@@ -18,7 +18,7 @@ export function readCatalystDailyStatisticsXlsFile(fileName: string): CatalystDa
     const workbook = readFile(fileName);
     const workSheet = workbook.Sheets['instrumenty'];
 
-    const rows = utils.sheet_to_json(workSheet, { header: 'A', range: 'A11:S20' });
+    const rows = utils.sheet_to_json(workSheet, { header: 'A', range: 10 });
 
     const bonds: CatalystDailyStatisticsBondDetails[] = [];
     var bondType: string | undefined = undefined;

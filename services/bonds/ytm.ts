@@ -21,7 +21,7 @@ async function ytm() {
         const ytmCalculator = new YieldToMaturityCalculator(bondDetails, 0.0019, 0.19);
         const closingPriceYtm = ytmCalculator.forPrice(bond.closingPrice);
         console.log(`Bond: ${bond.name},`
-            + ` total price: ${closingPriceYtm.totalBuyingPrice},`
+            + ` total price: ${closingPriceYtm.totalBuyingPrice.toFixed(2)},`
             + ` time to mature: ${closingPriceYtm.timeToMature.toFixed(2)},`
             + ` sale income: ${closingPriceYtm.totalSaleIncome.toFixed(2)},`
             + ` ytm: ${(closingPriceYtm.ytm * 100).toFixed(2)}%`);
