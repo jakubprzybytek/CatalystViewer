@@ -9,12 +9,17 @@ async function update() {
   const catalystDailyStatisticsFileName = await downloadLatestCatalystDailyStatistics();
   const bonds = readCatalystDailyStatisticsXlsFile(catalystDailyStatisticsFileName);
 
-  const bondDetailsTable = new BondDetailsTable(dynamoDbClient);
+  const bondDetailsTable = new BondDetailsTable(dynamoDbClient, 'dev-catalyst-viewer-BondDetails');
 
   const dbBonds = bonds.map((bond) => ({
     name: bond.name,
     market: bond.market,
-    issuer: 'n/a'
+    issuer: 'n/a',
+    type: bond.type,
+    nominalValue: bond.nominalValue,
+    maturityDay: bond.maturityDay,
+    currentInterestRate: bond.currentInterestRate,
+    accuredInterest: bond.accuredInterest
   }));
 
   await bondDetailsTable.storeAll(dbBonds);
