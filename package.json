@@ -25,6 +25,7 @@
   ],
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.163.0",
+    "@sls-next/lambda-at-edge": "^3.7.0",
     "axios": "^0.27.2",
     "date-fns": "^2.29.2",
     "xlsx": "^0.18.5"

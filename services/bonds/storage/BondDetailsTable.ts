@@ -1,4 +1,4 @@
-import { DynamoDBClient, PutItemCommand, BatchWriteItemCommandInput, BatchWriteItemCommand, QueryCommand, ScanCommand } from '@aws-sdk/client-dynamodb';
+import { DynamoDBClient, BatchWriteItemCommandInput, BatchWriteItemCommand, ScanCommand } from '@aws-sdk/client-dynamodb';
 import { DbBondDetails } from '.';
 
 const BATCH_SIZE = 25;
@@ -33,7 +33,7 @@ export class BondDetailsTable {
                 market: { S: bondDetails.market },
                 type: { S: bondDetails.type },
                 nominalValue: { N: bondDetails.nominalValue.toString() },
-                maturityDay: { S: bondDetails.maturityDay.toISOString() },
+                maturityDay: { S: bondDetails.maturityDay.toISOString().substring(0, 10) },
                 currentInterestRate: { N: (bondDetails.currentInterestRate || -1).toString() },
                 accuredInterest: { N: bondDetails.accuredInterest.toString() }
               },

@@ -1,7 +1,8 @@
-import { StackContext, Api, Table } from "@serverless-stack/resources";
-import * as iam from "aws-cdk-lib/aws-iam";
+import { StackContext, Api, Table } from '@serverless-stack/resources';
+import { RemovalPolicy } from 'aws-cdk-lib';
+import * as iam from 'aws-cdk-lib/aws-iam';
 
-export function MyStack({ stack }: StackContext) {
+export function BondsService({ stack }: StackContext) {
   const bondDetailsTable = new Table(stack, 'BondDetails', {
     fields: {
       name: 'string',
@@ -17,7 +18,12 @@ export function MyStack({ stack }: StackContext) {
     primaryIndex: {
       partitionKey: 'issuer',
       sortKey: 'name#market'
-    }
+    },
+    cdk: {
+      table: {
+        removalPolicy: RemovalPolicy.DESTROY,
+      },
+    },
   });
 
   const bondsDetailsTableReacAccess = new iam.PolicyStatement({
@@ -44,4 +50,8 @@ export function MyStack({ stack }: StackContext) {
   stack.addOutputs({
     ApiEndpoint: api.url
   });
+
+  return {
+    api
+  };
 }
