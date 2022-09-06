@@ -8,6 +8,7 @@ export function BondsService({ stack }: StackContext) {
       name: 'string',
       market: 'string',
       'name#market': 'string',
+      isin: 'string',
       issuer: 'string',
       type: 'string',
       nominalValue: 'number',

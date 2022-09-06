@@ -34,7 +34,7 @@ export class YieldToMaturityCalculator {
 
         const timeToMature = Math.ceil(this.bondDetails.maturityDay.valueOf() - today.valueOf()) / (1000 * 3600 * 24) / 365;
 
-        const totalInterests = this.bondDetails.accuredInterest + this.bondDetails.currentInterestRate * timeToMature;
+        const totalInterests = this.bondDetails.accuredInterest + (this.bondDetails.nominalValue * this.bondDetails.currentInterestRate / 100) * timeToMature;
         const interestsTax = totalInterests * this.taxRate;
         const saleProfit = this.bondDetails.nominalValue - totalBuyingPrice;
         const saleTax = saleProfit > 0 ? saleProfit * this.taxRate : 0;

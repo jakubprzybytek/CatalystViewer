@@ -30,6 +30,7 @@ export class BondDetailsTable {
                 issuer: { S: bondDetails.issuer },
                 'name#market': { S: `${bondDetails.name}#${bondDetails.market}` },
                 name: { S: bondDetails.name },
+                isin: { S: bondDetails.isin },
                 market: { S: bondDetails.market },
                 type: { S: bondDetails.type },
                 nominalValue: { N: bondDetails.nominalValue.toString() },
@@ -68,6 +69,7 @@ export class BondDetailsTable {
         return {
           issuer: item['issuer']['S'] || '',
           name: item['name']['S'] || '',
+          isin: item['isin']['S'] || '',
           market: item['market']['S'] || '',
           type: item['type']['S'] || '',
           nominalValue: Number(item['nominalValue']['N']) || -1,
