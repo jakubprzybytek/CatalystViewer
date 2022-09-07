@@ -31,8 +31,8 @@ export const handler = lambdaHandler<BondReport[]>(async event => {
 
         return {
             details: bondDetails,
-            closingPrice: 100,
-            closingPriceYtm: ytmCalculator.forPrice(100)
+            closingPrice: dbBond.closingPrice,
+            closingPriceYtm: ytmCalculator.forPrice(dbBond.closingPrice)
         }
     });
 

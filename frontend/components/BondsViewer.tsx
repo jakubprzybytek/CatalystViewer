@@ -43,40 +43,58 @@ export default function EventsBrowser(): JSX.Element {
               }
             }
           }}>
-            <Grid item container direction='row' xs={12} md={4}>
-              <Typography variant='h4'>{bond.details.name}</Typography>
-              <Stack>
-                <Typography component='span' variant='caption'>ISIN</Typography>
-                <Typography component='span'>{bond.details.isin}</Typography>
+            <Grid item container direction='row' xs={12} sm={4} sx={{
+              '& > div': {
+                width: '100%',
+                justifyContent: 'space-between'
+              }
+            }}>
+              <Stack direction='row'>
+                <Typography variant='h4'>{bond.details.name}</Typography>
+                <Stack>
+                  <Typography component='span' variant='caption'>ISIN</Typography>
+                  <Typography component='span'>{bond.details.isin}</Typography>
+                </Stack>
               </Stack>
-              <Stack>
-                <Typography component='span' variant='caption'>Issuer</Typography>
-                <Typography component='span'>{bond.details.issuer}</Typography>
-              </Stack>
-              <Stack>
-                <Typography component='span' variant='caption'>Type</Typography>
-                <Typography component='span'>{bond.details.type}</Typography>
-              </Stack>
-            </Grid>
-            <Grid item container xs={12} md={4}>
-              <Stack>
-                <Typography component='span' variant='caption'>Maturity day</Typography>
-                <Typography component='span'><>{bond.details.maturityDay.toString().substring(0, 10)}</></Typography>
-              </Stack>
-              <Stack>
-                <Typography component='span' variant='caption'>Nominal value</Typography>
-                <Typography component='span'>{bond.details.nominalValue.toFixed(2)}</Typography>
-              </Stack>
-              <Stack>
-                <Typography component='span' variant='caption'>Current interest</Typography>
-                <Typography component='span'>{bond.details.currentInterestRate.toFixed(2)}%</Typography>
-              </Stack>
-              <Stack>
-                <Typography component='span' variant='caption'>Accured interest</Typography>
-                <Typography component='span'>{bond.details.accuredInterest.toFixed(2)}</Typography>
+              <Stack direction='row'>
+                <Stack>
+                  <Typography component='span' variant='caption'>Issuer</Typography>
+                  <Typography component='span'>{bond.details.issuer}</Typography>
+                </Stack>
+                <Stack>
+                  <Typography component='span' variant='caption'>Type</Typography>
+                  <Typography component='span'>{bond.details.type}</Typography>
+                </Stack>
               </Stack>
             </Grid>
-            <Grid item container xs={12} md={4}>
+            <Grid item container direction='row' xs={12} sm={4} sx={{
+              '& > div': {
+                width: '100%',
+                justifyContent: 'space-between'
+              }
+            }}>
+              <Stack direction='row'>
+                <Stack>
+                  <Typography component='span' variant='caption'>Maturity day</Typography>
+                  <Typography component='span'><>{bond.details.maturityDay.toString().substring(0, 10)}</></Typography>
+                </Stack>
+                <Stack>
+                  <Typography component='span' variant='caption'>Nominal value</Typography>
+                  <Typography component='span'>{bond.details.nominalValue.toFixed(2)}</Typography>
+                </Stack>
+              </Stack>
+              <Stack direction='row'>
+                <Stack>
+                  <Typography component='span' variant='caption'>Current interest</Typography>
+                  <Typography component='span'>{bond.details.currentInterestRate.toFixed(2)}%</Typography>
+                </Stack>
+                <Stack>
+                  <Typography component='span' variant='caption'>Accured interest</Typography>
+                  <Typography component='span'>{bond.details.accuredInterest.toFixed(2)}</Typography>
+                </Stack>
+              </Stack>
+            </Grid>
+            <Grid item container xs={12} sm={4}>
               <Stack>
                 <Typography component='span' variant='caption'>Closing price</Typography>
                 <Typography component='span'>{bond.closingPrice.toFixed(2)}</Typography>
@@ -88,7 +106,8 @@ export default function EventsBrowser(): JSX.Element {
             </Grid>
           </Grid>
         </Paper>
-      ))}
-    </Box>
+      ))
+      }
+    </Box >
   );
 }

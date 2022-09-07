@@ -36,7 +36,8 @@ export class BondDetailsTable {
                 nominalValue: { N: bondDetails.nominalValue.toString() },
                 maturityDay: { S: bondDetails.maturityDay.toISOString().substring(0, 10) },
                 currentInterestRate: { N: (bondDetails.currentInterestRate || -1).toString() },
-                accuredInterest: { N: bondDetails.accuredInterest.toString() }
+                accuredInterest: { N: bondDetails.accuredInterest.toString() },
+                closingPrice: { N: bondDetails.closingPrice.toString() },
               },
             }
           })),
@@ -76,6 +77,7 @@ export class BondDetailsTable {
           maturityDay: new Date(Date.parse(item['maturityDay']['S'] || '')),
           currentInterestRate: Number(item['currentInterestRate']['N']) || -1,
           accuredInterest: Number(item['accuredInterest']['N']) || -1,
+          closingPrice: Number(item['closingPrice']['N']) || -1,
         };
       })
       : [];
