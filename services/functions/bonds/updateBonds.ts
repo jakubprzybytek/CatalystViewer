@@ -34,7 +34,8 @@ export async function handler(event: any) {
     }
 
     await bondDetailsTable.storeAll(dbBonds);
+
     return {
-        bonds
+        bondsUpdated: bonds.length
     }
 }

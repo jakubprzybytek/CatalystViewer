@@ -1,11 +1,18 @@
 import { StackContext, Function, use } from '@serverless-stack/resources';
 import { Duration } from 'aws-cdk-lib';
+import * as iam from 'aws-cdk-lib/aws-iam';
 import * as sfn from 'aws-cdk-lib/aws-stepfunctions';
 import * as tasks from 'aws-cdk-lib/aws-stepfunctions-tasks';
 import { BondsService } from './BondsService';
 
 export function BondsUpdater({ stack }: StackContext) {
-  const { bondDetailsTable, bondDetailsTableReadAccess } = use(BondsService);
+  const { bondDetailsTable } = use(BondsService);
+
+  const bondDetailsTableWriteAccess = new iam.PolicyStatement({
+    actions: ['dynamodb:BatchWriteItem'],
+    effect: iam.Effect.ALLOW,
+    resources: [bondDetailsTable.tableArn]
+  });
 
   const bondsUpdaterFunction = new Function(stack, 'BondsUpdaterFunction', {
     handler: 'functions/bonds/updateBonds.handler',
@@ -13,7 +20,7 @@ export function BondsUpdater({ stack }: StackContext) {
       BOND_DETAILS_TABLE_NAME: bondDetailsTable.tableName
     },
     timeout: '10 minutes',
-    permissions: [bondDetailsTableReadAccess]
+    permissions: [bondDetailsTableWriteAccess]
   })
 
   new sfn.StateMachine(stack, stack.stage + '-BondsUpdaterStateMachine', {

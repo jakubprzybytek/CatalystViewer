@@ -56,6 +56,5 @@ export function BondsService({ stack }: StackContext) {
   return {
     api,
     bondDetailsTable,
-    bondDetailsTableReadAccess: bondDetailsTableReadAccess
   };
 }
