@@ -45,7 +45,7 @@ export default function EventsBrowser(): JSX.Element {
             onChange={(event: SelectChangeEvent) => setBondTypeFilter(event.target.value)}>
             <MenuItem value='all' sx={{ fontStyle: 'italic' }}>All</MenuItem>
             {bondTypes.map((bondType) => (
-              <MenuItem value={bondType}>{bondType}</MenuItem>
+              <MenuItem key={bondType} value={bondType}>{bondType}</MenuItem>
             ))}
           </Select>
         </FormControl>
@@ -54,7 +54,7 @@ export default function EventsBrowser(): JSX.Element {
             onChange={(event: SelectChangeEvent) => setIssuerFilter(event.target.value)}>
             <MenuItem value='all' sx={{ fontStyle: 'italic' }}>All</MenuItem>
             {issuers.map((issuer) => (
-              <MenuItem value={issuer}>{issuer}</MenuItem>
+              <MenuItem key={issuer} value={issuer}>{issuer}</MenuItem>
             ))}
           </Select>
         </FormControl>
