@@ -1,5 +1,4 @@
-import pkg from "xlsx";
-const { utils, readFile } = pkg;
+import { utils, readFile } from "xlsx";
 import { CatalystDailyStatisticsBondDetails } from ".";
 
 export function readCatalystDailyStatisticsXlsFile(fileName: string): CatalystDailyStatisticsBondDetails[] {

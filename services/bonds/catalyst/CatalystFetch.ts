@@ -28,12 +28,14 @@ export async function downloadLatestCatalystDailyStatisticsFile(): Promise<strin
     const fileName = `catalyst_${format(previousDay, 'yyyyMMdd')}.xls`;
     console.log(`Daily statistics xls file: ${fileName}`);
 
-    if (existsSync(fileName)) {
-        console.log(`File ${fileName} already exists. Skipping downloading.`);
+    const localFileName = `/tmp/${fileName}`;
+
+    if (existsSync(localFileName)) {
+        console.log(`File ${localFileName} already exists. Skipping downloading.`);
     } else {
         const url = `https://gpwcatalyst.pl/pub/CATALYST/statystyki/statystyki_dzienne/${fileName}`;
-        await downloadCatalystFile(url, fileName);
+        await downloadCatalystFile(url, localFileName);
     }
 
-    return fileName;
+    return localFileName;
 }
