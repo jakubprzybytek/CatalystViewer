@@ -1,10 +1,9 @@
-import { useEffect, useState } from "react";
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import Grid from "@mui/material/Grid";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
-import { getBonds, BondReport } from "../sdk/GetBonds";
+import { BondReport } from "../sdk/GetBonds";
 
 type BondsListParam = {
   bondReports: BondReport[];

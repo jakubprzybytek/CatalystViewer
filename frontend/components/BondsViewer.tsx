@@ -23,7 +23,7 @@ export default function EventsBrowser(): JSX.Element {
   const issuers = useMemo(() => R.sortBy(R.identity, R.uniq(R.map(getBondDetailProp('issuer'), bonds))), [bonds]);
 
   let filteredBonds = bondTypeFilter !== 'all' ? R.filter((bondReport) => bondReport.details.type === bondTypeFilter, bonds) : bonds;
-  filteredBonds = issuerFilter !== 'all' ? R.filter((bondReport) => bondReport.details.issuer === issuerFilter, bonds) : bonds;
+  filteredBonds = issuerFilter !== 'all' ? R.filter((bondReport) => bondReport.details.issuer === issuerFilter, filteredBonds) : filteredBonds;
 
   useEffect(() => {
     setIsLoading(true);
