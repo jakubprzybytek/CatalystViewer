@@ -28,7 +28,7 @@ export async function downloadLatestCatalystDailyStatisticsFile(): Promise<strin
     const fileName = `catalyst_${format(previousDay, 'yyyyMMdd')}.xls`;
     console.log(`Daily statistics xls file: ${fileName}`);
 
-    const localFileName = `${fileName}`;
+    const localFileName = `/tmp/${fileName}`;
     console.log('cwd: ' + process.cwd())
 
     if (existsSync(localFileName)) {
