@@ -28,7 +28,8 @@ export async function downloadLatestCatalystDailyStatisticsFile(): Promise<strin
     const fileName = `catalyst_${format(previousDay, 'yyyyMMdd')}.xls`;
     console.log(`Daily statistics xls file: ${fileName}`);
 
-    const localFileName = `/tmp/${fileName}`;
+    const localFileName = `${fileName}`;
+    console.log('cwd: ' + process.cwd())
 
     if (existsSync(localFileName)) {
         console.log(`File ${localFileName} already exists. Skipping downloading.`);

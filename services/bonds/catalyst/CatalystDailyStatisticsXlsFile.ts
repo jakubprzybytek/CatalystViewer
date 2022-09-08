@@ -1,8 +1,10 @@
-import { utils, readFile } from "xlsx";
+import { utils, read } from "xlsx";
+import { readFileSync } from 'fs';
 import { CatalystDailyStatisticsBondDetails } from ".";
 
 export function readCatalystDailyStatisticsXlsFile(fileName: string): CatalystDailyStatisticsBondDetails[] {
-    const workbook = readFile(fileName);
+    const fileBuffer = readFileSync(fileName);
+    const workbook = read(fileBuffer);
     const workSheet = workbook.Sheets['instrumenty'];
 
     const rows = utils.sheet_to_json(workSheet, { header: 'A', range: 10 });

@@ -28,7 +28,7 @@ export function BondsService({ stack }: StackContext) {
     },
   });
 
-  const bondsDetailsTableReadAccess = new iam.PolicyStatement({
+  const bondDetailsTableReadAccess = new iam.PolicyStatement({
     actions: ['dynamodb:Scan'],
     effect: iam.Effect.ALLOW,
     resources: [bondDetailsTable.tableArn]
@@ -43,7 +43,7 @@ export function BondsService({ stack }: StackContext) {
           environment: {
             BOND_DETAILS_TABLE_NAME: bondDetailsTable.tableName
           },
-          permissions: [bondsDetailsTableReadAccess]
+          permissions: [bondDetailsTableReadAccess]
         }
       }
     }
@@ -54,6 +54,8 @@ export function BondsService({ stack }: StackContext) {
   });
 
   return {
-    api
+    api,
+    bondDetailsTable,
+    bondDetailsTableReadAccess: bondDetailsTableReadAccess
   };
 }

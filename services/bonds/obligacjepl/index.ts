@@ -1,3 +1,5 @@
+export * from './ObligacjeWebsite';
+
 export type ObligacjeBondInformation = {
     name: string;
     issuer: string;
