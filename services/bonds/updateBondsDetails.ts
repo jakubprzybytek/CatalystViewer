@@ -1,13 +1,11 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { downloadLatestCatalystDailyStatistics } from "./catalyst/CatalystSDK";
-import { CatalystDailyStatisticsBondDetails, readCatalystDailyStatisticsXlsFile } from "bonds/catalyst/CatalystDailyStatisticsXlsFile";
 import { BondDetailsTable, DbBondDetails } from './storage';
+import { CatalystDailyStatisticsBondDetails, getLatestCatalystDailyStatistics } from './catalyst';
 
 const dynamoDbClient = new DynamoDBClient({});
 
 async function update() {
-  const catalystDailyStatisticsFileName = await downloadLatestCatalystDailyStatistics();
-  const bonds: CatalystDailyStatisticsBondDetails[] = readCatalystDailyStatisticsXlsFile(catalystDailyStatisticsFileName);
+  const bonds: CatalystDailyStatisticsBondDetails[] = await getLatestCatalystDailyStatistics();
 
   const bondDetailsTable = new BondDetailsTable(dynamoDbClient, 'int-catalyst-viewer-BondDetails');
 

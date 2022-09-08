@@ -19,7 +19,7 @@ async function downloadCatalystFile(url: string, fileNameToSave: string) {
     writeFileSync(fileNameToSave, response.data, { encoding: null });
 }
 
-export async function downloadLatestCatalystDailyStatistics(): Promise<string> {
+export async function downloadLatestCatalystDailyStatisticsFile(): Promise<string> {
     let previousDay = subDays(new Date(), 1);
     while ((getDay(previousDay) + 1) % 7 < 2) { // skip Saturday and Sunday
         previousDay = subDays(previousDay, 1);

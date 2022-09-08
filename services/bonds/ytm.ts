@@ -1,11 +1,9 @@
-import { downloadLatestCatalystDailyStatistics } from "./catalyst/CatalystSDK";
-import { readCatalystDailyStatisticsXlsFile } from "bonds/catalyst/CatalystDailyStatisticsXlsFile";
-import { YieldToMaturityCalculator } from "./formulas/YieldToMaturity";
-import { BondDetails } from "bonds";
+import { YieldToMaturityCalculator } from './formulas/YieldToMaturity';
+import { BondDetails } from '../bonds';
+import { CatalystDailyStatisticsBondDetails, getLatestCatalystDailyStatistics } from "./catalyst";
 
 async function ytm() {
-    const catalystDailyStatisticsFileName = await downloadLatestCatalystDailyStatistics();
-    const bonds = readCatalystDailyStatisticsXlsFile(catalystDailyStatisticsFileName);
+    const bonds: CatalystDailyStatisticsBondDetails[] = await getLatestCatalystDailyStatistics();
 
     bonds.forEach((bond) => {
         const bondDetails: BondDetails = {
