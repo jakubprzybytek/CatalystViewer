@@ -82,6 +82,19 @@ export default function BondsList({ bondReports }: BondsListParam): JSX.Element 
               </Stack>
               <Stack direction='row'>
                 <Stack>
+                  <Typography component='span' variant='caption'>Interest Type</Typography>
+                  <Typography component='span'>{bond.details.interestType}</Typography>
+                </Stack>
+              </Stack>
+            </Grid>
+            <Grid item container xs={12} sm={4} sx={{
+              '& > div': {
+                width: '100%',
+                justifyContent: 'space-between'
+              }
+            }}>
+              <Stack direction='row'>
+                <Stack>
                   <Typography component='span' variant='caption'>Current interest</Typography>
                   <Typography component='span'>{bond.details.currentInterestRate.toFixed(2)}%</Typography>
                 </Stack>
@@ -90,15 +103,15 @@ export default function BondsList({ bondReports }: BondsListParam): JSX.Element 
                   <Typography component='span'>{bond.details.accuredInterest.toFixed(2)}</Typography>
                 </Stack>
               </Stack>
-            </Grid>
-            <Grid item container xs={12} sm={4}>
-              <Stack>
-                <Typography component='span' variant='caption'>Closing price</Typography>
-                <Typography component='span'>{bond.closingPrice.toFixed(2)}</Typography>
-              </Stack>
-              <Stack>
-                <Typography component='span' variant='caption'>Closing price YTM</Typography>
-                <Typography component='span'>{(bond.closingPriceYtm.ytm * 100).toFixed(2)}%</Typography>
+              <Stack direction='row'>
+                <Stack>
+                  <Typography component='span' variant='caption'>Closing price</Typography>
+                  <Typography component='span'>{bond.closingPrice.toFixed(2)}</Typography>
+                </Stack>
+                <Stack>
+                  <Typography component='span' variant='caption'>Closing price YTM</Typography>
+                  <Typography component='span'>{(bond.closingPriceYtm.ytm * 100).toFixed(2)}%</Typography>
+                </Stack>
               </Stack>
             </Grid>
           </Grid>
