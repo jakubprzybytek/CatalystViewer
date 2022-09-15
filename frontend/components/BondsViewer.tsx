@@ -39,7 +39,6 @@ export default function EventsBrowser(): JSX.Element {
   return (
     <>
       <Paper sx={{ p: 1, m: 1 }}>
-        {isLoading && <CircularProgress />}
         <FormControl fullWidth size="small" sx={{ mb: 1 }}>
           <Select value={bondTypeFilter} label="Bond type"
             onChange={(event: SelectChangeEvent) => setBondTypeFilter(event.target.value)}>
@@ -60,6 +59,7 @@ export default function EventsBrowser(): JSX.Element {
         </FormControl>
         <Typography>Listing {filteredBonds.length} bonds</Typography>
       </Paper>
+      {isLoading && <CircularProgress />}
       <BondsList bondReports={filteredBonds} />
     </>
   );
