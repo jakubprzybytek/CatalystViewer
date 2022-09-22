@@ -1,6 +1,7 @@
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import Grid from "@mui/material/Grid";
+import Divider from '@mui/material/Divider';
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
 import { BondReport } from "../sdk/GetBonds";
@@ -86,6 +87,7 @@ export default function BondsList({ bondReports }: BondsListParam): JSX.Element 
                 </Stack>
               </Stack>
             </Grid>
+            <Divider /> 
             <Grid item container xs={12} sm={4} sx={{
               '& > div': {
                 width: '100%',
