@@ -87,7 +87,7 @@ export default function BondsList({ bondReports }: BondsListParam): JSX.Element 
                 </Stack>
               </Stack>
             </Grid>
-            <Divider flexItem /> 
+            <Divider style={{ width: '100%' }} /> 
             <Grid item container xs={12} sm={4} sx={{
               '& > div': {
                 width: '100%',
