@@ -20,6 +20,7 @@ export function BondsUpdater({ stack }: StackContext) {
       BOND_DETAILS_TABLE_NAME: bondDetailsTable.tableName
     },
     timeout: '10 minutes',
+    memorySize: '256 MB',
     permissions: [bondDetailsTableWriteAccess]
   })
 
