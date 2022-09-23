@@ -99,7 +99,7 @@ export default function BondsList({ bondReports }: BondsListParam): JSX.Element 
                   <Typography component='span' variant='caption'>Current interest</Typography>
                   <Typography component='span'>{bond.details.currentInterestRate.toFixed(2)}%</Typography>
                 </Stack>
-                <Grid orientation='vertical' flexItem />
+                <Divider orientation='vertical' flexItem />
                 <Stack>
                   <Typography component='span' variant='caption'>Accured interest</Typography>
                   <Typography component='span'>{bond.details.accuredInterest.toFixed(2)}</Typography>
