@@ -10,12 +10,12 @@ export default function BondsList({ bondReports }: BondsListParam): JSX.Element 
   return (
     <Grid container sx={{ pr: 1 }}>
       {bondReports.map((bond) => (
-        <Grid item xs={12} md={6}
+        <Grid key={`${bond.details.name}#${bond.details.market}`} item xs={12} md={6}
           sx={{
             pb: 1,
             pl: 1
           }}>
-          <BondCard key={`${bond.details.name}#${bond.details.market}`} bond={bond} />
+          <BondCard bond={bond} />
         </Grid>
       ))}
     </Grid>
