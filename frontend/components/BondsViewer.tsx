@@ -40,7 +40,7 @@ export default function EventsBrowser(): JSX.Element {
       <Paper sx={{
         p: 1,
         m: 1,
-        '& > *': {
+        '& > div': {
           mt: 1
         }
       }}>
@@ -60,7 +60,7 @@ export default function EventsBrowser(): JSX.Element {
             <MenuItem key={issuer} value={issuer}>{issuer}</MenuItem>
           ))}
         </TextField>
-        <Typography>Listing {filteredBonds.length} bonds</Typography>
+        <Typography sx={{ ml: 2, mt: 2 }}>Listing {filteredBonds.length} bonds</Typography>
       </Paper>
       {isLoading && <CircularProgress />}
       <BondsList bondReports={filteredBonds} />
