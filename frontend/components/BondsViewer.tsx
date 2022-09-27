@@ -9,7 +9,16 @@ import BondsList from './BondsList';
 import { getBonds, BondReport } from '../sdk/GetBonds';
 import { BondDetails } from '../../services/bonds';
 
-const getBondDetailProp = (prop: 'type' | 'issuer') => R.compose(R.prop(prop), R.prop<'details', BondDetails>('details'));
+const collectBondDetailProps = (prop: 'type' | 'issuer') => R.map(R.compose(R.prop(prop), R.prop<'details', BondDetails>('details')));
+const sort = R.sortBy<string>(R.identity);
+
+const isBondType = (type: string) => type !== 'all' ? (bondReport: BondReport) => bondReport.details.type === type : R.always(true);
+const isIssuedBy = (issuer: string) => issuer !== 'all' ? (bondReport: BondReport) => bondReport.details.issuer === issuer : R.always(true);
+
+const filterByType = (type: string) => R.filter(isBondType(type));
+const filterByIssuer = (issuer: string) => R.filter(isIssuedBy(issuer));
+
+const filterBonds = (type: string, issuer: string) => R.filter(R.both(isBondType(type), isIssuedBy(issuer)));
 
 export default function EventsBrowser(): JSX.Element {
   const [isLoading, setIsLoading] = useState(false);
@@ -18,18 +27,24 @@ export default function EventsBrowser(): JSX.Element {
   const [bondTypeFilter, setBondTypeFilter] = useState<string>('all');
   const [issuerFilter, setIssuerFilter] = useState<string>('all');
 
-  const bondTypes = useMemo(() => R.uniq(R.map(getBondDetailProp('type'), bonds)), [bonds])
-  const issuers = useMemo(() => R.sortBy(R.identity, R.uniq(R.map(getBondDetailProp('issuer'), bonds))), [bonds]);
+  const availableBondTypes = useMemo(() => {
+    const filteredByIssuer = filterByIssuer(issuerFilter)(bonds);
+    return R.uniq(collectBondDetailProps('type')(filteredByIssuer));
+  }, [bonds, issuerFilter]);
 
-  let filteredBonds = bondTypeFilter !== 'all' ? R.filter((bondReport) => bondReport.details.type === bondTypeFilter, bonds) : bonds;
-  filteredBonds = issuerFilter !== 'all' ? R.filter((bondReport) => bondReport.details.issuer === issuerFilter, filteredBonds) : filteredBonds;
+  const availableIssuers = useMemo(() => {
+    const filteredByType = filterByType(bondTypeFilter)(bonds);
+    return sort(R.uniq(collectBondDetailProps('issuer')(filteredByType)));
+  }, [bonds, bondTypeFilter]);
+
+  const filteredBonds = filterBonds(bondTypeFilter, issuerFilter)(bonds);
 
   useEffect(() => {
     setIsLoading(true);
     const fetchData = async () => {
       const bonds = await getBonds();
-      setBonds(bonds);
       setIsLoading(false);
+      setBonds(bonds);
     };
 
     fetchData();
@@ -48,7 +63,7 @@ export default function EventsBrowser(): JSX.Element {
           value={bondTypeFilter}
           onChange={(event: any) => setBondTypeFilter(event.target.value)}>
           <MenuItem value='all' sx={{ fontStyle: 'italic' }}>All</MenuItem>
-          {bondTypes.map((bondType) => (
+          {availableBondTypes.map((bondType) => (
             <MenuItem key={bondType} value={bondType}>{bondType}</MenuItem>
           ))}
         </TextField>
@@ -56,7 +71,7 @@ export default function EventsBrowser(): JSX.Element {
           value={issuerFilter}
           onChange={(event: any) => setIssuerFilter(event.target.value)}>
           <MenuItem value='all' sx={{ fontStyle: 'italic' }}>All</MenuItem>
-          {issuers.map((issuer) => (
+          {availableIssuers.map((issuer) => (
             <MenuItem key={issuer} value={issuer}>{issuer}</MenuItem>
           ))}
         </TextField>
