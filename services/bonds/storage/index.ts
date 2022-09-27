@@ -12,4 +12,6 @@ export type DbBondDetails = {
     currentInterestRate: number;
     accuredInterest: number;
     closingPrice: number;
+    interestFirstDays: string[];
+    interestPayoffDays: string[];
 };

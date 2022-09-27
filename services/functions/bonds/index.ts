@@ -5,4 +5,6 @@ export type BondReport = {
     details: BondDetails;
     closingPrice: number;
     closingPriceYtm: YieldToMaturityReport;
+    previousInterestPayoffDay: string;
+    nextInterestPayoffDay: string;
 };

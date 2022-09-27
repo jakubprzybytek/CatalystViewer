@@ -39,7 +39,7 @@ export default function EventsBrowser(): JSX.Element {
   const [isLoading, setIsLoading] = useState(false);
   const [bonds, setBonds] = useState<BondReport[]>([]);
 
-  const [bondTypeFilter, setBondTypeFilter] = useState<string>('all');
+  const [bondTypeFilter, setBondTypeFilter] = useState<string>('Corporate bonds');
   const [issuerFilter, setIssuerFilter] = useState<string>('all');
   const [marketsFilter, setMarketsFilter] = useState<string[]>(['GPW RR', 'GPW ASO']);
 

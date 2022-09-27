@@ -24,21 +24,23 @@ export class BondDetailsTable {
     for (const bondsBatch of bondsBatches) {
       const batchWriteParams: BatchWriteItemCommandInput = {
         "RequestItems": {
-          [this.tableName]: bondsBatch.map((bondDetails) => ({
+          [this.tableName]: bondsBatch.map((dbBondDetails) => ({
             "PutRequest": {
               Item: {
-                issuer: { S: bondDetails.issuer },
-                'name#market': { S: `${bondDetails.name}#${bondDetails.market}` },
-                name: { S: bondDetails.name },
-                isin: { S: bondDetails.isin },
-                market: { S: bondDetails.market },
-                type: { S: bondDetails.type },
-                nominalValue: { N: bondDetails.nominalValue.toString() },
-                maturityDay: { S: bondDetails.maturityDay.toISOString().substring(0, 10) },
-                interestType: { S: bondDetails.interestType },
-                currentInterestRate: { N: (bondDetails.currentInterestRate || -1).toString() },
-                accuredInterest: { N: bondDetails.accuredInterest.toString() },
-                closingPrice: { N: bondDetails.closingPrice.toString() },
+                issuer: { S: dbBondDetails.issuer },
+                'name#market': { S: `${dbBondDetails.name}#${dbBondDetails.market}` },
+                name: { S: dbBondDetails.name },
+                isin: { S: dbBondDetails.isin },
+                market: { S: dbBondDetails.market },
+                type: { S: dbBondDetails.type },
+                nominalValue: { N: dbBondDetails.nominalValue.toString() },
+                maturityDay: { S: dbBondDetails.maturityDay.toISOString().substring(0, 10) },
+                interestType: { S: dbBondDetails.interestType },
+                currentInterestRate: { N: (dbBondDetails.currentInterestRate || -1).toString() },
+                accuredInterest: { N: dbBondDetails.accuredInterest.toString() },
+                closingPrice: { N: dbBondDetails.closingPrice.toString() },
+                interestFirstDays: { SS: dbBondDetails.interestFirstDays },
+                interestPayoffDays: { SS: dbBondDetails.interestPayoffDays }
               },
             }
           })),
@@ -80,6 +82,8 @@ export class BondDetailsTable {
           currentInterestRate: Number(item['currentInterestRate']['N']) || -1,
           accuredInterest: Number(item['accuredInterest']['N']) || -1,
           closingPrice: Number(item['closingPrice']['N']) || -1,
+          interestFirstDays: item['interestFirstDays']?.['SS'] || [],
+          interestPayoffDays: item['interestPayoffDays']?.['SS'] || []
         };
       })
       : [];

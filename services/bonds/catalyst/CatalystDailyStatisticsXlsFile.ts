@@ -42,5 +42,7 @@ export function readCatalystDailyStatisticsXlsFile(fileName: string): CatalystDa
         }
     }
 
+    console.log(`Parsed ${bonds.length} bonds`);
+
     return bonds;
 }

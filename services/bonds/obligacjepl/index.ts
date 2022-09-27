@@ -8,4 +8,6 @@ export type ObligacjeBondInformation = {
     nominalValue: number;
     interestType: string;
     currency: string;
+    interestFirstDays: string[];
+    interestPayoffDays: string[];
 };

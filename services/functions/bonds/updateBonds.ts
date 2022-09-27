@@ -29,7 +29,9 @@ export async function handler(event: any) {
             interestType: bondInformation.interestType,
             currentInterestRate: bond.currentInterestRate,
             accuredInterest: bond.accuredInterest,
-            closingPrice: bond.closingPrice
+            closingPrice: bond.closingPrice,
+            interestFirstDays: bondInformation.interestFirstDays,
+            interestPayoffDays: bondInformation.interestPayoffDays
         });
     }
 

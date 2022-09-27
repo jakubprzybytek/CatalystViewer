@@ -61,17 +61,19 @@ export default function BondCard({ bond }: BondCardParam): JSX.Element {
         </BondCardSection>
         <BondCardSection>
           <BondCardEntry caption='Maturity day'>{bond.details.maturityDay.toString().substring(0, 10)}</BondCardEntry>
+          <Divider orientation='vertical' variant='middle' flexItem />
           <BondCardEntry caption='Nominal value' textAlign='center'>{bond.details.nominalValue.toFixed(2)}</BondCardEntry>
+          <Divider orientation='vertical' variant='middle' flexItem />
           <BondCardEntry caption='Interest Type' textAlign='end'>{bond.details.interestType}</BondCardEntry>
         </BondCardSection>
         <Divider />
         <BondCardSection>
           <BondCardEntry caption='Current interest'>{bond.details.currentInterestRate.toFixed(2)}%</BondCardEntry>
-          <Divider orientation='vertical' variant='middle' flexItem />
-          <BondCardEntry caption='Accured interest' textAlign='center'>{bond.details.accuredInterest.toFixed(2)}</BondCardEntry>
-          <Divider orientation='vertical' variant='middle' flexItem />
+          <BondCardEntry caption='Accured interest (since)' textAlign='center'>{bond.details.accuredInterest.toFixed(2)} ({bond.previousInterestPayoffDay})</BondCardEntry>
+          <BondCardEntry caption='Next interest' textAlign='center'>{bond.nextInterestPayoffDay}</BondCardEntry>
+        </BondCardSection>
+        <BondCardSection>
           <BondCardEntry caption='Closing price' textAlign='center'>{bond.closingPrice.toFixed(2)}</BondCardEntry>
-          <Divider orientation='vertical' variant='middle' flexItem />
           <BondCardEntry caption='Closing price YTM' textAlign='end'>{(bond.closingPriceYtm.ytm * 100).toFixed(2)}%</BondCardEntry>
         </BondCardSection>
       </Paper>

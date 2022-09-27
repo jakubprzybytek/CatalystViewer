@@ -1,4 +1,5 @@
 import { lambdaHandler, Success } from "functions/HandlerProxy";
+import { parse, format, isAfter } from 'date-fns';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { BondDetails } from '../../bonds';
 import { BondDetailsTable } from '../../bonds/storage/BondDetailsTable';
@@ -26,15 +27,24 @@ export const handler = lambdaHandler<BondReport[]>(async event => {
             maturityDay: dbBond.maturityDay,
             interestType: dbBond.interestType,
             currentInterestRate: dbBond.currentInterestRate,
-            accuredInterest: dbBond.accuredInterest,
+            accuredInterest: dbBond.accuredInterest
         };
+
+        const interestFirstDays: Date[] = dbBond.interestFirstDays.map((dateString) => parse(dateString, 'yyyy-MM-dd', 0));
+        const interestPayoffDays: Date[] = dbBond.interestPayoffDays.map((dateString) => parse(dateString, 'yyyy-MM-dd', 0));
+
+        const today = new Date();
+        const previousInterestPayoffDay = interestFirstDays.reverse().find((firstDay) => isAfter(today, firstDay));
+        const nextInterestPayoffDay = interestPayoffDays.find((payoffDay) => isAfter(payoffDay, today));
 
         const ytmCalculator = new YieldToMaturityCalculator(bondDetails, 0.0019, 0.19);
 
         return {
             details: bondDetails,
             closingPrice: dbBond.closingPrice,
-            closingPriceYtm: ytmCalculator.forPrice(dbBond.closingPrice)
+            closingPriceYtm: ytmCalculator.forPrice(dbBond.closingPrice),
+            previousInterestPayoffDay: previousInterestPayoffDay ? format(previousInterestPayoffDay, 'yyyy-MM-dd') : 'n/a',
+            nextInterestPayoffDay: nextInterestPayoffDay ? format(nextInterestPayoffDay, 'yyyy-MM-dd') : 'n/a'
         }
     });
 
