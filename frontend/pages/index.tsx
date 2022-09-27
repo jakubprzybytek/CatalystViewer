@@ -13,6 +13,7 @@ const Home: NextPage = () => {
       </Head>
 
       <Box component='main' sx={{
+        minHeight: '100vh',
         pt: 1,
         backgroundColor: 'lightblue'
       }}>

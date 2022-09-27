@@ -53,10 +53,10 @@ export default function BondCard({ bond }: BondCardParam): JSX.Element {
       }}>
         <BondCardSection>
           <Typography variant='h4'>{bond.details.name}</Typography>
+          <BondCardEntry caption='Market' textAlign='end'>{bond.details.market}</BondCardEntry>
         </BondCardSection>
         <BondCardSection>
-          <BondCardEntry caption='Market'>{bond.details.market}</BondCardEntry>
-          <BondCardEntry caption='Issuer' textAlign='center'>{bond.details.issuer}</BondCardEntry>
+          <BondCardEntry caption='Issuer'>{bond.details.issuer}</BondCardEntry>
           <BondCardEntry caption='Type' textAlign='end'>{bond.details.type}</BondCardEntry>
         </BondCardSection>
         <BondCardSection>
