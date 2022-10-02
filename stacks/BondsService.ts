@@ -5,6 +5,7 @@ import * as iam from 'aws-cdk-lib/aws-iam';
 export function BondsService({ stack }: StackContext) {
   const bondDetailsTable = new Table(stack, 'BondDetails', {
     fields: {
+      updated: 'string',
       name: 'string',
       market: 'string',
       'name#market': 'string',
@@ -15,6 +16,8 @@ export function BondsService({ stack }: StackContext) {
       currency: 'string',
       maturityDay: 'string',
       interestType: 'string',
+      interestVariable: 'string',
+      interestConst: 'number',
       currentInterestRate: 'number',
       accuredInterest: 'number',
       interestFirstDays: 'string',

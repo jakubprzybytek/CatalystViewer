@@ -5,6 +5,7 @@ import Typography from "@mui/material/Typography";
 import { BondReport } from "../sdk/GetBonds";
 import { formatCurrency } from "../common/Formats";
 import { Box } from "@mui/system";
+import { Link } from "@mui/material";
 
 type BondCardEntryParam = {
   caption: string;
@@ -51,14 +52,13 @@ export default function BondCard({ bond }: BondCardParam): JSX.Element {
   return (
     <>
       <Paper sx={{
-        pb: 1,
         '& .MuiTypography-caption': {
           color: 'gray',
           lineHeight: 1.3
         }
       }}>
         <BondCardSection>
-          <Typography variant='h4'>{bond.details.name}</Typography>
+          <Typography variant='h4'><Link href={`https://obligacje.pl/pl/obligacja/${bond.details.name}`}>{bond.details.name}</Link></Typography>
           <BondCardEntry caption='Market' textAlign='end'>{bond.details.market}</BondCardEntry>
         </BondCardSection>
         <BondCardSection>
@@ -70,7 +70,7 @@ export default function BondCard({ bond }: BondCardParam): JSX.Element {
           <Divider orientation='vertical' variant='middle' flexItem />
           <BondCardEntry caption='Nominal value' textAlign='center' colorCode={nominalValueColorCode}>{formatCurrency(bond.details.nominalValue, 'PLN')}</BondCardEntry>
           <Divider orientation='vertical' variant='middle' flexItem />
-          <BondCardEntry caption='Interest Type' textAlign='end'>{bond.details.interestType}</BondCardEntry>
+          <BondCardEntry caption='Interest Type' textAlign='end'>{bond.details.interestVariable && `${bond.details.interestVariable} + `}{bond.details.interestConst}%</BondCardEntry>
         </BondCardSection>
         <Divider />
         <BondCardSection>
@@ -82,6 +82,13 @@ export default function BondCard({ bond }: BondCardParam): JSX.Element {
           <BondCardEntry caption='Closing price'>{bond.closingPrice.toFixed(2)}</BondCardEntry>
           <BondCardEntry caption='Closing price YTM' textAlign='end'>{(bond.closingPriceYtm.ytm * 100).toFixed(2)}%</BondCardEntry>
         </BondCardSection>
+        <Typography component='span' sx={{
+          display: 'flex',
+          justifyContent: 'right',
+          pr: 1,
+          fontSize: '0.7rem',
+          color: 'lightgray'
+        }}>Updated on: {bond.detailsUpdated}</Typography>
       </Paper>
     </>
   );

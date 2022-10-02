@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseObligacjeBondInformationPage } from "./ObligacjeBondInformationPage";
+import { parseObligacjeBondInformationPage, parseInterestType } from "./ObligacjeBondInformationPage";
 
 describe("ObligacjeBondInformationPage", () => {
     it("should parse", () => {
@@ -104,6 +104,8 @@ describe("ObligacjeBondInformationPage", () => {
             emissionValue: 60000000,
             nominalValue: 100,
             interestType: 'zmienne WIBOR 3M + 3.3%',
+            interestVariable: 'WIBOR 3M',
+            interestConst: 3.3,
             currency: 'PLN',
             interestFirstDays: [
                 '2022-08-12', '2022-11-12',
@@ -121,6 +123,31 @@ describe("ObligacjeBondInformationPage", () => {
                 '2026-02-12', '2026-05-12', '2026-08-12', '2026-11-12',
                 '2027-02-12', '2027-05-12', '2027-08-12'
             ]
+        });
+    });
+});
+
+
+describe("ObligacjeBondInformationPage", () => {
+    it("should parse", () => {
+        expect(parseInterestType('zmienne WIBOR 3M +  3.3%')).toEqual({
+            variable: 'WIBOR 3M',
+            const: 3.3
+        });
+
+        expect(parseInterestType('zmienne WIBOR 6M +  1%')).toEqual({
+            variable: 'WIBOR 6M',
+            const: 1
+        });
+
+        expect(parseInterestType('stałe 1.123%')).toEqual({
+            variable: undefined,
+            const: 1.123
+        });
+
+        expect(parseInterestType('obligacje zerokuponowe + 0%')).toEqual({
+            variable: undefined,
+            const: 0
         });
     });
 });

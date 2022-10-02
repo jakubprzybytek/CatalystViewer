@@ -26,6 +26,8 @@ export const handler = lambdaHandler<BondReport[]>(async event => {
             nominalValue: dbBond.nominalValue,
             maturityDay: dbBond.maturityDay,
             interestType: dbBond.interestType,
+            interestVariable: dbBond.interestVariable,
+            interestConst: dbBond.interestConst,
             currentInterestRate: dbBond.currentInterestRate,
             accuredInterest: dbBond.accuredInterest
         };
@@ -41,6 +43,7 @@ export const handler = lambdaHandler<BondReport[]>(async event => {
 
         return {
             details: bondDetails,
+            detailsUpdated: dbBond.updated,
             closingPrice: dbBond.closingPrice,
             closingPriceYtm: ytmCalculator.forPrice(dbBond.closingPrice),
             previousInterestPayoffDay: previousInterestPayoffDay ? format(previousInterestPayoffDay, 'yyyy-MM-dd') : 'n/a',

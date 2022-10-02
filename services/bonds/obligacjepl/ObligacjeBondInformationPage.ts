@@ -1,4 +1,4 @@
-import { ObligacjeBondInformation } from ".";
+import { InterestType, ObligacjeBondInformation } from ".";
 
 const BOND_NAME_REGEX = /<h1>(\w+)<\/h1>/;
 const ISSUER_REGEX = /"nazwa-emitenta">(.+)<\/a>/;
@@ -10,6 +10,10 @@ const CURRENCY_REGEX = /<th>Wartość nominalna:<\/th>\s+<td>.+ (\w{3})<\/td>/;
 const INTEREST_FIRST_DAYS_REGEX = /<h4>Pierwsze dni okresów odsetkowych<\/h4>.+?<ul>(.+?)<\/ul>/s;
 const INTEREST_PAYOFF_DAYS_REGEX = /<h4>Dni wypłaty odsetek<\/h4>.+?<ul>(.+?)<\/ul>/s;
 const DAY_REGEX = /<li>(.+?)<\/li>/g;
+
+const INTEREST_TYPE_VARIABLE_REGEX = /zmienne\s(.+)\s\+\s+([\w.]+)%/;
+const INTEREST_TYPE_CONST_REGEX = /stałe\s+([\w.]+)%/;
+const INTEREST_TYPE_ZERO_COUPON_REGEX = /obligacje\szerokuponowe\s\+\s0%/;
 
 function firstGroup(markup: string, regexp: RegExp): string {
     const regexpMatch = markup.match(regexp);
@@ -31,14 +35,50 @@ function firstGroups(markup: string, regexp: RegExp): string[] {
     return [...regexpMatch].map((match) => match[1]);
 }
 
+export function parseInterestType(interestType: string): InterestType {
+    const variableInterestRegexpMatch = interestType.match(INTEREST_TYPE_VARIABLE_REGEX);
+
+    if (variableInterestRegexpMatch !== null) {
+        return {
+            variable: variableInterestRegexpMatch[1],
+            const: Number(variableInterestRegexpMatch[2])
+        }
+    }
+
+    const constInterestRegexpMatch = interestType.match(INTEREST_TYPE_CONST_REGEX);
+
+    if (constInterestRegexpMatch !== null) {
+        return {
+            variable: undefined,
+            const: Number(constInterestRegexpMatch[1])
+        }
+    }
+
+    const zeroCouponInterestRegexpMatch = interestType.match(INTEREST_TYPE_ZERO_COUPON_REGEX);
+
+    if (zeroCouponInterestRegexpMatch !== null) {
+        return {
+            variable: undefined,
+            const: 0
+        }
+    }
+
+    throw Error(`Cannot parse interest type: '${interestType}'!`);
+}
+
 export function parseObligacjeBondInformationPage(markup: string): ObligacjeBondInformation {
+    const interestType = firstGroup(markup, INTEREST_TYPE_REGEX).replaceAll('  ', ' ');
+    const interestTypeParsed = parseInterestType(interestType);
+
     return {
         name: firstGroup(markup, BOND_NAME_REGEX),
         issuer: firstGroup(markup, ISSUER_REGEX),
         market: firstGroup(markup, MARKET_REGEX),
         emissionValue: Number(firstGroup(markup, EMISSION_VALUE_REGEX).replaceAll(' ', '')),
         nominalValue: Number(firstGroup(markup, NOMINAL_VALUE_REGEX).replaceAll(' ', '')),
-        interestType: firstGroup(markup, INTEREST_TYPE_REGEX).replaceAll('  ', ' '),
+        interestType: interestType,
+        interestVariable: interestTypeParsed?.variable,
+        interestConst: interestTypeParsed?.const,
         currency: firstGroup(markup, CURRENCY_REGEX),
         interestFirstDays: firstGroups(firstGroup(markup, INTEREST_FIRST_DAYS_REGEX), DAY_REGEX),
         interestPayoffDays: firstGroups(firstGroup(markup, INTEREST_PAYOFF_DAYS_REGEX), DAY_REGEX)

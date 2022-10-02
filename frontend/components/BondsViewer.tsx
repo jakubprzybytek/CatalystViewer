@@ -13,6 +13,8 @@ import BondsList from './BondsList';
 import { getBonds, BondReport } from '../sdk/GetBonds';
 import { BondDetails } from '../../services/bonds';
 import { Grid } from '@mui/material';
+import BondsListStats from './BondsListStats';
+import { Box } from '@mui/system';
 
 function removeFromArray(array: string[], element: string): string[] {
   const index = array.indexOf(element, 0);
@@ -69,10 +71,15 @@ export default function EventsBrowser(): JSX.Element {
   }, []);
 
   return (
-    <>
+    <Box sx={{
+      '& > div': {
+        mt: 1,
+        ml: 1,
+        mr: 1
+      }
+    }}>
       <Paper sx={{
         p: 1,
-        m: 1,
         '& > div': {
           mt: 1
         }
@@ -112,7 +119,8 @@ export default function EventsBrowser(): JSX.Element {
         <Typography sx={{ ml: 2, mt: 2 }}>Listing {filteredBonds.length} bonds</Typography>
       </Paper>
       {isLoading && <CircularProgress />}
+      <BondsListStats bondReports={filteredBonds} />
       <BondsList bondReports={filteredBonds} />
-    </>
+    </Box>
   );
 }

@@ -27,6 +27,7 @@ export class BondDetailsTable {
           [this.tableName]: bondsBatch.map((dbBondDetails) => ({
             "PutRequest": {
               Item: {
+                updated: { S: dbBondDetails.updated },
                 issuer: { S: dbBondDetails.issuer },
                 'name#market': { S: `${dbBondDetails.name}#${dbBondDetails.market}` },
                 name: { S: dbBondDetails.name },
@@ -37,6 +38,8 @@ export class BondDetailsTable {
                 currency: { S: dbBondDetails.currency },
                 maturityDay: { S: dbBondDetails.maturityDay.toISOString().substring(0, 10) },
                 interestType: { S: dbBondDetails.interestType },
+                ...(dbBondDetails.interestVariable && { interestVariable: { S: dbBondDetails.interestVariable } }),
+                interestConst: { N: dbBondDetails.interestConst.toString() },
                 currentInterestRate: { N: (dbBondDetails.currentInterestRate || -1).toString() },
                 accuredInterest: { N: dbBondDetails.accuredInterest.toString() },
                 closingPrice: { N: dbBondDetails.closingPrice.toString() },
@@ -72,6 +75,7 @@ export class BondDetailsTable {
     return result.Items
       ? result.Items.map((item) => {
         return {
+          updated: item['updated']?.['S'] || 'n/a',
           issuer: item['issuer']['S'] || '',
           name: item['name']['S'] || '',
           isin: item['isin']['S'] || '',
@@ -81,6 +85,8 @@ export class BondDetailsTable {
           currency: item['currency']?.['S'] || '',
           maturityDay: new Date(Date.parse(item['maturityDay']['S'] || '')),
           interestType: item['interestType']['S'] || '',
+          interestVariable: item['interestVariable']?.['S'],
+          interestConst: Number(item['interestConst']?.['N']) || 0,
           currentInterestRate: Number(item['currentInterestRate']['N']) || -1,
           accuredInterest: Number(item['accuredInterest']['N']) || -1,
           closingPrice: Number(item['closingPrice']['N']) || -1,
@@ -91,28 +97,4 @@ export class BondDetailsTable {
       : [];
   }
 
-  // async getAll(): Promise<DbBondDetails[]> {
-  //   console.log('BondDetailsTable: Fetching all bonds');
-  //   const queryCommand = new QueryCommand({
-  //     TableName: this.tableName
-  //   });
-
-  //   const result = await this.dynamoDBClient.send(queryCommand);
-  //   console.log(`BondDetailsTable: Returning ${result.Count ? result.Count : 0} bonds.`);
-
-  //   return result.Items
-  //     ? result.Items.map((item) => {
-  //       return {
-  //         issuer: item['issuer']['S'] || '',
-  //         name: item['name']['S'] || '',
-  //         market: item['market']['S'] || '',
-  //         type: item['type']['S'] || '',
-  //         nominalValue: Number(item['nominalValue']['N']) || -1,
-  //         maturityDay: new Date(Date.parse(item['maturityDay']['S'] || '')),
-  //         currentInterestRate: Number(item['currentInterestRate']['N']) || -1,
-  //         accuredInterest: Number(item['accuredInterest']['N']) || -1,
-  //       };
-  //     })
-  //     : [];
-  // }
 };

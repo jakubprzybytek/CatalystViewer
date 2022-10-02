@@ -15,7 +15,8 @@
     "axios": "^0.27.2",
     "next": "12.2.5",
     "react": "18.2.0",
-    "react-dom": "18.2.0"
+    "react-dom": "18.2.0",
+    "simple-statistics": "^7.7.6"
   },
   "devDependencies": {
     "@serverless-stack/static-site-env": "^1.10.6",
