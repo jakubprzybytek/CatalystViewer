@@ -4,20 +4,24 @@ import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
 import { BondReport } from "../sdk/GetBonds";
 import { formatCurrency } from "../common/Formats";
+import { Box } from "@mui/system";
 
 type BondCardEntryParam = {
   caption: string;
   textAlign?: 'left' | 'center' | 'end';
+  colorCode?: 'none' | 'lightpink' | 'orange' | 'lightgreen';
   children: React.ReactNode;
 }
 
-function BondCardEntry({ caption, textAlign = 'left', children }: BondCardEntryParam): JSX.Element {
+function BondCardEntry({ caption, textAlign = 'left', colorCode, children }: BondCardEntryParam): JSX.Element {
   return (
     <Stack sx={{
       '& > span': { textAlign: textAlign }
     }}>
       <Typography component='span' variant='caption'>{caption}</Typography>
-      <Typography component='span'>{children}</Typography>
+      {colorCode && colorCode !== 'none' ?
+        <Box component='span'><Typography component='span' sx={{ backgroundColor: colorCode, p: '1px 3px 1px 3px' }}>{children}</Typography></Box>
+        : <Typography component='span'>{children}</Typography>}
     </Stack>
   );
 }
@@ -43,6 +47,7 @@ type BondCardParam = {
 }
 
 export default function BondCard({ bond }: BondCardParam): JSX.Element {
+  const nominalValueColorCode = bond.details.nominalValue >= 50000 ? 'lightpink' : bond.details.nominalValue >= 10000 ? 'orange' : 'lightgreen';
   return (
     <>
       <Paper sx={{
@@ -63,7 +68,7 @@ export default function BondCard({ bond }: BondCardParam): JSX.Element {
         <BondCardSection>
           <BondCardEntry caption='Maturity day'>{bond.details.maturityDay.toString().substring(0, 10)}</BondCardEntry>
           <Divider orientation='vertical' variant='middle' flexItem />
-          <BondCardEntry caption='Nominal value' textAlign='center'>{formatCurrency(bond.details.nominalValue, 'PLN')}</BondCardEntry>
+          <BondCardEntry caption='Nominal value' textAlign='center' colorCode={nominalValueColorCode}>{formatCurrency(bond.details.nominalValue, 'PLN')}</BondCardEntry>
           <Divider orientation='vertical' variant='middle' flexItem />
           <BondCardEntry caption='Interest Type' textAlign='end'>{bond.details.interestType}</BondCardEntry>
         </BondCardSection>
