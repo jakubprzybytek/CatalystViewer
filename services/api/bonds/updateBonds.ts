@@ -1,7 +1,7 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { CatalystDailyStatisticsBondDetails, getLatestCatalystDailyStatistics } from 'bonds/catalyst';
-import { getBondInformation } from 'bonds/obligacjepl';
-import { BondDetailsTable, DbBondDetails } from 'bonds/storage';
+import { CatalystDailyStatisticsBondDetails, getLatestCatalystDailyStatistics } from '../../bonds/catalyst';
+import { getBondInformation } from '../../bonds/obligacjepl';
+import { BondDetailsTable, DbBondDetails } from '../../storage';
 
 const dynamoDbClient = new DynamoDBClient({});
 

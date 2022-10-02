@@ -1,8 +1,8 @@
-import { lambdaHandler, Success } from "functions/HandlerProxy";
+import { lambdaHandler, Success } from "../HandlerProxy";
 import { parse, format, isAfter } from 'date-fns';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { BondDetails } from '../../bonds';
-import { BondDetailsTable } from '../../bonds/storage/BondDetailsTable';
+import { BondDetailsTable } from '../../storage/BondDetailsTable';
 import { YieldToMaturityCalculator } from '../../bonds/formulas/YieldToMaturity';
 import { BondReport } from ".";
 

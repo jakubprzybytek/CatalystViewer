@@ -15,7 +15,7 @@ export function BondsUpdater({ stack, app }: StackContext) {
   });
 
   const bondsUpdaterFunction = new Function(stack, 'BondsUpdaterFunction', {
-    handler: 'functions/bonds/updateBonds.handler',
+    handler: 'api/bonds/updateBonds.handler',
     environment: {
       BOND_DETAILS_TABLE_NAME: bondDetailsTable.tableName,
       TEMP_FOLDER: app.local ? '.' : '/tmp'

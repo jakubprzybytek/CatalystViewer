@@ -39,10 +39,10 @@ export function BondsService({ stack }: StackContext) {
 
   const api = new Api(stack, "api", {
     routes: {
-      'GET /': 'functions/lambda.handler',
+      'GET /': 'api/lambda.handler',
       'GET /api/bonds': {
         function: {
-          handler: 'functions/bonds/getBonds.handler',
+          handler: 'api/bonds/getBonds.handler',
           environment: {
             BOND_DETAILS_TABLE_NAME: bondDetailsTable.tableName
           },

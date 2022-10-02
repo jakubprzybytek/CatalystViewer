@@ -1,6 +1,6 @@
 {
   "extends": "../tsconfig.json",
-  "include": ["functions", "bonds"],
+  "include": ["api", "bonds", "storage"],
   "compilerOptions": {
     "module": "esnext",
     "target": "es2021",
