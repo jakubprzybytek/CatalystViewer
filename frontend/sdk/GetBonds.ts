@@ -1,5 +1,5 @@
 import axios from "axios";
-import { BondReport } from '../../services/functions/bonds';
+import { BondReport } from '../../services/api/bonds';
 
 export type { BondReport };
 
