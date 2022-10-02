@@ -9,10 +9,10 @@ import Divider from '@mui/material/Divider';
 import { BondReport } from "../sdk/GetBonds";
 import { BondDetails } from '../../services/bonds';
 
-const interestVariable = R.compose<BondReport, BondDetails, string | undefined, string>(R.defaultTo('none'), R.prop('interestVariable'), R.prop('details'));
+const interestVariable = R.compose<BondReport[], BondDetails, string | undefined, string>(R.defaultTo('none'), R.prop('interestVariable'), R.prop('details'));
 const sort = R.sortBy<string>(R.identity);
 
-const constInterests = R.map(R.compose<BondReport, BondDetails, number>(R.prop('interestConst'), R.prop('details')));
+const constInterests = R.map(R.compose<BondReport[], BondDetails, number>(R.prop('interestConst'), R.prop('details')));
 
 type BondInterestTypeStatParam = {
   interestVariableType: string;
