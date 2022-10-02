@@ -12,6 +12,7 @@ export function BondsService({ stack }: StackContext) {
       issuer: 'string',
       type: 'string',
       nominalValue: 'number',
+      currency: 'string',
       maturityDay: 'string',
       interestType: 'string',
       currentInterestRate: 'number',

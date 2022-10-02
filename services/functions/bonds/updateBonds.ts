@@ -10,26 +10,27 @@ export async function handler(event: any) {
         throw new Error('Bond Details Table Name is not defined');
     }
 
-    const bonds: CatalystDailyStatisticsBondDetails[] = await getLatestCatalystDailyStatistics();
+    const bondsStats: CatalystDailyStatisticsBondDetails[] = await getLatestCatalystDailyStatistics();
 
     const bondDetailsTable = new BondDetailsTable(dynamoDbClient, process.env.BOND_DETAILS_TABLE_NAME);
 
     const dbBonds: DbBondDetails[] = [];
-    for (const bond of bonds) {
-        const bondInformation = await getBondInformation(bond.name);
+    for (const bondStats of bondsStats) {
+        const bondInformation = await getBondInformation(bondStats.name);
 
         dbBonds.push({
-            name: bond.name,
-            isin: bond.isin,
-            market: bond.market,
+            name: bondStats.name,
+            isin: bondStats.isin,
+            market: bondStats.market,
             issuer: bondInformation.issuer,
-            type: bond.type,
-            nominalValue: bond.nominalValue,
-            maturityDay: bond.maturityDay,
+            type: bondStats.type,
+            nominalValue: bondStats.nominalValue,
+            currency: bondStats.tradingCurrency,
+            maturityDay: bondStats.maturityDay,
             interestType: bondInformation.interestType,
-            currentInterestRate: bond.currentInterestRate,
-            accuredInterest: bond.accuredInterest,
-            closingPrice: bond.closingPrice,
+            currentInterestRate: bondStats.currentInterestRate,
+            accuredInterest: bondStats.accuredInterest,
+            closingPrice: bondStats.closingPrice,
             interestFirstDays: bondInformation.interestFirstDays,
             interestPayoffDays: bondInformation.interestPayoffDays
         });
@@ -38,6 +39,6 @@ export async function handler(event: any) {
     await bondDetailsTable.storeAll(dbBonds);
 
     return {
-        bondsUpdated: bonds.length
+        bondsUpdated: bondsStats.length
     }
 }

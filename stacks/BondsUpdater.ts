@@ -5,7 +5,7 @@ import * as sfn from 'aws-cdk-lib/aws-stepfunctions';
 import * as tasks from 'aws-cdk-lib/aws-stepfunctions-tasks';
 import { BondsService } from './BondsService';
 
-export function BondsUpdater({ stack }: StackContext) {
+export function BondsUpdater({ stack, app }: StackContext) {
   const { bondDetailsTable } = use(BondsService);
 
   const bondDetailsTableWriteAccess = new iam.PolicyStatement({
@@ -17,7 +17,8 @@ export function BondsUpdater({ stack }: StackContext) {
   const bondsUpdaterFunction = new Function(stack, 'BondsUpdaterFunction', {
     handler: 'functions/bonds/updateBonds.handler',
     environment: {
-      BOND_DETAILS_TABLE_NAME: bondDetailsTable.tableName
+      BOND_DETAILS_TABLE_NAME: bondDetailsTable.tableName,
+      TEMP_FOLDER: app.local ? '.' : '/tmp'
     },
     timeout: '10 minutes',
     permissions: [bondDetailsTableWriteAccess]

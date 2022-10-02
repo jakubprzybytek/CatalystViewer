@@ -20,6 +20,10 @@ async function downloadCatalystFile(url: string, fileNameToSave: string) {
 }
 
 export async function downloadLatestCatalystDailyStatisticsFile(): Promise<string> {
+    if (process.env.TEMP_FOLDER === undefined) {
+        throw new Error('Temp folder is not defined');
+    }
+
     let previousDay = subDays(new Date(), 1);
     while ((getDay(previousDay) + 1) % 7 < 2) { // skip Saturday and Sunday
         previousDay = subDays(previousDay, 1);
@@ -28,7 +32,7 @@ export async function downloadLatestCatalystDailyStatisticsFile(): Promise<strin
     const fileName = `catalyst_${format(previousDay, 'yyyyMMdd')}.xls`;
     console.log(`Daily statistics xls file: ${fileName}`);
 
-    const localFileName = `/tmp/${fileName}`;
+    const localFileName = `${process.env.TEMP_FOLDER}/${fileName}`;
     console.log('cwd: ' + process.cwd())
 
     if (existsSync(localFileName)) {
