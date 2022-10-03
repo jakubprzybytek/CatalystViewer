@@ -66,11 +66,17 @@ export default function BondCard({ bond }: BondCardParam): JSX.Element {
           <BondCardEntry caption='Type' textAlign='end'>{bond.details.type}</BondCardEntry>
         </BondCardSection>
         <BondCardSection>
-          <BondCardEntry caption='Maturity day'>{bond.details.maturityDay.toString().substring(0, 10)}</BondCardEntry>
+          <BondCardEntry caption='Maturity day'>
+            {bond.details.maturityDay.toString().substring(0, 10)}
+          </BondCardEntry>
           <Divider orientation='vertical' variant='middle' flexItem />
-          <BondCardEntry caption='Nominal value' textAlign='center' colorCode={nominalValueColorCode}>{formatCurrency(bond.details.nominalValue, 'PLN')}</BondCardEntry>
+          <BondCardEntry caption='Nominal value' textAlign='center' colorCode={nominalValueColorCode}>
+            {formatCurrency(bond.details.nominalValue, 'PLN')}
+          </BondCardEntry>
           <Divider orientation='vertical' variant='middle' flexItem />
-          <BondCardEntry caption='Interest Type' textAlign='end'>{bond.details.interestVariable && `${bond.details.interestVariable} + `}{bond.details.interestConst}%</BondCardEntry>
+          <BondCardEntry caption='Interest Type' textAlign='end'>
+            {bond.details.interestVariable && `${bond.details.interestVariable} + `}{bond.details.interestConst}%
+          </BondCardEntry>
         </BondCardSection>
         <Divider />
         <BondCardSection>
@@ -80,7 +86,7 @@ export default function BondCard({ bond }: BondCardParam): JSX.Element {
         </BondCardSection>
         <BondCardSection>
           <BondCardEntry caption='Closing price'>{bond.closingPrice.toFixed(2)}</BondCardEntry>
-          <BondCardEntry caption='Closing price YTM - net' textAlign='end'>{(bond.closingPriceNetYtm.ytm * 100).toFixed(2)}%</BondCardEntry>
+          <BondCardEntry caption='Closing price YTM - net' textAlign='center'>{(bond.closingPriceNetYtm.ytm * 100).toFixed(2)}%</BondCardEntry>
           <BondCardEntry caption='Closing price YTM - gross' textAlign='end'>{(bond.closingPriceGrossYtm.ytm * 100).toFixed(2)}%</BondCardEntry>
         </BondCardSection>
         <Typography component='span' sx={{

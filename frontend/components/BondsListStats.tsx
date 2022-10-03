@@ -1,5 +1,5 @@
 import * as R from 'ramda';
-import { average } from 'simple-statistics';
+import { average, quantile } from 'simple-statistics';
 import Typography from "@mui/material/Typography";
 import Grid from "@mui/material/Grid";
 import Stack from "@mui/material/Stack";
@@ -42,6 +42,16 @@ function BondInterestTypeStat({ interestVariableType, bondReports }: BondInteres
           <Typography variant='caption'>Avg interest</Typography>
           <Typography>{average(constInterests(bondReports)).toFixed(2)}%</Typography>
         </Stack>
+      </Stack>
+      <Stack sx={{
+        p: 1,
+        pb: 0,
+        textAlign: 'center'
+      }}>
+        <Typography variant='caption'>Quartiles (0, ¼, ½, ¾, 1)</Typography>
+        <Typography>{quantile(constInterests(bondReports), [0, 0.25, 0.5, 0.75, 1])
+          .map((q) => q.toFixed(2))
+          .join(', ')}</Typography>
       </Stack>
     </Paper>
   );
