@@ -14,7 +14,6 @@ const Home: NextPage = () => {
 
       <Box component='main' sx={{
         minHeight: '100vh',
-        pt: 1,
         backgroundColor: 'lightblue'
       }}>
         <BondViewer />

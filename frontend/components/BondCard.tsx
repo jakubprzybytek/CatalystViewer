@@ -86,8 +86,8 @@ export default function BondCard({ bond }: BondCardParam): JSX.Element {
         </BondCardSection>
         <BondCardSection>
           <BondCardEntry caption='Closing price'>{bond.closingPrice.toFixed(2)}</BondCardEntry>
-          <BondCardEntry caption='Closing price YTM - net' textAlign='center'>{(bond.closingPriceNetYtm.ytm * 100).toFixed(2)}%</BondCardEntry>
-          <BondCardEntry caption='Closing price YTM - gross' textAlign='end'>{(bond.closingPriceGrossYtm.ytm * 100).toFixed(2)}%</BondCardEntry>
+          <BondCardEntry caption='Closing price YTM (net)' textAlign='center'>{(bond.closingPriceNetYtm.ytm * 100).toFixed(2)}%</BondCardEntry>
+          <BondCardEntry caption='Closing price YTM (gross)' textAlign='end'>{(bond.closingPriceGrossYtm.ytm * 100).toFixed(2)}%</BondCardEntry>
         </BondCardSection>
         <Typography component='span' sx={{
           display: 'flex',

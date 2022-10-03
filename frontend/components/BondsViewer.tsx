@@ -72,18 +72,14 @@ export default function EventsBrowser(): JSX.Element {
 
   return (
     <Box sx={{
+      p: {
+        sm: 1
+      },
       '& > div': {
-        mt: 1,
-        ml: 1,
-        mr: 1
+        mb: 1
       }
     }}>
-      <Paper sx={{
-        p: 1,
-        '& > div': {
-          mt: 1
-        }
-      }}>
+      <Paper sx={{ p: 1 }}>
         <FormLabel component="legend">Market</FormLabel>
         <FormGroup row>
           {allMarkets.map((market) => (
