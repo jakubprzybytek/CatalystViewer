@@ -9,7 +9,7 @@ import Divider from '@mui/material/Divider';
 import { BondReport } from "../sdk/GetBonds";
 import { BondDetails } from '../../services/bonds';
 
-const interestVariable = R.compose<BondReport[], BondDetails, string | undefined, string>(R.defaultTo('none'), R.prop('interestVariable'), R.prop('details'));
+const interestVariable = R.compose<BondReport[], BondDetails, string | undefined, string>(R.defaultTo('Const'), R.prop('interestVariable'), R.prop('details'));
 const sort = R.sortBy<string>(R.identity);
 
 const constInterests = R.map(R.compose<BondReport[], BondDetails, number>(R.prop('interestConst'), R.prop('details')));
@@ -59,7 +59,7 @@ export default function BondsListStats({ bondReports }: BondsListParam): JSX.Ele
     <Box>
       <Grid container spacing={1}>
         {sort(Object.keys(bondsByInterestVariableTypes)).map((interestVariableType) => (
-          <Grid key={interestVariableType} item xs={4} sm={3} md={2}>
+          <Grid key={interestVariableType} item xs={6} sm={4} md={3}>
             <BondInterestTypeStat interestVariableType={interestVariableType} bondReports={bondsByInterestVariableTypes[interestVariableType]} />
           </Grid>
         ))}
