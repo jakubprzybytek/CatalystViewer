@@ -58,7 +58,7 @@ export default function BondCard({ bond }: BondCardParam): JSX.Element {
         }
       }}>
         <BondCardSection>
-          <Typography variant='h4'><Link href={`https://obligacje.pl/pl/obligacja/${bond.details.name}`}>{bond.details.name}</Link></Typography>
+          <Typography variant='h4'><Link href={`https://obligacje.pl/pl/obligacja/${bond.details.name}`} target='_blank'>{bond.details.name}</Link></Typography>
           <BondCardEntry caption='Market' textAlign='end'>{bond.details.market}</BondCardEntry>
         </BondCardSection>
         <BondCardSection>
@@ -80,7 +80,8 @@ export default function BondCard({ bond }: BondCardParam): JSX.Element {
         </BondCardSection>
         <BondCardSection>
           <BondCardEntry caption='Closing price'>{bond.closingPrice.toFixed(2)}</BondCardEntry>
-          <BondCardEntry caption='Closing price YTM' textAlign='end'>{(bond.closingPriceYtm.ytm * 100).toFixed(2)}%</BondCardEntry>
+          <BondCardEntry caption='Closing price YTM - net' textAlign='end'>{(bond.closingPriceNetYtm.ytm * 100).toFixed(2)}%</BondCardEntry>
+          <BondCardEntry caption='Closing price YTM - gross' textAlign='end'>{(bond.closingPriceGrossYtm.ytm * 100).toFixed(2)}%</BondCardEntry>
         </BondCardSection>
         <Typography component='span' sx={{
           display: 'flex',

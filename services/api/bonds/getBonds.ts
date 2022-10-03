@@ -39,13 +39,14 @@ export const handler = lambdaHandler<BondReport[]>(async event => {
         const previousInterestPayoffDay = interestFirstDays.reverse().find((firstDay) => isAfter(today, firstDay));
         const nextInterestPayoffDay = interestPayoffDays.find((payoffDay) => isAfter(payoffDay, today));
 
-        const ytmCalculator = new YieldToMaturityCalculator(bondDetails, 0.0019, 0.19);
+        const ytmCalculator = new YieldToMaturityCalculator(bondDetails, 0.0019);
 
         return {
             details: bondDetails,
             detailsUpdated: dbBond.updated,
             closingPrice: dbBond.closingPrice,
-            closingPriceYtm: ytmCalculator.forPrice(dbBond.closingPrice),
+            closingPriceNetYtm: ytmCalculator.forPrice(dbBond.closingPrice, 0.19),
+            closingPriceGrossYtm: ytmCalculator.forPrice(dbBond.closingPrice, 0),
             previousInterestPayoffDay: previousInterestPayoffDay ? format(previousInterestPayoffDay, 'yyyy-MM-dd') : 'n/a',
             nextInterestPayoffDay: nextInterestPayoffDay ? format(nextInterestPayoffDay, 'yyyy-MM-dd') : 'n/a'
         }
