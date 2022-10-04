@@ -6,8 +6,7 @@ import Stack from "@mui/material/Stack";
 import Box from "@mui/material/Box";
 import Paper from "@mui/material/Paper";
 import Divider from '@mui/material/Divider';
-import { BondReport } from "../sdk/GetBonds";
-import { BondDetails } from '../../services/bonds';
+import { BondReport, BondDetails } from "../sdk/GetBonds";
 
 const interestVariable = R.compose<BondReport[], BondDetails, string | undefined, string>(R.defaultTo('Const'), R.prop('interestVariable'), R.prop('details'));
 const sort = R.sortBy<string>(R.identity);

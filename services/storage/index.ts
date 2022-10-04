@@ -1,6 +1,7 @@
 export * from './BondDetailsTable';
 
 export type DbBondDetails = {
+    status: string;
     updated: string;
     name: string;
     isin: string;

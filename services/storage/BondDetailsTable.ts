@@ -27,6 +27,7 @@ export class BondDetailsTable {
           [this.tableName]: bondsBatch.map((dbBondDetails) => ({
             "PutRequest": {
               Item: {
+                bondStatus: { S: dbBondDetails.status },
                 updated: { S: dbBondDetails.updated },
                 issuer: { S: dbBondDetails.issuer },
                 'name#market': { S: `${dbBondDetails.name}#${dbBondDetails.market}` },
@@ -65,16 +66,21 @@ export class BondDetailsTable {
 
   async getAll(): Promise<DbBondDetails[]> {
     console.log('BondDetailsTable: Fetching all bonds');
-    const queryCommand = new ScanCommand({
-      TableName: this.tableName
+    const scanCommand = new ScanCommand({
+      TableName: this.tableName,
+      FilterExpression: 'bondStatus = :bs',
+      ExpressionAttributeValues: {
+        ":bs": { S: "active" }
+      }
     });
 
-    const result = await this.dynamoDBClient.send(queryCommand);
+    const result = await this.dynamoDBClient.send(scanCommand);
     console.log(`BondDetailsTable: Returning ${result.Count ? result.Count : 0} bonds.`);
 
     return result.Items
       ? result.Items.map((item) => {
         return {
+          status: item['bondStatus']?.['S'] || 'inactive',
           updated: item['updated']?.['S'] || 'n/a',
           issuer: item['issuer']['S'] || '',
           name: item['name']['S'] || '',

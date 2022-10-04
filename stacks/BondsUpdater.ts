@@ -9,7 +9,7 @@ export function BondsUpdater({ stack, app }: StackContext) {
   const { bondDetailsTable } = use(BondsService);
 
   const bondDetailsTableWriteAccess = new iam.PolicyStatement({
-    actions: ['dynamodb:BatchWriteItem'],
+    actions: ['dynamodb:Scan', 'dynamodb:BatchWriteItem'],
     effect: iam.Effect.ALLOW,
     resources: [bondDetailsTable.tableArn]
   });

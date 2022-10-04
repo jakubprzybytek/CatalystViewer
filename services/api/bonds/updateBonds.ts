@@ -5,22 +5,24 @@ import { BondDetailsTable, DbBondDetails } from '../../storage';
 
 const dynamoDbClient = new DynamoDBClient({});
 
+const bondId = (bond: DbBondDetails) => `${bond.name}#${bond.market}`;
+
 export async function handler(event: any) {
     if (process.env.BOND_DETAILS_TABLE_NAME === undefined) {
         throw new Error('Bond Details Table Name is not defined');
     }
 
     const currentTime = new Date().toISOString();
+    const bondDetailsTable = new BondDetailsTable(dynamoDbClient, process.env.BOND_DETAILS_TABLE_NAME);
 
     const bondsStats: CatalystDailyStatisticsBondDetails[] = await getLatestCatalystDailyStatistics();
 
-    const bondDetailsTable = new BondDetailsTable(dynamoDbClient, process.env.BOND_DETAILS_TABLE_NAME);
-
-    const dbBonds: DbBondDetails[] = [];
+    const bondsToStore: DbBondDetails[] = [];
     for (const bondStats of bondsStats) {
         const bondInformation = await getBondInformation(bondStats.name);
 
-        dbBonds.push({
+        bondsToStore.push({
+            status: 'active',
             updated: currentTime,
             name: bondStats.name,
             isin: bondStats.isin,
@@ -41,9 +43,29 @@ export async function handler(event: any) {
         });
     }
 
-    await bondDetailsTable.storeAll(dbBonds);
+    const newAndUpdatedBondsIdies = bondsToStore.map(bondId);
+
+    const storedBonds = await bondDetailsTable.getAll();
+    const storedBondsIdies = storedBonds.map(bondId);
+
+    const newBonds = bondsToStore
+        .filter((bondToStore) => !storedBondsIdies.includes(bondId(bondToStore)));
+
+    const bondsToDeactivate = storedBonds
+        .filter((storedBond) => !newAndUpdatedBondsIdies.includes(bondId(storedBond)));
+
+    bondsToDeactivate.forEach((bondToDeactivate) => {
+        bondsToStore.push({
+            ...bondToDeactivate,
+            status: 'inactive'
+        })
+    });
+
+    await bondDetailsTable.storeAll(bondsToStore);
 
     return {
-        bondsUpdated: bondsStats.length
+        bondsUpdated: bondsToStore.length,
+        newBonds: newBonds.map((bond) => bond.name),
+        bondsDeactivated: bondsToDeactivate.map((bond) => bond.name)
     }
 }

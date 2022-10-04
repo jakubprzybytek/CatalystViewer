@@ -5,6 +5,7 @@ import * as iam from 'aws-cdk-lib/aws-iam';
 export function BondsService({ stack }: StackContext) {
   const bondDetailsTable = new Table(stack, 'BondDetails', {
     fields: {
+      bondStatus: 'string',
       updated: 'string',
       name: 'string',
       market: 'string',
