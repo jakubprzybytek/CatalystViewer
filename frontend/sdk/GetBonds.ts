@@ -1,7 +1,7 @@
 import axios from "axios";
-import { BondReport } from '../../services/api/bonds';
+import { BondReport, BondDetails } from '../../services/api/bonds';
 
-export type { BondReport };
+export type { BondReport, BondDetails };
 
 export async function getBonds(): Promise<BondReport[]> {
     const url = `${process.env.NEXT_PUBLIC_API_URL}/api/bonds`;

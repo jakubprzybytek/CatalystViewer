@@ -22,17 +22,19 @@ type BondInterestTypeStatParam = {
 function BondInterestTypeStat({ interestVariableType, bondReports }: BondInterestTypeStatParam): JSX.Element {
   return (
     <Paper sx={{
+      textAlign: 'center',
+      '& > div': {
+        p: 1,
+        pb: 0,
+        justifyContent: 'space-around'
+      },
       '& .MuiTypography-caption': {
         color: 'gray',
         lineHeight: 1.3
       }
     }}>
-      <Typography variant='h6' sx={{ textAlign: 'center' }}>{interestVariableType}</Typography>
-      <Stack direction='row' sx={{
-        p: 1,
-        pb: 0,
-        justifyContent: 'space-between'
-      }}>
+      <Typography variant='h6'>{interestVariableType}</Typography>
+      <Stack direction='row'>
         <Stack>
           <Typography variant='caption'>Number</Typography>
           <Typography>{bondReports.length}</Typography>
@@ -43,11 +45,7 @@ function BondInterestTypeStat({ interestVariableType, bondReports }: BondInteres
           <Typography>{average(constInterests(bondReports)).toFixed(2)}%</Typography>
         </Stack>
       </Stack>
-      <Stack sx={{
-        p: 1,
-        pb: 0,
-        textAlign: 'center'
-      }}>
+      <Stack>
         <Typography variant='caption'>Quartiles (0, ¼, ½, ¾, 1)</Typography>
         <Typography>{quantile(constInterests(bondReports), [0, 0.25, 0.5, 0.75, 1])
           .map((q) => q.toFixed(2))
