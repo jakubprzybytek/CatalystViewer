@@ -1,6 +1,7 @@
 import { utils, read } from "xlsx";
 import { readFileSync } from 'fs';
 import { CatalystDailyStatisticsBondDetails } from ".";
+import { parseUTCDate } from "bonds";
 
 export function readCatalystDailyStatisticsXlsFile(fileName: string): CatalystDailyStatisticsBondDetails[] {
     const fileBuffer = readFileSync(fileName);
@@ -24,15 +25,13 @@ export function readCatalystDailyStatisticsXlsFile(fileName: string): CatalystDa
             }
 
             // row that defines specific bond
-            const maturityDay = new Date((row['A' as keyof typeof row] as string).replaceAll('.', '-') + 'T00:00:00.000Z');
-
             const bondDetails: CatalystDailyStatisticsBondDetails = {
                 name: row['I' as keyof typeof row],
                 isin: row['H' as keyof typeof row],
                 type: bondType || 'n/a',
                 market: row['E' as keyof typeof row],
                 nominalValue: row['D' as keyof typeof row],
-                maturityDay,
+                maturityDay: parseUTCDate(row['A' as keyof typeof row] as string),
                 currentInterestRate: row['B' as keyof typeof row],
                 accuredInterest: row['C' as keyof typeof row],
                 tradingCurrency: row['K' as keyof typeof row],

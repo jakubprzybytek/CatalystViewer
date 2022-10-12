@@ -1,4 +1,6 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
+import { parseUTCDate } from 'bonds';
+import { getTime } from 'date-fns';
 import { CatalystDailyStatisticsBondDetails, getLatestCatalystDailyStatistics } from '../../bonds/catalyst';
 import { getBondInformation } from '../../bonds/obligacjepl';
 import { BondDetailsTable, DbBondDetails } from '../../storage';
@@ -34,6 +36,7 @@ export async function handler(event: any) {
                 nominalValue: bondStats.nominalValue,
                 currency: bondStats.tradingCurrency,
                 maturityDay: bondStats.maturityDay,
+                maturityDayTs: bondStats.maturityDay.getTime(),
                 interestType: bondInformation.interestType,
                 interestVariable: bondInformation.interestVariable,
                 interestConst: bondInformation.interestConst,
@@ -41,7 +44,9 @@ export async function handler(event: any) {
                 accuredInterest: bondStats.accuredInterest,
                 closingPrice: bondStats.closingPrice,
                 interestFirstDays: bondInformation.interestFirstDays,
-                interestPayoffDays: bondInformation.interestPayoffDays
+                interestFirstDayTss: bondInformation.interestFirstDays.map(parseUTCDate).map(getTime),
+                interestPayoffDays: bondInformation.interestPayoffDays,
+                interestPayoffDayTss: bondInformation.interestPayoffDays.map(parseUTCDate).map(getTime)
             });
         } catch (error: any) {
             bondsFailed.push(bondStats.name);

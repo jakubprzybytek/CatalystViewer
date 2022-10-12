@@ -32,8 +32,8 @@ export const handler = lambdaHandler<BondReport[]>(async event => {
             accuredInterest: dbBond.accuredInterest
         };
 
-        const interestFirstDays: Date[] = dbBond.interestFirstDays.map((dateString) => parse(dateString, 'yyyy-MM-dd', 0));
-        const interestPayoffDays: Date[] = dbBond.interestPayoffDays.map((dateString) => parse(dateString, 'yyyy-MM-dd', 0));
+        const interestFirstDays: Date[] = dbBond.interestFirstDayTss.map((ts) => new Date(ts));
+        const interestPayoffDays: Date[] = dbBond.interestPayoffDayTss.map((ts) => new Date(ts));
 
         const today = new Date();
         const previousInterestPayoffDay = interestFirstDays.reverse().find((firstDay) => isAfter(today, firstDay));

@@ -11,6 +11,7 @@ export type DbBondDetails = {
     nominalValue: number;
     currency: string;
     maturityDay: Date;
+    maturityDayTs: number;
     interestType: string;
     interestVariable: string | undefined;
     interestConst: number;
@@ -18,5 +19,7 @@ export type DbBondDetails = {
     accuredInterest: number;
     closingPrice: number;
     interestFirstDays: string[];
+    interestFirstDayTss: number[];
     interestPayoffDays: string[];
+    interestPayoffDayTss: number[];
 };

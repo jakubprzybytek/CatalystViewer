@@ -38,6 +38,7 @@ export class BondDetailsTable {
                 nominalValue: { N: dbBondDetails.nominalValue.toString() },
                 currency: { S: dbBondDetails.currency },
                 maturityDay: { S: dbBondDetails.maturityDay.toISOString().substring(0, 10) },
+                maturityDayTs: { N: dbBondDetails.maturityDayTs.toString() },
                 interestType: { S: dbBondDetails.interestType },
                 ...(dbBondDetails.interestVariable && { interestVariable: { S: dbBondDetails.interestVariable } }),
                 interestConst: { N: dbBondDetails.interestConst.toString() },
@@ -45,7 +46,9 @@ export class BondDetailsTable {
                 accuredInterest: { N: dbBondDetails.accuredInterest.toString() },
                 closingPrice: { N: dbBondDetails.closingPrice.toString() },
                 interestFirstDays: { SS: dbBondDetails.interestFirstDays },
-                interestPayoffDays: { SS: dbBondDetails.interestPayoffDays }
+                ...(dbBondDetails.interestFirstDayTss.length > 0 && { interestFirstDayTss: { SS: dbBondDetails.interestFirstDayTss.map((number) => number.toString()) } }),
+                interestPayoffDays: { SS: dbBondDetails.interestPayoffDays },
+                ...(dbBondDetails.interestPayoffDayTss.length > 0 && { interestPayoffDayTss: { SS: dbBondDetails.interestPayoffDayTss.map((number) => number.toString()) } }),
               },
             }
           })),
@@ -90,14 +93,17 @@ export class BondDetailsTable {
           nominalValue: Number(item['nominalValue']['N']) || -1,
           currency: item['currency']?.['S'] || '',
           maturityDay: new Date(Date.parse(item['maturityDay']['S'] || '')),
+          maturityDayTs: Number(item['maturityDayTs']?.['N']) || 0,
           interestType: item['interestType']['S'] || '',
           interestVariable: item['interestVariable']?.['S'],
           interestConst: Number(item['interestConst']?.['N']) || 0,
           currentInterestRate: Number(item['currentInterestRate']['N']) || -1,
-          accuredInterest: Number(item['accuredInterest']['N']) || -1,
+          accuredInterest: Number(item['accuredInterest']['N']) || 0,
           closingPrice: Number(item['closingPrice']['N']) || -1,
           interestFirstDays: item['interestFirstDays']?.['SS'] || [],
-          interestPayoffDays: item['interestPayoffDays']?.['SS'] || []
+          interestFirstDayTss: item['interestFirstDayTss']?.['SS']?.map((str) => Number.parseInt(str)) || [],
+          interestPayoffDays: item['interestPayoffDays']?.['SS'] || [],
+          interestPayoffDayTss: item['interestPayoffDayTss']?.['SS']?.map((str) => Number.parseInt(str)) || []
         };
       })
       : [];

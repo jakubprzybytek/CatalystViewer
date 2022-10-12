@@ -16,13 +16,16 @@ export function BondsService({ stack }: StackContext) {
       nominalValue: 'number',
       currency: 'string',
       maturityDay: 'string',
+      maturityDayTs: 'number',
       interestType: 'string',
       interestVariable: 'string',
       interestConst: 'number',
       currentInterestRate: 'number',
       accuredInterest: 'number',
       interestFirstDays: 'string',
-      interestPayoffDays: 'string'
+      interestFirstDayTss: 'string',
+      interestPayoffDays: 'string',
+      interestPayoffDayTss: 'string'
     },
     primaryIndex: {
       partitionKey: 'issuer',
