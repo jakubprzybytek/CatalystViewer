@@ -1,5 +1,5 @@
 import * as R from 'ramda';
-import { average, quantile } from 'simple-statistics';
+import { average } from 'simple-statistics';
 import Typography from "@mui/material/Typography";
 import Grid from "@mui/material/Grid";
 import Stack from "@mui/material/Stack";
@@ -7,6 +7,7 @@ import Box from "@mui/material/Box";
 import Paper from "@mui/material/Paper";
 import Divider from '@mui/material/Divider';
 import { BondReport, BondDetails } from "../sdk/GetBonds";
+import { BondsStatistics } from '../common/BondsStatistics';
 
 const interestVariable = R.compose<BondReport[], BondDetails, string | undefined, string>(R.defaultTo('Const'), R.prop('interestVariable'), R.prop('details'));
 const sort = R.sortBy<string>(R.identity);
@@ -15,16 +16,17 @@ const constInterests = R.map(R.compose<BondReport[], BondDetails, number>(R.prop
 
 type BondInterestTypeStatParam = {
   interestVariableType: string;
+  interestConstPercentiles: number[];
   bondReports: BondReport[];
 }
 
-function BondInterestTypeStat({ interestVariableType, bondReports }: BondInterestTypeStatParam): JSX.Element {
+function BondInterestTypeStat({ interestVariableType, interestConstPercentiles, bondReports }: BondInterestTypeStatParam): JSX.Element {
   return (
     <Paper sx={{
+      pt: 0.5,
       textAlign: 'center',
       '& > div': {
-        p: 1,
-        pb: 0,
+        pb: 1,
         justifyContent: 'space-around'
       },
       '& .MuiTypography-caption': {
@@ -46,9 +48,9 @@ function BondInterestTypeStat({ interestVariableType, bondReports }: BondInteres
       </Stack>
       <Stack>
         <Typography variant='caption'>Quartiles (0, ¼, ½, ¾, 1)</Typography>
-        <Typography>{quantile(constInterests(bondReports), [0, 0.25, 0.5, 0.75, 1])
+        {interestConstPercentiles && <Typography>{interestConstPercentiles
           .map((q) => q.toFixed(2))
-          .join(', ')}</Typography>
+          .join(', ')}</Typography>}
       </Stack>
     </Paper>
   );
@@ -56,10 +58,11 @@ function BondInterestTypeStat({ interestVariableType, bondReports }: BondInteres
 
 type BondsListParam = {
   bondReports: BondReport[];
+  bondTypeFilter: string;
+  bondsStatistics: BondsStatistics;
 }
 
-export default function BondsListStats({ bondReports }: BondsListParam): JSX.Element {
-
+export default function BondsListStats({ bondReports, bondTypeFilter, bondsStatistics }: BondsListParam): JSX.Element {
   const bondsByInterestVariableTypes = R.groupBy(interestVariable)(bondReports);
 
   return (
@@ -67,7 +70,10 @@ export default function BondsListStats({ bondReports }: BondsListParam): JSX.Ele
       <Grid container spacing={1}>
         {sort(Object.keys(bondsByInterestVariableTypes)).map((interestVariableType) => (
           <Grid key={interestVariableType} item xs={6} sm={4} md={3}>
-            <BondInterestTypeStat interestVariableType={interestVariableType} bondReports={bondsByInterestVariableTypes[interestVariableType]} />
+            <BondInterestTypeStat
+              interestConstPercentiles={bondsStatistics[bondTypeFilter][interestVariableType]}
+              interestVariableType={interestVariableType}
+              bondReports={bondsByInterestVariableTypes[interestVariableType]} />
           </Grid>
         ))}
       </Grid>

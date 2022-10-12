@@ -6,11 +6,14 @@ import { BondReport } from "../sdk/GetBonds";
 import { formatCurrency } from "../common/Formats";
 import { Box } from "@mui/system";
 import { Link } from "@mui/material";
+import { BondsStatistics, interestVariablePart } from "../common/BondsStatistics";
+
+type Colors = 'lightpink' | 'orange' | 'yellow' | 'lightgreen';
 
 type BondCardEntryParam = {
   caption: string;
   textAlign?: 'left' | 'center' | 'end';
-  colorCode?: 'none' | 'lightpink' | 'orange' | 'lightgreen';
+  colorCode?: 'none' | Colors;
   children: React.ReactNode;
 }
 
@@ -43,12 +46,20 @@ function BondCardSection({ children }: BondCardSectionParam): JSX.Element {
   );
 }
 
+const colors: Colors[] = ['lightgreen', 'yellow', 'orange', 'lightpink'];
+
 type BondCardParam = {
-  bond: BondReport;
+  bondReport: BondReport;
+  bondsStatistics: BondsStatistics;
 }
 
-export default function BondCard({ bond }: BondCardParam): JSX.Element {
-  const nominalValueColorCode = bond.details.nominalValue >= 50000 ? 'lightpink' : bond.details.nominalValue >= 10000 ? 'orange' : 'lightgreen';
+export default function BondCard({ bondReport, bondsStatistics }: BondCardParam): JSX.Element {
+  const { details } = bondReport;
+  const nominalValueColorCode = details.nominalValue >= 50000 ? 'lightpink' : details.nominalValue >= 10000 ? 'orange' : 'lightgreen';
+  const interestConstIndex = bondsStatistics[details.type][interestVariablePart(bondReport)]
+    .findIndex((percentile) => bondReport.details.interestConst <= percentile) - 1;
+  const interestConstColorCode = colors[Math.max(interestConstIndex, 0)];
+
   return (
     <>
       <Paper sx={{
@@ -58,36 +69,36 @@ export default function BondCard({ bond }: BondCardParam): JSX.Element {
         }
       }}>
         <BondCardSection>
-          <Typography variant='h4'><Link href={`https://obligacje.pl/pl/obligacja/${bond.details.name}`} target='_blank'>{bond.details.name}</Link></Typography>
-          <BondCardEntry caption='Market' textAlign='end'>{bond.details.market}</BondCardEntry>
+          <Typography variant='h4'><Link href={`https://obligacje.pl/pl/obligacja/${bondReport.details.name}`} target='_blank'>{bondReport.details.name}</Link></Typography>
+          <BondCardEntry caption='Market' textAlign='end'>{bondReport.details.market}</BondCardEntry>
         </BondCardSection>
         <BondCardSection>
-          <BondCardEntry caption='Issuer'>{bond.details.issuer}</BondCardEntry>
-          <BondCardEntry caption='Type' textAlign='end'>{bond.details.type}</BondCardEntry>
+          <BondCardEntry caption='Issuer'>{bondReport.details.issuer}</BondCardEntry>
+          <BondCardEntry caption='Type' textAlign='end'>{bondReport.details.type}</BondCardEntry>
         </BondCardSection>
         <BondCardSection>
           <BondCardEntry caption='Maturity day'>
-            {bond.details.maturityDay.toString().substring(0, 10)}
+            {bondReport.details.maturityDay.toString().substring(0, 10)}
           </BondCardEntry>
           <Divider orientation='vertical' variant='middle' flexItem />
           <BondCardEntry caption='Nominal value' textAlign='center' colorCode={nominalValueColorCode}>
-            {formatCurrency(bond.details.nominalValue, 'PLN')}
+            {formatCurrency(bondReport.details.nominalValue, 'PLN')}
           </BondCardEntry>
           <Divider orientation='vertical' variant='middle' flexItem />
-          <BondCardEntry caption='Interest Type' textAlign='end'>
-            {bond.details.interestVariable && `${bond.details.interestVariable} + `}{bond.details.interestConst}%
+          <BondCardEntry caption='Interest Type' textAlign='end' colorCode={interestConstColorCode}>
+            {bondReport.details.interestVariable && `${bondReport.details.interestVariable} + `}{bondReport.details.interestConst}%
           </BondCardEntry>
         </BondCardSection>
         <Divider />
         <BondCardSection>
-          <BondCardEntry caption='Current interest'>{bond.details.currentInterestRate.toFixed(2)}%</BondCardEntry>
-          <BondCardEntry caption='Accured interest (since)' textAlign='center'>{formatCurrency(bond.details.accuredInterest, 'PLN')} ({bond.previousInterestPayoffDay})</BondCardEntry>
-          <BondCardEntry caption='Next interest' textAlign='center'>{bond.nextInterestPayoffDay}</BondCardEntry>
+          <BondCardEntry caption='Current interest'>{bondReport.details.currentInterestRate.toFixed(2)}%</BondCardEntry>
+          <BondCardEntry caption='Accured interest (since)' textAlign='center'>{formatCurrency(bondReport.details.accuredInterest, 'PLN')} ({bondReport.previousInterestPayoffDay})</BondCardEntry>
+          <BondCardEntry caption='Next interest' textAlign='center'>{bondReport.nextInterestPayoffDay}</BondCardEntry>
         </BondCardSection>
         <BondCardSection>
-          <BondCardEntry caption='Closing price'>{bond.closingPrice.toFixed(2)}</BondCardEntry>
-          <BondCardEntry caption='Closing price YTM (net)' textAlign='center'>{(bond.closingPriceNetYtm.ytm * 100).toFixed(2)}%</BondCardEntry>
-          <BondCardEntry caption='Closing price YTM (gross)' textAlign='end'>{(bond.closingPriceGrossYtm.ytm * 100).toFixed(2)}%</BondCardEntry>
+          <BondCardEntry caption='Closing price'>{bondReport.closingPrice.toFixed(2)}</BondCardEntry>
+          <BondCardEntry caption='Closing price YTM (net)' textAlign='center'>{(bondReport.closingPriceNetYtm.ytm * 100).toFixed(2)}%</BondCardEntry>
+          <BondCardEntry caption='Closing price YTM (gross)' textAlign='end'>{(bondReport.closingPriceGrossYtm.ytm * 100).toFixed(2)}%</BondCardEntry>
         </BondCardSection>
         <Typography component='span' sx={{
           display: 'flex',
@@ -95,7 +106,7 @@ export default function BondCard({ bond }: BondCardParam): JSX.Element {
           pr: 1,
           fontSize: '0.7rem',
           color: 'lightgray'
-        }}>Updated on: {bond.detailsUpdated}</Typography>
+        }}>Updated on: {bondReport.detailsUpdated}</Typography>
       </Paper>
     </>
   );

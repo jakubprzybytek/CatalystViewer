@@ -33,29 +33,30 @@ const filterByIssuer = (issuer: string) => R.filter(isIssuedBy(issuer));
 const filterBonds = (markets: string[], type: string, issuer: string) => R.filter(R.allPass([isBondType(type), isIssuedBy(issuer), isOnMarkets(markets)]));
 
 type BondsViewerFilterParams = {
-  allBonds: BondReport[];
-  setFilteredBonds: (filteredBonds: BondReport[]) => void;
+  allBondReports: BondReport[];
+  setBondTypeFilter: (bondTypeFilter: string) => void;
+  setFilteredBondReports: (filteredBonds: BondReport[]) => void;
 };
 
-export default function BondsViewerFilter({ allBonds, setFilteredBonds }: BondsViewerFilterParams): JSX.Element {
+export default function BondsViewerFilter({ allBondReports, setBondTypeFilter: setBondTypeFilter2, setFilteredBondReports: setFilteredBonds }: BondsViewerFilterParams): JSX.Element {
   const [bondTypeFilter, setBondTypeFilter] = useState<string>('Corporate bonds');
   const [issuerFilter, setIssuerFilter] = useState<string>('all');
   const [marketsFilter, setMarketsFilter] = useState<string[]>(['GPW RR', 'GPW ASO']);
 
-  const allMarkets = useMemo(() => sort(R.uniq(bondDetailsProps('market')(allBonds))), [allBonds]);
+  const allMarkets = useMemo(() => sort(R.uniq(bondDetailsProps('market')(allBondReports))), [allBondReports]);
 
   const availableBondTypes = useMemo(() => {
-    const filteredByIssuer = filterByIssuer(issuerFilter)(allBonds);
+    const filteredByIssuer = filterByIssuer(issuerFilter)(allBondReports);
     return R.uniq(bondDetailsProps('type')(filteredByIssuer));
-  }, [allBonds, issuerFilter]);
+  }, [allBondReports, issuerFilter]);
 
   const availableIssuers = useMemo(() => {
-    const filteredByType = filterByType(bondTypeFilter)(allBonds);
+    const filteredByType = filterByType(bondTypeFilter)(allBondReports);
     return sort(R.uniq(bondDetailsProps('issuer')(filteredByType)));
-  }, [allBonds, bondTypeFilter]);
+  }, [allBondReports, bondTypeFilter]);
 
-  const filteredBonds = useMemo(() => filterBonds(marketsFilter, bondTypeFilter, issuerFilter)(allBonds),
-    [allBonds, marketsFilter, issuerFilter, bondTypeFilter]);
+  const filteredBonds = useMemo(() => filterBonds(marketsFilter, bondTypeFilter, issuerFilter)(allBondReports),
+    [allBondReports, marketsFilter, issuerFilter, bondTypeFilter]);
 
   useEffect(() => setFilteredBonds(filteredBonds), [setFilteredBonds, filteredBonds]);
 
@@ -75,7 +76,7 @@ export default function BondsViewerFilter({ allBonds, setFilteredBonds }: BondsV
         <Grid item xs={12} md={6}>
           <TextField label="Bond type" size="small" fullWidth select
             value={bondTypeFilter}
-            onChange={(event: any) => setBondTypeFilter(event.target.value)}>
+            onChange={(event: any) => { setBondTypeFilter(event.target.value); setBondTypeFilter2(event.target.value); } }>
             <MenuItem value='all' sx={{ fontStyle: 'italic' }}>All</MenuItem>
             {availableBondTypes.map((bondType) => (
               <MenuItem key={bondType} value={bondType}>{bondType}</MenuItem>

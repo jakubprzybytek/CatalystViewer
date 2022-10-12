@@ -50,7 +50,8 @@ export function BondsService({ stack }: StackContext) {
           environment: {
             BOND_DETAILS_TABLE_NAME: bondDetailsTable.tableName
           },
-          permissions: [bondDetailsTableReadAccess]
+          permissions: [bondDetailsTableReadAccess],
+          timeout: '20 seconds'
         }
       }
     }
