@@ -6,7 +6,7 @@ import * as tasks from 'aws-cdk-lib/aws-stepfunctions-tasks';
 import { BondsService } from './BondsService';
 
 export function BondsUpdater({ stack, app }: StackContext) {
-  const { bondDetailsTable } = use(BondsService);
+  const { api, bondDetailsTable } = use(BondsService);
 
   const bondDetailsTableWriteAccess = new iam.PolicyStatement({
     actions: ['dynamodb:Scan', 'dynamodb:BatchWriteItem'],
@@ -29,5 +29,19 @@ export function BondsUpdater({ stack, app }: StackContext) {
       lambdaFunction: bondsUpdaterFunction,
       timeout: Duration.minutes(10)
     }).next(new sfn.Succeed(stack, "Bonds Updated!"))
+  });
+
+  api.addRoutes(stack, {
+    'GET /api/updates': {
+      function: {
+        handler: 'api/stepFunctions/getExecutions.handler',
+        environment: {
+          BOND_DETAILS_TABLE_NAME: bondDetailsTable.tableName
+        },
+        permissions: [],
+        timeout: '10 seconds'
+      }
+    }
+
   });
 }
