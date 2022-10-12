@@ -18,29 +18,35 @@ export async function handler(event: any) {
     const bondsStats: CatalystDailyStatisticsBondDetails[] = await getLatestCatalystDailyStatistics();
 
     const bondsToStore: DbBondDetails[] = [];
+    const bondsFailed: string[] = [];
     for (const bondStats of bondsStats) {
-        const bondInformation = await getBondInformation(bondStats.name);
+        try {
+            const bondInformation = await getBondInformation(bondStats.name);
 
-        bondsToStore.push({
-            status: 'active',
-            updated: currentTime,
-            name: bondStats.name,
-            isin: bondStats.isin,
-            market: bondStats.market,
-            issuer: bondInformation.issuer,
-            type: bondStats.type,
-            nominalValue: bondStats.nominalValue,
-            currency: bondStats.tradingCurrency,
-            maturityDay: bondStats.maturityDay,
-            interestType: bondInformation.interestType,
-            interestVariable: bondInformation.interestVariable,
-            interestConst: bondInformation.interestConst,
-            currentInterestRate: bondStats.currentInterestRate,
-            accuredInterest: bondStats.accuredInterest,
-            closingPrice: bondStats.closingPrice,
-            interestFirstDays: bondInformation.interestFirstDays,
-            interestPayoffDays: bondInformation.interestPayoffDays
-        });
+            bondsToStore.push({
+                status: 'active',
+                updated: currentTime,
+                name: bondStats.name,
+                isin: bondStats.isin,
+                market: bondStats.market,
+                issuer: bondInformation.issuer,
+                type: bondStats.type,
+                nominalValue: bondStats.nominalValue,
+                currency: bondStats.tradingCurrency,
+                maturityDay: bondStats.maturityDay,
+                interestType: bondInformation.interestType,
+                interestVariable: bondInformation.interestVariable,
+                interestConst: bondInformation.interestConst,
+                currentInterestRate: bondStats.currentInterestRate,
+                accuredInterest: bondStats.accuredInterest,
+                closingPrice: bondStats.closingPrice,
+                interestFirstDays: bondInformation.interestFirstDays,
+                interestPayoffDays: bondInformation.interestPayoffDays
+            });
+        } catch (error: any) {
+            bondsFailed.push(bondStats.name);
+            console.error(error);
+        }
     }
 
     const newAndUpdatedBondsIdies = bondsToStore.map(bondId);
@@ -66,6 +72,7 @@ export async function handler(event: any) {
     return {
         bondsUpdated: bondsToStore.length,
         newBonds: newBonds.map((bond) => bond.name),
-        bondsDeactivated: bondsToDeactivate.map((bond) => bond.name)
+        bondsDeactivated: bondsToDeactivate.map((bond) => bond.name),
+        bondsFailed
     }
 }
