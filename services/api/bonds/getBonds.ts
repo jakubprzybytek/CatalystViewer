@@ -1,5 +1,5 @@
 import { lambdaHandler, Success } from "../HandlerProxy";
-import { parse, format, isAfter } from 'date-fns';
+import { format, isAfter, differenceInDays } from 'date-fns';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { BondDetails } from '../../bonds';
 import { BondDetailsTable } from '../../storage/BondDetailsTable';
@@ -39,8 +39,19 @@ export const handler = lambdaHandler<BondReport[]>(async event => {
         const previousInterestPayoffDay = interestFirstDays.reverse().find((firstDay) => isAfter(today, firstDay));
         const nextInterestPayoffDay = interestPayoffDays.find((payoffDay) => isAfter(payoffDay, today));
 
-        const ytmCalculator = new YieldToMaturityCalculator(bondDetails, 0.0019);
+        const currentInterestDays = previousInterestPayoffDay
+            && differenceInDays(new Date(), previousInterestPayoffDay) + 1;
+        const accuredInterest = currentInterestDays
+            && currentInterestDays * dbBond.nominalValue * dbBond.currentInterestRate / 100 / 365;
+        const nextInterestPeriod = previousInterestPayoffDay && nextInterestPayoffDay
+            && differenceInDays(nextInterestPayoffDay, previousInterestPayoffDay) + 1;
+        const nextInterest = nextInterestPeriod
+            && nextInterestPeriod * dbBond.nominalValue * dbBond.currentInterestRate / 100 / 365;
 
+        const ytmCalculator = new YieldToMaturityCalculator(bondDetails, 0.0019);
+//        console.log(`${format(previousInterestPayoffDay || new Date(), 'yyyy-MM-dd')} ${format(nextInterestPayoffDay || new Date(), 'yyyy-MM-dd')}`)
+//        console.log(`curr ${currentInterestDays} next period ${nextInterestPeriod}`)
+//        console.log(`Acc: ${dbBond.accuredInterest}, com acc: ${accuredInterest}, nex:${nextInterest}`)
         return {
             details: bondDetails,
             detailsUpdated: dbBond.updated,
@@ -48,7 +59,9 @@ export const handler = lambdaHandler<BondReport[]>(async event => {
             closingPriceNetYtm: ytmCalculator.forPrice(dbBond.closingPrice, 0.19),
             closingPriceGrossYtm: ytmCalculator.forPrice(dbBond.closingPrice, 0),
             previousInterestPayoffDay: previousInterestPayoffDay ? format(previousInterestPayoffDay, 'yyyy-MM-dd') : 'n/a',
-            nextInterestPayoffDay: nextInterestPayoffDay ? format(nextInterestPayoffDay, 'yyyy-MM-dd') : 'n/a'
+            accuredInterest: accuredInterest || 0,
+            nextInterestPayoffDay: nextInterestPayoffDay ? format(nextInterestPayoffDay, 'yyyy-MM-dd') : 'n/a',
+            nextInterest: nextInterest || 0
         }
     });
 

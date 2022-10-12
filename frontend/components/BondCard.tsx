@@ -93,7 +93,11 @@ export default function BondCard({ bondReport, bondsStatistics }: BondCardParam)
         <BondCardSection>
           <BondCardEntry caption='Current interest'>{bondReport.details.currentInterestRate.toFixed(2)}%</BondCardEntry>
           <BondCardEntry caption='Accured interest (since)' textAlign='center'>{formatCurrency(bondReport.details.accuredInterest, 'PLN')} ({bondReport.previousInterestPayoffDay})</BondCardEntry>
-          <BondCardEntry caption='Next interest' textAlign='center'>{bondReport.nextInterestPayoffDay}</BondCardEntry>
+          <BondCardEntry caption='Next interest (when)' textAlign='center'>{formatCurrency(bondReport.nextInterest, 'PLN')} ({bondReport.nextInterestPayoffDay})</BondCardEntry>
+        </BondCardSection>
+        <BondCardSection>
+          <BondCardEntry caption='Accured interest (since)' textAlign='center'>{formatCurrency(bondReport.accuredInterest, 'PLN')} ({bondReport.previousInterestPayoffDay})</BondCardEntry>
+          <BondCardEntry caption='Next interest (when)' textAlign='center'>{formatCurrency(bondReport.nextInterest, 'PLN')} ({bondReport.nextInterestPayoffDay})</BondCardEntry>
         </BondCardSection>
         <BondCardSection>
           <BondCardEntry caption='Closing price'>{bondReport.closingPrice.toFixed(2)}</BondCardEntry>
