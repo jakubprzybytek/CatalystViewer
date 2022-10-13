@@ -32,12 +32,9 @@ export const handler = lambdaHandler<BondReport[]>(async event => {
             accuredInterest: dbBond.accuredInterest
         };
 
-        const interestFirstDays: Date[] = dbBond.interestFirstDayTss.map((ts) => new Date(ts));
-        const interestPayoffDays: Date[] = dbBond.interestPayoffDayTss.map((ts) => new Date(ts));
-
-        const today = new Date();
-        const previousInterestPayoffDay = interestFirstDays.reverse().find((firstDay) => isAfter(today, firstDay));
-        const nextInterestPayoffDay = interestPayoffDays.find((payoffDay) => isAfter(payoffDay, today));
+        const today = new Date().getTime();
+        const previousInterestPayoffDay = dbBond.interestFirstDayTss.reverse().find((firstInterestDay) => today >= firstInterestDay);
+        const nextInterestPayoffDay = dbBond.interestPayoffDayTss.find((payoffDay) => payoffDay >= today);
 
         const currentInterestDays = previousInterestPayoffDay
             && differenceInDays(new Date(), previousInterestPayoffDay) + 1;
@@ -49,9 +46,7 @@ export const handler = lambdaHandler<BondReport[]>(async event => {
             && nextInterestPeriod * dbBond.nominalValue * dbBond.currentInterestRate / 100 / 365;
 
         const ytmCalculator = new YieldToMaturityCalculator(bondDetails, 0.0019);
-//        console.log(`${format(previousInterestPayoffDay || new Date(), 'yyyy-MM-dd')} ${format(nextInterestPayoffDay || new Date(), 'yyyy-MM-dd')}`)
-//        console.log(`curr ${currentInterestDays} next period ${nextInterestPeriod}`)
-//        console.log(`Acc: ${dbBond.accuredInterest}, com acc: ${accuredInterest}, nex:${nextInterest}`)
+
         return {
             details: bondDetails,
             detailsUpdated: dbBond.updated,
