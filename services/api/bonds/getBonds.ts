@@ -41,7 +41,7 @@ export const handler = lambdaHandler<BondReport[]>(async event => {
         const accuredInterest = currentInterestDays
             && currentInterestDays * dbBond.nominalValue * dbBond.currentInterestRate / 100 / 365;
         const nextInterestPeriod = previousInterestPayoffDay && nextInterestPayoffDay
-            && differenceInDays(nextInterestPayoffDay, previousInterestPayoffDay) + 1;
+            && differenceInDays(nextInterestPayoffDay, previousInterestPayoffDay);
         const nextInterest = nextInterestPeriod
             && nextInterestPeriod * dbBond.nominalValue * dbBond.currentInterestRate / 100 / 365;
 
