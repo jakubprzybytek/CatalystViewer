@@ -1,6 +1,6 @@
-import { lambdaHandler, Success } from "../HandlerProxy";
-import { format, isAfter, differenceInDays } from 'date-fns';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
+import { format, differenceInDays } from 'date-fns';
+import { lambdaHandler, Success } from "../HandlerProxy";
 import { BondDetails } from '../../bonds';
 import { BondDetailsTable } from '../../storage/BondDetailsTable';
 import { YieldToMaturityCalculator } from '../../bonds/formulas/YieldToMaturity';
@@ -33,16 +33,16 @@ export const handler = lambdaHandler<BondReport[]>(async event => {
         };
 
         const today = new Date().getTime();
-        const previousInterestPayoffDay = dbBond.interestFirstDayTss.reverse().find((day) => today >= day);
+        const currentInterestPeriodFirstDay = dbBond.interestFirstDayTss.reverse().find((day) => today >= day);
         const nextInterestRightsDay = dbBond.interestRightsDayTss.find((day) => day >= today);
         const nextInterestPayoffDay = dbBond.interestPayoffDayTss.find((day) => day >= today);
 
-        const currentInterestDays = previousInterestPayoffDay
-            && differenceInDays(new Date(), previousInterestPayoffDay) + 1;
+        const currentInterestDays = currentInterestPeriodFirstDay
+            && differenceInDays(new Date(), currentInterestPeriodFirstDay) + 1;
         const accumulatedInterest = currentInterestDays
             && currentInterestDays * dbBond.nominalValue * dbBond.currentInterestRate / 100 / 365;
-        const nextInterestPeriod = previousInterestPayoffDay && nextInterestPayoffDay
-            && differenceInDays(nextInterestPayoffDay, previousInterestPayoffDay);
+        const nextInterestPeriod = currentInterestPeriodFirstDay && nextInterestPayoffDay
+            && differenceInDays(nextInterestPayoffDay, currentInterestPeriodFirstDay);
         const nextInterest = nextInterestPeriod
             && nextInterestPeriod * dbBond.nominalValue * dbBond.currentInterestRate / 100 / 365;
         const accuredInterest = nextInterestRightsDay && nextInterestPayoffDay
@@ -56,7 +56,7 @@ export const handler = lambdaHandler<BondReport[]>(async event => {
             closingPrice: dbBond.closingPrice,
             closingPriceNetYtm: ytmCalculator.forPrice(dbBond.closingPrice, 0.19),
             closingPriceGrossYtm: ytmCalculator.forPrice(dbBond.closingPrice, 0),
-            previousInterestPayoffDay: previousInterestPayoffDay ? format(previousInterestPayoffDay, 'yyyy-MM-dd') : 'n/a',
+            currentInterestPeriodFirstDay: currentInterestPeriodFirstDay ? format(currentInterestPeriodFirstDay, 'yyyy-MM-dd') : 'n/a',
             accumulatedInterest: accumulatedInterest || 0,
             accuredInterest: accuredInterest || 0,
             nextInterestRightsDay: nextInterestRightsDay ? format(nextInterestRightsDay, 'yyyy-MM-dd') : 'n/a',

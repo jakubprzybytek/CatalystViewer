@@ -1,5 +1,6 @@
 import { DynamoDBClient, BatchWriteItemCommandInput, BatchWriteItemCommand, ScanCommand } from '@aws-sdk/client-dynamodb';
 import { DbBondDetails } from '.';
+import { scanAll } from './ScanCommandUtil';
 
 const BATCH_SIZE = 25;
 
@@ -79,7 +80,7 @@ export class BondDetailsTable {
       }
     });
 
-    const result = await this.dynamoDBClient.send(scanCommand);
+    const result = await scanAll(this.dynamoDBClient, scanCommand);
     console.log(`BondDetailsTable: Returning ${result.Count ? result.Count : 0} bonds.`);
 
     return result.Items

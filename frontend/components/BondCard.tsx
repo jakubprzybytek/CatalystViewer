@@ -66,6 +66,9 @@ export default function BondCard({ bondReport, bondsStatistics }: BondCardParam)
         '& .MuiTypography-caption': {
           color: 'gray',
           lineHeight: 1.3
+        },
+        '& > hr': {
+          paddingTop: 1
         }
       }}>
         <BondCardSection>
@@ -92,13 +95,15 @@ export default function BondCard({ bondReport, bondsStatistics }: BondCardParam)
         <Divider />
         <BondCardSection>
           <BondCardEntry caption='Current interest'>{bondReport.details.currentInterestRate.toFixed(2)}%</BondCardEntry>
-          <BondCardEntry caption='Accured interest (since)' textAlign='center'>{formatCurrency(bondReport.details.accuredInterest, 'PLN')} ({bondReport.previousInterestPayoffDay})</BondCardEntry>
-          <BondCardEntry caption='Next interest (when)' textAlign='end'>{formatCurrency(bondReport.nextInterest, 'PLN')} ({bondReport.nextInterestPayoffDay})</BondCardEntry>
+          <BondCardEntry caption='Accured interest (since)' textAlign='center'>{formatCurrency(bondReport.details.accuredInterest, 'PLN')} ({bondReport.currentInterestPeriodFirstDay})</BondCardEntry>
+          <BondCardEntry caption='Next interest' textAlign='end'>{bondReport.nextInterestPayoffDay}</BondCardEntry>
         </BondCardSection>
         <BondCardSection>
-          <BondCardEntry caption='Accured interest (since)' textAlign='left'>{formatCurrency(bondReport.accuredInterest, 'PLN')} ({bondReport.previousInterestPayoffDay})</BondCardEntry>
+          <BondCardEntry caption='Accumulated interest (since)' textAlign='left'>{formatCurrency(bondReport.accumulatedInterest, 'PLN')} ({bondReport.currentInterestPeriodFirstDay})</BondCardEntry>
+          <BondCardEntry caption='Accured interest' textAlign='left'>{formatCurrency(bondReport.accuredInterest, 'PLN')}</BondCardEntry>
           <BondCardEntry caption='Next interest (when)' textAlign='end'>{formatCurrency(bondReport.nextInterest, 'PLN')} ({bondReport.nextInterestPayoffDay})</BondCardEntry>
         </BondCardSection>
+        <Divider />
         <BondCardSection>
           <BondCardEntry caption='Closing price'>{bondReport.closingPrice.toFixed(2)}</BondCardEntry>
           <BondCardEntry caption='Closing price YTM (net)' textAlign='center'>{(bondReport.closingPriceNetYtm.ytm * 100).toFixed(2)}%</BondCardEntry>

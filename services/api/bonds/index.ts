@@ -9,7 +9,7 @@ export type BondReport = {
     closingPrice: number;
     closingPriceNetYtm: YieldToMaturityReport;
     closingPriceGrossYtm: YieldToMaturityReport;
-    previousInterestPayoffDay: string;
+    currentInterestPeriodFirstDay: string;
     accumulatedInterest: number;
     accuredInterest: number;
     nextInterestRightsDay: string;
