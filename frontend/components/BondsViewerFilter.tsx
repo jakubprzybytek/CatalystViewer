@@ -76,7 +76,7 @@ export default function BondsViewerFilter({ allBondReports, setBondTypeFilter: s
         <Grid item xs={12} md={6}>
           <TextField label="Bond type" size="small" fullWidth select
             value={bondTypeFilter}
-            onChange={(event: any) => { setBondTypeFilter(event.target.value); setBondTypeFilter2(event.target.value); } }>
+            onChange={(event: React.ChangeEvent<HTMLInputElement>) => { setBondTypeFilter(event.target.value); setBondTypeFilter2(event.target.value); }}>
             <MenuItem value='all' sx={{ fontStyle: 'italic' }}>All</MenuItem>
             {availableBondTypes.map((bondType) => (
               <MenuItem key={bondType} value={bondType}>{bondType}</MenuItem>
@@ -86,7 +86,7 @@ export default function BondsViewerFilter({ allBondReports, setBondTypeFilter: s
         <Grid item xs={12} md={6}>
           <TextField label="Issuer" size="small" fullWidth select
             value={issuerFilter}
-            onChange={(event: any) => setIssuerFilter(event.target.value)}>
+            onChange={(event: React.ChangeEvent<HTMLInputElement>) => setIssuerFilter(event.target.value)}>
             <MenuItem value='all' sx={{ fontStyle: 'italic' }}>All</MenuItem>
             {availableIssuers.map((issuer) => (
               <MenuItem key={issuer} value={issuer}>{issuer}</MenuItem>

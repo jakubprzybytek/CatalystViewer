@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from 'react';
 import Box from '@mui/system/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import BondsList from './BondsList';
-import { getBonds, BondReport, BondDetails } from '../sdk/GetBonds';
+import { getBonds, BondReport } from '../sdk/GetBonds';
 import { computeStatistics } from '../common/BondsStatistics';
 import BondsViewerFilter from './BondsViewerFilter';
 import BondsListStats from './BondsListStats';

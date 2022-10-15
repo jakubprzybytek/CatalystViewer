@@ -1,4 +1,5 @@
 module.exports = function(...args) {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
   let original = require('./next.config.original.1662489144684.js');
   const finalConfig = {};
   const target = { target: 'serverless' };
