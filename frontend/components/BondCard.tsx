@@ -85,7 +85,7 @@ export default function BondCard({ bondReport, bondsStatistics }: BondCardParam)
           </BondCardEntry>
           <Divider orientation='vertical' variant='middle' flexItem />
           <BondCardEntry caption='Nominal value' textAlign='center' colorCode={nominalValueColorCode}>
-            {formatCurrency(bondReport.details.nominalValue, 'PLN')}
+            {formatCurrency(bondReport.details.nominalValue, bondReport.details.currency)}
           </BondCardEntry>
           <Divider orientation='vertical' variant='middle' flexItem />
           <BondCardEntry caption='Interest Type' textAlign='end' colorCode={interestConstColorCode}>
@@ -95,13 +95,13 @@ export default function BondCard({ bondReport, bondsStatistics }: BondCardParam)
         <Divider />
         <BondCardSection>
           <BondCardEntry caption='Current interest'>{bondReport.details.currentInterestRate.toFixed(2)}%</BondCardEntry>
-          <BondCardEntry caption='Accured interest (since)' textAlign='center'>{formatCurrency(bondReport.details.accuredInterest, 'PLN')} ({bondReport.currentInterestPeriodFirstDay})</BondCardEntry>
+          <BondCardEntry caption='Accured interest (since)' textAlign='center'>{formatCurrency(bondReport.details.accuredInterest, bondReport.details.currency)} ({bondReport.currentInterestPeriodFirstDay})</BondCardEntry>
           <BondCardEntry caption='Next interest' textAlign='end'>{bondReport.nextInterestPayoffDay}</BondCardEntry>
         </BondCardSection>
         <BondCardSection>
-          <BondCardEntry caption='Accumulated interest (since)' textAlign='left'>{formatCurrency(bondReport.accumulatedInterest, 'PLN')} ({bondReport.currentInterestPeriodFirstDay})</BondCardEntry>
-          <BondCardEntry caption='Accured interest' textAlign='left'>{formatCurrency(bondReport.accuredInterest, 'PLN')}</BondCardEntry>
-          <BondCardEntry caption='Next interest (when)' textAlign='end'>{formatCurrency(bondReport.nextInterest, 'PLN')} ({bondReport.nextInterestPayoffDay})</BondCardEntry>
+          <BondCardEntry caption='Accumulated interest (since)' textAlign='left'>{formatCurrency(bondReport.accumulatedInterest, bondReport.details.currency)} ({bondReport.currentInterestPeriodFirstDay})</BondCardEntry>
+          <BondCardEntry caption='Accured interest' textAlign='left'>{formatCurrency(bondReport.accuredInterest, bondReport.details.currency)}</BondCardEntry>
+          <BondCardEntry caption='Next interest (when)' textAlign='end'>{formatCurrency(bondReport.nextInterest, bondReport.details.currency)} ({bondReport.nextInterestPayoffDay})</BondCardEntry>
         </BondCardSection>
         <Divider />
         <BondCardSection>
