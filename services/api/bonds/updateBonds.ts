@@ -45,6 +45,8 @@ export async function handler(event: any) {
                 closingPrice: bondStats.closingPrice,
                 interestFirstDays: bondInformation.interestFirstDays,
                 interestFirstDayTss: bondInformation.interestFirstDays.map(parseUTCDate).map(getTime),
+                interestRightsDays: bondInformation.interestRightsDays,
+                interestRightsDayTss: bondInformation.interestRightsDays.map(parseUTCDate).map(getTime),
                 interestPayoffDays: bondInformation.interestPayoffDays,
                 interestPayoffDayTss: bondInformation.interestPayoffDays.map(parseUTCDate).map(getTime)
             });

@@ -47,6 +47,8 @@ export class BondDetailsTable {
                 closingPrice: { N: dbBondDetails.closingPrice.toString() },
                 interestFirstDays: { SS: dbBondDetails.interestFirstDays },
                 ...(dbBondDetails.interestFirstDayTss.length > 0 && { interestFirstDayTss: { SS: dbBondDetails.interestFirstDayTss.map((number) => number.toString()) } }),
+                ...(dbBondDetails.interestRightsDays.length > 0 && { interestRightsDay: { SS: dbBondDetails.interestRightsDays } }),
+                ...(dbBondDetails.interestRightsDayTss.length > 0 && { interestRightsDayTss: { SS: dbBondDetails.interestRightsDayTss.map((number) => number.toString()) } }),
                 interestPayoffDays: { SS: dbBondDetails.interestPayoffDays },
                 ...(dbBondDetails.interestPayoffDayTss.length > 0 && { interestPayoffDayTss: { SS: dbBondDetails.interestPayoffDayTss.map((number) => number.toString()) } }),
               },
@@ -102,6 +104,8 @@ export class BondDetailsTable {
           closingPrice: Number(item['closingPrice']['N']) || -1,
           interestFirstDays: item['interestFirstDays']?.['SS'] || [],
           interestFirstDayTss: item['interestFirstDayTss']?.['SS']?.map((str) => Number.parseInt(str)) || [],
+          interestRightsDays: item['interestRightsDays']?.['SS'] || [],
+          interestRightsDayTss: item['interestRightsDayTss']?.['SS']?.map((str) => Number.parseInt(str)) || [],
           interestPayoffDays: item['interestPayoffDays']?.['SS'] || [],
           interestPayoffDayTss: item['interestPayoffDayTss']?.['SS']?.map((str) => Number.parseInt(str)) || []
         };

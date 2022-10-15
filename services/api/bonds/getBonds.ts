@@ -33,17 +33,20 @@ export const handler = lambdaHandler<BondReport[]>(async event => {
         };
 
         const today = new Date().getTime();
-        const previousInterestPayoffDay = dbBond.interestFirstDayTss.reverse().find((firstInterestDay) => today >= firstInterestDay);
-        const nextInterestPayoffDay = dbBond.interestPayoffDayTss.find((payoffDay) => payoffDay >= today);
+        const previousInterestPayoffDay = dbBond.interestFirstDayTss.reverse().find((day) => today >= day);
+        const nextInterestRightsDay = dbBond.interestRightsDayTss.find((day) => day >= today);
+        const nextInterestPayoffDay = dbBond.interestPayoffDayTss.find((day) => day >= today);
 
         const currentInterestDays = previousInterestPayoffDay
             && differenceInDays(new Date(), previousInterestPayoffDay) + 1;
-        const accuredInterest = currentInterestDays
+        const accumulatedInterest = currentInterestDays
             && currentInterestDays * dbBond.nominalValue * dbBond.currentInterestRate / 100 / 365;
         const nextInterestPeriod = previousInterestPayoffDay && nextInterestPayoffDay
             && differenceInDays(nextInterestPayoffDay, previousInterestPayoffDay);
         const nextInterest = nextInterestPeriod
             && nextInterestPeriod * dbBond.nominalValue * dbBond.currentInterestRate / 100 / 365;
+        const accuredInterest = nextInterestRightsDay && nextInterestPayoffDay
+            && nextInterestRightsDay < nextInterestPayoffDay ? accumulatedInterest : 0;
 
         const ytmCalculator = new YieldToMaturityCalculator(bondDetails, 0.0019);
 
@@ -54,7 +57,9 @@ export const handler = lambdaHandler<BondReport[]>(async event => {
             closingPriceNetYtm: ytmCalculator.forPrice(dbBond.closingPrice, 0.19),
             closingPriceGrossYtm: ytmCalculator.forPrice(dbBond.closingPrice, 0),
             previousInterestPayoffDay: previousInterestPayoffDay ? format(previousInterestPayoffDay, 'yyyy-MM-dd') : 'n/a',
+            accumulatedInterest: accumulatedInterest || 0,
             accuredInterest: accuredInterest || 0,
+            nextInterestRightsDay: nextInterestRightsDay ? format(nextInterestRightsDay, 'yyyy-MM-dd') : 'n/a',
             nextInterestPayoffDay: nextInterestPayoffDay ? format(nextInterestPayoffDay, 'yyyy-MM-dd') : 'n/a',
             nextInterest: nextInterest || 0
         }

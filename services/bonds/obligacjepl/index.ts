@@ -16,5 +16,6 @@ export type ObligacjeBondInformation = {
     interestConst: number;
     currency: string;
     interestFirstDays: string[];
+    interestRightsDays: string[];
     interestPayoffDays: string[];
 };

@@ -1,3 +1,4 @@
+import * as R from 'ramda';
 import { InterestType, ObligacjeBondInformation } from ".";
 
 const BOND_NAME_REGEX = /<h1>(\w+)<\/h1>/;
@@ -8,12 +9,15 @@ const NOMINAL_VALUE_REGEX = /<th>Wartość nominalna:<\/th>\s+<td>(.+) \w{3}<\/t
 const INTEREST_TYPE_REGEX = /<th>Typ oprocentowania:<\/th>\s+<td>(.+)<\/td>/;
 const CURRENCY_REGEX = /<th>Wartość nominalna:<\/th>\s+<td>.+ (\w{3})<\/td>/;
 const INTEREST_FIRST_DAYS_REGEX = /<h4>Pierwsze dni okresów odsetkowych<\/h4>.+?<ul>(.+?)<\/ul>/s;
+const INTEREST_RIGHTS_DAYS_REGEX = /<h4>Dni ustalenia prawa do odsetek<\/h4>.+?<ul>(.+?)<\/ul>/s;
 const INTEREST_PAYOFF_DAYS_REGEX = /<h4>Dni wypłaty odsetek<\/h4>.+?<ul>(.+?)<\/ul>/s;
 const DAY_REGEX = /<li>(.+?)<\/li>/g;
 
 const INTEREST_TYPE_VARIABLE_REGEX = /zmienne\s(.+)\s\+\s+([\w.]+)%/;
 const INTEREST_TYPE_CONST_REGEX = /stałe\s+([\w.]+)%/;
 const INTEREST_TYPE_ZERO_COUPON_REGEX = /obligacje\szerokuponowe\s\+\s0%/;
+
+const unique = R.uniqBy(R.identity);
 
 function firstGroup(markup: string, regexp: RegExp): string {
     const regexpMatch = markup.match(regexp);
@@ -80,7 +84,8 @@ export function parseObligacjeBondInformationPage(markup: string): ObligacjeBond
         interestVariable: interestTypeParsed?.variable,
         interestConst: interestTypeParsed?.const,
         currency: firstGroup(markup, CURRENCY_REGEX),
-        interestFirstDays: firstGroups(firstGroup(markup, INTEREST_FIRST_DAYS_REGEX), DAY_REGEX),
-        interestPayoffDays: firstGroups(firstGroup(markup, INTEREST_PAYOFF_DAYS_REGEX), DAY_REGEX)
+        interestFirstDays: unique(firstGroups(firstGroup(markup, INTEREST_FIRST_DAYS_REGEX), DAY_REGEX)),
+        interestRightsDays: unique(firstGroups(firstGroup(markup, INTEREST_RIGHTS_DAYS_REGEX), DAY_REGEX)),
+        interestPayoffDays: unique(firstGroups(firstGroup(markup, INTEREST_PAYOFF_DAYS_REGEX), DAY_REGEX))
     };
 };

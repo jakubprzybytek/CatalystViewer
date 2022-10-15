@@ -24,6 +24,8 @@ export function BondsService({ stack }: StackContext) {
       accuredInterest: 'number',
       interestFirstDays: 'string',
       interestFirstDayTss: 'string',
+      interestRightsDays: 'string',
+      interestRightsDayTss: 'string',
       interestPayoffDays: 'string',
       interestPayoffDayTss: 'string'
     },

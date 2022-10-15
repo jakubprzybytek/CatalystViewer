@@ -1,5 +1,5 @@
+import { downloadLatestCatalystDailyStatisticsFile } from "./CatalystDownload";
 import { readCatalystDailyStatisticsXlsFile } from "./CatalystDailyStatisticsXlsFile";
-import { downloadLatestCatalystDailyStatisticsFile } from "./CatalystFetch";
 
 export async function getLatestCatalystDailyStatistics() {
     const catalystDailyStatisticsFileName = await downloadLatestCatalystDailyStatisticsFile();

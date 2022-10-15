@@ -20,6 +20,8 @@ export type DbBondDetails = {
     closingPrice: number;
     interestFirstDays: string[];
     interestFirstDayTss: number[];
+    interestRightsDays: string[];
+    interestRightsDayTss: number[];
     interestPayoffDays: string[];
     interestPayoffDayTss: number[];
 };
