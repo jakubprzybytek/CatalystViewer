@@ -1,6 +1,6 @@
 import { utils, read } from "xlsx";
 import { readFileSync } from 'fs';
-import { CatalystDailyStatisticsBondDetails } from ".";
+import { CatalystDailyStatisticsBondDetails } from "..";
 import { parseUTCDate } from "bonds";
 
 export function readCatalystDailyStatisticsXlsFile(fileName: string): CatalystDailyStatisticsBondDetails[] {
