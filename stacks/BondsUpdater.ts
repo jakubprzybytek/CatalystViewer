@@ -28,7 +28,7 @@ export function BondsUpdater({ stack, app }: StackContext) {
     definition: new tasks.LambdaInvoke(stack, "UpdateBondsTask", {
       lambdaFunction: bondsUpdaterFunction,
       timeout: Duration.minutes(10)
-    }).next(new sfn.Succeed(stack, "Bonds Updated!"))
+    })
   });
 
   api.addRoutes(stack, {
