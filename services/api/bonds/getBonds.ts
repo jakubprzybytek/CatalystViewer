@@ -54,15 +54,28 @@ export const handler = lambdaHandler<BondReport[]>(async event => {
         return {
             details: bondDetails,
             detailsUpdated: dbBond.updated,
+
+            currentInterestPeriodFirstDay: currentInterestPeriodFirstDay ? format(currentInterestPeriodFirstDay, 'yyyy-MM-dd') : 'n/a',
+            nextInterestRightsDay: nextInterestRightsDay ? format(nextInterestRightsDay, 'yyyy-MM-dd') : 'n/a',
+            nextInterestPayoffDay: nextInterestPayoffDay ? format(nextInterestPayoffDay, 'yyyy-MM-dd') : 'n/a',
+            accumulatedInterest: accumulatedInterest || 0,
+            accuredInterest: accuredInterest || 0,
+            nextInterest: nextInterest || 0,
+
             closingPrice: dbBond.closingPrice,
             closingPriceNetYtm: ytmCalculator.forPrice(dbBond.closingPrice, 0.19),
             closingPriceGrossYtm: ytmCalculator.forPrice(dbBond.closingPrice, 0),
-            currentInterestPeriodFirstDay: currentInterestPeriodFirstDay ? format(currentInterestPeriodFirstDay, 'yyyy-MM-dd') : 'n/a',
-            accumulatedInterest: accumulatedInterest || 0,
-            accuredInterest: accuredInterest || 0,
-            nextInterestRightsDay: nextInterestRightsDay ? format(nextInterestRightsDay, 'yyyy-MM-dd') : 'n/a',
-            nextInterestPayoffDay: nextInterestPayoffDay ? format(nextInterestPayoffDay, 'yyyy-MM-dd') : 'n/a',
-            nextInterest: nextInterest || 0
+
+            ...(dbBond.bidPrice && {
+                bidPrice: dbBond.bidPrice,
+                bidPriceNetYtm: ytmCalculator.forPrice(dbBond.bidPrice, 0.19),
+                bidPriceGrossYtm: ytmCalculator.forPrice(dbBond.bidPrice, 0)
+            }),
+            ...(dbBond.askPrice && {
+                askPrice: dbBond.askPrice,
+                askPriceNetYtm: ytmCalculator.forPrice(dbBond.askPrice, 0.19),
+                askPriceGrossYtm: ytmCalculator.forPrice(dbBond.askPrice, 0)
+            }),
         }
     });
 
