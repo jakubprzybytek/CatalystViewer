@@ -15,17 +15,19 @@ type BondCardEntryParam = {
   textAlign?: 'left' | 'center' | 'end';
   colorCode?: 'none' | Colors;
   children: React.ReactNode;
+  secondary?: string;
 }
 
-function BondCardEntry({ caption, textAlign = 'left', colorCode, children }: BondCardEntryParam): JSX.Element {
+function BondCardEntry({ caption, textAlign = 'left', colorCode, children, secondary }: BondCardEntryParam): JSX.Element {
   return (
     <Stack sx={{
-      '& > span': { textAlign: textAlign }
+      '& > span': { textAlign }
     }}>
       <Typography component='span' variant='caption'>{caption}</Typography>
       {colorCode && colorCode !== 'none' ?
         <Box component='span'><Typography component='span' sx={{ backgroundColor: colorCode, p: '1px 3px 1px 3px' }}>{children}</Typography></Box>
         : <Typography component='span'>{children}</Typography>}
+      {secondary && <Typography component='span' variant='subtitle2'>{secondary}</Typography>}
     </Stack>
   );
 }
@@ -67,6 +69,10 @@ export default function BondCard({ bondReport, bondsStatistics }: BondCardParam)
           color: 'gray',
           lineHeight: 1.3
         },
+        '& .MuiTypography-subtitle2': {
+          color: 'dimgray',
+          lineHeight: 1
+        },
         '& > hr': {
           paddingTop: 1
         }
@@ -99,9 +105,13 @@ export default function BondCard({ bondReport, bondsStatistics }: BondCardParam)
           <BondCardEntry caption='Next interest' textAlign='end'>{bondReport.nextInterestPayoffDay}</BondCardEntry>
         </BondCardSection>
         <BondCardSection>
-          <BondCardEntry caption='Accumulated interest (since)' textAlign='left'>{formatCurrency(bondReport.accumulatedInterest, bondReport.details.currency)} ({bondReport.currentInterestPeriodFirstDay})</BondCardEntry>
+          <BondCardEntry caption='Accumulated interest (since)' secondary={`(${bondReport.currentInterestPeriodFirstDay})`} textAlign='left'>
+            {formatCurrency(bondReport.accumulatedInterest, bondReport.details.currency)}
+          </BondCardEntry>
           <BondCardEntry caption='Accured interest' textAlign='left'>{formatCurrency(bondReport.accuredInterest, bondReport.details.currency)}</BondCardEntry>
-          <BondCardEntry caption='Next interest (when)' textAlign='end'>{formatCurrency(bondReport.nextInterest, bondReport.details.currency)} ({bondReport.nextInterestPayoffDay})</BondCardEntry>
+          <BondCardEntry caption='Next interest (when)' secondary={`(${bondReport.nextInterestPayoffDay})`} textAlign='end'>
+            {formatCurrency(bondReport.nextInterest, bondReport.details.currency)}
+          </BondCardEntry>
         </BondCardSection>
         <Divider />
         {!bondReport.lastPrice && bondReport.referencePrice && bondReport.referencePriceNetYtm && bondReport.referencePriceGrossYtm && <BondCardSection>
@@ -110,17 +120,23 @@ export default function BondCard({ bondReport, bondsStatistics }: BondCardParam)
           <BondCardEntry caption='Reference price YTM (gross)' textAlign='end'>{(bondReport.referencePriceGrossYtm.ytm * 100).toFixed(2)}%</BondCardEntry>
         </BondCardSection>}
         {bondReport.lastPrice && bondReport.lastPriceNetYtm && bondReport.lastPriceGrossYtm && <BondCardSection>
-          <BondCardEntry caption='Last price (date/time)'>{bondReport.lastPrice.toFixed(2)} ({bondReport.lastDateTime})</BondCardEntry>
+          <BondCardEntry caption='Last price (date/time)' secondary={`(${bondReport.lastDateTime})`}>
+            {bondReport.lastPrice.toFixed(2)}
+          </BondCardEntry>
           <BondCardEntry caption='Last price YTM (net)' textAlign='center'>{(bondReport.lastPriceNetYtm.ytm * 100).toFixed(2)}%</BondCardEntry>
           <BondCardEntry caption='Last price YTM (gross)' textAlign='end'>{(bondReport.lastPriceGrossYtm.ytm * 100).toFixed(2)}%</BondCardEntry>
         </BondCardSection>}
         {bondReport.bidPrice && bondReport.bidPriceNetYtm && bondReport.bidPriceGrossYtm && <BondCardSection>
-          <BondCardEntry caption='Bid price (V,C)'>{bondReport.bidPrice.toFixed(2)} ({bondReport.bidVolume},{bondReport.bidCount})</BondCardEntry>
+          <BondCardEntry caption='Bid price (V, C)' secondary={`(${bondReport.bidVolume}, ${bondReport.bidCount})`}>
+            {bondReport.bidPrice.toFixed(2)}
+          </BondCardEntry>
           <BondCardEntry caption='Bid price YTM (net)' textAlign='center'>{(bondReport.bidPriceNetYtm.ytm * 100).toFixed(2)}%</BondCardEntry>
           <BondCardEntry caption='Bid price YTM (gross)' textAlign='end'>{(bondReport.bidPriceGrossYtm.ytm * 100).toFixed(2)}%</BondCardEntry>
         </BondCardSection>}
         {bondReport.askPrice && bondReport.askPriceNetYtm && bondReport.askPriceGrossYtm && <BondCardSection>
-          <BondCardEntry caption='Ask price (V,C)'>{bondReport.askPrice.toFixed(2)} ({bondReport.askVolume},{bondReport.askCount})</BondCardEntry>
+          <BondCardEntry caption='Ask price (V, C)' secondary={`(${bondReport.askVolume}, ${bondReport.askCount})`}>
+            {bondReport.askPrice.toFixed(2)}
+          </BondCardEntry>
           <BondCardEntry caption='Ask price YTM (net)' textAlign='center'>{(bondReport.askPriceNetYtm.ytm * 100).toFixed(2)}%</BondCardEntry>
           <BondCardEntry caption='Ask price YTM (gross)' textAlign='end'>{(bondReport.askPriceGrossYtm.ytm * 100).toFixed(2)}%</BondCardEntry>
         </BondCardSection>}
