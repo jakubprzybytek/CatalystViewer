@@ -43,15 +43,18 @@ export class BondDetailsTable {
                 interestType: { S: dbBondDetails.interestType },
                 ...(dbBondDetails.interestVariable && { interestVariable: { S: dbBondDetails.interestVariable } }),
                 interestConst: { N: dbBondDetails.interestConst.toString() },
-                currentInterestRate: { N: (dbBondDetails.currentInterestRate || -1).toString() },
-                accuredInterest: { N: dbBondDetails.accuredInterest.toString() },
-                closingPrice: { N: dbBondDetails.closingPrice.toString() },
                 interestFirstDays: { SS: dbBondDetails.interestFirstDays },
                 ...(dbBondDetails.interestFirstDayTss.length > 0 && { interestFirstDayTss: { SS: dbBondDetails.interestFirstDayTss.map((number) => number.toString()) } }),
                 ...(dbBondDetails.interestRightsDays.length > 0 && { interestRightsDay: { SS: dbBondDetails.interestRightsDays } }),
                 ...(dbBondDetails.interestRightsDayTss.length > 0 && { interestRightsDayTss: { SS: dbBondDetails.interestRightsDayTss.map((number) => number.toString()) } }),
                 interestPayoffDays: { SS: dbBondDetails.interestPayoffDays },
                 ...(dbBondDetails.interestPayoffDayTss.length > 0 && { interestPayoffDayTss: { SS: dbBondDetails.interestPayoffDayTss.map((number) => number.toString()) } }),
+
+                currentInterestRate: { N: (dbBondDetails.currentInterestRate || -1).toString() },
+                accuredInterest: { N: dbBondDetails.accuredInterest.toString() },
+                closingPrice: { N: dbBondDetails.closingPrice.toString() },
+                ...(dbBondDetails.bidPrice && { bidPrice: { N: dbBondDetails.bidPrice.toString() } }),
+                ...(dbBondDetails.askPrice && { askPrice: { N: dbBondDetails.askPrice.toString() } }),
               },
             }
           })),
@@ -100,15 +103,18 @@ export class BondDetailsTable {
           interestType: item['interestType']['S'] || '',
           interestVariable: item['interestVariable']?.['S'],
           interestConst: Number(item['interestConst']?.['N']) || 0,
-          currentInterestRate: Number(item['currentInterestRate']['N']) || -1,
-          accuredInterest: Number(item['accuredInterest']['N']) || 0,
-          closingPrice: Number(item['closingPrice']['N']) || -1,
           interestFirstDays: item['interestFirstDays']?.['SS'] || [],
           interestFirstDayTss: item['interestFirstDayTss']?.['SS']?.map((str) => Number.parseInt(str)) || [],
           interestRightsDays: item['interestRightsDays']?.['SS'] || [],
           interestRightsDayTss: item['interestRightsDayTss']?.['SS']?.map((str) => Number.parseInt(str)) || [],
           interestPayoffDays: item['interestPayoffDays']?.['SS'] || [],
-          interestPayoffDayTss: item['interestPayoffDayTss']?.['SS']?.map((str) => Number.parseInt(str)) || []
+          interestPayoffDayTss: item['interestPayoffDayTss']?.['SS']?.map((str) => Number.parseInt(str)) || [],
+
+          currentInterestRate: Number(item['currentInterestRate']['N']) || -1,
+          accuredInterest: Number(item['accuredInterest']['N']) || 0,
+          closingPrice: Number(item['closingPrice']['N']) || -1,
+          ...(item['bidPrice']?.['N'] && { bidPrice: Number(item['bidPrice']?.['N']) }),
+          ...(item['askPrice']?.['N'] && { askPrice: Number(item['askPrice']?.['N']) }),
         };
       })
       : [];

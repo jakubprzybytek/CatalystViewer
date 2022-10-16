@@ -8,9 +8,8 @@ import { BondDetailsTable, DbBondDetails } from '../../storage';
 
 const dynamoDbClient = new DynamoDBClient({});
 
-const bondDbId = (bond: DbBondDetails): string => `${bond.name}#${bond.market}`;
-const bondStatId = (bond: CatalystDailyStatisticsBondDetails): string => `${bond.name}#${bond.market}`;
-const mapByBondId = R.reduce((map: Record<string, DbBondDetails>, curr: DbBondDetails) => R.assoc(bondDbId(curr), curr, map), {});
+const bondId = (bond: DbBondDetails | CatalystBondQuote | CatalystDailyStatisticsBondDetails): string => `${bond.name}#${bond.market}`;
+const mapByBondId = R.reduce((map: Record<string, DbBondDetails | CatalystBondQuote>, curr: DbBondDetails | CatalystBondQuote) => R.assoc(bondId(curr), curr, map), {});
 
 export async function handler(event: any) {
     if (process.env.BOND_DETAILS_TABLE_NAME === undefined) {
@@ -23,7 +22,9 @@ export async function handler(event: any) {
     const bondDetailsTable = new BondDetailsTable(dynamoDbClient, process.env.BOND_DETAILS_TABLE_NAME);
 
     const bondsStats: CatalystDailyStatisticsBondDetails[] = await getLatestCatalystDailyStatistics();
-    //const bondsQuotes: CatalystBondQuote[] = await getCurrentCatalystBondsQuotes();
+
+    const bondsQuotesList: CatalystBondQuote[] = await getCurrentCatalystBondsQuotes();
+    const bondsQuotes: Record<string, CatalystBondQuote> = mapByBondId(bondsQuotesList);
 
     const storedBondsList: DbBondDetails[] = await bondDetailsTable.getAll();
     const storedBonds: Record<string, DbBondDetails> = mapByBondId(storedBondsList);
@@ -33,7 +34,8 @@ export async function handler(event: any) {
 
     for (const bondStats of bondsStats) {
         try {
-            const storedBond = storedBonds[bondStatId(bondStats)];
+            const storedBond = storedBonds[bondId(bondStats)];
+            const bondQuotes = bondsQuotes[bondId(bondStats)];
 
             if (storedBond !== undefined) {
                 // update existing bond information
@@ -43,6 +45,8 @@ export async function handler(event: any) {
                     currentInterestRate: bondStats.currentInterestRate,
                     accuredInterest: bondStats.accuredInterest,
                     closingPrice: bondStats.closingPrice,
+                    ...(bondQuotes.bid && { bidPrice: bondQuotes.bid }),
+                    ...(bondQuotes.ask && { askPrice: bondQuotes.ask })
                 });
             } else {
                 // create new bond information record
@@ -50,7 +54,6 @@ export async function handler(event: any) {
 
                 newBondsToStore.push({
                     status: 'active',
-                    updated: currentTime,
                     name: bondStats.name,
                     isin: bondStats.isin,
                     market: bondStats.market,
@@ -63,15 +66,19 @@ export async function handler(event: any) {
                     interestType: bondInformation.interestType,
                     interestVariable: bondInformation.interestVariable,
                     interestConst: bondInformation.interestConst,
-                    currentInterestRate: bondStats.currentInterestRate,
-                    accuredInterest: bondStats.accuredInterest,
-                    closingPrice: bondStats.closingPrice,
                     interestFirstDays: bondInformation.interestFirstDays,
                     interestFirstDayTss: bondInformation.interestFirstDays.map(parseUTCDate).map(getTime),
                     interestRightsDays: bondInformation.interestRightsDays,
                     interestRightsDayTss: bondInformation.interestRightsDays.map(parseUTCDate).map(getTime),
                     interestPayoffDays: bondInformation.interestPayoffDays,
-                    interestPayoffDayTss: bondInformation.interestPayoffDays.map(parseUTCDate).map(getTime)
+                    interestPayoffDayTss: bondInformation.interestPayoffDays.map(parseUTCDate).map(getTime),
+                    
+                    updated: currentTime,
+                    currentInterestRate: bondStats.currentInterestRate,
+                    accuredInterest: bondStats.accuredInterest,
+                    closingPrice: bondStats.closingPrice,
+                    ...(bondQuotes.bid && { bidPrice: bondQuotes.bid }),
+                    ...(bondQuotes.ask && { askPrice: bondQuotes.ask })
                 });
             }
         } catch (error: any) {
@@ -81,9 +88,9 @@ export async function handler(event: any) {
     }
 
     // look for bonds to deactivate
-    const newAndUpdatedBondIdies = bondsStats.map(bondStatId);
+    const newAndUpdatedBondIdies = bondsStats.map(bondId);
     const deactivatedBondsToStore = storedBondsList
-        .filter(bond => !newAndUpdatedBondIdies.includes(bondDbId(bond)))
+        .filter(bond => !newAndUpdatedBondIdies.includes(bondId(bond)))
         .map(bond => ({
             ...bond,
             status: 'inactive'
