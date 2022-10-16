@@ -104,11 +104,11 @@ export default function BondCard({ bondReport, bondsStatistics }: BondCardParam)
           <BondCardEntry caption='Next interest (when)' textAlign='end'>{formatCurrency(bondReport.nextInterest, bondReport.details.currency)} ({bondReport.nextInterestPayoffDay})</BondCardEntry>
         </BondCardSection>
         <Divider />
-        <BondCardSection>
-          <BondCardEntry caption='Closing price'>{bondReport.closingPrice.toFixed(2)}</BondCardEntry>
-          <BondCardEntry caption='Closing price YTM (net)' textAlign='center'>{(bondReport.closingPriceNetYtm.ytm * 100).toFixed(2)}%</BondCardEntry>
-          <BondCardEntry caption='Closing price YTM (gross)' textAlign='end'>{(bondReport.closingPriceGrossYtm.ytm * 100).toFixed(2)}%</BondCardEntry>
-        </BondCardSection>
+        {!bondReport.lastPrice && bondReport.referencePrice && bondReport.referencePriceNetYtm && bondReport.referencePriceGrossYtm && <BondCardSection>
+          <BondCardEntry caption='Reference price'>{bondReport.referencePrice.toFixed(2)}</BondCardEntry>
+          <BondCardEntry caption='Reference price YTM (net)' textAlign='center'>{(bondReport.referencePriceNetYtm.ytm * 100).toFixed(2)}%</BondCardEntry>
+          <BondCardEntry caption='Reference price YTM (gross)' textAlign='end'>{(bondReport.referencePriceGrossYtm.ytm * 100).toFixed(2)}%</BondCardEntry>
+        </BondCardSection>}
         {bondReport.lastPrice && bondReport.lastPriceNetYtm && bondReport.lastPriceGrossYtm && <BondCardSection>
           <BondCardEntry caption='Last price (date/time)'>{bondReport.lastPrice.toFixed(2)} ({bondReport.lastDateTime})</BondCardEntry>
           <BondCardEntry caption='Last price YTM (net)' textAlign='center'>{(bondReport.lastPriceNetYtm.ytm * 100).toFixed(2)}%</BondCardEntry>

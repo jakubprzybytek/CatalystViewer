@@ -62,10 +62,11 @@ export const handler = lambdaHandler<BondReport[]>(async event => {
             accuredInterest: accuredInterest || 0,
             nextInterest: nextInterest || 0,
 
-            closingPrice: dbBond.closingPrice,
-            closingPriceNetYtm: ytmCalculator.forPrice(dbBond.closingPrice, 0.19),
-            closingPriceGrossYtm: ytmCalculator.forPrice(dbBond.closingPrice, 0),
-
+            ...(dbBond.referencePrice && {
+                referencePrice: dbBond.referencePrice,
+                referencePriceNetYtm: ytmCalculator.forPrice(dbBond.referencePrice, 0.19),
+                referencePriceGrossYtm: ytmCalculator.forPrice(dbBond.referencePrice, 0),
+            }),
             ...(dbBond.lastPrice && {
                 lastDateTime: dbBond.lastDateTime,
                 lastPrice: dbBond.lastPrice,

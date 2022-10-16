@@ -52,7 +52,7 @@ export class BondDetailsTable {
 
                 currentInterestRate: { N: (dbBondDetails.currentInterestRate || -1).toString() },
                 accuredInterest: { N: dbBondDetails.accuredInterest.toString() },
-                closingPrice: { N: dbBondDetails.closingPrice.toString() },
+                ...(dbBondDetails.referencePrice && { referencePrice: { N: dbBondDetails.referencePrice.toString() } }),
                 ...(dbBondDetails.lastDateTime && { lastDateTime: { S: dbBondDetails.lastDateTime } }),
                 ...(dbBondDetails.lastPrice && { lastPrice: { N: dbBondDetails.lastPrice.toString() } }),
                 ...(dbBondDetails.bidCount && { bidCount: { N: dbBondDetails.bidCount.toString() } }),
@@ -116,9 +116,9 @@ export class BondDetailsTable {
           interestPayoffDays: item['interestPayoffDays']?.['SS'] || [],
           interestPayoffDayTss: item['interestPayoffDayTss']?.['SS']?.map((str) => Number.parseInt(str)) || [],
 
-          currentInterestRate: Number(item['currentInterestRate']['N']) || -1,
+          currentInterestRate: Number(item['currentInterestRate']['N']) || 0,
           accuredInterest: Number(item['accuredInterest']['N']) || 0,
-          closingPrice: Number(item['closingPrice']['N']) || -1,
+          ...(item['referencePrice']?.['N'] && { referencePrice: Number(item['referencePrice']?.['N']) }),
           ...(item['lastDateTime']?.['S'] && { lastDateTime: item['lastDateTime']?.['S'] }),
           ...(item['lastPrice']?.['N'] && { lastPrice: Number(item['lastPrice']?.['N']) }),
           ...(item['bidCount']?.['N'] && { bidCount: Number(item['bidCount']?.['N']) }),

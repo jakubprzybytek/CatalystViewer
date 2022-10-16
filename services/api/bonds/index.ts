@@ -12,9 +12,9 @@ export type BondReport = {
     accumulatedInterest: number;
     accuredInterest: number;
     nextInterest: number;
-    closingPrice: number;
-    closingPriceNetYtm: YieldToMaturityReport;
-    closingPriceGrossYtm: YieldToMaturityReport;
+    referencePrice?: number;
+    referencePriceNetYtm?: YieldToMaturityReport;
+    referencePriceGrossYtm?: YieldToMaturityReport;
     lastPrice?: number;
     lastDateTime?: string;
     lastPriceNetYtm?: YieldToMaturityReport;

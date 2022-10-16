@@ -24,7 +24,7 @@ export type DbBondDetails = {
 
     currentInterestRate: number;
     accuredInterest: number;
-    closingPrice: number;
+    referencePrice?: number;
     lastDateTime?: string;
     lastPrice?: number;
     bidCount?: number;
