@@ -5,7 +5,7 @@ const QUOTE_ROW_REGEX = /<tr>(.+?)<\/tr>/sg;
 
 const QUOTE_BOND_NAME_REGEX = /"o-instrumentach-instrument\?nazwa=(.+?)"/;
 const QUOTE_MARKET_REGEX = /<td.+?class="col2">(.+?)<\/td>/;
-const QUOTE_BID_ASK_REGEX = /"col4">(?<referencePrice>.+?)<\/td>.+?"col12">(?<bidCount>.+?)<\/td>.+?"col12">(?<bidVolume>.+?)<\/td>.+?"col12">(?<bid>.+?)<\/td>.+?"col13">(?<ask>.+?)<\/td>.+?"col13">(?<askVolume>.+?)<\/td>.+?"col13">(?<askCount>.+?)<\/td>.+?/s;
+const QUOTE_BID_ASK_REGEX = /"col4">(?<referencePrice>.+?)<\/td>.+?"col8">(?<lastDateTime>.+?)<\/td>.+?col10">(?<lastPrice>.+?)<\/td>.+?"col12">(?<bidCount>.+?)<\/td>.+?"col12">(?<bidVolume>.+?)<\/td>.+?"col12">(?<bidPrice>.+?)<\/td>.+?"col13">(?<askPrice>.+?)<\/td>.+?"col13">(?<askVolume>.+?)<\/td>.+?"col13">(?<askCount>.+?)<\/td>.+?/s;
 
 function firstGroup(markup: string, regexp: RegExp): string {
     const regexpMatch = markup.match(regexp);
@@ -53,16 +53,18 @@ export function parseBondsQuotesPage(markup: string, title: string, currency: st
                 return undefined;
             }
 
-            const { groups: { referencePrice, bidCount, bidVolume, bid, ask, askVolume, askCount } } = result;
+            const { groups: { referencePrice, lastDateTime, lastPrice, bidCount, bidVolume, bidPrice, askPrice, askVolume, askCount } } = result;
 
             return {
                 name: currentBondName,
                 market: firstGroup(quoteRowMarkup, QUOTE_MARKET_REGEX).replace('&nbsp;', ' '),
                 ...(referencePrice !== '-' && { referencePrice: parseFloat(referencePrice) }),
+                ...(lastDateTime.trim() !== '-' && { lastDateTime: lastDateTime.trim() }),
+                ...(lastPrice.trim() !== '-' && { lastPrice: parseFloat(lastPrice) }),
                 ...(bidCount !== '-' && { bidCount: Number.parseInt(bidCount) }),
                 ...(bidVolume !== '-' && { bidVolume: Number.parseInt(bidVolume) }),
-                ...(bid !== '-' && { bid: parseFloat(bid) }),
-                ...(ask !== '-' && { ask: parseFloat(ask) }),
+                ...(bidPrice !== '-' && { bidPrice: parseFloat(bidPrice) }),
+                ...(askPrice !== '-' && { askPrice: parseFloat(askPrice) }),
                 ...(askVolume !== '-' && { askVolume: Number.parseInt(askVolume) }),
                 ...(askCount !== '-' && { askCount: Number.parseInt(askCount) }),
                 currency

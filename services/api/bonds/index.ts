@@ -15,10 +15,18 @@ export type BondReport = {
     closingPrice: number;
     closingPriceNetYtm: YieldToMaturityReport;
     closingPriceGrossYtm: YieldToMaturityReport;
+    lastPrice?: number;
+    lastDateTime?: string;
+    lastPriceNetYtm?: YieldToMaturityReport;
+    lastPriceGrossYtm?: YieldToMaturityReport;
+    bidCount?: number;
+    bidVolume?: number;
     bidPrice?: number;
     bidPriceNetYtm?: YieldToMaturityReport;
     bidPriceGrossYtm?: YieldToMaturityReport;
     askPrice?: number;
+    askVolume?: number;
+    askCount?: number;
     askPriceNetYtm?: YieldToMaturityReport;
     askPriceGrossYtm?: YieldToMaturityReport;
 };

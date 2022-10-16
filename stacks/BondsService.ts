@@ -30,8 +30,14 @@ export function BondsService({ stack }: StackContext) {
       currentInterestRate: 'number',
       accuredInterest: 'number',
       closingPrice: 'number',
+      lastDateTime: 'string',
+      lastPrice: 'number',
+      bidCount: 'number',
+      bidVolume: 'number',
       bidPrice: 'number',
-      askPrice: 'number'
+      askPrice: 'number',
+      askVolume: 'number',
+      askCount: 'number'
     },
     primaryIndex: {
       partitionKey: 'issuer',

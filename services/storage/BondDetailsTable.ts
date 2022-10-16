@@ -53,8 +53,14 @@ export class BondDetailsTable {
                 currentInterestRate: { N: (dbBondDetails.currentInterestRate || -1).toString() },
                 accuredInterest: { N: dbBondDetails.accuredInterest.toString() },
                 closingPrice: { N: dbBondDetails.closingPrice.toString() },
+                ...(dbBondDetails.lastDateTime && { lastDateTime: { S: dbBondDetails.lastDateTime } }),
+                ...(dbBondDetails.lastPrice && { lastPrice: { N: dbBondDetails.lastPrice.toString() } }),
+                ...(dbBondDetails.bidCount && { bidCount: { N: dbBondDetails.bidCount.toString() } }),
+                ...(dbBondDetails.bidVolume && { bidVolume: { N: dbBondDetails.bidVolume.toString() } }),
                 ...(dbBondDetails.bidPrice && { bidPrice: { N: dbBondDetails.bidPrice.toString() } }),
                 ...(dbBondDetails.askPrice && { askPrice: { N: dbBondDetails.askPrice.toString() } }),
+                ...(dbBondDetails.askVolume && { askVolume: { N: dbBondDetails.askVolume.toString() } }),
+                ...(dbBondDetails.askCount && { askCount: { N: dbBondDetails.askCount.toString() } }),
               },
             }
           })),
@@ -113,8 +119,14 @@ export class BondDetailsTable {
           currentInterestRate: Number(item['currentInterestRate']['N']) || -1,
           accuredInterest: Number(item['accuredInterest']['N']) || 0,
           closingPrice: Number(item['closingPrice']['N']) || -1,
+          ...(item['lastDateTime']?.['S'] && { lastDateTime: item['lastDateTime']?.['S'] }),
+          ...(item['lastPrice']?.['N'] && { lastPrice: Number(item['lastPrice']?.['N']) }),
+          ...(item['bidCount']?.['N'] && { bidCount: Number(item['bidCount']?.['N']) }),
+          ...(item['bidVolume']?.['N'] && { bidVolume: Number(item['bidVolume']?.['N']) }),
           ...(item['bidPrice']?.['N'] && { bidPrice: Number(item['bidPrice']?.['N']) }),
           ...(item['askPrice']?.['N'] && { askPrice: Number(item['askPrice']?.['N']) }),
+          ...(item['askVolume']?.['N'] && { askVolume: Number(item['askVolume']?.['N']) }),
+          ...(item['askCount']?.['N'] && { askCount: Number(item['askCount']?.['N']) }),
         };
       })
       : [];

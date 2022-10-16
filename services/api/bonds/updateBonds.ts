@@ -45,8 +45,14 @@ export async function handler(event: any) {
                     currentInterestRate: bondStats.currentInterestRate,
                     accuredInterest: bondStats.accuredInterest,
                     closingPrice: bondStats.closingPrice,
-                    ...(bondQuotes.bid && { bidPrice: bondQuotes.bid }),
-                    ...(bondQuotes.ask && { askPrice: bondQuotes.ask })
+                    ...(bondQuotes.lastDateTime && { lastDateTime: bondQuotes.lastDateTime }),
+                    ...(bondQuotes.lastPrice && { lastPrice: bondQuotes.lastPrice }),
+                    ...(bondQuotes.bidCount && { bidCount: bondQuotes.bidCount }),
+                    ...(bondQuotes.bidVolume && { bidVolume: bondQuotes.bidVolume }),
+                    ...(bondQuotes.bidPrice && { bidPrice: bondQuotes.bidPrice }),
+                    ...(bondQuotes.askPrice && { askPrice: bondQuotes.askPrice }),
+                    ...(bondQuotes.askVolume && { askVolume: bondQuotes.askVolume }),
+                    ...(bondQuotes.askCount && { askCount: bondQuotes.askCount })
                 });
             } else {
                 // create new bond information record
@@ -72,13 +78,19 @@ export async function handler(event: any) {
                     interestRightsDayTss: bondInformation.interestRightsDays.map(parseUTCDate).map(getTime),
                     interestPayoffDays: bondInformation.interestPayoffDays,
                     interestPayoffDayTss: bondInformation.interestPayoffDays.map(parseUTCDate).map(getTime),
-                    
+
                     updated: currentTime,
                     currentInterestRate: bondStats.currentInterestRate,
                     accuredInterest: bondStats.accuredInterest,
                     closingPrice: bondStats.closingPrice,
-                    ...(bondQuotes.bid && { bidPrice: bondQuotes.bid }),
-                    ...(bondQuotes.ask && { askPrice: bondQuotes.ask })
+                    ...(bondQuotes.lastDateTime && { lastDateTime: bondQuotes.lastDateTime }),
+                    ...(bondQuotes.lastPrice && { lastPrice: bondQuotes.lastPrice }),
+                    ...(bondQuotes.bidCount && { bidCount: bondQuotes.bidCount }),
+                    ...(bondQuotes.bidVolume && { bidVolume: bondQuotes.bidVolume }),
+                    ...(bondQuotes.bidPrice && { bidPrice: bondQuotes.bidPrice }),
+                    ...(bondQuotes.askPrice && { askPrice: bondQuotes.askPrice }),
+                    ...(bondQuotes.askVolume && { askVolume: bondQuotes.askVolume }),
+                    ...(bondQuotes.askCount && { askCount: bondQuotes.askCount })
                 });
             }
         } catch (error: any) {

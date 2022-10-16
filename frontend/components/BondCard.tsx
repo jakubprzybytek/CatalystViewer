@@ -109,13 +109,18 @@ export default function BondCard({ bondReport, bondsStatistics }: BondCardParam)
           <BondCardEntry caption='Closing price YTM (net)' textAlign='center'>{(bondReport.closingPriceNetYtm.ytm * 100).toFixed(2)}%</BondCardEntry>
           <BondCardEntry caption='Closing price YTM (gross)' textAlign='end'>{(bondReport.closingPriceGrossYtm.ytm * 100).toFixed(2)}%</BondCardEntry>
         </BondCardSection>
+        {bondReport.lastPrice && bondReport.lastPriceNetYtm && bondReport.lastPriceGrossYtm && <BondCardSection>
+          <BondCardEntry caption='Last price (date/time)'>{bondReport.lastPrice.toFixed(2)} ({bondReport.lastDateTime})</BondCardEntry>
+          <BondCardEntry caption='Last price YTM (net)' textAlign='center'>{(bondReport.lastPriceNetYtm.ytm * 100).toFixed(2)}%</BondCardEntry>
+          <BondCardEntry caption='Last price YTM (gross)' textAlign='end'>{(bondReport.lastPriceGrossYtm.ytm * 100).toFixed(2)}%</BondCardEntry>
+        </BondCardSection>}
         {bondReport.bidPrice && bondReport.bidPriceNetYtm && bondReport.bidPriceGrossYtm && <BondCardSection>
-          <BondCardEntry caption='Bid price'>{bondReport.bidPrice.toFixed(2)}</BondCardEntry>
+          <BondCardEntry caption='Bid price (V,C)'>{bondReport.bidPrice.toFixed(2)} ({bondReport.bidVolume},{bondReport.bidCount})</BondCardEntry>
           <BondCardEntry caption='Bid price YTM (net)' textAlign='center'>{(bondReport.bidPriceNetYtm.ytm * 100).toFixed(2)}%</BondCardEntry>
           <BondCardEntry caption='Bid price YTM (gross)' textAlign='end'>{(bondReport.bidPriceGrossYtm.ytm * 100).toFixed(2)}%</BondCardEntry>
         </BondCardSection>}
         {bondReport.askPrice && bondReport.askPriceNetYtm && bondReport.askPriceGrossYtm && <BondCardSection>
-          <BondCardEntry caption='Ask price'>{bondReport.askPrice.toFixed(2)}</BondCardEntry>
+          <BondCardEntry caption='Ask price (V,C)'>{bondReport.askPrice.toFixed(2)} ({bondReport.askVolume},{bondReport.askCount})</BondCardEntry>
           <BondCardEntry caption='Ask price YTM (net)' textAlign='center'>{(bondReport.askPriceNetYtm.ytm * 100).toFixed(2)}%</BondCardEntry>
           <BondCardEntry caption='Ask price YTM (gross)' textAlign='end'>{(bondReport.askPriceGrossYtm.ytm * 100).toFixed(2)}%</BondCardEntry>
         </BondCardSection>}

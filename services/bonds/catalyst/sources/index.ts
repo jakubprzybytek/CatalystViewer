@@ -18,10 +18,12 @@ export type CatalystBondQuery = {
     readonly name: string;
     readonly market: string;
     readonly referencePrice: number;
+    readonly lastDateTime: string;
+    readonly lastPrice: number;
     readonly bidCount: number;
     readonly bidVolume: number;
-    readonly bid: number;
-    readonly ask: number;
+    readonly bidPrice: number;
+    readonly askPrice: number;
     readonly askVolume: number;
     readonly askCount: number;
     readonly currency: string;
