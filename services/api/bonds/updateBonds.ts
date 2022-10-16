@@ -108,7 +108,7 @@ export async function handler(event: any) {
             status: 'inactive'
         }));
 
-    bondDetailsTable.storeAll(updatedBondsToStore
+    await bondDetailsTable.storeAll(updatedBondsToStore
         .concat(newBondsToStore)
         .concat(deactivatedBondsToStore));
 
