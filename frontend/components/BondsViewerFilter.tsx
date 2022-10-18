@@ -10,6 +10,7 @@ import TextField from '@mui/material/TextField';
 import MenuItem from '@mui/material/MenuItem';
 import Typography from '@mui/material/Typography';
 import { BondReport, BondDetails } from '../sdk/GetBonds';
+import { useLocalStorage } from '../common/UseStorage';
 
 function removeFromArray(array: string[], element: string): string[] {
   const index = array.indexOf(element, 0);
@@ -40,11 +41,13 @@ type BondsViewerFilterParams = {
   setFilteredBondReports: (filteredBonds: BondReport[]) => void;
 };
 
+const defaultMarkets = ['GPW RR', 'GPW ASO'];
+
 export default function BondsViewerFilter({ allBondReports, setBondTypeFilter: setBondTypeFilter2, setFilteredBondReports: setFilteredBonds }: BondsViewerFilterParams): JSX.Element {
-  const [bondTypeFilter, setBondTypeFilter] = useState<string>('Corporate bonds');
-  const [issuerFilter, setIssuerFilter] = useState<string>('all');
-  const [marketsFilter, setMarketsFilter] = useState<string[]>(['GPW RR', 'GPW ASO']);
-  const [maxNominalFilter, setMaxNominalFilter] = useState<number>(10000);
+  const [bondTypeFilter, setBondTypeFilter] = useLocalStorage<string>('filter.bondType', 'Corporate bonds');
+  const [issuerFilter, setIssuerFilter] = useLocalStorage('filter.issuer', 'all');
+  const [marketsFilter, setMarketsFilter] = useLocalStorage<string[]>('filter.market', defaultMarkets);
+  const [maxNominalFilter, setMaxNominalFilter] = useLocalStorage<number>('filter.maxNominalValue', 10000);
 
   const allMarkets = useMemo(() => sort(R.uniq(bondDetailsProps('market')(allBondReports))), [allBondReports]);
 
@@ -68,7 +71,7 @@ export default function BondsViewerFilter({ allBondReports, setBondTypeFilter: s
       <Grid container spacing={1}>
         <Grid item xs={12} sm={6} md={4}>
           <TextField label="Bond type" size="small" fullWidth select
-            value={bondTypeFilter}
+            value={availableBondTypes.includes(bondTypeFilter) ? bondTypeFilter : ''}
             onChange={(event: React.ChangeEvent<HTMLInputElement>) => { setBondTypeFilter(event.target.value); setBondTypeFilter2(event.target.value); }}>
             <MenuItem value='all' sx={{ fontStyle: 'italic' }}>All</MenuItem>
             {availableBondTypes.map((bondType) => (
@@ -78,7 +81,7 @@ export default function BondsViewerFilter({ allBondReports, setBondTypeFilter: s
         </Grid>
         <Grid item xs={12} sm={6} md={4}>
           <TextField label="Issuer" size="small" fullWidth select
-            value={issuerFilter}
+            value={availableIssuers.includes(issuerFilter) ? issuerFilter : ''}
             onChange={(event: React.ChangeEvent<HTMLInputElement>) => setIssuerFilter(event.target.value)}>
             <MenuItem value='all' sx={{ fontStyle: 'italic' }}>All</MenuItem>
             {availableIssuers.map((issuer) => (
