@@ -1,25 +1,19 @@
 import { useEffect, useState, useMemo } from 'react';
 import * as R from 'ramda';
 import Grid from '@mui/material/Grid';
+import Stack from '@mui/material/Stack';
 import Paper from '@mui/material/Paper';
+import FormControl from '@mui/material/FormControl';
 import FormGroup from '@mui/material/FormGroup';
 import FormLabel from '@mui/material/FormLabel';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Checkbox from '@mui/material/Checkbox';
 import TextField from '@mui/material/TextField';
 import MenuItem from '@mui/material/MenuItem';
+import Chip from '@mui/material/Chip';
 import Typography from '@mui/material/Typography';
 import { BondReport, BondDetails } from '../sdk/GetBonds';
-import { useLocalStorage } from '../common/UseStorage';
-
-function removeFromArray(array: string[], element: string): string[] {
-  const index = array.indexOf(element, 0);
-  const duplicate = [...array];
-  if (index > -1) {
-    duplicate.splice(index, 1);
-  }
-  return duplicate;
-}
+import { useArrayLocalStorage, useLocalStorage } from '../common/UseStorage';
 
 const bondDetailsProps = (prop: 'market' | 'type' | 'issuer') => R.map(R.compose(R.prop(prop), R.prop<'details', BondDetails>('details')));
 const sort = R.sortBy<string>(R.identity);
@@ -46,7 +40,7 @@ const defaultMarkets = ['GPW RR', 'GPW ASO'];
 export default function BondsViewerFilter({ allBondReports, setBondTypeFilter: setBondTypeFilter2, setFilteredBondReports: setFilteredBonds }: BondsViewerFilterParams): JSX.Element {
   const [bondTypeFilter, setBondTypeFilter] = useLocalStorage<string>('filter.bondType', 'Corporate bonds');
   const [issuerFilter, setIssuerFilter] = useLocalStorage('filter.issuer', 'all');
-  const [marketsFilter, setMarketsFilter] = useLocalStorage<string[]>('filter.market', defaultMarkets);
+  const [marketsFilter, addMarketFilter, removeMarketFilter] = useArrayLocalStorage<string>('filter.market', defaultMarkets);
   const [maxNominalFilter, setMaxNominalFilter] = useLocalStorage<number>('filter.maxNominalValue', 10000);
 
   const allMarkets = useMemo(() => sort(R.uniq(bondDetailsProps('market')(allBondReports))), [allBondReports]);
@@ -70,45 +64,57 @@ export default function BondsViewerFilter({ allBondReports, setBondTypeFilter: s
     <Paper sx={{ p: 1 }}>
       <Grid container spacing={1}>
         <Grid item xs={12} sm={6} md={4}>
-          <TextField label="Bond type" size="small" fullWidth select
-            value={availableBondTypes.includes(bondTypeFilter) ? bondTypeFilter : ''}
-            onChange={(event: React.ChangeEvent<HTMLInputElement>) => { setBondTypeFilter(event.target.value); setBondTypeFilter2(event.target.value); }}>
-            <MenuItem value='all' sx={{ fontStyle: 'italic' }}>All</MenuItem>
-            {availableBondTypes.map((bondType) => (
-              <MenuItem key={bondType} value={bondType}>{bondType}</MenuItem>
-            ))}
-          </TextField>
+          <Stack spacing={1}>
+            <FormControl fullWidth>
+              <TextField label="Bond type" size="small" fullWidth select
+                value={availableBondTypes.includes(bondTypeFilter) ? bondTypeFilter : ''}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) => { setBondTypeFilter(event.target.value); setBondTypeFilter2(event.target.value); }}>
+                <MenuItem value='all' sx={{ fontStyle: 'italic' }}>All</MenuItem>
+                {availableBondTypes.map((bondType) => (
+                  <MenuItem key={bondType} value={bondType}>{bondType}</MenuItem>
+                ))}
+              </TextField>
+            </FormControl>
+            <FormControl fullWidth>
+              <TextField label="Max nominal value" size="small" fullWidth select
+                value={maxNominalFilter}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) => setMaxNominalFilter(Number.parseInt(event.target.value))}>
+                <MenuItem value={100}>100</MenuItem>
+                <MenuItem value={1000}>1000</MenuItem>
+                <MenuItem value={10000}>10 000</MenuItem>
+                <MenuItem value={100000}>100 000</MenuItem>
+              </TextField>
+            </FormControl>
+            <FormControl fullWidth>
+              <FormLabel component="legend">Market</FormLabel>
+              <FormGroup row>
+                {allMarkets.map((market) => (
+                  <FormControlLabel key={market} control={
+                    <Checkbox
+                      checked={marketsFilter.includes(market)}
+                      onChange={(event: React.ChangeEvent<HTMLInputElement>) => event.target.checked ? addMarketFilter(market) : removeMarketFilter(market)} />
+                  } label={market} />
+                ))}
+              </FormGroup>
+            </FormControl>
+          </Stack>
         </Grid>
         <Grid item xs={12} sm={6} md={4}>
-          <TextField label="Issuer" size="small" fullWidth select
-            value={availableIssuers.includes(issuerFilter) ? issuerFilter : ''}
-            onChange={(event: React.ChangeEvent<HTMLInputElement>) => setIssuerFilter(event.target.value)}>
-            <MenuItem value='all' sx={{ fontStyle: 'italic' }}>All</MenuItem>
-            {availableIssuers.map((issuer) => (
-              <MenuItem key={issuer} value={issuer}>{issuer}</MenuItem>
-            ))}
-          </TextField>
+          <FormControl fullWidth>
+            <FormLabel>Issuers</FormLabel>
+            <TextField label="Issuer" size="small" fullWidth select
+              value={availableIssuers.includes(issuerFilter) ? issuerFilter : ''}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) => setIssuerFilter(event.target.value)}>
+              <MenuItem value='all' sx={{ fontStyle: 'italic' }}>All</MenuItem>
+              {availableIssuers.map((issuer) => (
+                <MenuItem key={issuer} value={issuer}>{issuer}</MenuItem>
+              ))}
+            </TextField>
+            <Stack direction='row'>
+              <Chip label={issuerFilter} onDelete={() => { }} />
+            </Stack>
+          </FormControl>
         </Grid>
-      </Grid>
-      <FormLabel component="legend">Market</FormLabel>
-      <FormGroup row>
-        {allMarkets.map((market) => (
-          <FormControlLabel key={market} control={
-            <Checkbox
-              checked={marketsFilter.includes(market)}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>) => setMarketsFilter(event.target.checked ? [...marketsFilter, market] : removeFromArray(marketsFilter, market))} />
-          } label={market} />
-        ))}
-      </FormGroup>
-      <Grid container item xs={12} sm={6} md={4}>
-        <TextField label="Max nominal value" size="small" fullWidth select
-          value={maxNominalFilter}
-          onChange={(event: React.ChangeEvent<HTMLInputElement>) => setMaxNominalFilter(Number.parseInt(event.target.value))}>
-          <MenuItem value={100}>100</MenuItem>
-          <MenuItem value={1000}>1000</MenuItem>
-          <MenuItem value={10000}>10 000</MenuItem>
-          <MenuItem value={100000}>100 000</MenuItem>
-        </TextField>
       </Grid>
       <Typography sx={{ ml: 2, mt: 2 }}>Listing {filteredBonds.length} bonds</Typography>
     </Paper>
