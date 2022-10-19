@@ -87,6 +87,7 @@ export default function BondsViewerFilter({ allBondReports, setBondTypeFilter: s
                 <MenuItem value={1000}>1000</MenuItem>
                 <MenuItem value={10000}>10 000</MenuItem>
                 <MenuItem value={100000}>100 000</MenuItem>
+                <MenuItem value={1000000}>1 000 000</MenuItem>
               </TextField>
             </FormControl>
             <FormControl fullWidth>
@@ -114,7 +115,12 @@ export default function BondsViewerFilter({ allBondReports, setBondTypeFilter: s
                   <MenuItem key={issuer} value={issuer}>{issuer}</MenuItem>
                 ))}
               </Select>
-              <Stack direction='row' spacing={1} flexWrap='wrap'>
+              <Stack direction='row' flexWrap='wrap' sx={{
+                '& > div' : {
+                  mr: 1,
+                  mb: 1
+                }
+              }}>
                 {issuersFilter && issuersFilter.map(issuer =>
                   <Chip key={issuer} label={issuer} onDelete={() => { removeIssuerFilter(issuer) }} />
                 )}
