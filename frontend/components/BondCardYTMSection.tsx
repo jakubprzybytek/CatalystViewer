@@ -38,7 +38,7 @@ export default function BondCardYTMSection({ title, bondReport, price, secondary
 
   return (
     <BondCardSection>
-      <BondCardEntry caption={title} secondary={secondary}>{price}</BondCardEntry>
+      <BondCardEntry caption={title} width='50%'>{price} ({secondary})</BondCardEntry>
       <BondCardEntry caption='Net YTM' textAlign='center'>{(ytmNet * 100).toFixed(2)}%</BondCardEntry>
       <BondCardEntry caption='Gross YTM' textAlign='end'>{(ytmGros * 100).toFixed(2)}%</BondCardEntry>
     </BondCardSection>

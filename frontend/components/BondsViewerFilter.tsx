@@ -52,7 +52,7 @@ export default function BondsViewerFilter({ allBondReports, setBondTypeFilter: s
   const availableBondTypes = useMemo(() => {
     //const filteredByIssuer = filterByIssuer(issuerFilter)(allBondReports);
     return R.uniq(bondDetailsProps('type')(allBondReports));
-  }, [allBondReports, issuersFilter]);
+  }, [allBondReports]);
 
   const availableIssuers = useMemo(() => {
     const filteredByType = filterByType(bondTypeFilter)(allBondReports);
