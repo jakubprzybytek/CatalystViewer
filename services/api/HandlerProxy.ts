@@ -1,4 +1,5 @@
 import { APIGatewayProxyHandlerV2, APIGatewayProxyEventV2 } from "aws-lambda";
+import { gzipSync } from 'zlib';
 
 type LambdaResponse<T> = {
     data: T;
@@ -19,16 +20,25 @@ export const lambdaHandler = <T>(lambda: LambdaType<T>): APIGatewayProxyHandlerV
     return async function (event: APIGatewayProxyEventV2) {
         try {
             const response = await lambda(event);
+            const body = JSON.stringify(response.data);
+            const gzippedBody = gzipSync(body);
             return {
+                isBase64Encoded: true,
                 statusCode: response.statusCode,
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(response.data),
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Content-Encoding': 'gzip'
+                },
+                body: gzippedBody.toString('base64'),
             };
         } catch (e) {
             console.error(e);
             return {
                 statusCode: 500,
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Content-Encoding': 'none'
+                },
                 body: JSON.stringify({
                     message: e
                 }),

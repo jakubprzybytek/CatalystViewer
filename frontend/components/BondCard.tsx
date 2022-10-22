@@ -7,46 +7,9 @@ import { formatCurrency } from "../common/Formats";
 import { Box } from "@mui/system";
 import { Link } from "@mui/material";
 import { BondsStatistics, interestVariablePart } from "../common/BondsStatistics";
-
-type Colors = 'lightpink' | 'orange' | 'yellow' | 'lightgreen';
-
-type BondCardEntryParam = {
-  caption: string;
-  textAlign?: 'left' | 'center' | 'end';
-  colorCode?: 'none' | Colors;
-  children: React.ReactNode;
-  secondary?: string;
-}
-
-function BondCardEntry({ caption, textAlign = 'left', colorCode, children, secondary }: BondCardEntryParam): JSX.Element {
-  return (
-    <Stack sx={{
-      '& > span': { textAlign }
-    }}>
-      <Typography component='span' variant='caption'>{caption}</Typography>
-      {colorCode && colorCode !== 'none' ?
-        <Box component='span'><Typography component='span' sx={{ backgroundColor: colorCode, p: '1px 3px 1px 3px' }}>{children}</Typography></Box>
-        : <Typography component='span'>{children}</Typography>}
-      {secondary && <Typography component='span' variant='subtitle2'>{secondary}</Typography>}
-    </Stack>
-  );
-}
-
-type BondCardSectionParam = {
-  children: React.ReactNode;
-}
-
-function BondCardSection({ children }: BondCardSectionParam): JSX.Element {
-  return (
-    <Stack direction='row' sx={{
-      p: 1,
-      pb: 0,
-      justifyContent: 'space-between'
-    }}>
-      {children}
-    </Stack>
-  );
-}
+import YTMReportEntry from "./BondCardYTMSection";
+import { BondCardSection } from "./BondCardSection";
+import { BondCardEntry, Colors } from "./BondCardEntry";
 
 const colors: Colors[] = ['lightgreen', 'yellow', 'orange', 'lightpink'];
 
@@ -70,8 +33,9 @@ export default function BondCard({ bondReport, bondsStatistics }: BondCardParam)
           lineHeight: 1.3
         },
         '& .MuiTypography-subtitle2': {
-          color: 'dimgray',
-          lineHeight: 1
+          pl: 1,
+//          color: 'dimgray',
+          lineHeight: '24px'
         },
         '& > hr': {
           paddingTop: 1
@@ -114,32 +78,10 @@ export default function BondCard({ bondReport, bondsStatistics }: BondCardParam)
           </BondCardEntry>
         </BondCardSection>
         <Divider />
-        {!bondReport.lastPrice && bondReport.referencePrice && bondReport.referencePriceNetYtm && bondReport.referencePriceGrossYtm && <BondCardSection>
-          <BondCardEntry caption='Reference price'>{bondReport.referencePrice.toFixed(2)}</BondCardEntry>
-          <BondCardEntry caption='Reference price YTM (net)' textAlign='center'>{(bondReport.referencePriceNetYtm.ytm * 100).toFixed(2)}%</BondCardEntry>
-          <BondCardEntry caption='Reference price YTM (gross)' textAlign='end'>{(bondReport.referencePriceGrossYtm.ytm * 100).toFixed(2)}%</BondCardEntry>
-        </BondCardSection>}
-        {bondReport.lastPrice && bondReport.lastPriceNetYtm && bondReport.lastPriceGrossYtm && <BondCardSection>
-          <BondCardEntry caption='Last price (date/time)' secondary={`(${bondReport.lastDateTime})`}>
-            {bondReport.lastPrice.toFixed(2)}
-          </BondCardEntry>
-          <BondCardEntry caption='Last price YTM (net)' textAlign='center'>{(bondReport.lastPriceNetYtm.ytm * 100).toFixed(2)}%</BondCardEntry>
-          <BondCardEntry caption='Last price YTM (gross)' textAlign='end'>{(bondReport.lastPriceGrossYtm.ytm * 100).toFixed(2)}%</BondCardEntry>
-        </BondCardSection>}
-        {bondReport.bidPrice && bondReport.bidPriceNetYtm && bondReport.bidPriceGrossYtm && <BondCardSection>
-          <BondCardEntry caption='Bid price (V, C)' secondary={`(${bondReport.bidVolume}, ${bondReport.bidCount})`}>
-            {bondReport.bidPrice.toFixed(2)}
-          </BondCardEntry>
-          <BondCardEntry caption='Bid price YTM (net)' textAlign='center'>{(bondReport.bidPriceNetYtm.ytm * 100).toFixed(2)}%</BondCardEntry>
-          <BondCardEntry caption='Bid price YTM (gross)' textAlign='end'>{(bondReport.bidPriceGrossYtm.ytm * 100).toFixed(2)}%</BondCardEntry>
-        </BondCardSection>}
-        {bondReport.askPrice && bondReport.askPriceNetYtm && bondReport.askPriceGrossYtm && <BondCardSection>
-          <BondCardEntry caption='Ask price (V, C)' secondary={`(${bondReport.askVolume}, ${bondReport.askCount})`}>
-            {bondReport.askPrice.toFixed(2)}
-          </BondCardEntry>
-          <BondCardEntry caption='Ask price YTM (net)' textAlign='center'>{(bondReport.askPriceNetYtm.ytm * 100).toFixed(2)}%</BondCardEntry>
-          <BondCardEntry caption='Ask price YTM (gross)' textAlign='end'>{(bondReport.askPriceGrossYtm.ytm * 100).toFixed(2)}%</BondCardEntry>
-        </BondCardSection>}
+        {!bondReport.lastPrice && bondReport.referencePrice && <YTMReportEntry title='Reference price' bondReport={bondReport} price={bondReport.referencePrice} />}
+        {bondReport.lastPrice && <YTMReportEntry title='Last price (date/time)' bondReport={bondReport} price={bondReport.lastPrice} secondary={bondReport.lastDateTime} />}
+        {bondReport.bidPrice && <YTMReportEntry title='Bid price (vol, cnt)' bondReport={bondReport} price={bondReport.bidPrice} secondary={`(${bondReport.bidVolume}, ${bondReport.bidCount})`} />}
+        {bondReport.askPrice && <YTMReportEntry title='Ask price (vol, cnt)' bondReport={bondReport} price={bondReport.askPrice} secondary={`(${bondReport.askVolume}, ${bondReport.askCount})`} />}
         <Typography component='span' sx={{
           display: 'flex',
           justifyContent: 'right',

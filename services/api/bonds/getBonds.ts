@@ -26,6 +26,7 @@ export const handler = lambdaHandler<BondReport[]>(async event => {
             nominalValue: dbBond.nominalValue,
             currency: dbBond.currency,
             maturityDay: dbBond.maturityDay,
+            maturityDayTs: dbBond.maturityDayTs,
             interestType: dbBond.interestType,
             interestVariable: dbBond.interestVariable,
             interestConst: dbBond.interestConst,
@@ -49,7 +50,7 @@ export const handler = lambdaHandler<BondReport[]>(async event => {
         const accuredInterest = nextInterestRightsDay && nextInterestPayoffDay
             && nextInterestRightsDay < nextInterestPayoffDay ? accumulatedInterest : 0;
 
-        const ytmCalculator = new YieldToMaturityCalculator(bondDetails, 0.0019);
+        //const ytmCalculator = new YieldToMaturityCalculator(bondDetails, 0.0019);
 
         return {
             details: bondDetails,
@@ -63,30 +64,47 @@ export const handler = lambdaHandler<BondReport[]>(async event => {
             nextInterest: nextInterest || 0,
 
             ...(dbBond.referencePrice && {
-                referencePrice: dbBond.referencePrice,
-                referencePriceNetYtm: ytmCalculator.forPrice(dbBond.referencePrice, 0.19),
-                referencePriceGrossYtm: ytmCalculator.forPrice(dbBond.referencePrice, 0),
+                referencePrice: dbBond.referencePrice
             }),
             ...(dbBond.lastPrice && {
                 lastDateTime: dbBond.lastDateTime,
                 lastPrice: dbBond.lastPrice,
-                lastPriceNetYtm: ytmCalculator.forPrice(dbBond.lastPrice, 0.19),
-                lastPriceGrossYtm: ytmCalculator.forPrice(dbBond.lastPrice, 0)
             }),
             ...(dbBond.bidPrice && dbBond.bidVolume && dbBond.bidCount && {
                 bidCount: dbBond.bidCount,
                 bidVolume: dbBond.bidVolume,
                 bidPrice: dbBond.bidPrice,
-                bidPriceNetYtm: ytmCalculator.forPrice(dbBond.bidPrice, 0.19),
-                bidPriceGrossYtm: ytmCalculator.forPrice(dbBond.bidPrice, 0)
             }),
             ...(dbBond.askPrice && dbBond.askVolume && dbBond.askCount && {
                 askPrice: dbBond.askPrice,
                 askVolume: dbBond.askVolume,
                 askCount: dbBond.askCount,
-                askPriceNetYtm: ytmCalculator.forPrice(dbBond.askPrice, 0.19),
-                askPriceGrossYtm: ytmCalculator.forPrice(dbBond.askPrice, 0)
             }),
+            // ...(dbBond.referencePrice && {
+            //     referencePrice: dbBond.referencePrice,
+            //     referencePriceNetYtm: ytmCalculator.forPrice(dbBond.referencePrice, 0.19),
+            //     referencePriceGrossYtm: ytmCalculator.forPrice(dbBond.referencePrice, 0),
+            // }),
+            // ...(dbBond.lastPrice && {
+            //     lastDateTime: dbBond.lastDateTime,
+            //     lastPrice: dbBond.lastPrice,
+            //     lastPriceNetYtm: ytmCalculator.forPrice(dbBond.lastPrice, 0.19),
+            //     lastPriceGrossYtm: ytmCalculator.forPrice(dbBond.lastPrice, 0)
+            // }),
+            // ...(dbBond.bidPrice && dbBond.bidVolume && dbBond.bidCount && {
+            //     bidCount: dbBond.bidCount,
+            //     bidVolume: dbBond.bidVolume,
+            //     bidPrice: dbBond.bidPrice,
+            //     bidPriceNetYtm: ytmCalculator.forPrice(dbBond.bidPrice, 0.19),
+            //     bidPriceGrossYtm: ytmCalculator.forPrice(dbBond.bidPrice, 0)
+            // }),
+            // ...(dbBond.askPrice && dbBond.askVolume && dbBond.askCount && {
+            //     askPrice: dbBond.askPrice,
+            //     askVolume: dbBond.askVolume,
+            //     askCount: dbBond.askCount,
+            //     askPriceNetYtm: ytmCalculator.forPrice(dbBond.askPrice, 0.19),
+            //     askPriceGrossYtm: ytmCalculator.forPrice(dbBond.askPrice, 0)
+            // }),
         }
     });
 
