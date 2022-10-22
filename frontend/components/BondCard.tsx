@@ -50,11 +50,9 @@ export default function BondCard({ bondReport, bondsStatistics }: BondCardParam)
           <BondCardEntry caption='Maturity day'>
             {bondReport.details.maturityDay.toString().substring(0, 10)}
           </BondCardEntry>
-          <Divider orientation='vertical' variant='middle' flexItem />
           <BondCardEntry caption='Nominal value' textAlign='center' colorCode={nominalValueColorCode}>
             {formatCurrency(bondReport.details.nominalValue, bondReport.details.currency)}
           </BondCardEntry>
-          <Divider orientation='vertical' variant='middle' flexItem />
           <BondCardEntry caption='Interest Type' textAlign='end' colorCode={interestConstColorCode}>
             {bondReport.details.interestVariable && `${bondReport.details.interestVariable} + `}{bondReport.details.interestConst}%
           </BondCardEntry>
