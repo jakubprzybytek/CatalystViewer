@@ -1,8 +1,9 @@
-import { useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import * as R from 'ramda';
 import Grid from '@mui/material/Grid';
 import Stack from '@mui/material/Stack';
 import Paper from '@mui/material/Paper';
+import Collapse from '@mui/material/Collapse';
 import FormControl from '@mui/material/FormControl';
 import FormGroup from '@mui/material/FormGroup';
 import FormLabel from '@mui/material/FormLabel';
@@ -12,6 +13,7 @@ import Select, { SelectChangeEvent } from '@mui/material/Select';
 import TextField from '@mui/material/TextField';
 import MenuItem from '@mui/material/MenuItem';
 import Chip from '@mui/material/Chip';
+import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
 import { BondReport, BondDetails } from '../sdk/GetBonds';
 import { useArrayLocalStorage, useLocalStorage } from '../common/UseStorage';
@@ -42,6 +44,8 @@ const defaultIssuers: string[] = [];
 const defaultMarkets = ['GPW RR', 'GPW ASO'];
 
 export default function BondsViewerFilter({ allBondReports, setBondTypeFilter: setBondTypeFilter2, setFilteredBondReports: setFilteredBonds }: BondsViewerFilterParams): JSX.Element {
+  const [moreFiltersExpanded, setMoreFiltersExpanded] = useState(false);
+
   const [bondTypeFilter, setBondTypeFilter] = useLocalStorage<string>('filter.bondType', 'Corporate bonds');
   const [issuersFilter, addIssuerFilter, removeIssuerFilter] = useArrayLocalStorage('filter.issuer', defaultIssuers);
   const [marketsFilter, addMarketFilter, removeMarketFilter] = useArrayLocalStorage<string>('filter.market', defaultMarkets);
@@ -66,19 +70,54 @@ export default function BondsViewerFilter({ allBondReports, setBondTypeFilter: s
 
   return (
     <Paper sx={{ p: 1 }}>
+      <Grid container item xs={12} sm={6} md={4}>
+        <FormControl fullWidth>
+          <TextField label="Bond type" size="small" fullWidth select
+            value={availableBondTypes.includes(bondTypeFilter) ? bondTypeFilter : ''}
+            onChange={(event: React.ChangeEvent<HTMLInputElement>) => { setBondTypeFilter(event.target.value); setBondTypeFilter2(event.target.value); }}>
+            <MenuItem value='all' sx={{ fontStyle: 'italic' }}>All</MenuItem>
+            {availableBondTypes.map((bondType) => (
+              <MenuItem key={bondType} value={bondType}>{bondType}</MenuItem>
+            ))}
+          </TextField>
+        </FormControl>
+      </Grid>
       <Grid container spacing={1}>
         <Grid item xs={12} sm={6} md={4}>
-          <Stack spacing={1}>
-            <FormControl fullWidth>
-              <TextField label="Bond type" size="small" fullWidth select
-                value={availableBondTypes.includes(bondTypeFilter) ? bondTypeFilter : ''}
-                onChange={(event: React.ChangeEvent<HTMLInputElement>) => { setBondTypeFilter(event.target.value); setBondTypeFilter2(event.target.value); }}>
-                <MenuItem value='all' sx={{ fontStyle: 'italic' }}>All</MenuItem>
-                {availableBondTypes.map((bondType) => (
-                  <MenuItem key={bondType} value={bondType}>{bondType}</MenuItem>
-                ))}
-              </TextField>
-            </FormControl>
+          <FormControl fullWidth>
+            <FormLabel>Issuers</FormLabel>
+            <Select label="New" size="small" fullWidth
+              value=''
+              onChange={(event: SelectChangeEvent) => addIssuerFilter(event.target.value)}>
+              {availableIssuers.map((issuer) => (
+                <MenuItem key={issuer} value={issuer}>{issuer}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Grid>
+        <Grid item xs={12}>
+          <Stack direction='row' flexWrap='wrap' sx={{
+            '& > div': {
+              mr: 1,
+              mb: 1
+            }
+          }}>
+            {issuersFilter && issuersFilter.map(issuer =>
+              <Chip key={issuer} label={issuer} size='small'
+                onDelete={() => { removeIssuerFilter(issuer) }} />
+            )}
+          </Stack>
+        </Grid>
+        <Grid item xs={12}>
+          <Link sx={{ cursor: 'pointer' }}
+            onClick={() => setMoreFiltersExpanded(!moreFiltersExpanded)}>
+            {moreFiltersExpanded ? 'Less filters' : 'More filters'}
+          </Link>
+        </Grid>
+      </Grid>
+      <Collapse in={moreFiltersExpanded}>
+        <Grid container spacing={1} marginTop={1}>
+          <Grid item xs={12} sm={6} md={4}>
             <FormControl fullWidth>
               <TextField label="Max nominal value" size="small" fullWidth select
                 value={maxNominalFilter}
@@ -90,6 +129,8 @@ export default function BondsViewerFilter({ allBondReports, setBondTypeFilter: s
                 <MenuItem value={1000000}>1 000 000</MenuItem>
               </TextField>
             </FormControl>
+          </Grid>
+          <Grid item xs={12} sm={6} md={6}>
             <FormControl fullWidth>
               <FormLabel component="legend">Market</FormLabel>
               <FormGroup row>
@@ -102,33 +143,9 @@ export default function BondsViewerFilter({ allBondReports, setBondTypeFilter: s
                 ))}
               </FormGroup>
             </FormControl>
-          </Stack>
+          </Grid>
         </Grid>
-        <Grid item xs={12} sm={6} md={4}>
-          <FormControl fullWidth>
-            <Stack spacing={1}>
-              <FormLabel>Issuers</FormLabel>
-              <Select label="New" size="small" fullWidth
-                value=''
-                onChange={(event: SelectChangeEvent) => addIssuerFilter(event.target.value)}>
-                {availableIssuers.map((issuer) => (
-                  <MenuItem key={issuer} value={issuer}>{issuer}</MenuItem>
-                ))}
-              </Select>
-              <Stack direction='row' flexWrap='wrap' sx={{
-                '& > div' : {
-                  mr: 1,
-                  mb: 1
-                }
-              }}>
-                {issuersFilter && issuersFilter.map(issuer =>
-                  <Chip key={issuer} label={issuer} onDelete={() => { removeIssuerFilter(issuer) }} />
-                )}
-              </Stack>
-            </Stack>
-          </FormControl>
-        </Grid>
-      </Grid>
+      </Collapse>
       <Typography sx={{ ml: 2, mt: 2 }}>Listing {filteredBonds.length} bonds</Typography>
     </Paper >
   );
