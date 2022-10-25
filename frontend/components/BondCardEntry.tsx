@@ -2,13 +2,13 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { Box } from "@mui/system";
 
-export type Colors = 'lightpink' | 'orange' | 'yellow' | 'lightgreen';
+export type Colors = 'lightpink' | 'orange' | 'yellow' | 'lightgreen' | 'none';
 
 type BondCardEntryParam = {
   caption: string;
   width?: string;
   textAlign?: 'left' | 'center' | 'end';
-  colorCode?: 'none' | Colors;
+  colorCode?: Colors;
   children: React.ReactNode;
   secondary?: string;
 }
