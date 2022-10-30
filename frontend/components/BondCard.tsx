@@ -7,7 +7,7 @@ import { formatCurrency } from "../common/Formats";
 import YTMReportEntry from "./BondCardYTMSection";
 import { BondCardSection } from "./BondCardSection";
 import { BondCardEntry, Colors } from "./BondCardEntry";
-import { BondsStatistics, interestVariablePart } from "../common/BondsStatistics";
+import { BondsStatistics, interestVariablePart } from "../bonds/statistics";
 
 const colors: Colors[] = ['lightgreen', 'yellow', 'orange', 'lightpink'];
 
@@ -19,8 +19,8 @@ type BondCardParam = {
 export default function BondCard({ bondReport, bondsStatistics }: BondCardParam): JSX.Element {
   const { details } = bondReport;
   const nominalValueColorCode: Colors = details.nominalValue >= 50000 ? 'lightpink' : details.nominalValue >= 10000 ? 'orange' : 'lightgreen';
-  const interestConstIndex = bondsStatistics[details.type][interestVariablePart(bondReport)]
-    .findIndex((percentile) => bondReport.details.interestConst <= percentile) - 1;
+  const interestConstIndex = bondsStatistics.byType[details.type][interestVariablePart(bondReport)]
+    .findIndex(percentile => bondReport.details.interestConst <= percentile) - 1;
   const interestConstColorCode: Colors = colors[Math.max(interestConstIndex, 0)];
   const accuredInterestColorCode: Colors = bondReport.accuredInterest == 0 ? 'lightgreen' : 'none';
 

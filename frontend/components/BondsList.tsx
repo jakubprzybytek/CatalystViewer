@@ -4,7 +4,7 @@ import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import BondCard from "./BondCard";
 import { BondReport } from "../sdk/GetBonds";
-import { BondsStatistics } from '../common/BondsStatistics';
+import { BondsStatistics } from '../bonds/statistics';
 
 const BATCH_SIZE = 20;
 

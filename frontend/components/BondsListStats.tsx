@@ -7,7 +7,7 @@ import Box from "@mui/material/Box";
 import Paper from "@mui/material/Paper";
 import Divider from '@mui/material/Divider';
 import { BondReport, BondDetails } from "../sdk/GetBonds";
-import { BondsStatistics } from '../common/BondsStatistics';
+import { BondsStatistics } from '../bonds/statistics';
 
 const interestVariable = R.compose<BondReport[], BondDetails, string | undefined, string>(R.defaultTo('Const'), R.prop('interestVariable'), R.prop('details'));
 const sort = R.sortBy<string>(R.identity);
@@ -63,17 +63,18 @@ type BondsListParam = {
 }
 
 export default function BondsListStats({ bondReports, bondTypeFilter, bondsStatistics }: BondsListParam): JSX.Element {
-  const bondsByInterestVariableTypes = R.groupBy(interestVariable)(bondReports);
+  const bondsByInterestBaseTypes = R.groupBy(interestVariable)(bondReports);
+  const bondInterestBaseTypePercentiles = bondTypeFilter === 'all' ? bondsStatistics.all : bondsStatistics.byType[bondTypeFilter];
 
   return (
     <Box>
       <Grid container spacing={1}>
-        {sort(Object.keys(bondsByInterestVariableTypes)).map((interestVariableType) => (
-          <Grid key={interestVariableType} item xs={6} sm={4} md={3}>
+        {sort(Object.keys(bondsByInterestBaseTypes)).map(interestBaseType => (
+          <Grid key={interestBaseType} item xs={6} sm={4} md={3}>
             <BondInterestTypeStat
-              interestConstPercentiles={bondsStatistics[bondTypeFilter][interestVariableType]}
-              interestVariableType={interestVariableType}
-              bondReports={bondsByInterestVariableTypes[interestVariableType]} />
+              interestConstPercentiles={bondInterestBaseTypePercentiles[interestBaseType]}
+              interestVariableType={interestBaseType}
+              bondReports={bondsByInterestBaseTypes[interestBaseType]} />
           </Grid>
         ))}
       </Grid>

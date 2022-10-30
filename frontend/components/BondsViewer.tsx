@@ -3,7 +3,7 @@ import Box from '@mui/system/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import BondsList from './BondsList';
 import { getBonds, BondReport } from '../sdk/GetBonds';
-import { computeStatistics } from '../common/BondsStatistics';
+import { computeStatistics } from '../bonds/statistics';
 import BondsViewerFilter from './BondsViewerFilter';
 import BondsListStats from './BondsListStats';
 
