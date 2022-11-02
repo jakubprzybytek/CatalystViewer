@@ -13,10 +13,20 @@ async function downloadCatalystFile(url: string, fileNameToSave: string) {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36',
         },
         responseType: 'arraybuffer'
-    });
+    })
+        .then(response => {
+            if (response.status === 200 && response.headers['content-type'] === 'application/vnd.ms-excel') {
+                return response.data;
+            } else {
+                throw Error(`Cannot fetch: ${response.statusText} / content-type: ${response.headers['content-type']}`);
+            }
+        })
+        .catch(error => {
+            throw Error(`Cannot fetch: ${error}`);
+        });
 
     console.log(`Storing as: ${fileNameToSave}`);
-    writeFileSync(fileNameToSave, response.data, { encoding: null });
+    writeFileSync(fileNameToSave, response, { encoding: null });
 }
 
 export async function downloadLatestCatalystDailyStatisticsFile(): Promise<string> {
@@ -24,12 +34,12 @@ export async function downloadLatestCatalystDailyStatisticsFile(): Promise<strin
         throw new Error('Temp folder is not defined');
     }
 
-    let previousDay = subDays(new Date(), 1);
-    while ((getDay(previousDay) + 1) % 7 < 2) { // skip Saturday and Sunday
-        previousDay = subDays(previousDay, 1);
+    let reportDay = subDays(new Date(), 1);
+    while ((getDay(reportDay) + 1) % 7 < 2) { // skip Saturday and Sunday
+        reportDay = subDays(reportDay, 1);
     }
 
-    const fileName = `catalyst_${format(previousDay, 'yyyyMMdd')}.xls`;
+    const fileName = `catalyst_${format(reportDay, 'yyyyMMdd')}.xls`;
     console.log(`Daily statistics xls file: ${fileName}`);
 
     const localFileName = `${process.env.TEMP_FOLDER}/${fileName}`;
