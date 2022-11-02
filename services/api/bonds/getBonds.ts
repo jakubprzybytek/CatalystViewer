@@ -3,7 +3,6 @@ import { format, differenceInDays } from 'date-fns';
 import { lambdaHandler, Success } from "../HandlerProxy";
 import { BondDetails } from '../../bonds';
 import { BondDetailsTable } from '../../storage/BondDetailsTable';
-import { YieldToMaturityCalculator } from '../../bonds/formulas/YieldToMaturity';
 import { BondReport } from ".";
 
 const dynamoDBClient = new DynamoDBClient({});
@@ -50,8 +49,6 @@ export const handler = lambdaHandler<BondReport[]>(async event => {
         const accuredInterest = nextInterestRightsDay && nextInterestPayoffDay
             && nextInterestRightsDay < nextInterestPayoffDay ? accumulatedInterest : 0;
 
-        //const ytmCalculator = new YieldToMaturityCalculator(bondDetails, 0.0019);
-
         return {
             details: bondDetails,
             detailsUpdated: dbBond.updated,
@@ -79,32 +76,7 @@ export const handler = lambdaHandler<BondReport[]>(async event => {
                 askPrice: dbBond.askPrice,
                 askVolume: dbBond.askVolume,
                 askCount: dbBond.askCount,
-            }),
-            // ...(dbBond.referencePrice && {
-            //     referencePrice: dbBond.referencePrice,
-            //     referencePriceNetYtm: ytmCalculator.forPrice(dbBond.referencePrice, 0.19),
-            //     referencePriceGrossYtm: ytmCalculator.forPrice(dbBond.referencePrice, 0),
-            // }),
-            // ...(dbBond.lastPrice && {
-            //     lastDateTime: dbBond.lastDateTime,
-            //     lastPrice: dbBond.lastPrice,
-            //     lastPriceNetYtm: ytmCalculator.forPrice(dbBond.lastPrice, 0.19),
-            //     lastPriceGrossYtm: ytmCalculator.forPrice(dbBond.lastPrice, 0)
-            // }),
-            // ...(dbBond.bidPrice && dbBond.bidVolume && dbBond.bidCount && {
-            //     bidCount: dbBond.bidCount,
-            //     bidVolume: dbBond.bidVolume,
-            //     bidPrice: dbBond.bidPrice,
-            //     bidPriceNetYtm: ytmCalculator.forPrice(dbBond.bidPrice, 0.19),
-            //     bidPriceGrossYtm: ytmCalculator.forPrice(dbBond.bidPrice, 0)
-            // }),
-            // ...(dbBond.askPrice && dbBond.askVolume && dbBond.askCount && {
-            //     askPrice: dbBond.askPrice,
-            //     askVolume: dbBond.askVolume,
-            //     askCount: dbBond.askCount,
-            //     askPriceNetYtm: ytmCalculator.forPrice(dbBond.askPrice, 0.19),
-            //     askPriceGrossYtm: ytmCalculator.forPrice(dbBond.askPrice, 0)
-            // }),
+            })
         }
     });
 
