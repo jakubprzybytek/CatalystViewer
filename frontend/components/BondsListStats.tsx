@@ -8,11 +8,49 @@ import Paper from "@mui/material/Paper";
 import Divider from '@mui/material/Divider';
 import { BondReport, BondDetails } from "../sdk/GetBonds";
 import { BondsStatistics } from '../bonds/statistics';
+import { interestConstPartColors } from './BondCard';
 
 const interestVariable = R.compose<BondReport[], BondDetails, string | undefined, string>(R.defaultTo('Const'), R.prop('interestVariable'), R.prop('details'));
 const sort = R.sortBy<string>(R.identity);
 
 const constInterests = R.map(R.compose<BondReport[], BondDetails, number>(R.prop('interestConst'), R.prop('details')));
+
+type InterestChartParam = {
+  quartiles: number[];
+  bondReports: BondReport[];
+}
+
+function InterestChart({ quartiles, bondReports }: InterestChartParam) {
+  const margin = Math.max((quartiles[quartiles.length - 1] - quartiles[0]) * 0.1, 0.5);
+  const min = quartiles[0] - margin;
+  const max = quartiles[quartiles.length - 1] + margin;
+  const xScale = (value: number) => (value - min) / (max - min) * 100;
+  return (
+    <svg width='100%' viewBox='-5 0 110 20' xmlns='http://www.w3.org/2000/svg'>
+      <line x1={0} y1={10} x2={100} y2={10} stroke='grey' strokeWidth={0.2} />
+      {quartiles.map((quartile, index) => {
+        const x = xScale(quartile);
+        const y = index % 2 ? 4 : 20;
+        return (
+          <>
+            <line key={index} x1={x} y1={9} x2={x} y2={11} stroke='grey' strokeWidth={0.2} />
+            <text x={x} y={y} style={{ 'fontSize': '0.3rem' }} fill='grey' textAnchor='middle'>{quartile.toFixed(2)}</text>
+          </>
+        );
+      })}
+      {bondReports.map((bond, index) => {
+        const x = xScale(bond.details.interestConst);
+        const y = 8 + Math.random() * 4;
+        const interestConstIndex = quartiles
+          .findIndex(percentile => bond.details.interestConst <= percentile) - 1;
+        const interestConstColorCode = interestConstPartColors[Math.max(interestConstIndex, 0)];
+        return (
+          <circle key={index} cx={x} cy={y} r={0.75} fill={interestConstColorCode} />
+        );
+      })}
+    </svg>
+  );
+}
 
 type BondInterestTypeStatParam = {
   interestVariableType: string;
@@ -46,12 +84,7 @@ function BondInterestTypeStat({ interestVariableType, interestConstPercentiles, 
           <Typography>{average(constInterests(bondReports)).toFixed(2)}%</Typography>
         </Stack>
       </Stack>
-      <Stack>
-        <Typography variant='caption'>Quartiles (0, ¼, ½, ¾, 1)</Typography>
-        {interestConstPercentiles && <Typography>{interestConstPercentiles
-          .map((q) => q.toFixed(2))
-          .join(', ')}</Typography>}
-      </Stack>
+      <InterestChart quartiles={interestConstPercentiles} bondReports={bondReports} />
     </Paper>
   );
 }
