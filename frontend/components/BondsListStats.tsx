@@ -45,7 +45,7 @@ function InterestChart({ quartiles, bondReports }: InterestChartParam) {
           .findIndex(percentile => bond.details.interestConst <= percentile) - 1;
         const interestConstColorCode = interestConstPartColors[Math.max(interestConstIndex, 0)];
         return (
-          <circle key={index} cx={x} cy={y} r={0.75} fill={interestConstColorCode} />
+          <circle key={index} cx={x} cy={y} r={0.75} stroke='grey' strokeWidth={0.2} fill={interestConstColorCode} />
         );
       })}
     </svg>
