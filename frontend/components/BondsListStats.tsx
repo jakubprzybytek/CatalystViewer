@@ -9,6 +9,7 @@ import Divider from '@mui/material/Divider';
 import { BondReport, BondDetails } from "../sdk/GetBonds";
 import { BondsStatistics } from '../bonds/statistics';
 import { interestConstPartColors } from './BondCard';
+import { Fragment } from 'react';
 
 const interestVariable = R.compose<BondReport[], BondDetails, string | undefined, string>(R.defaultTo('Const'), R.prop('interestVariable'), R.prop('details'));
 const sort = R.sortBy<string>(R.identity);
@@ -32,10 +33,10 @@ function InterestChart({ quartiles, bondReports }: InterestChartParam) {
         const x = xScale(quartile);
         const y = index % 2 ? 4 : 20;
         return (
-          <>
-            <line key={index} x1={x} y1={9} x2={x} y2={11} stroke='grey' strokeWidth={0.2} />
+          <Fragment key={index}>
+            <line x1={x} y1={9} x2={x} y2={11} stroke='grey' strokeWidth={0.2} />
             <text x={x} y={y} style={{ 'fontSize': '0.3rem' }} fill='grey' textAnchor='middle'>{quartile.toFixed(2)}</text>
-          </>
+          </Fragment>
         );
       })}
       {bondReports.map((bond, index) => {
@@ -98,7 +99,8 @@ type BondsListParam = {
 export default function BondsListStats({ bondReports, bondTypeFilter, bondsStatistics }: BondsListParam): JSX.Element {
   const bondsByInterestBaseTypes = R.groupBy(interestVariable)(bondReports);
   const bondInterestBaseTypePercentiles = bondTypeFilter === 'all' ? bondsStatistics.all : bondsStatistics.byType[bondTypeFilter];
-
+  console.log(bondInterestBaseTypePercentiles)
+  console.log(bondTypeFilter)
   return (
     <Box>
       <Grid container spacing={1}>

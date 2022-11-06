@@ -73,7 +73,10 @@ export default function BondsViewerFilter({ allBondReports, setBondTypeFilter: s
   const filteredBonds = useMemo(() => filterBonds(marketsFilter, bondTypeFilter, issuersFilter, maxNominalFilter)(allBondReports),
     [allBondReports, marketsFilter, issuersFilter, bondTypeFilter, maxNominalFilter]);
 
-  useEffect(() => setFilteredBonds(sortByName(filteredBonds)), [setFilteredBonds, filteredBonds]);
+  useEffect(() => {
+    setFilteredBonds(sortByName(filteredBonds));
+    setBondTypeFilter2(bondTypeFilter);
+  }, [setFilteredBonds, filteredBonds, bondTypeFilter]);
 
   return (
     <Paper sx={{ p: 1 }}>
@@ -81,7 +84,7 @@ export default function BondsViewerFilter({ allBondReports, setBondTypeFilter: s
         <FormControl fullWidth>
           <TextField label="Bond type" size="small" fullWidth select
             value={availableBondTypes.includes(bondTypeFilter) ? bondTypeFilter : ''}
-            onChange={(event: React.ChangeEvent<HTMLInputElement>) => { setBondTypeFilter(event.target.value); setBondTypeFilter2(event.target.value); }}>
+            onChange={(event: React.ChangeEvent<HTMLInputElement>) => setBondTypeFilter(event.target.value)}>
             <MenuItem value='all' sx={{ fontStyle: 'italic' }}>All</MenuItem>
             {availableBondTypes.map((bondType) => (
               <MenuItem key={bondType} value={bondType}>{bondType}</MenuItem>
