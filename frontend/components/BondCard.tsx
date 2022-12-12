@@ -60,8 +60,12 @@ export default function BondCard({ bondReport, bondsStatistics }: BondCardParam)
         </BondCardSection>
         <Divider />
         <BondCardSection>
-          <BondCardEntry caption='Current interest (since)' secondary={`(${bondReport.currentInterestPeriodFirstDay})`}>{bondReport.details.currentInterestRate.toFixed(2)}%</BondCardEntry>
-          <BondCardEntry caption='Accured interest (acc)' textAlign='center' colorCode={accuredInterestColorCode} secondary={bondReport.details.accuredInterest == 0 ? `(${formatCurrency(bondReport.accumulatedInterest, bondReport.details.currency)})` : undefined}>{formatCurrency(bondReport.details.accuredInterest, bondReport.details.currency)}</BondCardEntry>
+          <BondCardEntry caption='Current interest (since)' secondary={`(${bondReport.currentInterestPeriodFirstDay})`}>
+            {bondReport.details.currentInterestRate.toFixed(2)}%
+          </BondCardEntry>
+          <BondCardEntry caption='Accured interest (until)' textAlign='center' colorCode={accuredInterestColorCode} secondary={`(${bondReport.nextInterestRightsDay})`}>
+            {formatCurrency(bondReport.details.accuredInterest, bondReport.details.currency)} {bondReport.details.accuredInterest == 0 ? `(${formatCurrency(bondReport.accumulatedInterest, bondReport.details.currency)})` : undefined}
+          </BondCardEntry>
           <BondCardEntry caption='Next interest (when)' secondary={`(${bondReport.nextInterestPayoffDay})`} textAlign='end'>
             {formatCurrency(bondReport.nextInterest, bondReport.details.currency)}
           </BondCardEntry>
