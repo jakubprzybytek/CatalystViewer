@@ -44,7 +44,7 @@ export default function BondCard({ bondReport, bondsStatistics }: BondCardParam)
           <BondCardEntry caption='Market' textAlign='end'>{bondReport.details.market}</BondCardEntry>
         </BondCardSection>
         <BondCardSection>
-          <BondCardEntry caption='Issuer'>{bondReport.details.issuer}</BondCardEntry>
+          <BondCardEntry caption='Issuer' variant='h6'>{bondReport.details.issuer}</BondCardEntry>
           <BondCardEntry caption='Type' textAlign='end'>{bondReport.details.type}</BondCardEntry>
         </BondCardSection>
         <BondCardSection>
