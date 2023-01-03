@@ -52,6 +52,7 @@ export const handler = lambdaHandler<BondReport[]>(async event => {
         return {
             details: bondDetails,
             detailsUpdated: dbBond.updated,
+            detailsUpdatedTs: dbBond.updatedTs,
 
             currentInterestPeriodFirstDay: currentInterestPeriodFirstDay ? format(currentInterestPeriodFirstDay, 'yyyy-MM-dd') : 'n/a',
             nextInterestRightsDay: nextInterestRightsDay ? format(nextInterestRightsDay, 'yyyy-MM-dd') : 'n/a',

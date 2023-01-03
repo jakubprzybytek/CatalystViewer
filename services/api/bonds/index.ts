@@ -6,6 +6,7 @@ export type { BondDetails };
 export type BondReport = {
     details: BondDetails;
     detailsUpdated: string;
+    detailsUpdatedTs: number;
     currentInterestPeriodFirstDay: string;
     nextInterestRightsDay: string;
     nextInterestPayoffDay: string;

@@ -81,7 +81,7 @@ export default function BondCard({ bondReport, bondsStatistics }: BondCardParam)
           pr: 1,
           fontSize: '0.7rem',
           color: 'lightgray'
-        }}>Updated on: {bondReport.detailsUpdated}</Typography>
+        }}>Updated on: {new Date(bondReport.detailsUpdatedTs).toLocaleString('pl-PL')}</Typography>
       </Paper>
     </>
   );

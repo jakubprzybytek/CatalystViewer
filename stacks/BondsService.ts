@@ -7,6 +7,7 @@ export function BondsService({ stack }: StackContext) {
     fields: {
       bondStatus: 'string',
       updated: 'string',
+      updatedTs: 'number',
       name: 'string',
       market: 'string',
       'name#market': 'string',

@@ -25,11 +25,12 @@ export class BondDetailsTable {
     for (const bondsBatch of bondsBatches) {
       const batchWriteParams: BatchWriteItemCommandInput = {
         "RequestItems": {
-          [this.tableName]: bondsBatch.map((dbBondDetails) => ({
+          [this.tableName]: bondsBatch.map(dbBondDetails => ({
             "PutRequest": {
               Item: {
                 bondStatus: { S: dbBondDetails.status },
                 updated: { S: dbBondDetails.updated },
+                updatedTs: { N: dbBondDetails.updatedTs.toString() },
                 issuer: { S: dbBondDetails.issuer },
                 'name#market': { S: `${dbBondDetails.name}#${dbBondDetails.market}` },
                 name: { S: dbBondDetails.name },
@@ -97,6 +98,7 @@ export class BondDetailsTable {
         return {
           status: item['bondStatus']?.['S'] || 'inactive',
           updated: item['updated']?.['S'] || 'n/a',
+          updatedTs: Number(item['updatedTs']?.['N']) || 0,
           issuer: item['issuer']['S'] || '',
           name: item['name']['S'] || '',
           isin: item['isin']['S'] || '',
