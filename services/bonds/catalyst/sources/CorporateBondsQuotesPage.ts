@@ -1,3 +1,5 @@
+// npx esrun .\services\bonds\catalyst\testQuotes.ts
+
 import { CatalystBondQuery } from '.';
 
 const QUOTES_TABLE_REGEX_STRING = '{TITLE} \\({CURRENCY}\\).+?<table(.+?)<\/table>';
@@ -7,14 +9,10 @@ const QUOTE_BOND_NAME_REGEX = /"o-instrumentach-instrument\?nazwa=(.+?)"/;
 const QUOTE_MARKET_REGEX = /<td.+?class="col2">(.+?)<\/td>/;
 const QUOTE_BID_ASK_REGEX = /"col4">(?<referencePrice>.+?)<\/td>.+?"col8">(?<lastDateTime>.+?)<\/td>.+?col10">(?<lastPrice>.+?)<\/td>.+?"col12">(?<bidCount>.+?)<\/td>.+?"col12">(?<bidVolume>.+?)<\/td>.+?"col12">(?<bidPrice>.+?)<\/td>.+?"col13">(?<askPrice>.+?)<\/td>.+?"col13">(?<askVolume>.+?)<\/td>.+?"col13">(?<askCount>.+?)<\/td>.+?/s;
 
-function firstGroup(markup: string, regexp: RegExp): string {
+function firstGroup(markup: string, regexp: RegExp): string | undefined {
     const regexpMatch = markup.match(regexp);
 
-    if (regexpMatch === null) {
-        throw Error(`Cannot find match using ${regexp}`);
-    }
-
-    return regexpMatch[1];
+    return regexpMatch?.[1];
 }
 
 function firstOptionalGroup(markup: string, regexp: RegExp): string | undefined {
@@ -36,10 +34,16 @@ function parseFloat(number: string): number {
 }
 
 export function parseBondsQuotesPage(markup: string, title: string, currency: string): CatalystBondQuery[] {
-    const QUOTES_TABLE_REGEX = new RegExp(QUOTES_TABLE_REGEX_STRING
+    const quotesTableRegex = new RegExp(QUOTES_TABLE_REGEX_STRING
         .replace('{TITLE}', title)
         .replace('{CURRENCY}', currency), 's');
-    const quotesTable = firstGroup(markup, QUOTES_TABLE_REGEX);
+    const quotesTable = firstGroup(markup, quotesTableRegex);
+
+    if (quotesTable === undefined) {
+        console.log(`Could not match ${quotesTableRegex}`);
+        return [];
+    }
+
     const quoteRows = firstGroups(quotesTable, QUOTE_ROW_REGEX);
 
     var currentBondName = 'n/a';
@@ -57,7 +61,7 @@ export function parseBondsQuotesPage(markup: string, title: string, currency: st
 
             return {
                 name: currentBondName,
-                market: firstGroup(quoteRowMarkup, QUOTE_MARKET_REGEX).replace('&nbsp;', ' '),
+                market: firstGroup(quoteRowMarkup, QUOTE_MARKET_REGEX)?.replace('&nbsp;', ' ') || 'n/a',
                 ...(referencePrice !== '-' && { referencePrice: parseFloat(referencePrice) }),
                 ...(lastDateTime.trim() !== '-' && { lastDateTime: lastDateTime.trim() }),
                 ...(lastPrice.trim() !== '-' && { lastPrice: parseFloat(lastPrice) }),

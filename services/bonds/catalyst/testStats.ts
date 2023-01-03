@@ -1,3 +1,5 @@
+// npx esrun .\services\bonds\catalyst\testStats.ts
+
 import { CatalystDailyStatisticsBondDetails, getLatestCatalystDailyStatistics } from ".";
 
 (async () => {
