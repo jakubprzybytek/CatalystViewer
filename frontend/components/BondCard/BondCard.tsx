@@ -1,15 +1,49 @@
+import Stack from "@mui/material/Stack";
 import Divider from '@mui/material/Divider';
 import Paper from "@mui/material/Paper";
 import Link from "@mui/material/Link";
 import Typography from "@mui/material/Typography";
-import { BondReport } from "../sdk/GetBonds";
-import { formatCurrency } from "../common/Formats";
+import { BondReport } from "../../sdk/GetBonds";
+import { formatCurrency } from "../../common/Formats";
 import YTMReportEntry from "./BondCardYTMSection";
 import { BondCardSection } from "./BondCardSection";
-import { BondCardEntry, Color } from "./BondCardEntry";
-import { BondsStatistics, interestVariablePart } from "../bonds/statistics";
+import { BondCardEntry, BondCardEntry2, Color } from "./BondCardEntry";
+import { BondsStatistics, interestVariablePart } from "../../bonds/statistics";
 
 export const interestConstPartColors: Color[] = ['lightgreen', 'yellow', 'orange', 'lightpink'];
+
+type BondCardCurrentInterestSectionParam = {
+  bondReport: BondReport;
+}
+
+function BondCardCurrentInterestSection({ bondReport }: BondCardCurrentInterestSectionParam): JSX.Element {
+  return (
+    <>
+      <BondCardSection>
+        <BondCardEntry2 caption='First day' width='33%'>
+          <Typography component='span'>{bondReport.currentInterestPeriodFirstDay}</Typography>
+        </BondCardEntry2>
+        <BondCardEntry2 caption='Record day' textAlign="center" width='33%'>
+          <Typography component='span'>{bondReport.nextInterestRightsDay}</Typography>
+        </BondCardEntry2>
+        <BondCardEntry2 caption='Payable' textAlign="end" width='33%'>
+          <Typography component='span'>{bondReport.nextInterestPayoffDay}</Typography>
+        </BondCardEntry2>
+      </BondCardSection>
+      <BondCardSection>
+        <BondCardEntry2 caption='Current interest' width='33%'>
+          <Typography variant='h5'>{bondReport.details.currentInterestRate.toFixed(2)}%</Typography>
+        </BondCardEntry2>
+        <BondCardEntry2 caption='Accured interest' textAlign="center" width='33%'>
+          <Typography component='span'>{formatCurrency(bondReport.details.accuredInterest, bondReport.details.currency)}</Typography>
+        </BondCardEntry2>
+        <BondCardEntry2 caption='Full interest' textAlign="end" width='33%'>
+          <Typography component='span'>{formatCurrency(bondReport.nextInterest, bondReport.details.currency)}</Typography>
+        </BondCardEntry2>
+      </BondCardSection>
+    </>
+  );
+}
 
 type BondCardParam = {
   bondReport: BondReport;
@@ -58,6 +92,8 @@ export default function BondCard({ bondReport, bondsStatistics }: BondCardParam)
             {bondReport.details.interestVariable && `${bondReport.details.interestVariable} + `}{bondReport.details.interestConst}%
           </BondCardEntry>
         </BondCardSection>
+        <Divider />
+        <BondCardCurrentInterestSection bondReport={bondReport} />
         <Divider />
         <BondCardSection>
           <BondCardEntry caption='Current interest (since)' secondary={`(${bondReport.currentInterestPeriodFirstDay})`}>

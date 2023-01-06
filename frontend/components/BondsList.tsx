@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import Grid from "@mui/material/Grid";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import BondCard from "./BondCard";
+import BondCard from "./BondCard/BondCard";
 import { BondReport } from "../sdk/GetBonds";
 import { BondsStatistics } from '../bonds/statistics';
 

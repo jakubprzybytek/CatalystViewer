@@ -29,3 +29,15 @@ export function BondCardEntry({ caption, width, variant = 'body1', textAlign = '
     </Stack>
   );
 }
+
+export function BondCardEntry2({ caption, width, textAlign = 'left', children }: BondCardEntryParam): JSX.Element {
+  return (
+    <Stack sx={{
+      '& > span': { textAlign },
+      ...(width && { width })
+    }}>
+      <Typography component='span' variant='caption'>{caption}</Typography>
+      {children}
+    </Stack>
+  );
+}
