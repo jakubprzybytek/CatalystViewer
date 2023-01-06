@@ -46,7 +46,7 @@ export function BondCardValue({ variant = 'body1', colorCode = 'none', children 
       <Typography component='span' variant={variant} sx={{
         backgroundColor: colorCode,
         borderRadius: 1,
-        p: '1px 3px 1px 3px'
+        p: '2px 4px 2px 4px'
       }}>{children}</Typography>
     </Box>
   );
