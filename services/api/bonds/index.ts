@@ -1,21 +1,15 @@
-import { BondDetails } from '../../bonds';
+import { BondDetails, BondCurrentValues } from '../../bonds';
 import { YieldToMaturityReport } from '../../bonds/formulas/YieldToMaturity';
 
-export type { BondDetails };
+export type { BondDetails, BondCurrentValues };
 
 export type BondReport = {
     details: BondDetails;
+    currentValues: BondCurrentValues;
 
     detailsUpdated: string;
     detailsUpdatedTs: number;
 
-    currentInterestFirstDay: number,
-    currentInterestRecordDay: number,
-    currentInterestPayableDay: number,
-
-    accumulatedInterest: number;
-    accuredInterest: number;
-    nextInterest: number;
     referencePrice?: number;
     referencePriceNetYtm?: YieldToMaturityReport;
     referencePriceGrossYtm?: YieldToMaturityReport;

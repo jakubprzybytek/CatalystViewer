@@ -11,8 +11,16 @@ export type BondDetails = {
     readonly interestType: string;
     readonly interestVariable: string | undefined;
     readonly interestConst: number;
-    readonly currentInterestRate: number;
+}
+
+export type BondCurrentValues = {
+    readonly interestFirstDay: number;
+    readonly interestRecordDay: number;
+    readonly interestPayableDay: number;
+
+    readonly interestRate: number;
     readonly accuredInterest: number;
+    readonly fullInterest: number;
 }
 
 export function parseUTCDate(dateString: string): Date {

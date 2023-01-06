@@ -1,4 +1,4 @@
-import { BondDetails } from '../sdk/GetBonds';
+import { BondDetails, BondCurrentValues } from '../sdk/GetBonds';
 
 export type YieldToMaturityReport = {
     buyingPrice: number;
@@ -18,21 +18,23 @@ export type YieldToMaturityReport = {
 
 export class YieldToMaturityCalculator {
     bondDetails: BondDetails;
+    bondCurrentValues: BondCurrentValues;
     commisionRate: number;
 
-    constructor(bondDetails: BondDetails, commisionRate: number) {
+    constructor(bondDetails: BondDetails, bondCurrentValues: BondCurrentValues, commisionRate: number) {
         this.bondDetails = bondDetails;
+        this.bondCurrentValues = bondCurrentValues;
         this.commisionRate = commisionRate;
     }
 
     forPrice(price: number, taxRate: number, today: Date = new Date()): YieldToMaturityReport {
-        const buyingPrice = this.bondDetails.nominalValue * price / 100 + this.bondDetails.accuredInterest;
+        const buyingPrice = this.bondDetails.nominalValue * price / 100 + this.bondCurrentValues.accuredInterest;
         const buyingCommision = buyingPrice * this.commisionRate;
         const totalBuyingPrice = buyingPrice + buyingCommision;
 
         const timeToMature = Math.ceil(this.bondDetails.maturityDayTs - today.valueOf()) / (1000 * 3600 * 24) / 365;
 
-        const totalInterests = this.bondDetails.accuredInterest + (this.bondDetails.nominalValue * this.bondDetails.currentInterestRate / 100) * timeToMature;
+        const totalInterests = this.bondCurrentValues.accuredInterest + (this.bondDetails.nominalValue * this.bondCurrentValues.interestRate / 100) * timeToMature;
         const interestsTax = totalInterests * taxRate;
         const saleProfit = this.bondDetails.nominalValue - totalBuyingPrice;
         const saleTax = saleProfit > 0 ? saleProfit * taxRate : 0;
@@ -63,4 +65,4 @@ export class YieldToMaturityCalculator {
             ytm
         }
     }
-};
+}

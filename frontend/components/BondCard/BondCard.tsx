@@ -61,30 +61,30 @@ function BondCardMainInformationSection({ bondReport, bondsStatistics }: BondCar
 }
 
 function BondCardCurrentInterestSection({ bondReport }: BondReportParam): JSX.Element {
-  const accuredInterestColorCode: ColorCode = bondReport.accuredInterest == 0 ? 'green' : 'none';
+  const accuredInterestColorCode: ColorCode = bondReport.currentValues.accuredInterest == 0 ? 'green' : 'none';
 
   return (
     <>
       <BondCardSection>
         <BondCardEntry caption='First day' width='33%'>
-          <BondCardValue>{formatDate(bondReport.currentInterestFirstDay)}</BondCardValue>
+          <BondCardValue>{formatDate(bondReport.currentValues.interestFirstDay)}</BondCardValue>
         </BondCardEntry>
         <BondCardEntry caption='Record day' textAlign="center" width='33%'>
-          <BondCardValue>{formatDate(bondReport.currentInterestRecordDay)}</BondCardValue>
+          <BondCardValue>{formatDate(bondReport.currentValues.interestRecordDay)}</BondCardValue>
         </BondCardEntry>
         <BondCardEntry caption='Payable' textAlign="end">
-          <BondCardValue>{formatDate(bondReport.currentInterestPayableDay)}</BondCardValue>
+          <BondCardValue>{formatDate(bondReport.currentValues.interestPayableDay)}</BondCardValue>
         </BondCardEntry>
       </BondCardSection>
       <BondCardSection>
         <BondCardEntry caption='Current interest' width='33%'>
-          <BondCardValue variant='h6'>{bondReport.details.currentInterestRate.toFixed(2)}%</BondCardValue>
+          <BondCardValue variant='h6'>{bondReport.currentValues.interestRate.toFixed(2)}%</BondCardValue>
         </BondCardEntry>
         <BondCardEntry caption='Accured interest' textAlign="center" width='33%'>
-          <BondCardValue colorCode={accuredInterestColorCode}>{formatCurrency(bondReport.accuredInterest, bondReport.details.currency)}</BondCardValue>
+          <BondCardValue colorCode={accuredInterestColorCode}>{formatCurrency(bondReport.currentValues.accuredInterest, bondReport.details.currency)}</BondCardValue>
         </BondCardEntry>
         <BondCardEntry caption='Full interest' textAlign="end">
-          <BondCardValue>{formatCurrency(bondReport.nextInterest, bondReport.details.currency)}</BondCardValue>
+          <BondCardValue>{formatCurrency(bondReport.currentValues.fullInterest, bondReport.details.currency)}</BondCardValue>
         </BondCardEntry>
       </BondCardSection>
     </>

@@ -1,7 +1,7 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { format, differenceInDays } from 'date-fns';
+import { differenceInDays } from 'date-fns';
 import { lambdaHandler, Success } from "../HandlerProxy";
-import { BondDetails } from '../../bonds';
+import { BondDetails, BondCurrentValues } from '../../bonds';
 import { BondDetailsTable } from '../../storage/BondDetailsTable';
 import { BondReport } from ".";
 
@@ -16,7 +16,7 @@ export const handler = lambdaHandler<BondReport[]>(async event => {
     const dbBonds = await bondDetailsTable.getAll();
 
     const bonds = dbBonds.map(dbBond => {
-        const bondDetails: BondDetails = {
+        const details: BondDetails = {
             name: dbBond.name,
             isin: dbBond.isin,
             issuer: dbBond.issuer,
@@ -29,9 +29,6 @@ export const handler = lambdaHandler<BondReport[]>(async event => {
             interestType: dbBond.interestType,
             interestVariable: dbBond.interestVariable,
             interestConst: dbBond.interestConst,
-
-            currentInterestRate: dbBond.currentInterestRate,
-            accuredInterest: dbBond.accuredInterest
         };
 
         const today = new Date().getTime();
@@ -44,21 +41,24 @@ export const handler = lambdaHandler<BondReport[]>(async event => {
         const currentInterestDays = differenceInDays(new Date(), currentInterestFirstDay) + 1;
         const accumulatedInterest = currentInterestDays * dbBond.nominalValue * dbBond.currentInterestRate / 100 / 365;
         const currentInterestPeriod = differenceInDays(currentInterestPayableDay, currentInterestFirstDay);
-        const nextInterest = currentInterestPeriod * dbBond.nominalValue * dbBond.currentInterestRate / 100 / 365;
+        const fullInterest = currentInterestPeriod * dbBond.nominalValue * dbBond.currentInterestRate / 100 / 365;
         const accuredInterest = currentInterestRecordDay > today ? accumulatedInterest : 0;
 
+        const currentValues: BondCurrentValues = {
+            interestFirstDay: currentInterestFirstDay,
+            interestRecordDay: currentInterestRecordDay,
+            interestPayableDay: currentInterestPayableDay,
+            interestRate: dbBond.currentInterestRate,
+            accuredInterest,
+            fullInterest
+        };
+
         return {
-            details: bondDetails,
+            details: details,
+            currentValues: currentValues,
+
             detailsUpdated: dbBond.updated,
             detailsUpdatedTs: dbBond.updatedTs,
-
-            currentInterestFirstDay: currentInterestFirstDay,
-            currentInterestRecordDay: currentInterestRecordDay,
-            currentInterestPayableDay: currentInterestPayableDay,
-
-            accumulatedInterest: accumulatedInterest,
-            accuredInterest: accuredInterest,
-            nextInterest: nextInterest,
 
             ...(dbBond.referencePrice && {
                 referencePrice: dbBond.referencePrice

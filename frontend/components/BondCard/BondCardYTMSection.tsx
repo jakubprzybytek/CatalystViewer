@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import CircularProgress from "@mui/material/CircularProgress";
-import { BondDetails, BondReport } from "../../sdk/GetBonds";
+import { BondReport, BondDetails, BondCurrentValues } from "../../sdk/GetBonds";
 import { YieldToMaturityCalculator } from "../../bonds/YieldToMaturity";
 import { BondCardSection } from "./BondCardSection";
 import { BondCardEntry } from "./BondCardEntry";
 
-function computeYTM(bondDetails: BondDetails, price: number) {
-  const ytmCalculator = new YieldToMaturityCalculator(bondDetails, 0.0019);
+function computeYTM(details: BondDetails, currentValues: BondCurrentValues, price: number) {
+  const ytmCalculator = new YieldToMaturityCalculator(details, currentValues, 0.0019);
   return {
     ytmNet: ytmCalculator.forPrice(price, 0.19).ytm,
     ytmGros: ytmCalculator.forPrice(price, 0).ytm
@@ -25,7 +25,7 @@ export default function BondCardYTMSection({ title, bondReport, price, secondary
   const [ytmGros, setYtmGros] = useState<number>();
 
   useEffect(() => {
-    const { ytmNet: computedYtmNet, ytmGros: computedYtmGros } = computeYTM(bondReport.details, price);
+    const { ytmNet: computedYtmNet, ytmGros: computedYtmGros } = computeYTM(bondReport.details, bondReport.currentValues, price);
     setYtmNet(computedYtmNet);
     setYtmGros(computedYtmGros);
   }, []);
