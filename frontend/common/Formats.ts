@@ -1,3 +1,5 @@
+import { format } from 'date-fns';
+
 const currencyFormatterBuilder = (currency: string) => (value: number) =>
     new Intl.NumberFormat('pl-PL', {
         style: 'currency',
@@ -12,4 +14,8 @@ export function formatCurrency(value: number, currency: string) {
     }
 
     return currencyFormatters[currency](value);
+}
+
+export function formatDate(date: number) {
+    return format(date, "d-MM-yyyy");
 }

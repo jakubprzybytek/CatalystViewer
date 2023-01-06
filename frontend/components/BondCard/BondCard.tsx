@@ -9,6 +9,7 @@ import { BondCardSection } from "./BondCardSection";
 import { BondCardEntry, BondCardValue } from "./BondCardEntry";
 import { BondsStatistics, interestVariablePart } from "../../bonds/statistics";
 import { ColorCode } from "../../common/ColorCodes";
+import { formatDate } from '../../common/Formats';
 
 export const interestConstPartColors: ColorCode[] = ['green', 'yellow', 'orange', 'red'];
 
@@ -66,13 +67,13 @@ function BondCardCurrentInterestSection({ bondReport }: BondReportParam): JSX.El
     <>
       <BondCardSection>
         <BondCardEntry caption='First day' width='33%'>
-          <BondCardValue>{bondReport.currentInterestPeriodFirstDay}</BondCardValue>
+          <BondCardValue>{formatDate(bondReport.currentInterestFirstDay)}</BondCardValue>
         </BondCardEntry>
         <BondCardEntry caption='Record day' textAlign="center" width='33%'>
-          <BondCardValue>{bondReport.nextInterestRightsDay}</BondCardValue>
+          <BondCardValue>{formatDate(bondReport.currentInterestRecordDay)}</BondCardValue>
         </BondCardEntry>
         <BondCardEntry caption='Payable' textAlign="end">
-          <BondCardValue>{bondReport.nextInterestPayoffDay}</BondCardValue>
+          <BondCardValue>{formatDate(bondReport.currentInterestPayableDay)}</BondCardValue>
         </BondCardEntry>
       </BondCardSection>
       <BondCardSection>
@@ -80,7 +81,7 @@ function BondCardCurrentInterestSection({ bondReport }: BondReportParam): JSX.El
           <BondCardValue variant='h6'>{bondReport.details.currentInterestRate.toFixed(2)}%</BondCardValue>
         </BondCardEntry>
         <BondCardEntry caption='Accured interest' textAlign="center" width='33%'>
-          <BondCardValue colorCode={accuredInterestColorCode}>{formatCurrency(bondReport.details.accuredInterest, bondReport.details.currency)}</BondCardValue>
+          <BondCardValue colorCode={accuredInterestColorCode}>{formatCurrency(bondReport.accuredInterest, bondReport.details.currency)}</BondCardValue>
         </BondCardEntry>
         <BondCardEntry caption='Full interest' textAlign="end">
           <BondCardValue>{formatCurrency(bondReport.nextInterest, bondReport.details.currency)}</BondCardValue>

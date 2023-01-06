@@ -15,7 +15,7 @@ export const handler = lambdaHandler<BondReport[]>(async event => {
     const bondDetailsTable = new BondDetailsTable(dynamoDBClient, process.env.BOND_DETAILS_TABLE_NAME);
     const dbBonds = await bondDetailsTable.getAll();
 
-    const bonds = dbBonds.map((dbBond) => {
+    const bonds = dbBonds.map(dbBond => {
         const bondDetails: BondDetails = {
             name: dbBond.name,
             isin: dbBond.isin,
@@ -29,37 +29,36 @@ export const handler = lambdaHandler<BondReport[]>(async event => {
             interestType: dbBond.interestType,
             interestVariable: dbBond.interestVariable,
             interestConst: dbBond.interestConst,
+
             currentInterestRate: dbBond.currentInterestRate,
             accuredInterest: dbBond.accuredInterest
         };
 
         const today = new Date().getTime();
-        const currentInterestPeriodFirstDay = dbBond.interestFirstDayTss.reverse().find((day) => today >= day);
-        const nextInterestRightsDay = dbBond.interestRightsDayTss.find((day) => day >= today);
-        const nextInterestPayoffDay = dbBond.interestPayoffDayTss.find((day) => day >= today);
 
-        const currentInterestDays = currentInterestPeriodFirstDay
-            && differenceInDays(new Date(), currentInterestPeriodFirstDay) + 1;
-        const accumulatedInterest = currentInterestDays
-            && currentInterestDays * dbBond.nominalValue * dbBond.currentInterestRate / 100 / 365;
-        const nextInterestPeriod = currentInterestPeriodFirstDay && nextInterestPayoffDay
-            && differenceInDays(nextInterestPayoffDay, currentInterestPeriodFirstDay);
-        const nextInterest = nextInterestPeriod
-            && nextInterestPeriod * dbBond.nominalValue * dbBond.currentInterestRate / 100 / 365;
-        const accuredInterest = nextInterestRightsDay && nextInterestPayoffDay
-            && nextInterestRightsDay < nextInterestPayoffDay ? accumulatedInterest : 0;
+        const interestPeriodIndex = dbBond.interestPayoffDayTss.findIndex(day => day >= today);
+        const currentInterestFirstDay = dbBond.interestFirstDayTss[interestPeriodIndex];
+        const currentInterestRecordDay = dbBond.interestRightsDayTss[interestPeriodIndex];
+        const currentInterestPayableDay = dbBond.interestPayoffDayTss[interestPeriodIndex];
+
+        const currentInterestDays = differenceInDays(new Date(), currentInterestFirstDay) + 1;
+        const accumulatedInterest = currentInterestDays * dbBond.nominalValue * dbBond.currentInterestRate / 100 / 365;
+        const currentInterestPeriod = differenceInDays(currentInterestPayableDay, currentInterestFirstDay);
+        const nextInterest = currentInterestPeriod * dbBond.nominalValue * dbBond.currentInterestRate / 100 / 365;
+        const accuredInterest = currentInterestRecordDay > today ? accumulatedInterest : 0;
 
         return {
             details: bondDetails,
             detailsUpdated: dbBond.updated,
             detailsUpdatedTs: dbBond.updatedTs,
 
-            currentInterestPeriodFirstDay: currentInterestPeriodFirstDay ? format(currentInterestPeriodFirstDay, 'yyyy-MM-dd') : 'n/a',
-            nextInterestRightsDay: nextInterestRightsDay ? format(nextInterestRightsDay, 'yyyy-MM-dd') : 'n/a',
-            nextInterestPayoffDay: nextInterestPayoffDay ? format(nextInterestPayoffDay, 'yyyy-MM-dd') : 'n/a',
-            accumulatedInterest: accumulatedInterest || 0,
-            accuredInterest: accuredInterest || 0,
-            nextInterest: nextInterest || 0,
+            currentInterestFirstDay: currentInterestFirstDay,
+            currentInterestRecordDay: currentInterestRecordDay,
+            currentInterestPayableDay: currentInterestPayableDay,
+
+            accumulatedInterest: accumulatedInterest,
+            accuredInterest: accuredInterest,
+            nextInterest: nextInterest,
 
             ...(dbBond.referencePrice && {
                 referencePrice: dbBond.referencePrice
