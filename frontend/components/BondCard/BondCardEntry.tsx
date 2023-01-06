@@ -2,15 +2,14 @@ import Stack from "@mui/material/Stack";
 import { Variant } from "@mui/material/styles/createTypography";
 import Typography from "@mui/material/Typography";
 import { Box } from "@mui/system";
-
-export type Color = 'lightpink' | 'orange' | 'yellow' | 'lightgreen' | 'none';
+import { ColorCode, colorMarkers } from "../../common/ColorCodes";
 
 type BondCardEntryParam = {
   caption: string;
   width?: string;
   variant?: Variant;
   textAlign?: 'left' | 'center' | 'end';
-  colorCode?: Color;
+  colorCode?: ColorCode;
   children: React.ReactNode;
   secondary?: string;
 }
@@ -28,14 +27,15 @@ export function BondCardEntry({ caption, width, textAlign = 'left', children }: 
 }
 
 type BondCardValueParam = {
-  colorCode?: Color;
+  colorCode?: ColorCode;
   variant?: Variant;
   children: React.ReactNode;
 }
 
 export function BondCardValue({ variant = 'body1', colorCode = 'none', children }: BondCardValueParam): JSX.Element {
+  const colorMarker = colorMarkers[colorCode];
 
-  if (colorCode === 'none') {
+  if (colorMarker === undefined) {
     return (
       <Typography component='span' variant={variant}>{children}</Typography>
     );
@@ -44,9 +44,13 @@ export function BondCardValue({ variant = 'body1', colorCode = 'none', children 
   return (
     <Box component='span'>
       <Typography component='span' variant={variant} sx={{
-        backgroundColor: colorCode,
+        color: colorMarker.color,
+        backgroundColor: colorMarker.backgroundColor,
+        borderWidth: '1px',
+        borderStyle: 'solid',
+        borderColor: colorMarker.color,
         borderRadius: 1,
-        p: '2px 4px 2px 4px'
+        p: '0px 2px 0px 2px'
       }}>{children}</Typography>
     </Box>
   );
