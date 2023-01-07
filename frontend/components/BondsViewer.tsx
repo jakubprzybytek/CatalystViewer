@@ -7,7 +7,7 @@ import { computeStatistics } from '../bonds/statistics';
 import BondsViewerFilter from './BondsViewerFilter';
 import BondsListStats from './BondsListStats';
 
-export default function EventsBrowser(): JSX.Element {
+export default function BondsViewer(): JSX.Element {
   const [isLoading, setIsLoading] = useState(false);
   const [allBonds, setAllBonds] = useState<BondReport[]>([]);
 
