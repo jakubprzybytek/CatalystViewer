@@ -8,7 +8,6 @@ import Button from '@mui/material/Button';
 import BondsViewer from '../components/BondsViewer/BondsViewer';
 import IssuersViewer from '../components/IssuersViewer/IssuersViewer';
 import { BondReport, getBonds } from '../sdk/GetBonds';
-import { CircularProgress } from '@mui/material';
 
 enum View {
   Bonds,
@@ -34,30 +33,16 @@ function Panel({ shown, children }: PanelParams): JSX.Element {
 const Home: NextPage = () => {
   const [view, setView] = useState(View.Bonds);
 
-  const [isLoading, setIsLoading] = useState(false);
   const [allBonds, setAllBonds] = useState<BondReport[] | undefined>(undefined);
 
   useEffect(() => {
-    setIsLoading(true);
     const fetchData = async () => {
       const bonds = await getBonds();
       setAllBonds(bonds);
-      setIsLoading(false);
     };
 
     fetchData();
   }, []);
-
-  const MainContent = () => isLoading ? (<CircularProgress />) : (
-    <>
-      <Panel shown={view === View.Bonds}>
-        <BondsViewer allBonds={allBonds} />
-      </Panel>
-      <Panel shown={view === View.Issuers}>
-        <IssuersViewer />
-      </Panel>
-    </>
-  )
 
   return (
     <>
