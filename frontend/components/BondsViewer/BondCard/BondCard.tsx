@@ -2,14 +2,14 @@ import Divider from '@mui/material/Divider';
 import Paper from "@mui/material/Paper";
 import Link from "@mui/material/Link";
 import Typography from "@mui/material/Typography";
-import { BondReport } from "../../sdk/GetBonds";
-import { formatCurrency } from "../../common/Formats";
+import { BondReport } from "../../../sdk/GetBonds";
+import { formatCurrency } from "../../../common/Formats";
 import YTMReportEntry from "./BondCardYTMSection";
 import { BondCardSection } from "./BondCardSection";
 import { BondCardEntry, BondCardValue } from "./BondCardEntry";
-import { BondsStatistics, interestVariablePart } from "../../bonds/statistics";
-import { ColorCode } from "../../common/ColorCodes";
-import { formatDate } from '../../common/Formats';
+import { BondsStatistics, interestVariablePart } from "../../../bonds/statistics";
+import { ColorCode } from "../../../common/ColorCodes";
+import { formatDate } from '../../../common/Formats';
 
 export const interestConstPartColors: ColorCode[] = ['green', 'yellow', 'orange', 'red'];
 

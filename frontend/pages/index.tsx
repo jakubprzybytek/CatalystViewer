@@ -1,11 +1,14 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { NextPage } from 'next';
 import Head from 'next/head';
 import Box from "@mui/material/Box";
-import BondsViewer from '../components/BondsViewer';
 import AppBar from '@mui/material/AppBar';
 import Toolbar from '@mui/material/Toolbar';
 import Button from '@mui/material/Button';
+import BondsViewer from '../components/BondsViewer/BondsViewer';
+import IssuersViewer from '../components/IssuersViewer/IssuersViewer';
+import { BondReport, getBonds } from '../sdk/GetBonds';
+import { CircularProgress } from '@mui/material';
 
 enum View {
   Bonds,
@@ -30,6 +33,31 @@ function Panel({ shown, children }: PanelParams): JSX.Element {
 
 const Home: NextPage = () => {
   const [view, setView] = useState(View.Bonds);
+
+  const [isLoading, setIsLoading] = useState(false);
+  const [allBonds, setAllBonds] = useState<BondReport[] | undefined>(undefined);
+
+  useEffect(() => {
+    setIsLoading(true);
+    const fetchData = async () => {
+      const bonds = await getBonds();
+      setAllBonds(bonds);
+      setIsLoading(false);
+    };
+
+    fetchData();
+  }, []);
+
+  const MainContent = () => isLoading ? (<CircularProgress />) : (
+    <>
+      <Panel shown={view === View.Bonds}>
+        <BondsViewer allBonds={allBonds} />
+      </Panel>
+      <Panel shown={view === View.Issuers}>
+        <IssuersViewer />
+      </Panel>
+    </>
+  )
 
   return (
     <>
@@ -57,10 +85,10 @@ const Home: NextPage = () => {
 
       <Toolbar variant='dense' />
       <Panel shown={view === View.Bonds}>
-        <BondsViewer />
+        <BondsViewer allBonds={allBonds} />
       </Panel>
       <Panel shown={view === View.Issuers}>
-        Issuers
+        <IssuersViewer />
       </Panel>
     </>
   )

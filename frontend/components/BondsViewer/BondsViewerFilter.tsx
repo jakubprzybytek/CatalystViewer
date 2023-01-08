@@ -20,8 +20,8 @@ import Button from '@mui/material/Button';
 import Menu from '@mui/material/Menu';
 import Check from '@mui/icons-material/Check';
 import AddCircle from '@mui/icons-material/AddCircle';
-import { BondReport, BondDetails } from '../sdk/GetBonds';
-import { useArrayLocalStorage, useLocalStorage } from '../common/UseStorage';
+import { BondReport, BondDetails } from '../../sdk/GetBonds';
+import { useArrayLocalStorage, useLocalStorage } from '../../common/UseStorage';
 
 const bondDetailsProps = (prop: 'market' | 'type' | 'issuer') => R.map(R.compose(R.prop(prop), R.prop<'details', BondDetails>('details')));
 const bondName = (bondReport: BondReport) => bondReport.details.name;
