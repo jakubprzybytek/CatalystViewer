@@ -58,18 +58,21 @@ const Home: NextPage = () => {
 
       <AppBar component="nav">
         <Toolbar variant='dense' sx={{
-          '& > button': {
+          justifyContent: 'space-between',
+          '& button': {
             mr: 1
           }
         }}>
-          <Button variant='outlined' color='inherit'
-            onClick={() => setView(View.Bonds)}>
-            Bonds
-          </Button>
-          <Button variant='outlined' color='inherit'
-            onClick={() => setView(View.Issuers)}>
-            Issuers
-          </Button>
+          <Box component='span'>
+            <Button variant='outlined' color='inherit'
+              onClick={() => setView(View.Bonds)}>
+              Bonds
+            </Button>
+            <Button variant='outlined' color='inherit'
+              onClick={() => setView(View.Issuers)}>
+              Issuers
+            </Button>
+          </Box>
           <IconButton color='inherit' disabled={isLoading}
             onClick={() => { setIsLoading(true); fetchData(); }}>
             <Refresh />
