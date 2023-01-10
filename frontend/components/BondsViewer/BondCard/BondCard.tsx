@@ -72,7 +72,7 @@ function BondCardCurrentInterestSection({ bondReport }: BondReportParam): JSX.El
         <BondCardEntry caption='Record day' textAlign="center" width='33%'>
           <BondCardValue>{formatDate(bondReport.currentValues.interestRecordDay)}</BondCardValue>
         </BondCardEntry>
-        <BondCardEntry caption='Payable' textAlign="end">
+        <BondCardEntry caption='Payable' textAlign="end" width='33%'>
           <BondCardValue>{formatDate(bondReport.currentValues.interestPayableDay)}</BondCardValue>
         </BondCardEntry>
       </BondCardSection>
@@ -83,7 +83,7 @@ function BondCardCurrentInterestSection({ bondReport }: BondReportParam): JSX.El
         <BondCardEntry caption='Accured interest' textAlign="center" width='33%'>
           <BondCardValue colorCode={accuredInterestColorCode}>{formatCurrency(bondReport.currentValues.accuredInterest, bondReport.details.currency)}</BondCardValue>
         </BondCardEntry>
-        <BondCardEntry caption='Full interest' textAlign="end">
+        <BondCardEntry caption='Full interest' textAlign="end" width='33%'>
           <BondCardValue>{formatCurrency(bondReport.currentValues.fullInterest, bondReport.details.currency)}</BondCardValue>
         </BondCardEntry>
       </BondCardSection>
