@@ -5,6 +5,8 @@ import Box from "@mui/material/Box";
 import AppBar from '@mui/material/AppBar';
 import Toolbar from '@mui/material/Toolbar';
 import Button from '@mui/material/Button';
+import IconButton from '@mui/material/IconButton';
+import Refresh from '@mui/icons-material/Refresh';
 import BondsViewer from '../components/BondsViewer/BondsViewer';
 import IssuersViewer from '../components/IssuersViewer/IssuersViewer';
 import { BondReport, getBonds } from '../sdk/GetBonds';
@@ -33,14 +35,17 @@ function Panel({ shown, children }: PanelParams): JSX.Element {
 const Home: NextPage = () => {
   const [view, setView] = useState(View.Bonds);
 
+  const [isLoading, setIsLoading] = useState(false);
   const [allBonds, setAllBonds] = useState<BondReport[] | undefined>(undefined);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const bonds = await getBonds();
-      setAllBonds(bonds);
-    };
+  const fetchData = async () => {
+    const bonds = await getBonds();
+    setAllBonds(bonds);
+    setIsLoading(false);
+  };
 
+  useEffect(() => {
+    setIsLoading(true);
     fetchData();
   }, []);
 
@@ -65,6 +70,10 @@ const Home: NextPage = () => {
             onClick={() => setView(View.Issuers)}>
             Issuers
           </Button>
+          <IconButton color='inherit' disabled={isLoading}
+            onClick={() => { setIsLoading(true); fetchData(); }}>
+            <Refresh />
+          </IconButton>
         </Toolbar>
       </AppBar>
 
@@ -73,7 +82,7 @@ const Home: NextPage = () => {
         <BondsViewer allBonds={allBonds} />
       </Panel>
       <Panel shown={view === View.Issuers}>
-        <IssuersViewer />
+        <IssuersViewer allBonds={allBonds} />
       </Panel>
     </>
   )
