@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import type { NextPage } from 'next';
 import Head from 'next/head';
 import Box from "@mui/material/Box";
+import Stack from "@mui/material/Stack";
 import AppBar from '@mui/material/AppBar';
 import Toolbar from '@mui/material/Toolbar';
 import Button from '@mui/material/Button';
@@ -58,12 +59,9 @@ const Home: NextPage = () => {
 
       <AppBar component="nav">
         <Toolbar variant='dense' sx={{
-          justifyContent: 'space-between',
-          '& button': {
-            mr: 1
-          }
+          justifyContent: 'space-between'
         }}>
-          <Box component='span'>
+          <Stack direction='row' spacing={1}>
             <Button variant='outlined' color='inherit'
               onClick={() => setView(View.Bonds)}>
               Bonds
@@ -72,7 +70,7 @@ const Home: NextPage = () => {
               onClick={() => setView(View.Issuers)}>
               Issuers
             </Button>
-          </Box>
+          </Stack>
           <IconButton color='inherit' disabled={isLoading}
             onClick={() => { setIsLoading(true); fetchData(); }}>
             <Refresh />
