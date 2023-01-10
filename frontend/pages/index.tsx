@@ -37,7 +37,7 @@ const Home: NextPage = () => {
   const [view, setView] = useState(View.Bonds);
 
   const [isLoading, setIsLoading] = useState(false);
-  const [allBonds, setAllBonds] = useState<BondReport[] | undefined>(undefined);
+  const [allBonds, setAllBonds] = useState<BondReport[]>([]);
 
   const fetchData = async () => {
     const bonds = await getBonds();
@@ -80,7 +80,7 @@ const Home: NextPage = () => {
 
       <Toolbar variant='dense' />
       <Panel shown={view === View.Bonds}>
-        <BondsViewer allBonds={allBonds} />
+        <BondsViewer allBonds={allBonds} loadingBonds={isLoading} />
       </Panel>
       <Panel shown={view === View.Issuers}>
         <IssuersViewer allBonds={allBonds} />

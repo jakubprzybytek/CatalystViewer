@@ -8,26 +8,15 @@ import BondsViewerFilter from './BondsViewerFilter';
 import BondsListStats from './BondsListStats';
 
 type BondsViewerParams = {
-  allBonds: BondReport[] | undefined;
+  allBonds: BondReport[];
+  loadingBonds: boolean;
 }
 
-export default function BondsViewer({ allBonds }: BondsViewerParams): JSX.Element {
+export default function BondsViewer({ allBonds, loadingBonds }: BondsViewerParams): JSX.Element {
   const [bondTypeFilter, setBondTypeFilter] = useState<string>('Corporate bonds');
   const [filteredBonds, setFilteredBonds] = useState<BondReport[]>([]);
 
   const bondsStatistics = useMemo(() => allBonds ? computeStatistics(allBonds) : undefined, [allBonds]);
-
-  if (allBonds === undefined || bondsStatistics === undefined) {
-    return (
-      <Box sx={{
-        display: 'flex',
-        height: '60vh',
-        justifyContent: 'center',
-        alignItems: 'center'
-      }}>
-        <CircularProgress />
-      </Box>);
-  }
 
   return (
     <Box sx={{
@@ -35,8 +24,18 @@ export default function BondsViewer({ allBonds }: BondsViewerParams): JSX.Elemen
       '& > div': { mb: 1 }
     }}>
       <BondsViewerFilter allBondReports={allBonds} setBondTypeFilter={setBondTypeFilter} setFilteredBondReports={setFilteredBonds} />
-      <BondsListStats bondReports={filteredBonds} bondsStatistics={bondsStatistics} bondTypeFilter={bondTypeFilter} />
-      <BondsList bondReports={filteredBonds} bondsStatistics={bondsStatistics} />
+      {loadingBonds && <Box sx={{
+        display: 'flex',
+        height: '60vh',
+        justifyContent: 'center',
+        alignItems: 'center'
+      }}>
+        <CircularProgress />
+      </Box>}
+      {!loadingBonds && (bondsStatistics !== undefined) && <>
+        <BondsListStats bondReports={filteredBonds} bondsStatistics={bondsStatistics} bondTypeFilter={bondTypeFilter} />
+        <BondsList bondReports={filteredBonds} bondsStatistics={bondsStatistics} />
+      </>}
     </Box>
   );
 }
