@@ -3,14 +3,17 @@ import Box from '@mui/material/Box';
 import { BondReport } from '../../sdk/GetBonds';
 
 type IssuersViewerParams = {
-  allBonds: BondReport[] | undefined;
+  bonds: BondReport[];
+  loadingBonds: boolean;
 }
 
-export default function IssuersViewer({ allBonds }: IssuersViewerParams): JSX.Element {
+export default function IssuersViewer({ bonds, loadingBonds }: IssuersViewerParams): JSX.Element {
   return (
     <Box sx={{
     }}>
-      HEllo issuers
+      {bonds.map(bond => (
+        <Box key={bond.details.name + bond.details.market}>{bond.details.name}</Box>
+      ))}
     </Box>
   );
 }

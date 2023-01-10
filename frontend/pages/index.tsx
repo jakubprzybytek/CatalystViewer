@@ -80,10 +80,10 @@ const Home: NextPage = () => {
 
       <Toolbar variant='dense' />
       <Panel shown={view === View.Bonds}>
-        <BondsViewer allBonds={allBonds} loadingBonds={isLoading} />
+        <BondsViewer bonds={allBonds} loadingBonds={isLoading} />
       </Panel>
       <Panel shown={view === View.Issuers}>
-        <IssuersViewer allBonds={allBonds} />
+        <IssuersViewer bonds={allBonds} loadingBonds={isLoading} />
       </Panel>
     </>
   )

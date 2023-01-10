@@ -101,8 +101,7 @@ type BondsListParam = {
 export default function BondsListStats({ bondReports, bondTypeFilter, bondsStatistics }: BondsListParam): JSX.Element {
   const bondsByInterestBaseTypes = R.groupBy(interestVariable)(bondReports);
   const bondInterestBaseTypePercentiles = bondTypeFilter === 'all' ? bondsStatistics.all : bondsStatistics.byType[bondTypeFilter];
-  console.log(bondInterestBaseTypePercentiles)
-  console.log(bondTypeFilter)
+
   return (
     <Box>
       <Grid container spacing={1}>
