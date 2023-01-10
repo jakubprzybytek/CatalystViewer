@@ -14,9 +14,9 @@ type BondsListParam = {
 }
 
 export default function BondsList({ bondReports, bondsStatistics }: BondsListParam): JSX.Element {
-  const [displayedItemsCount, setDisplayedItemsCound] = useState(BATCH_SIZE);
+  const [displayedItemsCount, setDisplayedItemsCount] = useState(BATCH_SIZE);
 
-  useEffect(() => setDisplayedItemsCound(BATCH_SIZE), [bondReports]);
+  useEffect(() => setDisplayedItemsCount(BATCH_SIZE), [bondReports]);
 
   return (
     <Box>
@@ -29,7 +29,7 @@ export default function BondsList({ bondReports, bondsStatistics }: BondsListPar
         {displayedItemsCount < bondReports.length &&
           <Grid item container xs={12} justifyContent='center'>
             <Button variant='outlined'
-              onClick={() => setDisplayedItemsCound(displayedItemsCount + BATCH_SIZE)}>
+              onClick={() => setDisplayedItemsCount(displayedItemsCount + BATCH_SIZE)}>
               Load more
             </Button>
           </Grid>}
