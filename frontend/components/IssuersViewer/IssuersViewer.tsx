@@ -1,10 +1,11 @@
+import { useMemo } from 'react';
 import { average, min, max } from 'simple-statistics';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
+import IssuersList from './IssuersList';
 import { BondReport } from '../../sdk/GetBonds';
 import { getInterestConstParts, groupByIssuer, groupByInterestVariablePart, getNominalValues } from '../../bonds/statistics/BondsData';
-import { IssuerReport } from '.';
-import IssuersList from './IssuersList';
+import { IssuerReport, sortByInterestConstAverage } from '.';
 
 type IssuersViewerParams = {
   bonds: BondReport[];
@@ -12,22 +13,26 @@ type IssuersViewerParams = {
 }
 
 export default function IssuersViewer({ bonds, loadingBonds }: IssuersViewerParams): JSX.Element {
-  const bondsByIssuer = groupByIssuer(bonds);
 
-  const issuerReports: IssuerReport[] = [];
+  const issuerReports = useMemo(() => {
+    const bondsByIssuer = groupByIssuer(bonds);
+    const issuerReports: IssuerReport[] = [];
 
-  Object.entries(bondsByIssuer).map(([issuer, issuerBonds]) => {
-    Object.entries(groupByInterestVariablePart(issuerBonds)).map(([interestVariableType, bondsByInterestVariablePart]) => {
-      issuerReports.push({
-        name: issuer,
-        interestVariable: interestVariableType,
-        interestConstAverage: average(getInterestConstParts(bondsByInterestVariablePart)),
-        minNominalValue: min(getNominalValues(bondsByInterestVariablePart)),
-        maxNominalValue: max(getNominalValues(bondsByInterestVariablePart)),
-        count: bondsByInterestVariablePart.length
+    Object.entries(bondsByIssuer).map(([issuer, issuerBonds]) => {
+      Object.entries(groupByInterestVariablePart(issuerBonds)).map(([interestVariableType, bondsByInterestVariablePart]) => {
+        issuerReports.push({
+          name: issuer,
+          interestVariable: interestVariableType,
+          interestConstAverage: average(getInterestConstParts(bondsByInterestVariablePart)),
+          minNominalValue: min(getNominalValues(bondsByInterestVariablePart)),
+          maxNominalValue: max(getNominalValues(bondsByInterestVariablePart)),
+          count: bondsByInterestVariablePart.length
+        });
       });
     });
-  });
+
+    return sortByInterestConstAverage(issuerReports);
+  }, [bonds]);
 
   return (
     <Box sx={{

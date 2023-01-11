@@ -1,3 +1,5 @@
+import * as R from 'ramda';
+
 export type IssuerReport = {
     name: string;
     interestVariable: string;
@@ -6,3 +8,7 @@ export type IssuerReport = {
     maxNominalValue: number;
     count: number;
 }
+
+const interestConstAverage = R.prop<'interestConstAverage', number>('interestConstAverage');
+
+export const sortByInterestConstAverage = R.sortBy<IssuerReport>(interestConstAverage);
