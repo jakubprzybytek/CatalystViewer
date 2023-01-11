@@ -1,6 +1,5 @@
 import Paper from "@mui/material/Paper";
-import { BondCardSection } from "../BondsViewer/BondCard/BondCardSection";
-import { BondCardEntry, BondCardValue } from "../BondsViewer/BondCard/BondCardEntry";
+import { CardSection, CardEntry, CardValue } from "../Cards";
 import { ColorCode } from "../../common/ColorCodes";
 import { IssuerReport } from '.';
 import Typography from "@mui/material/Typography";
@@ -26,25 +25,25 @@ export default function IssuerCard({ issuerReport }: IssuerCardParam): JSX.Eleme
           paddingTop: 1
         }
       }}>
-        <BondCardSection>
+        <CardSection>
           <Typography variant='h6'>{issuerReport.name}</Typography>
-        </BondCardSection>
-        <BondCardSection>
-          <BondCardEntry caption='Bonds'>
-            <BondCardValue>{issuerReport.count}</BondCardValue>
-          </BondCardEntry>
-          <BondCardEntry caption='Nominal values' textAlign='end'>
-            <BondCardValue>{issuerReport.minNominalValue}{issuerReport.minNominalValue !== issuerReport.maxNominalValue ? ` - ${issuerReport.maxNominalValue}` : ''}</BondCardValue>
-          </BondCardEntry>
-        </BondCardSection>
-        <BondCardSection>
-          <BondCardEntry caption='Interest Variable Type'>
-            <BondCardValue>{issuerReport.interestVariable}</BondCardValue>
-          </BondCardEntry>
-          <BondCardEntry caption='Interest Const Avg.' textAlign='end'>
-            <BondCardValue>{issuerReport.interestConstAverage.toPrecision(2)}%</BondCardValue>
-          </BondCardEntry>
-        </BondCardSection>
+        </CardSection>
+        <CardSection>
+          <CardEntry caption='Bonds'>
+            <CardValue>{issuerReport.count}</CardValue>
+          </CardEntry>
+          <CardEntry caption='Nominal values' textAlign='end'>
+            <CardValue>{issuerReport.minNominalValue}{issuerReport.minNominalValue !== issuerReport.maxNominalValue ? ` - ${issuerReport.maxNominalValue}` : ''}</CardValue>
+          </CardEntry>
+        </CardSection>
+        <CardSection>
+          <CardEntry caption='Interest Variable Type'>
+            <CardValue>{issuerReport.interestVariable}</CardValue>
+          </CardEntry>
+          <CardEntry caption='Interest Const Avg.' textAlign='end'>
+            <CardValue>{issuerReport.interestConstAverage.toPrecision(2)}%</CardValue>
+          </CardEntry>
+        </CardSection>
       </Paper>
     </>
   );

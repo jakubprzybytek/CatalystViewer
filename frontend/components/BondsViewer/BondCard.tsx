@@ -2,14 +2,13 @@ import Divider from '@mui/material/Divider';
 import Paper from "@mui/material/Paper";
 import Link from "@mui/material/Link";
 import Typography from "@mui/material/Typography";
-import { BondReport } from "../../../sdk/GetBonds";
-import { formatCurrency } from "../../../common/Formats";
+import { BondReport } from "../../sdk/GetBonds";
+import { formatCurrency } from "../../common/Formats";
 import YTMReportEntry from "./BondCardYTMSection";
-import { BondCardSection } from "./BondCardSection";
-import { BondCardEntry, BondCardValue } from "./BondCardEntry";
-import { BondsStatistics, interestVariablePart } from "../../../bonds/statistics";
-import { ColorCode } from "../../../common/ColorCodes";
-import { formatDate } from '../../../common/Formats';
+import { CardSection, CardEntry, CardValue } from "../Cards";
+import { BondsStatistics, interestVariablePart } from "../../bonds/statistics";
+import { ColorCode } from "../../common/ColorCodes";
+import { formatDate } from '../../common/Formats';
 
 export const interestConstPartColors: ColorCode[] = ['green', 'yellow', 'orange', 'red'];
 
@@ -31,31 +30,31 @@ function BondCardMainInformationSection({ bondReport, bondsStatistics }: BondCar
 
   return (
     <>
-      <BondCardSection>
+      <CardSection>
         <Typography variant='h4'><Link href={`https://obligacje.pl/pl/obligacja/${bondReport.details.name}`} target='_blank'>{bondReport.details.name}</Link></Typography>
-        <BondCardEntry caption='Market' textAlign='end'>{bondReport.details.market}</BondCardEntry>
-      </BondCardSection>
-      <BondCardSection>
-        <BondCardEntry caption='Issuer'>
-          <BondCardValue variant='h6'>{bondReport.details.issuer}</BondCardValue>
-        </BondCardEntry>
-        <BondCardEntry caption='Type' textAlign='end'>{bondReport.details.type}</BondCardEntry>
-      </BondCardSection>
-      <BondCardSection>
-        <BondCardEntry caption='Maturity day'>
+        <CardEntry caption='Market' textAlign='end'>{bondReport.details.market}</CardEntry>
+      </CardSection>
+      <CardSection>
+        <CardEntry caption='Issuer'>
+          <CardValue variant='h6'>{bondReport.details.issuer}</CardValue>
+        </CardEntry>
+        <CardEntry caption='Type' textAlign='end'>{bondReport.details.type}</CardEntry>
+      </CardSection>
+      <CardSection>
+        <CardEntry caption='Maturity day'>
           {bondReport.details.maturityDay.toString().substring(0, 10)}
-        </BondCardEntry>
-        <BondCardEntry caption='Nominal value' textAlign='center'>
-          <BondCardValue colorCode={nominalValueColorCode}>
+        </CardEntry>
+        <CardEntry caption='Nominal value' textAlign='center'>
+          <CardValue colorCode={nominalValueColorCode}>
             {formatCurrency(bondReport.details.nominalValue, bondReport.details.currency)}
-          </BondCardValue>
-        </BondCardEntry>
-        <BondCardEntry caption='Interest Type' textAlign='end'>
-          <BondCardValue colorCode={interestConstColorCode}>
+          </CardValue>
+        </CardEntry>
+        <CardEntry caption='Interest Type' textAlign='end'>
+          <CardValue colorCode={interestConstColorCode}>
             {bondReport.details.interestVariable && `${bondReport.details.interestVariable} + `}{bondReport.details.interestConst}%
-          </BondCardValue>
-        </BondCardEntry>
-      </BondCardSection>
+          </CardValue>
+        </CardEntry>
+      </CardSection>
     </>
   );
 }
@@ -65,28 +64,28 @@ function BondCardCurrentInterestSection({ bondReport }: BondReportParam): JSX.El
 
   return (
     <>
-      <BondCardSection>
-        <BondCardEntry caption='First day' width='33%'>
-          <BondCardValue>{formatDate(bondReport.currentValues.interestFirstDay)}</BondCardValue>
-        </BondCardEntry>
-        <BondCardEntry caption='Record day' textAlign="center" width='33%'>
-          <BondCardValue>{formatDate(bondReport.currentValues.interestRecordDay)}</BondCardValue>
-        </BondCardEntry>
-        <BondCardEntry caption='Payable' textAlign="end" width='33%'>
-          <BondCardValue>{formatDate(bondReport.currentValues.interestPayableDay)}</BondCardValue>
-        </BondCardEntry>
-      </BondCardSection>
-      <BondCardSection>
-        <BondCardEntry caption='Current interest' width='33%'>
-          <BondCardValue variant='h6'>{bondReport.currentValues.interestRate.toFixed(2)}%</BondCardValue>
-        </BondCardEntry>
-        <BondCardEntry caption='Accured interest' textAlign="center" width='33%'>
-          <BondCardValue colorCode={accuredInterestColorCode}>{formatCurrency(bondReport.currentValues.accuredInterest, bondReport.details.currency)}</BondCardValue>
-        </BondCardEntry>
-        <BondCardEntry caption='Full interest' textAlign="end" width='33%'>
-          <BondCardValue>{formatCurrency(bondReport.currentValues.fullInterest, bondReport.details.currency)}</BondCardValue>
-        </BondCardEntry>
-      </BondCardSection>
+      <CardSection>
+        <CardEntry caption='First day' width='33%'>
+          <CardValue>{formatDate(bondReport.currentValues.interestFirstDay)}</CardValue>
+        </CardEntry>
+        <CardEntry caption='Record day' textAlign="center" width='33%'>
+          <CardValue>{formatDate(bondReport.currentValues.interestRecordDay)}</CardValue>
+        </CardEntry>
+        <CardEntry caption='Payable' textAlign="end" width='33%'>
+          <CardValue>{formatDate(bondReport.currentValues.interestPayableDay)}</CardValue>
+        </CardEntry>
+      </CardSection>
+      <CardSection>
+        <CardEntry caption='Current interest' width='33%'>
+          <CardValue variant='h6'>{bondReport.currentValues.interestRate.toFixed(2)}%</CardValue>
+        </CardEntry>
+        <CardEntry caption='Accured interest' textAlign="center" width='33%'>
+          <CardValue colorCode={accuredInterestColorCode}>{formatCurrency(bondReport.currentValues.accuredInterest, bondReport.details.currency)}</CardValue>
+        </CardEntry>
+        <CardEntry caption='Full interest' textAlign="end" width='33%'>
+          <CardValue>{formatCurrency(bondReport.currentValues.fullInterest, bondReport.details.currency)}</CardValue>
+        </CardEntry>
+      </CardSection>
     </>
   );
 }

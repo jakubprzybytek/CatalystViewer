@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
 import CircularProgress from "@mui/material/CircularProgress";
-import { BondReport, BondDetails, BondCurrentValues } from "../../../sdk/GetBonds";
-import { YieldToMaturityCalculator } from "../../../bonds/YieldToMaturity";
-import { BondCardSection } from "./BondCardSection";
-import { BondCardEntry } from "./BondCardEntry";
+import { BondReport, BondDetails, BondCurrentValues } from "../../sdk/GetBonds";
+import { YieldToMaturityCalculator } from "../../bonds/YieldToMaturity";
+import { CardSection, CardEntry } from "../Cards";
 
 function computeYTM(details: BondDetails, currentValues: BondCurrentValues, price: number) {
   const ytmCalculator = new YieldToMaturityCalculator(details, currentValues, 0.0019);
@@ -37,10 +36,10 @@ export default function BondCardYTMSection({ title, bondReport, price, secondary
   }
 
   return (
-    <BondCardSection>
-      <BondCardEntry caption={title} width='50%'>{price} ({secondary})</BondCardEntry>
-      <BondCardEntry caption='Net YTM' textAlign='center'>{(ytmNet * 100).toFixed(2)}%</BondCardEntry>
-      <BondCardEntry caption='Gross YTM' textAlign='end'>{(ytmGros * 100).toFixed(2)}%</BondCardEntry>
-    </BondCardSection>
+    <CardSection>
+      <CardEntry caption={title} width='50%'>{price} ({secondary})</CardEntry>
+      <CardEntry caption='Net YTM' textAlign='center'>{(ytmNet * 100).toFixed(2)}%</CardEntry>
+      <CardEntry caption='Gross YTM' textAlign='end'>{(ytmGros * 100).toFixed(2)}%</CardEntry>
+    </CardSection>
   );
 }

@@ -8,7 +8,7 @@ import Paper from "@mui/material/Paper";
 import Divider from '@mui/material/Divider';
 import { BondReport, BondDetails } from "../../sdk/GetBonds";
 import { BondsStatistics } from '../../bonds/statistics';
-import { interestConstPartColors } from './BondCard/BondCard';
+import { interestConstPartColors } from './BondCard';
 import { colorMarkers } from "../../common/ColorCodes";
 import { Fragment } from 'react';
 

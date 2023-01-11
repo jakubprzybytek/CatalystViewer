@@ -1,5 +1,6 @@
 import { average, min, max } from 'simple-statistics';
 import Box from '@mui/material/Box';
+import CircularProgress from '@mui/material/CircularProgress';
 import { BondReport } from '../../sdk/GetBonds';
 import { getInterestConstParts, groupByIssuer, groupByInterestVariablePart, getNominalValues } from '../../bonds/statistics/BondsData';
 import { IssuerReport } from '.';
@@ -31,7 +32,17 @@ export default function IssuersViewer({ bonds, loadingBonds }: IssuersViewerPara
   return (
     <Box sx={{
     }}>
-      <IssuersList issuers={issuerReports} />
+      {loadingBonds && <Box sx={{
+        display: 'flex',
+        height: '60vh',
+        justifyContent: 'center',
+        alignItems: 'center'
+      }}>
+        <CircularProgress />
+      </Box>}
+      {!loadingBonds && <>
+        <IssuersList issuers={issuerReports} />
+      </>}
     </Box>
   );
 }

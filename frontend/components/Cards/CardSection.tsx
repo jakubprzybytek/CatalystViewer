@@ -1,10 +1,10 @@
 import Stack from "@mui/material/Stack";
 
-type BondCardSectionParam = {
+type CardSectionParam = {
   children: React.ReactNode;
 }
 
-export function BondCardSection({ children }: BondCardSectionParam): JSX.Element {
+export function CardSection({ children }: CardSectionParam): JSX.Element {
   return (
     <Stack direction='row' sx={{
       p: 1,

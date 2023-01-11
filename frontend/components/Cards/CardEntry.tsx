@@ -2,7 +2,7 @@ import Stack from "@mui/material/Stack";
 import { Variant } from "@mui/material/styles/createTypography";
 import Typography from "@mui/material/Typography";
 import { Box } from "@mui/system";
-import { ColorCode, colorMarkers } from "../../../common/ColorCodes";
+import { ColorCode, colorMarkers } from "../../common/ColorCodes";
 
 type BondCardEntryParam = {
   caption: string;
@@ -14,7 +14,7 @@ type BondCardEntryParam = {
   secondary?: string;
 }
 
-export function BondCardEntry({ caption, width, textAlign = 'left', children }: BondCardEntryParam): JSX.Element {
+export function CardEntry({ caption, width, textAlign = 'left', children }: BondCardEntryParam): JSX.Element {
   return (
     <Stack sx={{
       '& > span': { textAlign },
@@ -26,13 +26,13 @@ export function BondCardEntry({ caption, width, textAlign = 'left', children }: 
   );
 }
 
-type BondCardValueParam = {
+type CardValueParam = {
   colorCode?: ColorCode;
   variant?: Variant;
   children: React.ReactNode;
 }
 
-export function BondCardValue({ variant = 'body1', colorCode = 'none', children }: BondCardValueParam): JSX.Element {
+export function CardValue({ variant = 'body1', colorCode = 'none', children }: CardValueParam): JSX.Element {
   const colorMarker = colorMarkers[colorCode];
 
   if (colorMarker === undefined) {
