@@ -3,6 +3,8 @@ import { CardSection, CardEntry, CardValue } from "../Cards";
 import { ColorCode } from "../../common/ColorCodes";
 import { IssuerReport } from '.';
 import Typography from "@mui/material/Typography";
+import Stack from "@mui/material/Stack";
+import { nominalValueColorCode } from "../../bonds/BondDecorators";
 
 export const interestConstPartColors: ColorCode[] = ['green', 'yellow', 'orange', 'red'];
 
@@ -30,18 +32,20 @@ export default function IssuerCard({ issuerReport }: IssuerCardParam): JSX.Eleme
         </CardSection>
         <CardSection>
           <CardEntry caption='Bonds'>
-            <CardValue>{issuerReport.count}</CardValue>
+            <CardValue variant='h6'>{issuerReport.count}</CardValue>
           </CardEntry>
-          <CardEntry caption='Nominal values' textAlign='end'>
-            <CardValue>{issuerReport.minNominalValue}{issuerReport.minNominalValue !== issuerReport.maxNominalValue ? ` - ${issuerReport.maxNominalValue}` : ''}</CardValue>
+          <CardEntry caption='Nominal values' textAlign='center'>
+            {issuerReport.minNominalValue === issuerReport.maxNominalValue &&
+              <CardValue colorCode={nominalValueColorCode(issuerReport.minNominalValue)}>{issuerReport.minNominalValue}</CardValue>}
+            {issuerReport.minNominalValue !== issuerReport.maxNominalValue &&
+              <Stack direction='row' spacing={0.5}>
+                <CardValue colorCode={nominalValueColorCode(issuerReport.minNominalValue)}>{issuerReport.minNominalValue}</CardValue>
+                <span>-</span>
+                <CardValue colorCode={nominalValueColorCode(issuerReport.maxNominalValue)}>{issuerReport.maxNominalValue}</CardValue>
+              </Stack>}
           </CardEntry>
-        </CardSection>
-        <CardSection>
-          <CardEntry caption='Interest Variable Type'>
-            <CardValue>{issuerReport.interestVariable}</CardValue>
-          </CardEntry>
-          <CardEntry caption='Interest Const Avg.' textAlign='end'>
-            <CardValue>{issuerReport.interestConstAverage.toPrecision(2)}%</CardValue>
+          <CardEntry caption='Interest Type' textAlign='end'>
+            <CardValue colorCode='green'>{issuerReport.interestVariable} + {issuerReport.interestConstAverage.toPrecision(2)}%</CardValue>
           </CardEntry>
         </CardSection>
       </Paper>

@@ -7,6 +7,7 @@ import { formatCurrency } from "../../common/Formats";
 import YTMReportEntry from "./BondCardYTMSection";
 import { CardSection, CardEntry, CardValue } from "../Cards";
 import { BondsStatistics, interestVariablePart } from "../../bonds/statistics";
+import { nominalValueColorCode } from '../../bonds/BondDecorators';
 import { ColorCode } from "../../common/ColorCodes";
 import { formatDate } from '../../common/Formats';
 
@@ -23,7 +24,6 @@ type BondReportParam = {
 
 function BondCardMainInformationSection({ bondReport, bondsStatistics }: BondCardParam): JSX.Element {
   const { details } = bondReport;
-  const nominalValueColorCode: ColorCode = details.nominalValue >= 50000 ? 'red' : details.nominalValue >= 10000 ? 'orange' : 'green';
   const interestConstIndex = bondsStatistics.byType[details.type][interestVariablePart(bondReport)]
     .findIndex(percentile => bondReport.details.interestConst <= percentile) - 1;
   const interestConstColorCode: ColorCode = interestConstPartColors[Math.max(interestConstIndex, 0)];
@@ -45,7 +45,7 @@ function BondCardMainInformationSection({ bondReport, bondsStatistics }: BondCar
           {bondReport.details.maturityDay.toString().substring(0, 10)}
         </CardEntry>
         <CardEntry caption='Nominal value' textAlign='center'>
-          <CardValue colorCode={nominalValueColorCode}>
+          <CardValue colorCode={nominalValueColorCode(bondReport.details.nominalValue)}>
             {formatCurrency(bondReport.details.nominalValue, bondReport.details.currency)}
           </CardValue>
         </CardEntry>

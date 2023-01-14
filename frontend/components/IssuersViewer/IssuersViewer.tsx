@@ -4,8 +4,10 @@ import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import IssuersList from './IssuersList';
 import { BondReport } from '../../sdk/GetBonds';
-import { getInterestConstParts, groupByIssuer, groupByInterestVariablePart, getNominalValues } from '../../bonds/statistics/BondsData';
+import { getInterestConstParts, groupByIssuer, groupByInterestVariablePart, getNominalValues, filterByType } from '../../bonds/statistics/BondsData';
 import { IssuerReport, sortByInterestConstAverage } from '.';
+
+const filterCorporateBonds = filterByType('Corporate bonds');
 
 type IssuersViewerParams = {
   bonds: BondReport[];
@@ -15,7 +17,8 @@ type IssuersViewerParams = {
 export default function IssuersViewer({ bonds, loadingBonds }: IssuersViewerParams): JSX.Element {
 
   const issuerReports = useMemo(() => {
-    const bondsByIssuer = groupByIssuer(bonds);
+    const filteredBonds = filterCorporateBonds(bonds);
+    const bondsByIssuer = groupByIssuer(filteredBonds);
     const issuerReports: IssuerReport[] = [];
 
     Object.entries(bondsByIssuer).map(([issuer, issuerBonds]) => {
