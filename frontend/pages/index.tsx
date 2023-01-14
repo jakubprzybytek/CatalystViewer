@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { NextPage } from 'next';
 import Head from 'next/head';
 import Box from "@mui/material/Box";
@@ -11,6 +11,7 @@ import Refresh from '@mui/icons-material/Refresh';
 import BondsViewer from '../components/BondsViewer/BondsViewer';
 import IssuersViewer from '../components/IssuersViewer/IssuersViewer';
 import { BondReport, getBonds } from '../sdk/GetBonds';
+import { computeStatistics } from '../bonds/statistics';
 
 enum View {
   Bonds,
@@ -44,6 +45,8 @@ const Home: NextPage = () => {
     setAllBonds(bonds);
     setIsLoading(false);
   };
+
+  const bondsStatistics = useMemo(() => computeStatistics(allBonds), [allBonds]);
 
   useEffect(() => {
     setIsLoading(true);
@@ -80,10 +83,10 @@ const Home: NextPage = () => {
 
       <Toolbar variant='dense' />
       <Panel shown={view === View.Bonds}>
-        <BondsViewer bonds={allBonds} loadingBonds={isLoading} />
+        <BondsViewer bonds={allBonds} loadingBonds={isLoading} bondsStatistics={bondsStatistics} />
       </Panel>
       <Panel shown={view === View.Issuers}>
-        <IssuersViewer bonds={allBonds} loadingBonds={isLoading} />
+        <IssuersViewer bonds={allBonds} loadingBonds={isLoading} bondsStatistics={bondsStatistics} />
       </Panel>
     </>
   )

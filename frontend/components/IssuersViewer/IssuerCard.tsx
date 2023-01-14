@@ -3,16 +3,22 @@ import Typography from "@mui/material/Typography";
 import Stack from "@mui/material/Stack";
 import { CardSection, CardEntry, CardValue } from "../Cards";
 import { ColorCode } from "../../common/ColorCodes";
-import { nominalValueColorCode } from "../../bonds/BondIndicators";
+import { getInterestConstColorCode, getNominalValueColorCode } from "../../bonds/BondIndicators";
 import { IssuerReport } from '.';
+import { BondsStatistics } from "../../bonds/statistics";
 
 export const interestConstPartColors: ColorCode[] = ['green', 'yellow', 'orange', 'red'];
 
 type IssuerCardParam = {
   issuerReport: IssuerReport;
+  bondsStatistics: BondsStatistics;
 }
 
-export default function IssuerCard({ issuerReport }: IssuerCardParam): JSX.Element {
+export default function IssuerCard({ issuerReport, bondsStatistics }: IssuerCardParam): JSX.Element {
+
+  const minNominalValueColorCode = getNominalValueColorCode(issuerReport.minNominalValue);
+  const interestConstColorCode = getInterestConstColorCode(issuerReport.interestConstAverage, bondsStatistics.byType['Corporate bonds'][issuerReport.interestVariable]);
+
   return (
     <>
       <Paper sx={{
@@ -36,16 +42,16 @@ export default function IssuerCard({ issuerReport }: IssuerCardParam): JSX.Eleme
           </CardEntry>
           <CardEntry caption='Nominal values' textAlign='center'>
             {issuerReport.minNominalValue === issuerReport.maxNominalValue &&
-              <CardValue colorCode={nominalValueColorCode(issuerReport.minNominalValue)}>{issuerReport.minNominalValue}</CardValue>}
+              <CardValue colorCode={minNominalValueColorCode}>{issuerReport.minNominalValue}</CardValue>}
             {issuerReport.minNominalValue !== issuerReport.maxNominalValue &&
               <Stack direction='row' spacing={0.5}>
-                <CardValue colorCode={nominalValueColorCode(issuerReport.minNominalValue)}>{issuerReport.minNominalValue}</CardValue>
+                <CardValue colorCode={minNominalValueColorCode}>{issuerReport.minNominalValue}</CardValue>
                 <span>-</span>
-                <CardValue colorCode={nominalValueColorCode(issuerReport.maxNominalValue)}>{issuerReport.maxNominalValue}</CardValue>
+                <CardValue colorCode={getNominalValueColorCode(issuerReport.maxNominalValue)}>{issuerReport.maxNominalValue}</CardValue>
               </Stack>}
           </CardEntry>
           <CardEntry caption='Interest Type' textAlign='end'>
-            <CardValue colorCode='green'>{issuerReport.interestVariable} + {issuerReport.interestConstAverage.toPrecision(2)}%</CardValue>
+            <CardValue colorCode={interestConstColorCode}>{issuerReport.interestVariable} + {issuerReport.interestConstAverage.toPrecision(2)}%</CardValue>
           </CardEntry>
         </CardSection>
       </Paper>

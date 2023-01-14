@@ -7,10 +7,8 @@ import { formatCurrency, formatDate } from '../../common/Formats';
 import YTMReportEntry from "./BondCardYTMSection";
 import { CardSection, CardEntry, CardValue } from "../Cards";
 import { BondsStatistics, interestVariablePart } from "../../bonds/statistics";
-import { nominalValueColorCode } from '../../bonds/BondIndicators';
+import { getNominalValueColorCode, getInterestConstColorCode } from '../../bonds/BondIndicators';
 import { ColorCode } from "../../common/ColorCodes";
-
-export const interestConstPartColors: ColorCode[] = ['green', 'yellow', 'orange', 'red'];
 
 type BondCardParam = {
   bondReport: BondReport;
@@ -23,9 +21,9 @@ type BondReportParam = {
 
 function BondCardMainInformationSection({ bondReport, bondsStatistics }: BondCardParam): JSX.Element {
   const { details } = bondReport;
-  const interestConstIndex = bondsStatistics.byType[details.type][interestVariablePart(bondReport)]
-    .findIndex(percentile => details.interestConst <= percentile) - 1;
-  const interestConstColorCode: ColorCode = interestConstPartColors[Math.max(interestConstIndex, 0)];
+
+  const nominalValueColorCode = getNominalValueColorCode(details.nominalValue);
+  const interestConstColorCode = getInterestConstColorCode(details.interestConst, bondsStatistics.byType[details.type][interestVariablePart(bondReport)]);
 
   return (
     <>
@@ -44,7 +42,7 @@ function BondCardMainInformationSection({ bondReport, bondsStatistics }: BondCar
           {details.maturityDay.toString().substring(0, 10)}
         </CardEntry>
         <CardEntry caption='Nominal value' textAlign='center'>
-          <CardValue colorCode={nominalValueColorCode(details.nominalValue)}>
+          <CardValue colorCode={nominalValueColorCode}>
             {formatCurrency(details.nominalValue, details.currency)}
           </CardValue>
         </CardEntry>

@@ -6,15 +6,17 @@ import IssuersList from './IssuersList';
 import { BondReport } from '../../sdk/GetBonds';
 import { getInterestConstParts, groupByIssuer, groupByInterestVariablePart, getNominalValues, filterByType } from '../../bonds/statistics/BondsData';
 import { IssuerReport, sortByInterestConstAverage } from '.';
+import { BondsStatistics } from '../../bonds/statistics';
 
 const filterCorporateBonds = filterByType('Corporate bonds');
 
 type IssuersViewerParams = {
   bonds: BondReport[];
   loadingBonds: boolean;
+  bondsStatistics: BondsStatistics;
 }
 
-export default function IssuersViewer({ bonds, loadingBonds }: IssuersViewerParams): JSX.Element {
+export default function IssuersViewer({ bonds, loadingBonds, bondsStatistics }: IssuersViewerParams): JSX.Element {
 
   const issuerReports = useMemo(() => {
     const filteredBonds = filterCorporateBonds(bonds);
@@ -39,6 +41,8 @@ export default function IssuersViewer({ bonds, loadingBonds }: IssuersViewerPara
 
   return (
     <Box sx={{
+      p: { sm: 1 },
+      '& > div': { mb: 1 }
     }}>
       {loadingBonds && <Box sx={{
         display: 'flex',
@@ -49,7 +53,7 @@ export default function IssuersViewer({ bonds, loadingBonds }: IssuersViewerPara
         <CircularProgress />
       </Box>}
       {!loadingBonds && <>
-        <IssuersList issuers={issuerReports} />
+        <IssuersList issuers={issuerReports} bondsStatistics={bondsStatistics} />
       </>}
     </Box>
   );

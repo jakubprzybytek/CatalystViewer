@@ -21,9 +21,9 @@ export default function BondsList({ bondReports, bondsStatistics }: BondsListPar
   return (
     <Box>
       <Grid container spacing={1}>
-        {bondReports.slice(0, displayedItemsCount).map((bondReportr) => (
-          <Grid key={`${bondReportr.details.name}#${bondReportr.details.market}`} item xs={12} sm={6} lg={4} xl={3}>
-            <BondCard bondReport={bondReportr} bondsStatistics={bondsStatistics} />
+        {bondReports.slice(0, displayedItemsCount).map(bondReport => (
+          <Grid key={`${bondReport.details.name}#${bondReport.details.market}`} item xs={12} sm={6} lg={4} xl={3}>
+            <BondCard bondReport={bondReport} bondsStatistics={bondsStatistics} />
           </Grid>
         ))}
         {displayedItemsCount < bondReports.length &&

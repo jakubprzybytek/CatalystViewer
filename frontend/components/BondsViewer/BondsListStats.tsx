@@ -1,4 +1,5 @@
 import * as R from 'ramda';
+import { Fragment } from 'react';
 import { average } from 'simple-statistics';
 import Typography from "@mui/material/Typography";
 import Grid from "@mui/material/Grid";
@@ -8,9 +9,8 @@ import Paper from "@mui/material/Paper";
 import Divider from '@mui/material/Divider';
 import { BondReport, BondDetails } from "../../sdk/GetBonds";
 import { BondsStatistics } from '../../bonds/statistics';
-import { interestConstPartColors } from './BondCard';
 import { colorMarkers } from "../../common/ColorCodes";
-import { Fragment } from 'react';
+import { getInterestConstColorCode } from '../../bonds/BondIndicators';
 
 const interestVariable = R.compose<BondReport[], BondDetails, string | undefined, string>(R.defaultTo('Const'), R.prop('interestVariable'), R.prop('details'));
 const sort = R.sortBy<string>(R.identity);
@@ -43,9 +43,7 @@ function InterestChart({ quartiles, bondReports }: InterestChartParam) {
       {bondReports.map((bond, index) => {
         const x = xScale(bond.details.interestConst);
         const y = 8 + Math.random() * 4;
-        const interestConstIndex = quartiles
-          .findIndex(percentile => bond.details.interestConst <= percentile) - 1;
-        const interestConstColorCode = interestConstPartColors[Math.max(interestConstIndex, 0)];
+        const interestConstColorCode = getInterestConstColorCode(bond.details.interestConst, quartiles);
         const interestConstColorMarker = colorMarkers[interestConstColorCode];
         return (
           <circle key={index} cx={x} cy={y} r={0.75} stroke='grey' strokeWidth={0.2} fill={interestConstColorMarker?.backgroundColor} />
