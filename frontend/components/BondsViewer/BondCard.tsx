@@ -3,13 +3,12 @@ import Paper from "@mui/material/Paper";
 import Link from "@mui/material/Link";
 import Typography from "@mui/material/Typography";
 import { BondReport } from "../../sdk/GetBonds";
-import { formatCurrency } from "../../common/Formats";
+import { formatCurrency, formatDate } from '../../common/Formats';
 import YTMReportEntry from "./BondCardYTMSection";
 import { CardSection, CardEntry, CardValue } from "../Cards";
 import { BondsStatistics, interestVariablePart } from "../../bonds/statistics";
-import { nominalValueColorCode } from '../../bonds/BondDecorators';
+import { nominalValueColorCode } from '../../bonds/BondIndicators';
 import { ColorCode } from "../../common/ColorCodes";
-import { formatDate } from '../../common/Formats';
 
 export const interestConstPartColors: ColorCode[] = ['green', 'yellow', 'orange', 'red'];
 

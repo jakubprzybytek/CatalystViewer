@@ -1,10 +1,10 @@
 import Paper from "@mui/material/Paper";
-import { CardSection, CardEntry, CardValue } from "../Cards";
-import { ColorCode } from "../../common/ColorCodes";
-import { IssuerReport } from '.';
 import Typography from "@mui/material/Typography";
 import Stack from "@mui/material/Stack";
-import { nominalValueColorCode } from "../../bonds/BondDecorators";
+import { CardSection, CardEntry, CardValue } from "../Cards";
+import { ColorCode } from "../../common/ColorCodes";
+import { nominalValueColorCode } from "../../bonds/BondIndicators";
+import { IssuerReport } from '.';
 
 export const interestConstPartColors: ColorCode[] = ['green', 'yellow', 'orange', 'red'];
 
