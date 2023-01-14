@@ -1,3 +1,4 @@
+export * from './BondsData';
 export * from './BondsStatistics';
 
 export type InterestByBaseTypePercentiles = Record<string, number[]>;
