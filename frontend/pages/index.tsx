@@ -4,10 +4,12 @@ import Head from 'next/head';
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import AppBar from '@mui/material/AppBar';
+import Drawer from '@mui/material/Drawer';
 import Toolbar from '@mui/material/Toolbar';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
 import Refresh from '@mui/icons-material/Refresh';
+import FilterAlt from '@mui/icons-material/FilterAlt';
 import BondsViewer from '../components/BondsViewer/BondsViewer';
 import IssuersViewer from '../components/IssuersViewer/IssuersViewer';
 import { BondReport, getBonds } from '../sdk/GetBonds';
@@ -17,6 +19,15 @@ enum View {
   Bonds,
   Issuers
 }
+
+function DrawerContent(): JSX.Element {
+  return (
+    <Box>
+      Hello world
+    </Box>
+  );
+}
+
 
 type PanelParams = {
   shown: boolean;
@@ -35,6 +46,9 @@ function Panel({ shown, children }: PanelParams): JSX.Element {
 }
 
 const Home: NextPage = () => {
+
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
   const [view, setView] = useState(View.Bonds);
 
   const [isLoading, setIsLoading] = useState(false);
@@ -65,22 +79,40 @@ const Home: NextPage = () => {
           justifyContent: 'space-between'
         }}>
           <Stack direction='row' spacing={1}>
-            <Button variant='outlined' color='inherit'
+            <Button variant={view === View.Bonds ? 'outlined' : 'text'} color='inherit'
               onClick={() => setView(View.Bonds)}>
               Bonds
             </Button>
-            <Button variant='outlined' color='inherit'
+            <Button variant={view === View.Issuers ? 'outlined' : 'text'} color='inherit'
               onClick={() => setView(View.Issuers)}>
               Issuers
             </Button>
           </Stack>
-          <IconButton color='inherit' disabled={isLoading}
-            onClick={() => { setIsLoading(true); fetchData(); }}>
-            <Refresh />
-          </IconButton>
+          <Stack direction='row' spacing={1}>
+            <IconButton color='inherit' disabled={isLoading}
+              onClick={() => { setIsLoading(true); fetchData(); }}>
+              <Refresh />
+            </IconButton>
+            <IconButton color='inherit'
+              onClick={() => { setDrawerOpen(true); }}>
+              <FilterAlt />
+            </IconButton>
+          </Stack>
         </Toolbar>
       </AppBar>
-
+      <Box component="nav">
+        <Drawer
+          anchor='top'
+          //variant='temporary'
+          open={drawerOpen}
+          onClose={() => setDrawerOpen(false)}
+          ModalProps={{
+            keepMounted: true, // Better open performance on mobile.
+          }}
+        >
+          <DrawerContent />
+        </Drawer>
+      </Box>
       <Toolbar variant='dense' />
       <Panel shown={view === View.Bonds}>
         <BondsViewer bonds={allBonds} loadingBonds={isLoading} bondsStatistics={bondsStatistics} />
