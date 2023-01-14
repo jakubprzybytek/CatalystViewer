@@ -24,33 +24,33 @@ type BondReportParam = {
 function BondCardMainInformationSection({ bondReport, bondsStatistics }: BondCardParam): JSX.Element {
   const { details } = bondReport;
   const interestConstIndex = bondsStatistics.byType[details.type][interestVariablePart(bondReport)]
-    .findIndex(percentile => bondReport.details.interestConst <= percentile) - 1;
+    .findIndex(percentile => details.interestConst <= percentile) - 1;
   const interestConstColorCode: ColorCode = interestConstPartColors[Math.max(interestConstIndex, 0)];
 
   return (
     <>
       <CardSection>
-        <Typography variant='h4'><Link href={`https://obligacje.pl/pl/obligacja/${bondReport.details.name}`} target='_blank'>{bondReport.details.name}</Link></Typography>
-        <CardEntry caption='Market' textAlign='end'>{bondReport.details.market}</CardEntry>
+        <Typography variant='h4'><Link href={`https://obligacje.pl/pl/obligacja/${details.name}`} target='_blank'>{details.name}</Link></Typography>
+        <CardEntry caption='Market' textAlign='end'>{details.market}</CardEntry>
       </CardSection>
       <CardSection>
         <CardEntry caption='Issuer'>
-          <CardValue variant='h6'>{bondReport.details.issuer}</CardValue>
+          <CardValue variant='h6'>{details.issuer}</CardValue>
         </CardEntry>
-        <CardEntry caption='Type' textAlign='end'>{bondReport.details.type}</CardEntry>
+        <CardEntry caption='Type' textAlign='end'>{details.type}</CardEntry>
       </CardSection>
       <CardSection>
         <CardEntry caption='Maturity day'>
-          {bondReport.details.maturityDay.toString().substring(0, 10)}
+          {details.maturityDay.toString().substring(0, 10)}
         </CardEntry>
         <CardEntry caption='Nominal value' textAlign='center'>
-          <CardValue colorCode={nominalValueColorCode(bondReport.details.nominalValue)}>
-            {formatCurrency(bondReport.details.nominalValue, bondReport.details.currency)}
+          <CardValue colorCode={nominalValueColorCode(details.nominalValue)}>
+            {formatCurrency(details.nominalValue, details.currency)}
           </CardValue>
         </CardEntry>
         <CardEntry caption='Interest Type' textAlign='end'>
           <CardValue colorCode={interestConstColorCode}>
-            {bondReport.details.interestVariable && `${bondReport.details.interestVariable} + `}{bondReport.details.interestConst}%
+            {details.interestVariable && `${details.interestVariable} + `}{details.interestConst}%
           </CardValue>
         </CardEntry>
       </CardSection>
@@ -98,7 +98,6 @@ export default function BondCard({ bondReport, bondsStatistics }: BondCardParam)
           lineHeight: 1.3
         },
         '& .MuiTypography-subtitle2': {
-          //          color: 'dimgray',
           lineHeight: '24px'
         },
         '& > hr': {
