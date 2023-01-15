@@ -8,26 +8,33 @@ import Drawer from '@mui/material/Drawer';
 import Toolbar from '@mui/material/Toolbar';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
+import Typography from '@mui/material/Typography';
 import Refresh from '@mui/icons-material/Refresh';
 import FilterAlt from '@mui/icons-material/FilterAlt';
 import BondsViewer from '../components/BondsViewer/BondsViewer';
 import IssuersViewer from '../components/IssuersViewer/IssuersViewer';
 import { BondReport, getBonds } from '../sdk/GetBonds';
 import { computeStatistics } from '../bonds/statistics';
+import BondsFilter from '../components/BondsFilter/BondsFilter';
 
 enum View {
   Bonds,
   Issuers
 }
 
-function DrawerContent(): JSX.Element {
+type DrawerContentProps = {
+  bondReports: BondReport[];
+  setFilteredBondReports: (filteredBonds: BondReport[]) => void;
+}
+
+function DrawerContent({ bondReports, setFilteredBondReports }: DrawerContentProps): JSX.Element {
   return (
-    <Box>
-      Hello world
+    <Box padding={1}>
+      <Typography>Select filters:</Typography>
+      <BondsFilter allBondReports={bondReports} setFilteredBondReports={setFilteredBondReports} />
     </Box>
   );
 }
-
 
 type PanelParams = {
   shown: boolean;
@@ -46,13 +53,12 @@ function Panel({ shown, children }: PanelParams): JSX.Element {
 }
 
 const Home: NextPage = () => {
-
   const [drawerOpen, setDrawerOpen] = useState(false);
-
   const [view, setView] = useState(View.Bonds);
 
   const [isLoading, setIsLoading] = useState(false);
   const [allBonds, setAllBonds] = useState<BondReport[]>([]);
+  const [filteredBonds, setFilteredBonds] = useState<BondReport[]>([]);
 
   const fetchData = async () => {
     const bonds = await getBonds();
@@ -110,7 +116,7 @@ const Home: NextPage = () => {
             keepMounted: true, // Better open performance on mobile.
           }}
         >
-          <DrawerContent />
+          <DrawerContent bondReports={allBonds} setFilteredBondReports={setFilteredBonds} />
         </Drawer>
       </Box>
       <Toolbar variant='dense' />

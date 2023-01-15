@@ -4,11 +4,11 @@ import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import IssuersList from './IssuersList';
 import { BondReport } from '../../sdk/GetBonds';
-import { getInterestConstParts, groupByIssuer, groupByInterestVariablePart, getNominalValues, filterByType } from '../../bonds/statistics/BondsData';
+import { getInterestConstParts, groupByIssuer, groupByInterestVariablePart, getNominalValues, filterByBondType } from '../../bonds/statistics/BondsData';
 import { IssuerReport, sortByInterestConstAverage } from '.';
 import { BondsStatistics } from '../../bonds/statistics';
 
-const filterCorporateBonds = filterByType('Corporate bonds');
+const filterCorporateBonds = filterByBondType('Corporate bonds');
 
 type IssuersViewerParams = {
   bonds: BondReport[];

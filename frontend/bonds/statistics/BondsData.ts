@@ -12,8 +12,12 @@ const nominalValue = R.compose<BondReport[], BondDetails, number>(R.prop('nomina
 const isBondType = (type: string) => type !== 'all' ? (bondReport: BondReport) => bondReport.details.type === type : R.always(true);
 
 // Getters
+export const getBondTypes = R.map(bondType);
 export const getInterestConstParts = R.map(interestConstPart);
 export const getNominalValues = R.map(nominalValue);
+
+// Getters with unique values
+export const getUniqueBondTypes = (bondReports: BondReport[]): string[] => R.uniq(getBondTypes(bondReports));
 
 // Group by
 export const groupByType = R.groupBy(bondType);
@@ -21,4 +25,4 @@ export const groupByIssuer = R.groupBy(bondIssuer);
 export const groupByInterestVariablePart = R.groupBy(interestVariablePart);
 
 // Filters
-export const filterByType = (type: string) => R.filter(isBondType(type));
+export const filterByBondType = (bondType: string) => R.filter(isBondType(bondType));
