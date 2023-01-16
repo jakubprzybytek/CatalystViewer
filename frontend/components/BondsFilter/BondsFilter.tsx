@@ -3,7 +3,7 @@ import Grid from "@mui/material/Grid";
 import FormControl from "@mui/material/FormControl";
 import MenuItem from "@mui/material/MenuItem";
 import TextField from "@mui/material/TextField";
-import { filterBy, filterByBondType, getUniqueBondTypes, getUniqueMarkets, isBondType, isOnMarkets, nominalValueLessThan, sortStrings } from "../../bonds/statistics";
+import { filterBy, getUniqueBondTypes, getUniqueMarkets, isBondType, isOnMarkets, nominalValueLessThan, sortStrings } from "../../bonds/statistics";
 import { useArrayLocalStorage, useLocalStorage } from "../../common/UseStorage";
 import { BondReport } from "../../sdk/GetBonds";
 import FormLabel from "@mui/material/FormLabel";
