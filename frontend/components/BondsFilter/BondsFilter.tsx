@@ -1,90 +1,21 @@
 import { useEffect, useMemo } from "react";
 import Grid from "@mui/material/Grid";
-import FormControl from "@mui/material/FormControl";
-import MenuItem from "@mui/material/MenuItem";
-import TextField from "@mui/material/TextField";
+import BondTypeFilter from "./BondTypeFilter";
+import NominalValueFilter from "./NominalValueFilter";
+import MarketFilter from "./MarketFilter";
 import { filterBy, getUniqueBondTypes, getUniqueMarkets, isBondType, isOnMarkets, nominalValueLessThan, sortStrings } from "../../bonds/statistics";
 import { useArrayLocalStorage, useLocalStorage } from "../../common/UseStorage";
 import { BondReport } from "../../sdk/GetBonds";
-import FormLabel from "@mui/material/FormLabel";
-import FormGroup from "@mui/material/FormGroup";
-import FormControlLabel from "@mui/material/FormControlLabel";
-import Checkbox from "@mui/material/Checkbox";
 
 const DEFAULT_MARKETS = ['GPW RR', 'GPW ASO'];
-
-type BondTypeFilterParam = {
-  bondTypes: string[];
-  selectedBondType: string;
-  setSelectedBondType: (bondType: string) => void;
-}
-
-function BondTypeFilter({ bondTypes, selectedBondType, setSelectedBondType }: BondTypeFilterParam) {
-  return (
-    <FormControl fullWidth>
-      <TextField label="Bond type" size="small" fullWidth select
-        value={bondTypes.includes(selectedBondType) ? selectedBondType : ''}
-        onChange={(event: React.ChangeEvent<HTMLInputElement>) => setSelectedBondType(event.target.value)}>
-        {bondTypes.map(bondType => (
-          <MenuItem key={bondType} value={bondType}>{bondType}</MenuItem>
-        ))}
-      </TextField>
-    </FormControl>
-
-  );
-}
-
-type NominalValueFilterParam = {
-  selectedNominalValue: number;
-  setSelectedNominalValue: (nominalValue: number) => void;
-}
-
-function NominalValueFilter({ selectedNominalValue, setSelectedNominalValue }: NominalValueFilterParam) {
-  return (
-    <FormControl fullWidth>
-      <TextField label="Max nominal value" size="small" fullWidth select
-        value={selectedNominalValue}
-        onChange={(event: React.ChangeEvent<HTMLInputElement>) => setSelectedNominalValue(Number.parseInt(event.target.value))}>
-        <MenuItem value={100}>100</MenuItem>
-        <MenuItem value={1000}>1000</MenuItem>
-        <MenuItem value={10000}>10 000</MenuItem>
-        <MenuItem value={100000}>100 000</MenuItem>
-        <MenuItem value={1000000}>1 000 000</MenuItem>
-      </TextField>
-    </FormControl>
-  );
-}
-
-type MarketFilterParam = {
-  allMarkets: string[];
-  selectedMarkets: string[];
-  addMarket: (market: string) => void;
-  removeMarket: (market: string) => void;
-}
-
-function MarketFilter({ allMarkets, selectedMarkets, addMarket, removeMarket }: MarketFilterParam) {
-  return (
-    <FormControl fullWidth>
-      <FormLabel component="legend">Market</FormLabel>
-      <FormGroup row>
-        {allMarkets.map((market) => (
-          <FormControlLabel key={market} control={
-            <Checkbox
-              checked={selectedMarkets.includes(market)}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>) => event.target.checked ? addMarket(market) : removeMarket(market)} />
-          } label={market} />
-        ))}
-      </FormGroup>
-    </FormControl>
-  );
-}
 
 type BondsFilterParams = {
   allBondReports: BondReport[];
   setFilteredBondReports: (filteredBonds: BondReport[]) => void;
+  setSelectedBondType: (bondType: string) => void;
 };
 
-export default function BondsFilter({ allBondReports, setFilteredBondReports }: BondsFilterParams): JSX.Element {
+export default function BondsFilter({ allBondReports, setFilteredBondReports, setSelectedBondType }: BondsFilterParams): JSX.Element {
   const [bondTypeFilterString, setBondTypeFilterString] = useLocalStorage<string>('filter.bondType', 'Corporate bonds');
   const [maxNominalValueFilterNumber, setMaxNominalValueFilterNumber] = useLocalStorage<number>('filter.maxNominalValue', 10000);
   const [marketsFilterStrings, addMarketFilter, removeMarketFilter] = useArrayLocalStorage<string>('filter.market', DEFAULT_MARKETS);
@@ -97,7 +28,6 @@ export default function BondsFilter({ allBondReports, setFilteredBondReports }: 
   useEffect(() => {
     const filterBondReports = filterBy([isBondType(bondTypeFilterString), nominalValueLessThan(maxNominalValueFilterNumber), isOnMarkets(marketsFilterStrings)]);
 
-    // const filteredBondReports = filterByBondType(bondTypeFilterString)(allBondReports);
     const filteredBondReports = filterBondReports(allBondReports);
     console.log(`Filtering bonds: ${filteredBondReports.length}, bond type: ${bondTypeFilterString}, max nominal value: ${maxNominalValueFilterNumber}, markets: ${marketsFilterStrings}`);
     setFilteredBondReports(filteredBondReports);
@@ -105,7 +35,7 @@ export default function BondsFilter({ allBondReports, setFilteredBondReports }: 
 
   return (
     <Grid container item xs={12} sm={6} md={4}>
-      <BondTypeFilter bondTypes={availableBondTypes} selectedBondType={bondTypeFilterString} setSelectedBondType={setBondTypeFilterString} />
+      <BondTypeFilter bondTypes={availableBondTypes} selectedBondType={bondTypeFilterString} setSelectedBondType={(bondType: string) => { setBondTypeFilterString(bondType); setSelectedBondType(bondType); }} />
       <Grid container spacing={1} marginTop={1}>
         <Grid item xs={12} sm={6} md={4}>
           <NominalValueFilter selectedNominalValue={maxNominalValueFilterNumber} setSelectedNominalValue={setMaxNominalValueFilterNumber} />

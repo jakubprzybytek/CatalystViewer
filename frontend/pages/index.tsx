@@ -11,11 +11,11 @@ import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import Refresh from '@mui/icons-material/Refresh';
 import FilterAlt from '@mui/icons-material/FilterAlt';
+import BondsFilter from '../components/BondsFilter/BondsFilter';
 import BondsViewer from '../components/BondsViewer/BondsViewer';
 import IssuersViewer from '../components/IssuersViewer/IssuersViewer';
 import { BondReport, getBonds } from '../sdk/GetBonds';
 import { computeStatisticsForInterestBaseTypes } from '../bonds/statistics';
-import BondsFilter from '../components/BondsFilter/BondsFilter';
 
 enum View {
   Bonds,
@@ -47,6 +47,8 @@ const Home: NextPage = () => {
 
   const [filteredBondReports, setFilteredBondReports] = useState<BondReport[]>([]);
   const filteredBondsStatistics = useMemo(() => computeStatisticsForInterestBaseTypes(filteredBondReports), [filteredBondReports]);
+
+  const [selectedBondType, setSelectedBondType] = useState('');
 
   const fetchData = async () => {
     const bonds = await getBonds();
@@ -80,7 +82,7 @@ const Home: NextPage = () => {
               Bonds
             </Button>
           </Stack>
-          <Typography>Bond type</Typography>
+          <Typography>{filteredBondReports.length} {selectedBondType}</Typography>
           <Stack direction='row' spacing={1}>
             <IconButton color='inherit' disabled={isLoading}
               onClick={() => { setIsLoading(true); fetchData(); }}>
@@ -102,7 +104,7 @@ const Home: NextPage = () => {
           }}>
           <Box padding={1}>
             <Typography>Select filters:</Typography>
-            <BondsFilter allBondReports={allBondReports} setFilteredBondReports={setFilteredBondReports} />
+            <BondsFilter allBondReports={allBondReports} setFilteredBondReports={setFilteredBondReports} setSelectedBondType={setSelectedBondType} />
           </Box>
         </Drawer>
       </Box>

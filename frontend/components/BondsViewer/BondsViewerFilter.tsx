@@ -29,7 +29,7 @@ type BondsViewerFilterParams = {
 
 const defaultIssuers: string[] = [];
 
-export default function BondsViewerFilter({ allBondReports, setFilteredBondReports: setFilteredBonds }: BondsViewerFilterParams): JSX.Element {
+export default function BondsViewerFilter({ allBondReports, setFilteredBondReports }: BondsViewerFilterParams): JSX.Element {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
 
@@ -42,8 +42,8 @@ export default function BondsViewerFilter({ allBondReports, setFilteredBondRepor
   const filteredBonds = useMemo(() => R.filter(isIssuedBy(issuersFilter))(allBondReports), [allBondReports, issuersFilter]);
 
   useEffect(() => {
-    setFilteredBonds(sortByName(filteredBonds));
-  }, [setFilteredBonds, filteredBonds]);
+    setFilteredBondReports(sortByName(filteredBonds));
+  }, [setFilteredBondReports, filteredBonds]);
 
   return (
     <Paper sx={{ p: 1 }}>
