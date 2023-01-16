@@ -14,7 +14,7 @@ import FilterAlt from '@mui/icons-material/FilterAlt';
 import BondsViewer from '../components/BondsViewer/BondsViewer';
 import IssuersViewer from '../components/IssuersViewer/IssuersViewer';
 import { BondReport, getBonds } from '../sdk/GetBonds';
-import { computeStatisticsForInterestBaseTypes, InterestPercentilesByInterestBaseType } from '../bonds/statistics';
+import { computeStatisticsForInterestBaseTypes } from '../bonds/statistics';
 import BondsFilter from '../components/BondsFilter/BondsFilter';
 
 enum View {
@@ -40,19 +40,13 @@ function Panel({ shown, children }: PanelParams): JSX.Element {
 
 const Home: NextPage = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [view, setView] = useState(View.Bonds);
+  const [view, setView] = useState(View.Issuers);
 
   const [isLoading, setIsLoading] = useState(false);
   const [allBondReports, setAllBondReports] = useState<BondReport[]>([]);
 
   const [filteredBondReports, setFilteredBondReports] = useState<BondReport[]>([]);
-  const [filteredBondsStatistics, setFilteredBondsStatistics] = useState<InterestPercentilesByInterestBaseType>({});
-  //const filteredBondsStatistics = useMemo(() => computeStatisticsForInterestBaseTypes(filteredBondReports), [filteredBondReports]);
-
-  function updateFilteredBondReports(bondReports: BondReport[]) {
-    setFilteredBondReports(bondReports);
-    setFilteredBondsStatistics(computeStatisticsForInterestBaseTypes(bondReports));
-  }
+  const filteredBondsStatistics = useMemo(() => computeStatisticsForInterestBaseTypes(filteredBondReports), [filteredBondReports]);
 
   const fetchData = async () => {
     const bonds = await getBonds();
@@ -77,15 +71,16 @@ const Home: NextPage = () => {
           justifyContent: 'space-between'
         }}>
           <Stack direction='row' spacing={1}>
-            <Button variant={view === View.Bonds ? 'outlined' : 'text'} color='inherit'
-              onClick={() => setView(View.Bonds)}>
-              Bonds
-            </Button>
             <Button variant={view === View.Issuers ? 'outlined' : 'text'} color='inherit'
               onClick={() => setView(View.Issuers)}>
               Issuers
             </Button>
+            <Button variant={view === View.Bonds ? 'outlined' : 'text'} color='inherit'
+              onClick={() => setView(View.Bonds)}>
+              Bonds
+            </Button>
           </Stack>
+          <Typography>Bond type</Typography>
           <Stack direction='row' spacing={1}>
             <IconButton color='inherit' disabled={isLoading}
               onClick={() => { setIsLoading(true); fetchData(); }}>
@@ -107,16 +102,16 @@ const Home: NextPage = () => {
           }}>
           <Box padding={1}>
             <Typography>Select filters:</Typography>
-            <BondsFilter allBondReports={allBondReports} setFilteredBondReports={updateFilteredBondReports} />
+            <BondsFilter allBondReports={allBondReports} setFilteredBondReports={setFilteredBondReports} />
           </Box>
         </Drawer>
       </Box>
       <Toolbar variant='dense' />
-      <Panel shown={view === View.Bonds}>
-        <BondsViewer bondReports={filteredBondReports} loadingBonds={isLoading} statistics={filteredBondsStatistics} />
-      </Panel>
       <Panel shown={view === View.Issuers}>
         <IssuersViewer bondReports={filteredBondReports} loadingBonds={isLoading} statistics={filteredBondsStatistics} />
+      </Panel>
+      <Panel shown={view === View.Bonds}>
+        <BondsViewer bondReports={filteredBondReports} loadingBonds={isLoading} statistics={filteredBondsStatistics} />
       </Panel>
     </>
   )
