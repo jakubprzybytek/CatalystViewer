@@ -5,19 +5,18 @@ import { CardSection, CardEntry, CardValue } from "../Cards";
 import { ColorCode } from "../../common/ColorCodes";
 import { getInterestConstColorCode, getNominalValueColorCode } from "../../bonds/BondIndicators";
 import { IssuerReport } from '.';
-import { BondsStatistics } from "../../bonds/statistics";
+import { InterestPercentilesByInterestBaseType } from "../../bonds/statistics";
 
 export const interestConstPartColors: ColorCode[] = ['green', 'yellow', 'orange', 'red'];
 
 type IssuerCardParam = {
   issuerReport: IssuerReport;
-  bondsStatistics: BondsStatistics;
+  statistics: InterestPercentilesByInterestBaseType;
 }
 
-export default function IssuerCard({ issuerReport, bondsStatistics }: IssuerCardParam): JSX.Element {
-
+export default function IssuerCard({ issuerReport, statistics }: IssuerCardParam): JSX.Element {
   const minNominalValueColorCode = getNominalValueColorCode(issuerReport.minNominalValue);
-  const interestConstColorCode = getInterestConstColorCode(issuerReport.interestConstAverage, bondsStatistics.byType['Corporate bonds'][issuerReport.interestVariable]);
+  const interestConstColorCode = getInterestConstColorCode(issuerReport.interestConstAverage, statistics[issuerReport.interestBaseType]);
 
   return (
     <>
@@ -51,7 +50,7 @@ export default function IssuerCard({ issuerReport, bondsStatistics }: IssuerCard
               </Stack>}
           </CardEntry>
           <CardEntry caption='Interest Type' textAlign='end'>
-            <CardValue colorCode={interestConstColorCode}>{issuerReport.interestVariable} + {issuerReport.interestConstAverage.toPrecision(2)}%</CardValue>
+            <CardValue colorCode={interestConstColorCode}>{issuerReport.interestBaseType} + {issuerReport.interestConstAverage.toPrecision(2)}%</CardValue>
           </CardEntry>
         </CardSection>
       </Paper>

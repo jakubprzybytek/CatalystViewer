@@ -6,24 +6,24 @@ import { BondReport } from "../../sdk/GetBonds";
 import { formatCurrency, formatDate } from '../../common/Formats';
 import YTMReportEntry from "./BondCardYTMSection";
 import { CardSection, CardEntry, CardValue } from "../Cards";
-import { BondsStatistics, interestVariablePart } from "../../bonds/statistics";
+import { InterestPercentilesByInterestBaseType, interestBaseType } from "../../bonds/statistics";
 import { getNominalValueColorCode, getInterestConstColorCode } from '../../bonds/BondIndicators';
 import { ColorCode } from "../../common/ColorCodes";
 
 type BondCardParam = {
   bondReport: BondReport;
-  bondsStatistics: BondsStatistics;
+  statistics: InterestPercentilesByInterestBaseType;
 }
 
 type BondReportParam = {
   bondReport: BondReport;
 }
 
-function BondCardMainInformationSection({ bondReport, bondsStatistics }: BondCardParam): JSX.Element {
+function BondCardMainInformationSection({ bondReport, statistics }: BondCardParam): JSX.Element {
   const { details } = bondReport;
 
   const nominalValueColorCode = getNominalValueColorCode(details.nominalValue);
-  const interestConstColorCode = getInterestConstColorCode(details.interestConst, bondsStatistics.byType[details.type][interestVariablePart(bondReport)]);
+  const interestConstColorCode = getInterestConstColorCode(details.interestConst, statistics[interestBaseType(bondReport)]);
 
   return (
     <>
@@ -87,7 +87,7 @@ function BondCardCurrentInterestSection({ bondReport }: BondReportParam): JSX.El
   );
 }
 
-export default function BondCard({ bondReport, bondsStatistics }: BondCardParam): JSX.Element {
+export default function BondCard({ bondReport, statistics }: BondCardParam): JSX.Element {
   return (
     <>
       <Paper sx={{
@@ -102,7 +102,7 @@ export default function BondCard({ bondReport, bondsStatistics }: BondCardParam)
           paddingTop: 1
         }
       }}>
-        <BondCardMainInformationSection bondReport={bondReport} bondsStatistics={bondsStatistics} />
+        <BondCardMainInformationSection bondReport={bondReport} statistics={statistics} />
         <Divider />
         <BondCardCurrentInterestSection bondReport={bondReport} />
         <Divider />

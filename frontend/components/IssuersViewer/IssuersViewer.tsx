@@ -4,30 +4,26 @@ import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import IssuersList from './IssuersList';
 import { BondReport } from '../../sdk/GetBonds';
-import { getInterestConstParts, groupByIssuer, groupByInterestVariablePart, getNominalValues, filterByBondType } from '../../bonds/statistics/BondsData';
+import { getInterestConstParts, groupByIssuer, groupByInterestBaseType, getNominalValues } from '../../bonds/statistics/BondsData';
 import { IssuerReport, sortByInterestConstAverage } from '.';
-import { BondsStatistics } from '../../bonds/statistics';
-
-const filterCorporateBonds = filterByBondType('Corporate bonds');
+import { InterestPercentilesByInterestBaseType } from '../../bonds/statistics';
 
 type IssuersViewerParams = {
-  bonds: BondReport[];
+  bondReports: BondReport[];
   loadingBonds: boolean;
-  bondsStatistics: BondsStatistics;
+  statistics: InterestPercentilesByInterestBaseType;
 }
 
-export default function IssuersViewer({ bonds, loadingBonds, bondsStatistics }: IssuersViewerParams): JSX.Element {
-
+export default function IssuersViewer({ bondReports, loadingBonds, statistics }: IssuersViewerParams): JSX.Element {
   const issuerReports = useMemo(() => {
-    const filteredBonds = filterCorporateBonds(bonds);
-    const bondsByIssuer = groupByIssuer(filteredBonds);
+    const bondsByIssuer = groupByIssuer(bondReports);
     const issuerReports: IssuerReport[] = [];
 
     Object.entries(bondsByIssuer).map(([issuer, issuerBonds]) => {
-      Object.entries(groupByInterestVariablePart(issuerBonds)).map(([interestVariableType, bondsByInterestVariablePart]) => {
+      Object.entries(groupByInterestBaseType(issuerBonds)).map(([interestVariableType, bondsByInterestVariablePart]) => {
         issuerReports.push({
           name: issuer,
-          interestVariable: interestVariableType,
+          interestBaseType: interestVariableType,
           interestConstAverage: average(getInterestConstParts(bondsByInterestVariablePart)),
           minNominalValue: min(getNominalValues(bondsByInterestVariablePart)),
           maxNominalValue: max(getNominalValues(bondsByInterestVariablePart)),
@@ -37,7 +33,7 @@ export default function IssuersViewer({ bonds, loadingBonds, bondsStatistics }: 
     });
 
     return sortByInterestConstAverage(issuerReports);
-  }, [bonds]);
+  }, [bondReports]);
 
   return (
     <Box sx={{
@@ -53,7 +49,7 @@ export default function IssuersViewer({ bonds, loadingBonds, bondsStatistics }: 
         <CircularProgress />
       </Box>}
       {!loadingBonds && <>
-        <IssuersList issuers={issuerReports} bondsStatistics={bondsStatistics} />
+        <IssuersList issuers={issuerReports} statistics={statistics} />
       </>}
     </Box>
   );

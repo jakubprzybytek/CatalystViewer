@@ -14,26 +14,12 @@ import FilterAlt from '@mui/icons-material/FilterAlt';
 import BondsViewer from '../components/BondsViewer/BondsViewer';
 import IssuersViewer from '../components/IssuersViewer/IssuersViewer';
 import { BondReport, getBonds } from '../sdk/GetBonds';
-import { computeStatistics } from '../bonds/statistics';
+import { computeStatisticsForInterestBaseTypes, InterestPercentilesByInterestBaseType } from '../bonds/statistics';
 import BondsFilter from '../components/BondsFilter/BondsFilter';
 
 enum View {
   Bonds,
   Issuers
-}
-
-type DrawerContentProps = {
-  bondReports: BondReport[];
-  setFilteredBondReports: (filteredBonds: BondReport[]) => void;
-}
-
-function DrawerContent({ bondReports, setFilteredBondReports }: DrawerContentProps): JSX.Element {
-  return (
-    <Box padding={1}>
-      <Typography>Select filters:</Typography>
-      <BondsFilter allBondReports={bondReports} setFilteredBondReports={setFilteredBondReports} />
-    </Box>
-  );
 }
 
 type PanelParams = {
@@ -57,16 +43,22 @@ const Home: NextPage = () => {
   const [view, setView] = useState(View.Bonds);
 
   const [isLoading, setIsLoading] = useState(false);
-  const [allBonds, setAllBonds] = useState<BondReport[]>([]);
-  const [filteredBonds, setFilteredBonds] = useState<BondReport[]>([]);
+  const [allBondReports, setAllBondReports] = useState<BondReport[]>([]);
+
+  const [filteredBondReports, setFilteredBondReports] = useState<BondReport[]>([]);
+  const [filteredBondsStatistics, setFilteredBondsStatistics] = useState<InterestPercentilesByInterestBaseType>({});
+  //const filteredBondsStatistics = useMemo(() => computeStatisticsForInterestBaseTypes(filteredBondReports), [filteredBondReports]);
+
+  function updateFilteredBondReports(bondReports: BondReport[]) {
+    setFilteredBondReports(bondReports);
+    setFilteredBondsStatistics(computeStatisticsForInterestBaseTypes(bondReports));
+  }
 
   const fetchData = async () => {
     const bonds = await getBonds();
-    setAllBonds(bonds);
+    setAllBondReports(bonds);
     setIsLoading(false);
   };
-
-  const bondsStatistics = useMemo(() => computeStatistics(allBonds), [allBonds]);
 
   useEffect(() => {
     setIsLoading(true);
@@ -107,24 +99,24 @@ const Home: NextPage = () => {
         </Toolbar>
       </AppBar>
       <Box component="nav">
-        <Drawer
-          anchor='top'
+        <Drawer anchor='top' open={drawerOpen}
           //variant='temporary'
-          open={drawerOpen}
           onClose={() => setDrawerOpen(false)}
           ModalProps={{
             keepMounted: true, // Better open performance on mobile.
-          }}
-        >
-          <DrawerContent bondReports={allBonds} setFilteredBondReports={setFilteredBonds} />
+          }}>
+          <Box padding={1}>
+            <Typography>Select filters:</Typography>
+            <BondsFilter allBondReports={allBondReports} setFilteredBondReports={updateFilteredBondReports} />
+          </Box>
         </Drawer>
       </Box>
       <Toolbar variant='dense' />
       <Panel shown={view === View.Bonds}>
-        <BondsViewer bonds={allBonds} loadingBonds={isLoading} bondsStatistics={bondsStatistics} />
+        <BondsViewer bondReports={filteredBondReports} loadingBonds={isLoading} statistics={filteredBondsStatistics} />
       </Panel>
       <Panel shown={view === View.Issuers}>
-        <IssuersViewer bonds={allBonds} loadingBonds={isLoading} bondsStatistics={bondsStatistics} />
+        <IssuersViewer bondReports={filteredBondReports} loadingBonds={isLoading} statistics={filteredBondsStatistics} />
       </Panel>
     </>
   )

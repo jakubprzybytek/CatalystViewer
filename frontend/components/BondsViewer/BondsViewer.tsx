@@ -3,18 +3,17 @@ import Box from '@mui/system/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import BondsList from './BondsList';
 import { BondReport } from '../../sdk/GetBonds';
-import { BondsStatistics } from '../../bonds/statistics';
+import { InterestPercentilesByInterestBaseType } from '../../bonds/statistics';
 import BondsViewerFilter from './BondsViewerFilter';
 import BondsListStats from './BondsListStats';
 
 type BondsViewerParams = {
-  bonds: BondReport[];
+  bondReports: BondReport[];
   loadingBonds: boolean;
-  bondsStatistics: BondsStatistics;
+  statistics: InterestPercentilesByInterestBaseType;
 }
 
-export default function BondsViewer({ bonds, loadingBonds, bondsStatistics }: BondsViewerParams): JSX.Element {
-  const [bondTypeFilter, setBondTypeFilter] = useState<string>('Corporate bonds');
+export default function BondsViewer({ bondReports, loadingBonds, statistics }: BondsViewerParams): JSX.Element {
   const [filteredBonds, setFilteredBonds] = useState<BondReport[]>([]);
 
   return (
@@ -22,7 +21,7 @@ export default function BondsViewer({ bonds, loadingBonds, bondsStatistics }: Bo
       p: { sm: 1 },
       '& > div': { mb: 1 }
     }}>
-      <BondsViewerFilter allBondReports={bonds} setBondTypeFilter={setBondTypeFilter} setFilteredBondReports={setFilteredBonds} />
+      <BondsViewerFilter allBondReports={bondReports} setFilteredBondReports={setFilteredBonds} />
       {loadingBonds && <Box sx={{
         display: 'flex',
         height: '60vh',
@@ -32,8 +31,8 @@ export default function BondsViewer({ bonds, loadingBonds, bondsStatistics }: Bo
         <CircularProgress />
       </Box>}
       {!loadingBonds && <>
-        <BondsListStats bondReports={filteredBonds} bondsStatistics={bondsStatistics} bondTypeFilter={bondTypeFilter} />
-        <BondsList bondReports={filteredBonds} bondsStatistics={bondsStatistics} />
+        <BondsListStats bondReports={bondReports} statistics={statistics} />
+        <BondsList bondReports={bondReports} statistics={statistics} />
       </>}
     </Box>
   );

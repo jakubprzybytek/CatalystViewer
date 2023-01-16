@@ -7,15 +7,13 @@ import Stack from "@mui/material/Stack";
 import Box from "@mui/material/Box";
 import Paper from "@mui/material/Paper";
 import Divider from '@mui/material/Divider';
-import { BondReport, BondDetails } from "../../sdk/GetBonds";
-import { BondsStatistics } from '../../bonds/statistics';
+import { BondReport } from "../../sdk/GetBonds";
+import { getInterestConstParts, groupByInterestBaseType } from '../../bonds/statistics';
+import { InterestPercentilesByInterestBaseType } from '../../bonds/statistics';
 import { colorMarkers } from "../../common/ColorCodes";
 import { getInterestConstColorCode } from '../../bonds/BondIndicators';
 
-const interestVariable = R.compose<BondReport[], BondDetails, string | undefined, string>(R.defaultTo('Const'), R.prop('interestVariable'), R.prop('details'));
 const sort = R.sortBy<string>(R.identity);
-
-const constInterests = R.map(R.compose<BondReport[], BondDetails, number>(R.prop('interestConst'), R.prop('details')));
 
 type InterestChartParam = {
   quartiles: number[];
@@ -53,13 +51,13 @@ function InterestChart({ quartiles, bondReports }: InterestChartParam) {
   );
 }
 
-type BondInterestTypeStatParam = {
-  interestVariableType: string;
+type BondInterestBaseTypeStatParam = {
+  interestBaseType: string;
   interestConstPercentiles: number[];
   bondReports: BondReport[];
 }
 
-function BondInterestTypeStat({ interestVariableType, interestConstPercentiles, bondReports }: BondInterestTypeStatParam): JSX.Element {
+function BondInterestBaseTypeStat({ interestBaseType: interestVariableType, interestConstPercentiles, bondReports }: BondInterestBaseTypeStatParam): JSX.Element {
   return (
     <Paper sx={{
       pt: 0.5,
@@ -82,7 +80,7 @@ function BondInterestTypeStat({ interestVariableType, interestConstPercentiles, 
         <Divider orientation='vertical' variant='middle' flexItem />
         <Stack sx={{ textAlign: 'right' }}>
           <Typography variant='caption'>Avg interest</Typography>
-          <Typography>{average(constInterests(bondReports)).toFixed(2)}%</Typography>
+          <Typography>{average(getInterestConstParts(bondReports)).toFixed(2)}%</Typography>
         </Stack>
       </Stack>
       <InterestChart quartiles={interestConstPercentiles} bondReports={bondReports} />
@@ -92,22 +90,21 @@ function BondInterestTypeStat({ interestVariableType, interestConstPercentiles, 
 
 type BondsListParam = {
   bondReports: BondReport[];
-  bondTypeFilter: string;
-  bondsStatistics: BondsStatistics;
+  statistics: InterestPercentilesByInterestBaseType;
 }
 
-export default function BondsListStats({ bondReports, bondTypeFilter, bondsStatistics }: BondsListParam): JSX.Element {
-  const bondsByInterestBaseTypes = R.groupBy(interestVariable)(bondReports);
-  const bondInterestBaseTypePercentiles = bondTypeFilter === 'all' ? bondsStatistics.all : bondsStatistics.byType[bondTypeFilter];
-
+export default function BondsListStats({ bondReports, statistics }: BondsListParam): JSX.Element {
+  const bondsByInterestBaseTypes = groupByInterestBaseType(bondReports);
+console.log('Bonds' + bondReports.length)
+console.log('Stats: ' + JSON.stringify(statistics));
   return (
     <Box>
       <Grid container spacing={1}>
         {sort(Object.keys(bondsByInterestBaseTypes)).map(interestBaseType => (
           <Grid key={interestBaseType} item xs={6} sm={4} md={3}>
-            <BondInterestTypeStat
-              interestConstPercentiles={bondInterestBaseTypePercentiles[interestBaseType]}
-              interestVariableType={interestBaseType}
+            <BondInterestBaseTypeStat
+              interestBaseType={interestBaseType}
+              interestConstPercentiles={statistics[interestBaseType]}
               bondReports={bondsByInterestBaseTypes[interestBaseType]} />
           </Grid>
         ))}

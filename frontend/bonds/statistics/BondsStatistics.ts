@@ -1,11 +1,11 @@
 import { quantile, min } from 'simple-statistics';
-import { BondsStatistics, InterestByBaseTypePercentiles, groupByType, groupByInterestVariablePart, getInterestConstParts } from '.';
+import { BondsStatistics, InterestPercentilesByInterestBaseType, groupByType, groupByInterestBaseType, getInterestConstParts } from '.';
 import { BondReport } from '../../sdk/GetBonds';
 
-function computeInterestConstValuesStatistics(bonds: BondReport[]): InterestByBaseTypePercentiles {
-    const bondsByInterestBaseType = groupByInterestVariablePart(bonds);
+export function computeStatisticsForInterestBaseTypes(bonds: BondReport[]): InterestPercentilesByInterestBaseType {
+    const bondsByInterestBaseType = groupByInterestBaseType(bonds);
 
-    const interestVariableTypePercentiles: InterestByBaseTypePercentiles = {};
+    const interestVariableTypePercentiles: InterestPercentilesByInterestBaseType = {};
     Object.keys(bondsByInterestBaseType)
         .forEach(interestBaseType => {
             const interestConstValues = getInterestConstParts(bondsByInterestBaseType[interestBaseType]);
@@ -15,16 +15,16 @@ function computeInterestConstValuesStatistics(bonds: BondReport[]): InterestByBa
     return interestVariableTypePercentiles;
 }
 
-export function computeStatistics(allBonds: BondReport[]): BondsStatistics {
-    const bondsByType = groupByType(allBonds);
-    const bondTypesStatistics: Record<string, InterestByBaseTypePercentiles> = {};
-    Object.keys(bondsByType)
-        .forEach(bondType => {
-            bondTypesStatistics[bondType] = computeInterestConstValuesStatistics(bondsByType[bondType]);
-        });
+// export function computeStatistics(allBonds: BondReport[]): BondsStatistics {
+//     const bondsByType = groupByType(allBonds);
+//     const bondTypesStatistics: Record<string, InterestPercentilesByInterestBaseType> = {};
+//     Object.keys(bondsByType)
+//         .forEach(bondType => {
+//             bondTypesStatistics[bondType] = computeStatisticsForInterestBaseTypes(bondsByType[bondType]);
+//         });
 
-    return {
-        all: computeInterestConstValuesStatistics(allBonds),
-        byType: bondTypesStatistics
-    }
-}
+//     return {
+//         all: computeStatisticsForInterestBaseTypes(allBonds),
+//         byType: bondTypesStatistics
+//     }
+// }

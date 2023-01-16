@@ -2,7 +2,7 @@ import * as R from 'ramda';
 
 export type IssuerReport = {
     name: string;
-    interestVariable: string;
+    interestBaseType: string;
     interestConstAverage: number;
     minNominalValue: number;
     maxNominalValue: number;

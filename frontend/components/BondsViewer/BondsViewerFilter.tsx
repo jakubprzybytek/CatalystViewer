@@ -36,51 +36,51 @@ const nominalValueLessThan = (maxNominalValue: number) => (bondReport: BondRepor
 const filterByType = (type: string) => R.filter(isBondType(type));
 //const filterByIssuer = (issuer: string) => R.filter(isIssuedBy(issuer));
 
-const filterBonds = (markets: string[], type: string, issuers: string[], maxNominalValue: number) =>
-  R.filter(R.allPass([isBondType(type), isIssuedBy(issuers), isOnMarkets(markets), nominalValueLessThan(maxNominalValue)]));
+// const filterBonds = (markets: string[], type: string, issuers: string[], maxNominalValue: number) =>
+//   R.filter(R.allPass([isBondType(type), isIssuedBy(issuers), isOnMarkets(markets), nominalValueLessThan(maxNominalValue)]));
+const filterBonds = (markets: string[], issuers: string[], maxNominalValue: number) =>
+  R.filter(R.allPass([isIssuedBy(issuers), isOnMarkets(markets), nominalValueLessThan(maxNominalValue)]));
 
 type BondsViewerFilterParams = {
   allBondReports: BondReport[];
-  setBondTypeFilter: (bondTypeFilter: string) => void;
   setFilteredBondReports: (filteredBonds: BondReport[]) => void;
 };
 
 const defaultIssuers: string[] = [];
 const defaultMarkets = ['GPW RR', 'GPW ASO'];
 
-export default function BondsViewerFilter({ allBondReports, setBondTypeFilter: setBondTypeFilter2, setFilteredBondReports: setFilteredBonds }: BondsViewerFilterParams): JSX.Element {
+export default function BondsViewerFilter({ allBondReports, setFilteredBondReports: setFilteredBonds }: BondsViewerFilterParams): JSX.Element {
   const [moreFiltersExpanded, setMoreFiltersExpanded] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
 
-  const [bondTypeFilter, setBondTypeFilter] = useLocalStorage<string>('filter.bondType', 'Corporate bonds');
+  //const [bondTypeFilter, setBondTypeFilter] = useLocalStorage<string>('filter.bondType', 'Corporate bonds');
   const [issuersFilter, addIssuerFilter, removeIssuerFilter] = useArrayLocalStorage('filter.issuer', defaultIssuers);
   const [marketsFilter, addMarketFilter, removeMarketFilter] = useArrayLocalStorage<string>('filter.market', defaultMarkets);
   const [maxNominalFilter, setMaxNominalFilter] = useLocalStorage<number>('filter.maxNominalValue', 10000);
 
   const allMarkets = useMemo(() => sort(R.uniq(bondDetailsProps('market')(allBondReports))), [allBondReports]);
 
-  const availableBondTypes = useMemo(() => {
-    //const filteredByIssuer = filterByIssuer(issuerFilter)(allBondReports);
-    return R.uniq(bondDetailsProps('type')(allBondReports));
-  }, [allBondReports]);
+  // const availableBondTypes = useMemo(() => {
+  //   //const filteredByIssuer = filterByIssuer(issuerFilter)(allBondReports);
+  //   return R.uniq(bondDetailsProps('type')(allBondReports));
+  // }, [allBondReports]);
 
   const availableIssuers = useMemo(() => {
-    const filteredByType = filterByType(bondTypeFilter)(allBondReports);
-    return sort(R.uniq(bondDetailsProps('issuer')(filteredByType)));
-  }, [allBondReports, bondTypeFilter]);
+    //const filteredByType = filterByType(bondTypeFilter)(allBondReports);
+    return sort(R.uniq(bondDetailsProps('issuer')(allBondReports)));
+  }, [allBondReports]);
 
-  const filteredBonds = useMemo(() => filterBonds(marketsFilter, bondTypeFilter, issuersFilter, maxNominalFilter)(allBondReports),
-    [allBondReports, marketsFilter, issuersFilter, bondTypeFilter, maxNominalFilter]);
+  const filteredBonds = useMemo(() => filterBonds(marketsFilter, issuersFilter, maxNominalFilter)(allBondReports),
+    [allBondReports, marketsFilter, issuersFilter, maxNominalFilter]);
 
   useEffect(() => {
     setFilteredBonds(sortByName(filteredBonds));
-    setBondTypeFilter2(bondTypeFilter);
-  }, [setFilteredBonds, filteredBonds, bondTypeFilter]);
+  }, [setFilteredBonds, filteredBonds]);
 
   return (
     <Paper sx={{ p: 1 }}>
-      <Grid container item xs={12} sm={6} md={4}>
+      {/* <Grid container item xs={12} sm={6} md={4}>
         <FormControl fullWidth>
           <TextField label="Bond type" size="small" fullWidth select
             value={availableBondTypes.includes(bondTypeFilter) ? bondTypeFilter : ''}
@@ -91,7 +91,7 @@ export default function BondsViewerFilter({ allBondReports, setBondTypeFilter: s
             ))}
           </TextField>
         </FormControl>
-      </Grid>
+      </Grid> */}
       <Grid container spacing={1}>
         <Grid item xs={12}>
           <Button startIcon={(<AddCircle />)}
