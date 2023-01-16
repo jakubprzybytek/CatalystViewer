@@ -12,10 +12,9 @@ const DEFAULT_MARKETS = ['GPW RR', 'GPW ASO'];
 type BondsFilterParams = {
   allBondReports: BondReport[];
   setFilteredBondReports: (filteredBonds: BondReport[]) => void;
-  setSelectedBondType: (bondType: string) => void;
 };
 
-export default function BondsFilter({ allBondReports, setFilteredBondReports, setSelectedBondType }: BondsFilterParams): JSX.Element {
+export default function BondsFilter({ allBondReports, setFilteredBondReports }: BondsFilterParams): JSX.Element {
   const [bondTypeFilterString, setBondTypeFilterString] = useLocalStorage<string>('filter.bondType', 'Corporate bonds');
   const [maxNominalValueFilterNumber, setMaxNominalValueFilterNumber] = useLocalStorage<number>('filter.maxNominalValue', 10000);
   const [marketsFilterStrings, addMarketFilter, removeMarketFilter] = useArrayLocalStorage<string>('filter.market', DEFAULT_MARKETS);
@@ -35,7 +34,7 @@ export default function BondsFilter({ allBondReports, setFilteredBondReports, se
 
   return (
     <Grid container item xs={12} sm={6} md={4}>
-      <BondTypeFilter bondTypes={availableBondTypes} selectedBondType={bondTypeFilterString} setSelectedBondType={(bondType: string) => { setBondTypeFilterString(bondType); setSelectedBondType(bondType); }} />
+      <BondTypeFilter bondTypes={availableBondTypes} selectedBondType={bondTypeFilterString} setSelectedBondType={setBondTypeFilterString} />
       <Grid container spacing={1} marginTop={1}>
         <Grid item xs={12} sm={6} md={4}>
           <NominalValueFilter selectedNominalValue={maxNominalValueFilterNumber} setSelectedNominalValue={setMaxNominalValueFilterNumber} />

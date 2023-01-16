@@ -48,8 +48,6 @@ const Home: NextPage = () => {
   const [filteredBondReports, setFilteredBondReports] = useState<BondReport[]>([]);
   const filteredBondsStatistics = useMemo(() => computeStatisticsForInterestBaseTypes(filteredBondReports), [filteredBondReports]);
 
-  const [selectedBondType, setSelectedBondType] = useState('');
-
   const fetchData = async () => {
     const bonds = await getBonds();
     setAllBondReports(bonds);
@@ -82,7 +80,7 @@ const Home: NextPage = () => {
               Bonds
             </Button>
           </Stack>
-          <Typography>{filteredBondReports.length} {selectedBondType}</Typography>
+          <Typography>{filteredBondReports.length} bonds</Typography>
           <Stack direction='row' spacing={1}>
             <IconButton color='inherit' disabled={isLoading}
               onClick={() => { setIsLoading(true); fetchData(); }}>
@@ -104,7 +102,7 @@ const Home: NextPage = () => {
           }}>
           <Box padding={1}>
             <Typography>Select filters:</Typography>
-            <BondsFilter allBondReports={allBondReports} setFilteredBondReports={setFilteredBondReports} setSelectedBondType={setSelectedBondType} />
+            <BondsFilter allBondReports={allBondReports} setFilteredBondReports={setFilteredBondReports} />
           </Box>
         </Drawer>
       </Box>
