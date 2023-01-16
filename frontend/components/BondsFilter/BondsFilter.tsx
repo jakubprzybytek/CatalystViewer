@@ -3,7 +3,7 @@ import Grid from "@mui/material/Grid";
 import FormControl from "@mui/material/FormControl";
 import MenuItem from "@mui/material/MenuItem";
 import TextField from "@mui/material/TextField";
-import { filterByBondType, getUniqueBondTypes, getUniqueMarkets, sortStrings } from "../../bonds/statistics";
+import { filterBy, filterByBondType, getUniqueBondTypes, getUniqueMarkets, isBondType, isOnMarkets, nominalValueLessThan, sortStrings } from "../../bonds/statistics";
 import { useArrayLocalStorage, useLocalStorage } from "../../common/UseStorage";
 import { BondReport } from "../../sdk/GetBonds";
 import FormLabel from "@mui/material/FormLabel";
@@ -86,7 +86,7 @@ type BondsFilterParams = {
 
 export default function BondsFilter({ allBondReports, setFilteredBondReports }: BondsFilterParams): JSX.Element {
   const [bondTypeFilterString, setBondTypeFilterString] = useLocalStorage<string>('filter.bondType', 'Corporate bonds');
-  const [maxNominalValueFilterString, setMaxNominalValueFilterString] = useLocalStorage<number>('filter.maxNominalValue', 10000);
+  const [maxNominalValueFilterNumber, setMaxNominalValueFilterNumber] = useLocalStorage<number>('filter.maxNominalValue', 10000);
   const [marketsFilterStrings, addMarketFilter, removeMarketFilter] = useArrayLocalStorage<string>('filter.market', DEFAULT_MARKETS);
 
   // Populate filtering options
@@ -95,17 +95,20 @@ export default function BondsFilter({ allBondReports, setFilteredBondReports }: 
 
   // Perform actual bonds filtering
   useEffect(() => {
-    const filteredBondReports = filterByBondType(bondTypeFilterString)(allBondReports);
-    console.log(`Filtering bonds: ${filteredBondReports.length}, bond type: ${bondTypeFilterString}`);
+    const filterBondReports = filterBy([isBondType(bondTypeFilterString), nominalValueLessThan(maxNominalValueFilterNumber), isOnMarkets(marketsFilterStrings)]);
+
+    // const filteredBondReports = filterByBondType(bondTypeFilterString)(allBondReports);
+    const filteredBondReports = filterBondReports(allBondReports);
+    console.log(`Filtering bonds: ${filteredBondReports.length}, bond type: ${bondTypeFilterString}, max nominal value: ${maxNominalValueFilterNumber}, markets: ${marketsFilterStrings}`);
     setFilteredBondReports(filteredBondReports);
-  }, [allBondReports, bondTypeFilterString]);
+  }, [allBondReports, bondTypeFilterString, maxNominalValueFilterNumber, marketsFilterStrings]);
 
   return (
     <Grid container item xs={12} sm={6} md={4}>
       <BondTypeFilter bondTypes={availableBondTypes} selectedBondType={bondTypeFilterString} setSelectedBondType={setBondTypeFilterString} />
       <Grid container spacing={1} marginTop={1}>
         <Grid item xs={12} sm={6} md={4}>
-          <NominalValueFilter selectedNominalValue={maxNominalValueFilterString} setSelectedNominalValue={setMaxNominalValueFilterString} />
+          <NominalValueFilter selectedNominalValue={maxNominalValueFilterNumber} setSelectedNominalValue={setMaxNominalValueFilterNumber} />
         </Grid>
         <Grid item xs={12} sm={6} md={4}>
           <MarketFilter allMarkets={allMarkets} selectedMarkets={marketsFilterStrings} addMarket={addMarketFilter} removeMarket={removeMarketFilter} />

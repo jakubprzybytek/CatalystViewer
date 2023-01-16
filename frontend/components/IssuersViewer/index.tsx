@@ -6,6 +6,7 @@ export type IssuerReport = {
     interestConstAverage: number;
     minNominalValue: number;
     maxNominalValue: number;
+    currency: string;
     count: number;
 }
 

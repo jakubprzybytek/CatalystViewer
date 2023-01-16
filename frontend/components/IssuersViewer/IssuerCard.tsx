@@ -6,6 +6,7 @@ import { ColorCode } from "../../common/ColorCodes";
 import { getInterestConstColorCode, getNominalValueColorCode } from "../../bonds/BondIndicators";
 import { IssuerReport } from '.';
 import { InterestPercentilesByInterestBaseType } from "../../bonds/statistics";
+import { formatCurrency } from "../../common/Formats";
 
 export const interestConstPartColors: ColorCode[] = ['green', 'yellow', 'orange', 'red'];
 
@@ -41,12 +42,12 @@ export default function IssuerCard({ issuerReport, statistics }: IssuerCardParam
           </CardEntry>
           <CardEntry caption='Nominal values' textAlign='center'>
             {issuerReport.minNominalValue === issuerReport.maxNominalValue &&
-              <CardValue colorCode={minNominalValueColorCode}>{issuerReport.minNominalValue}</CardValue>}
+              <CardValue colorCode={minNominalValueColorCode}>{formatCurrency(issuerReport.minNominalValue, issuerReport.currency)}</CardValue>}
             {issuerReport.minNominalValue !== issuerReport.maxNominalValue &&
               <Stack direction='row' spacing={0.5}>
-                <CardValue colorCode={minNominalValueColorCode}>{issuerReport.minNominalValue}</CardValue>
+                <CardValue colorCode={minNominalValueColorCode}>{formatCurrency(issuerReport.minNominalValue, issuerReport.currency)}</CardValue>
                 <span>-</span>
-                <CardValue colorCode={getNominalValueColorCode(issuerReport.maxNominalValue)}>{issuerReport.maxNominalValue}</CardValue>
+                <CardValue colorCode={getNominalValueColorCode(issuerReport.maxNominalValue)}>{formatCurrency(issuerReport.maxNominalValue, issuerReport.currency)}</CardValue>
               </Stack>}
           </CardEntry>
           <CardEntry caption='Interest Type' textAlign='end'>

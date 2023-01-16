@@ -27,6 +27,7 @@ export default function IssuersViewer({ bondReports, loadingBonds, statistics }:
           interestConstAverage: average(getInterestConstParts(bondsByInterestVariablePart)),
           minNominalValue: min(getNominalValues(bondsByInterestVariablePart)),
           maxNominalValue: max(getNominalValues(bondsByInterestVariablePart)),
+          currency: bondsByInterestVariablePart[0].details.currency,
           count: bondsByInterestVariablePart.length
         });
       });

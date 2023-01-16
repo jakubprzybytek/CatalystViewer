@@ -10,7 +10,9 @@ export const interestConstPart = R.compose<BondReport[], BondDetails, number>(R.
 const nominalValue = R.compose<BondReport[], BondDetails, number>(R.prop('nominalValue'), R.prop('details'));
 
 // Predicates
-const isBondType = (type: string) => type !== 'all' ? (bondReport: BondReport) => bondReport.details.type === type : R.always(true);
+export const isBondType = (type: string) => type !== 'all' ? (bondReport: BondReport) => bondReport.details.type === type : R.always(true);
+export const nominalValueLessThan = (maxNominalValue: number) => (bondReport: BondReport) => bondReport.details.nominalValue <= maxNominalValue;
+export const isOnMarkets = (markets: string[]) => (bondReport: BondReport) => markets.includes(bondReport.details.market);
 
 // Getters
 export const getBondTypes = R.map(bondType);
@@ -28,7 +30,9 @@ export const groupByIssuer = R.groupBy(bondIssuer);
 export const groupByInterestBaseType = R.groupBy(interestBaseType);
 
 // Filters
+type BondReportPredicate = (bondReport: BondReport) => boolean;
 export const filterByBondType = (bondType: string) => R.filter(isBondType(bondType));
+export const filterBy = (predicates: BondReportPredicate[]) => R.filter(R.allPass(predicates));
 
 // Sorting
 export const sortStrings = R.sortBy<string>(R.identity);
