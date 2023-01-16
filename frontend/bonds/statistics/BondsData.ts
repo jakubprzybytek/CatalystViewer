@@ -1,5 +1,4 @@
 import * as R from 'ramda';
-import IssuersList from '../../components/IssuersViewer/IssuersList';
 import { BondReport, BondDetails } from '../../sdk/GetBonds';
 
 // Properties extractors

@@ -1,11 +1,11 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import Box from '@mui/system/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import BondsList from './BondsList';
-import { BondReport } from '../../sdk/GetBonds';
-import { filterByIssuer, getUniqueIssuers, InterestPercentilesByInterestBaseType } from '../../bonds/statistics';
 import BondsViewerFilter from './BondsViewerFilter';
 import BondsListStats from './BondsListStats';
+import { BondReport } from '../../sdk/GetBonds';
+import { filterByIssuer, getUniqueIssuers, InterestPercentilesByInterestBaseType } from '../../bonds/statistics';
 import { useArrayLocalStorage } from '../../common/UseStorage';
 
 const DEFAULT_ISSUERS: string[] = [];
