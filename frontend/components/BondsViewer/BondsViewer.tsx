@@ -1,11 +1,14 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import Box from '@mui/system/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import BondsList from './BondsList';
 import { BondReport } from '../../sdk/GetBonds';
-import { InterestPercentilesByInterestBaseType } from '../../bonds/statistics';
+import { filterByIssuer, getUniqueIssuers, InterestPercentilesByInterestBaseType } from '../../bonds/statistics';
 import BondsViewerFilter from './BondsViewerFilter';
 import BondsListStats from './BondsListStats';
+import { useArrayLocalStorage } from '../../common/UseStorage';
+
+const DEFAULT_ISSUERS: string[] = [];
 
 type BondsViewerParams = {
   bondReports: BondReport[];
@@ -14,14 +17,17 @@ type BondsViewerParams = {
 }
 
 export default function BondsViewer({ bondReports, loadingBonds, statistics }: BondsViewerParams): JSX.Element {
-  const [filteredBonds, setFilteredBonds] = useState<BondReport[]>([]);
+  const [issuersFilterString, addIssuerFilterString, removeIssuerFilterString] = useArrayLocalStorage('filter.issuer', DEFAULT_ISSUERS);
+
+  const availableIssuers = useMemo(() => getUniqueIssuers(bondReports), [bondReports]);
+  const filteredBondReports = useMemo(() => filterByIssuer(issuersFilterString)(bondReports), [bondReports, issuersFilterString]);
 
   return (
     <Box sx={{
       p: { sm: 1 },
       '& > div': { mb: 1 }
     }}>
-      <BondsViewerFilter allBondReports={bondReports} setFilteredBondReports={setFilteredBonds} />
+      <BondsViewerFilter allIssuers={availableIssuers} selectedIssuers={issuersFilterString} addIssuer={addIssuerFilterString} removeIssuer={removeIssuerFilterString} />
       {loadingBonds && <Box sx={{
         display: 'flex',
         height: '60vh',
@@ -31,8 +37,8 @@ export default function BondsViewer({ bondReports, loadingBonds, statistics }: B
         <CircularProgress />
       </Box>}
       {!loadingBonds && <>
-        <BondsListStats bondReports={bondReports} statistics={statistics} />
-        <BondsList bondReports={bondReports} statistics={statistics} />
+        <BondsListStats bondReports={filteredBondReports} statistics={statistics} />
+        <BondsList bondReports={filteredBondReports} statistics={statistics} />
       </>}
     </Box>
   );
