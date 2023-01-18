@@ -119,7 +119,6 @@ const Home: NextPage = () => {
             keepMounted: true, // Better open performance on mobile.
           }}>
           <Box padding={1}>
-            <Typography>Select filters:</Typography>
             <BondsFilter allBondReports={allBondReports} setFilteredBondReports={setFilteredBondReports} />
           </Box>
         </Drawer>

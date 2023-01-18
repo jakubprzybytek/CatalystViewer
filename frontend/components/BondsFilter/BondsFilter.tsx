@@ -6,6 +6,7 @@ import MarketFilter from "./MarketFilter";
 import { filterBy, getUniqueBondTypes, getUniqueMarkets, isBondType, isOnMarkets, nominalValueLessThan, sortStrings } from "../../bonds/statistics";
 import { useArrayLocalStorage, useLocalStorage } from "../../common/UseStorage";
 import { BondReport } from "../../sdk/GetBonds";
+import Typography from "@mui/material/Typography";
 
 const DEFAULT_MARKETS = ['GPW RR', 'GPW ASO'];
 
@@ -33,16 +34,20 @@ export default function BondsFilter({ allBondReports, setFilteredBondReports }: 
   }, [allBondReports, bondTypeFilterString, maxNominalValueFilterNumber, marketsFilterStrings]);
 
   return (
-    <Grid container item xs={12} sm={6} md={4}>
-      <BondTypeFilter bondTypes={availableBondTypes} selectedBondType={bondTypeFilterString} setSelectedBondType={setBondTypeFilterString} />
+    <>
+      <Grid container item xs={12} sm={6} md={4}>
+        <Typography paddingBottom={1}>Select bond type:</Typography>
+        <BondTypeFilter bondTypes={availableBondTypes} selectedBondType={bondTypeFilterString} setSelectedBondType={setBondTypeFilterString} />
+      </Grid>
       <Grid container spacing={1} marginTop={1}>
         <Grid item xs={12} sm={6} md={4}>
+          <Typography paddingBottom={1}>Apply more filters:</Typography>
           <NominalValueFilter selectedNominalValue={maxNominalValueFilterNumber} setSelectedNominalValue={setMaxNominalValueFilterNumber} />
         </Grid>
-        <Grid item xs={12} sm={6} md={4}>
+        <Grid item xs={12} sm={6} md={8}>
           <MarketFilter allMarkets={allMarkets} selectedMarkets={marketsFilterStrings} addMarket={addMarketFilter} removeMarket={removeMarketFilter} />
         </Grid>
       </Grid>
-    </Grid>
+    </>
   );
 }
