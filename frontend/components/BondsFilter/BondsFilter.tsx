@@ -1,12 +1,13 @@
 import { useEffect, useMemo } from "react";
 import Grid from "@mui/material/Grid";
+import Typography from "@mui/material/Typography";
 import BondTypeFilter from "./BondTypeFilter";
 import NominalValueFilter from "./NominalValueFilter";
 import MarketFilter from "./MarketFilter";
+import { useBondsFilters } from "./useBondsFilters";
 import { filterBy, getUniqueBondTypes, getUniqueMarkets, isBondType, isOnMarkets, nominalValueLessThan, sortStrings } from "../../bonds/statistics";
 import { useArrayLocalStorage, useLocalStorage } from "../../common/UseStorage";
 import { BondReport } from "../../sdk/GetBonds";
-import Typography from "@mui/material/Typography";
 
 const DEFAULT_MARKETS = ['GPW RR', 'GPW ASO'];
 
@@ -16,7 +17,11 @@ type BondsFilterParams = {
 };
 
 export default function BondsFilter({ allBondReports, setFilteredBondReports }: BondsFilterParams): JSX.Element {
-  const [bondTypeFilterString, setBondTypeFilterString] = useLocalStorage<string>('filter.bondType', 'Corporate bonds');
+
+  const { bondTypeFilterString, setBondTypeFilterString } = useBondsFilters();
+  const { setCount } = useBondsFilters();
+
+  //const [bondTypeFilterString, setBondTypeFilterString] = useLocalStorage<string>('filter.bondType', 'Corporate bonds');
   const [maxNominalValueFilterNumber, setMaxNominalValueFilterNumber] = useLocalStorage<number>('filter.maxNominalValue', 10000);
   const [marketsFilterStrings, addMarketFilter, removeMarketFilter] = useArrayLocalStorage<string>('filter.market', DEFAULT_MARKETS);
 
@@ -31,6 +36,7 @@ export default function BondsFilter({ allBondReports, setFilteredBondReports }: 
     const filteredBondReports = filterBondReports(allBondReports);
     console.log(`Filtering bonds: ${filteredBondReports.length}, bond type: ${bondTypeFilterString}, max nominal value: ${maxNominalValueFilterNumber}, markets: ${marketsFilterStrings}`);
     setFilteredBondReports(filteredBondReports);
+    setCount(filteredBondReports.length);
   }, [allBondReports, bondTypeFilterString, maxNominalValueFilterNumber, marketsFilterStrings]);
 
   return (

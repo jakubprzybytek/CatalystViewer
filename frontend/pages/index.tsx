@@ -19,6 +19,7 @@ import BondsViewer from '../components/BondsViewer/BondsViewer';
 import IssuersViewer from '../components/IssuersViewer/IssuersViewer';
 import { BondReport, getBonds } from '../sdk/GetBonds';
 import { computeStatisticsForInterestBaseTypes } from '../bonds/statistics';
+import { BondsFiltersProvider, useBondsFilters } from '../components/BondsFilter/useBondsFilters';
 
 enum View {
   Bonds,
@@ -34,6 +35,13 @@ function HideOnScroll({ children }: HideOnScrollParams): JSX.Element {
     <Slide appear={false} direction="down" in={!useScrollTrigger()}>
       {children}
     </Slide>
+  );
+}
+
+function Title(): JSX.Element {
+  const { bondTypeFilterString, count } = useBondsFilters();
+  return (
+    <Typography textAlign='center'>{count} {bondTypeFilterString}</Typography>
   );
 }
 
@@ -81,55 +89,57 @@ const Home: NextPage = () => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <HideOnScroll>
-        <AppBar component="nav">
-          <Toolbar variant='dense'>
-            <Stack flexGrow={1}>
-              <Stack direction='row' sx={{
-                justifyContent: 'space-between'
-              }}>
-                <Stack flexGrow={1} justifyContent='center'>
-                  <Typography textAlign='center'>{filteredBondReports.length} bonds</Typography>
+      <BondsFiltersProvider>
+        <HideOnScroll>
+          <AppBar component="nav">
+            <Toolbar variant='dense'>
+              <Stack flexGrow={1}>
+                <Stack direction='row' sx={{
+                  justifyContent: 'space-between'
+                }}>
+                  <Stack flexGrow={1} justifyContent='center'>
+                    <Title />
+                  </Stack>
+                  <Stack direction='row'>
+                    <IconButton color='inherit' disabled={isLoading}
+                      onClick={() => { setIsLoading(true); fetchData(); }}>
+                      <Refresh />
+                    </IconButton>
+                    <IconButton color='inherit'
+                      onClick={() => { setDrawerOpen(true); }}>
+                      <FilterAlt />
+                    </IconButton>
+                  </Stack>
                 </Stack>
-                <Stack direction='row'>
-                  <IconButton color='inherit' disabled={isLoading}
-                    onClick={() => { setIsLoading(true); fetchData(); }}>
-                    <Refresh />
-                  </IconButton>
-                  <IconButton color='inherit'
-                    onClick={() => { setDrawerOpen(true); }}>
-                    <FilterAlt />
-                  </IconButton>
-                </Stack>
+                <Tabs indicatorColor="secondary" textColor="inherit" centered
+                  value={view} onChange={(event: React.SyntheticEvent, newValue: View) => setView(newValue)}>
+                  <Tab label='Issuers' value={View.Issuers} />
+                  <Tab label='Bonds' value={View.Bonds} />
+                </Tabs>
               </Stack>
-              <Tabs indicatorColor="secondary" textColor="inherit" centered
-                value={view} onChange={(event: React.SyntheticEvent, newValue: View) => setView(newValue)}>
-                <Tab label='Issuers' value={View.Issuers} />
-                <Tab label='Bonds' value={View.Bonds} />
-              </Tabs>
-            </Stack>
-          </Toolbar>
-        </AppBar>
-      </HideOnScroll>
-      <Box component="nav">
-        <Drawer anchor='top' open={drawerOpen}
-          //variant='temporary'
-          onClose={() => setDrawerOpen(false)}
-          ModalProps={{
-            keepMounted: true, // Better open performance on mobile.
-          }}>
-          <Box padding={1}>
-            <BondsFilter allBondReports={allBondReports} setFilteredBondReports={setFilteredBondReports} />
-          </Box>
-        </Drawer>
-      </Box>
-      <Toolbar sx={{ height: 88 }}  />
-      <Panel shown={view === View.Issuers}>
-        <IssuersViewer bondReports={filteredBondReports} loadingBonds={isLoading} statistics={filteredBondsStatistics} />
-      </Panel>
-      <Panel shown={view === View.Bonds}>
-        <BondsViewer bondReports={filteredBondReports} loadingBonds={isLoading} statistics={filteredBondsStatistics} />
-      </Panel>
+            </Toolbar>
+          </AppBar>
+        </HideOnScroll>
+        <Box component="nav">
+          <Drawer anchor='top' open={drawerOpen}
+            //variant='temporary'
+            onClose={() => setDrawerOpen(false)}
+            ModalProps={{
+              keepMounted: true, // Better open performance on mobile.
+            }}>
+            <Box padding={1}>
+              <BondsFilter allBondReports={allBondReports} setFilteredBondReports={setFilteredBondReports} />
+            </Box>
+          </Drawer>
+        </Box>
+        <Toolbar sx={{ height: 88 }} />
+        <Panel shown={view === View.Issuers}>
+          <IssuersViewer bondReports={filteredBondReports} loadingBonds={isLoading} statistics={filteredBondsStatistics} />
+        </Panel>
+        <Panel shown={view === View.Bonds}>
+          <BondsViewer bondReports={filteredBondReports} loadingBonds={isLoading} statistics={filteredBondsStatistics} />
+        </Panel>
+      </BondsFiltersProvider>
     </>
   )
 }
