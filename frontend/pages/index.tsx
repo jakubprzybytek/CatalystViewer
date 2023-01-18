@@ -4,13 +4,16 @@ import Head from 'next/head';
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import AppBar from '@mui/material/AppBar';
+import Slide from '@mui/material/Slide';
+import Tabs from '@mui/material/Tabs';
+import Tab from '@mui/material/Tab';
 import Drawer from '@mui/material/Drawer';
 import Toolbar from '@mui/material/Toolbar';
-import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import Refresh from '@mui/icons-material/Refresh';
 import FilterAlt from '@mui/icons-material/FilterAlt';
+import useScrollTrigger from '@mui/material/useScrollTrigger';
 import BondsFilter from '../components/BondsFilter/BondsFilter';
 import BondsViewer from '../components/BondsViewer/BondsViewer';
 import IssuersViewer from '../components/IssuersViewer/IssuersViewer';
@@ -22,9 +25,21 @@ enum View {
   Issuers
 }
 
+type HideOnScrollParams = {
+  children: React.ReactElement;
+}
+
+function HideOnScroll({ children }: HideOnScrollParams): JSX.Element {
+  return (
+    <Slide appear={false} direction="down" in={!useScrollTrigger()}>
+      {children}
+    </Slide>
+  );
+}
+
 type PanelParams = {
   shown: boolean;
-  children: React.ReactNode;
+  children: React.ReactElement;
 }
 
 function Panel({ shown, children }: PanelParams): JSX.Element {
@@ -66,33 +81,36 @@ const Home: NextPage = () => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <AppBar component="nav">
-        <Toolbar variant='dense' sx={{
-          justifyContent: 'space-between'
-        }}>
-          <Stack direction='row' spacing={1}>
-            <Button variant={view === View.Issuers ? 'outlined' : 'text'} color='inherit'
-              onClick={() => setView(View.Issuers)}>
-              Issuers
-            </Button>
-            <Button variant={view === View.Bonds ? 'outlined' : 'text'} color='inherit'
-              onClick={() => setView(View.Bonds)}>
-              Bonds
-            </Button>
-          </Stack>
-          <Typography>{filteredBondReports.length} bonds</Typography>
-          <Stack direction='row' spacing={1}>
-            <IconButton color='inherit' disabled={isLoading}
-              onClick={() => { setIsLoading(true); fetchData(); }}>
-              <Refresh />
-            </IconButton>
-            <IconButton color='inherit'
-              onClick={() => { setDrawerOpen(true); }}>
-              <FilterAlt />
-            </IconButton>
-          </Stack>
-        </Toolbar>
-      </AppBar>
+      <HideOnScroll>
+        <AppBar component="nav">
+          <Toolbar variant='dense'>
+            <Stack flexGrow={1}>
+              <Stack direction='row' sx={{
+                justifyContent: 'space-between'
+              }}>
+                <Stack flexGrow={1} justifyContent='center'>
+                  <Typography textAlign='center'>{filteredBondReports.length} bonds</Typography>
+                </Stack>
+                <Stack direction='row'>
+                  <IconButton color='inherit' disabled={isLoading}
+                    onClick={() => { setIsLoading(true); fetchData(); }}>
+                    <Refresh />
+                  </IconButton>
+                  <IconButton color='inherit'
+                    onClick={() => { setDrawerOpen(true); }}>
+                    <FilterAlt />
+                  </IconButton>
+                </Stack>
+              </Stack>
+              <Tabs indicatorColor="secondary" textColor="inherit" centered
+                value={view} onChange={(event: React.SyntheticEvent, newValue: View) => setView(newValue)}>
+                <Tab label='Issuers' value={View.Issuers} />
+                <Tab label='Bonds' value={View.Bonds} />
+              </Tabs>
+            </Stack>
+          </Toolbar>
+        </AppBar>
+      </HideOnScroll>
       <Box component="nav">
         <Drawer anchor='top' open={drawerOpen}
           //variant='temporary'
@@ -106,7 +124,7 @@ const Home: NextPage = () => {
           </Box>
         </Drawer>
       </Box>
-      <Toolbar variant='dense' />
+      <Toolbar sx={{ height: 88 }}  />
       <Panel shown={view === View.Issuers}>
         <IssuersViewer bondReports={filteredBondReports} loadingBonds={isLoading} statistics={filteredBondsStatistics} />
       </Panel>
