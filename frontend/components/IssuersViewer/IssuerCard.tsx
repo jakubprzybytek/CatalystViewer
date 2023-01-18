@@ -1,12 +1,14 @@
+import Stack from "@mui/material/Stack";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
-import Stack from "@mui/material/Stack";
+import Checkbox from "@mui/material/Checkbox";
 import { CardSection, CardEntry, CardValue } from "../Cards";
 import { ColorCode } from "../../common/ColorCodes";
 import { getInterestConstColorCode, getNominalValueColorCode } from "../../bonds/BondIndicators";
 import { IssuerReport } from '.';
 import { InterestPercentilesByInterestBaseType } from "../../bonds/statistics";
 import { formatCurrency } from "../../common/Formats";
+import { useBondsFilters } from "../BondsFilter/useBondsFilters";
 
 export const interestConstPartColors: ColorCode[] = ['green', 'yellow', 'orange', 'red'];
 
@@ -16,6 +18,8 @@ type IssuerCardParam = {
 }
 
 export default function IssuerCard({ issuerReport, statistics }: IssuerCardParam): JSX.Element {
+  const { issuersFilterStrings, addIssuerFilterString, removeIssuerFilterString } = useBondsFilters();
+
   const minNominalValueColorCode = getNominalValueColorCode(issuerReport.minNominalValue);
   const interestConstColorCode = getInterestConstColorCode(issuerReport.interestConstAverage, statistics[issuerReport.interestBaseType]);
 
@@ -34,7 +38,12 @@ export default function IssuerCard({ issuerReport, statistics }: IssuerCardParam
         }
       }}>
         <CardSection>
-          <Typography variant='h6'>{issuerReport.name}</Typography>
+          <Stack direction='row' flexGrow={1} justifyContent='space-between'>
+            <Typography variant='h6'>{issuerReport.name}</Typography>
+            <Checkbox
+              checked={issuersFilterStrings.includes(issuerReport.name)}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) => event.target.checked ? addIssuerFilterString(issuerReport.name) : removeIssuerFilterString(issuerReport.name)} />
+          </Stack>
         </CardSection>
         <CardSection>
           <CardEntry caption='Bonds'>

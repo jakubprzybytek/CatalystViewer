@@ -5,10 +5,8 @@ import BondsList from './BondsList';
 import BondsViewerFilter from './BondsViewerFilter';
 import BondsListStats from './BondsListStats';
 import { BondReport } from '../../sdk/GetBonds';
-import { filterByIssuer, getUniqueIssuers, InterestPercentilesByInterestBaseType } from '../../bonds/statistics';
-import { useArrayLocalStorage } from '../../common/UseStorage';
-
-const DEFAULT_ISSUERS: string[] = [];
+import { filterByIssuer, getUniqueIssuers, InterestPercentilesByInterestBaseType, sortStrings } from '../../bonds/statistics';
+import { useBondsFilters } from '../BondsFilter/useBondsFilters';
 
 type BondsViewerParams = {
   bondReports: BondReport[];
@@ -17,17 +15,17 @@ type BondsViewerParams = {
 }
 
 export default function BondsViewer({ bondReports, loadingBonds, statistics }: BondsViewerParams): JSX.Element {
-  const [issuersFilterString, addIssuerFilterString, removeIssuerFilterString] = useArrayLocalStorage('filter.issuer', DEFAULT_ISSUERS);
+  const { issuersFilterStrings, addIssuerFilterString, removeIssuerFilterString } = useBondsFilters();
 
-  const availableIssuers = useMemo(() => getUniqueIssuers(bondReports), [bondReports]);
-  const filteredBondReports = useMemo(() => filterByIssuer(issuersFilterString)(bondReports), [bondReports, issuersFilterString]);
+  const availableIssuers = useMemo(() => sortStrings(getUniqueIssuers(bondReports)), [bondReports]);
+  const filteredBondReports = useMemo(() => filterByIssuer(issuersFilterStrings)(bondReports), [bondReports, issuersFilterStrings]);
 
   return (
     <Box sx={{
       p: { sm: 1 },
       '& > div': { mb: 1 }
     }}>
-      <BondsViewerFilter allIssuers={availableIssuers} selectedIssuers={issuersFilterString} addIssuer={addIssuerFilterString} removeIssuer={removeIssuerFilterString} />
+      <BondsViewerFilter allIssuers={availableIssuers} selectedIssuers={issuersFilterStrings} addIssuer={addIssuerFilterString} removeIssuer={removeIssuerFilterString} />
       {loadingBonds && <Box sx={{
         display: 'flex',
         height: '60vh',
