@@ -24,7 +24,6 @@ export const handler = lambdaHandler<BondReport[]>(async event => {
             type: dbBond.type,
             nominalValue: dbBond.nominalValue,
             currency: dbBond.currency,
-            maturityDay: dbBond.maturityDay,
             maturityDayTs: dbBond.maturityDayTs,
             interestType: dbBond.interestType,
             interestVariable: dbBond.interestVariable,

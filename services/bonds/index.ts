@@ -6,7 +6,6 @@ export type BondDetails = {
     readonly type: string;
     readonly nominalValue: number;
     readonly currency: string;
-    readonly maturityDay: Date;
     readonly maturityDayTs: number;
     readonly interestType: string;
     readonly interestVariable: string | undefined;

@@ -95,8 +95,7 @@ type BondsListParam = {
 
 export default function BondsListStats({ bondReports, statistics }: BondsListParam): JSX.Element {
   const bondsByInterestBaseTypes = groupByInterestBaseType(bondReports);
-console.log('Bonds' + bondReports.length)
-console.log('Stats: ' + JSON.stringify(statistics));
+
   return (
     <Box>
       <Grid container spacing={1}>
