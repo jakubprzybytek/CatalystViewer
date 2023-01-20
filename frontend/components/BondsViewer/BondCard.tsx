@@ -5,7 +5,7 @@ import { BondReport } from "../../sdk/GetBonds";
 import { InterestPercentilesByInterestBaseType } from "../../bonds/statistics";
 import BondCardMainInformationSection from './BondCardMainInformationSection';
 import BondCardCurrentInterestSection from './BondCardCurrentInterestSection';
-import YTMReportEntry from "./BondCardYTMSection";
+import BondCardYTMSection from "./BondCardYTMSection";
 
 type BondCardParam = {
   bondReport: BondReport;
@@ -31,10 +31,10 @@ export default function BondCard({ bondReport, statistics }: BondCardParam): JSX
         <Divider />
         <BondCardCurrentInterestSection bondReport={bondReport} />
         <Divider />
-        {!bondReport.lastPrice && bondReport.referencePrice && <YTMReportEntry title='Reference price' bondReport={bondReport} price={bondReport.referencePrice} />}
-        {bondReport.lastPrice && <YTMReportEntry title='Last price (date/time)' bondReport={bondReport} price={bondReport.lastPrice} secondary={bondReport.lastDateTime} />}
-        {bondReport.bidPrice && <YTMReportEntry title='Bid price (vol, cnt)' bondReport={bondReport} price={bondReport.bidPrice} secondary={`${bondReport.bidVolume}, ${bondReport.bidCount}`} />}
-        {bondReport.askPrice && <YTMReportEntry title='Ask price (vol, cnt)' bondReport={bondReport} price={bondReport.askPrice} secondary={`${bondReport.askVolume}, ${bondReport.askCount}`} />}
+        {!bondReport.lastPrice && bondReport.referencePrice && <BondCardYTMSection title='Reference price' bondReport={bondReport} price={bondReport.referencePrice} />}
+        {bondReport.lastPrice && <BondCardYTMSection title='Last price (date/time)' bondReport={bondReport} price={bondReport.lastPrice} secondary={bondReport.lastDateTime} />}
+        {bondReport.bidPrice && <BondCardYTMSection title='Bid price (vol, cnt)' bondReport={bondReport} price={bondReport.bidPrice} secondary={`${bondReport.bidVolume}, ${bondReport.bidCount}`} />}
+        {bondReport.askPrice && <BondCardYTMSection title='Ask price (vol, cnt)' bondReport={bondReport} price={bondReport.askPrice} secondary={`${bondReport.askVolume}, ${bondReport.askCount}`} />}
         <Typography component='span' sx={{
           display: 'flex',
           justifyContent: 'right',
