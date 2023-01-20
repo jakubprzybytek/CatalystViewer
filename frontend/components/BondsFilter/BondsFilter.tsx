@@ -6,10 +6,7 @@ import NominalValueFilter from "./NominalValueFilter";
 import MarketFilter from "./MarketFilter";
 import { useBondsFilters } from "./useBondsFilters";
 import { filterBy, getUniqueBondTypes, getUniqueMarkets, isBondType, isOnMarkets, nominalValueLessThan, sortStrings } from "../../bonds/statistics";
-import { useArrayLocalStorage, useLocalStorage } from "../../common/UseStorage";
 import { BondReport } from "../../sdk/GetBonds";
-
-const DEFAULT_MARKETS = ['GPW RR', 'GPW ASO'];
 
 type BondsFilterParams = {
   allBondReports: BondReport[];
@@ -17,13 +14,11 @@ type BondsFilterParams = {
 };
 
 export default function BondsFilter({ allBondReports, setFilteredBondReports }: BondsFilterParams): JSX.Element {
-
   const { bondTypeFilterString, setBondTypeFilterString } = useBondsFilters();
+  const { maxNominalValueFilterNumber, setMaxNominalValueFilterNumber } = useBondsFilters();
+  const { marketsFilterStrings, addMarketFilter, removeMarketFilter } = useBondsFilters();
   const { setCount } = useBondsFilters();
 
-  //const [bondTypeFilterString, setBondTypeFilterString] = useLocalStorage<string>('filter.bondType', 'Corporate bonds');
-  const [maxNominalValueFilterNumber, setMaxNominalValueFilterNumber] = useLocalStorage<number>('filter.maxNominalValue', 10000);
-  const [marketsFilterStrings, addMarketFilter, removeMarketFilter] = useArrayLocalStorage<string>('filter.market', DEFAULT_MARKETS);
 
   // Populate filtering options
   const availableBondTypes = useMemo(() => getUniqueBondTypes(allBondReports), [allBondReports]);
