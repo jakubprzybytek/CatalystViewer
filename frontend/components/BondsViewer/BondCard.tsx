@@ -3,20 +3,16 @@ import Paper from "@mui/material/Paper";
 import Link from "@mui/material/Link";
 import Typography from "@mui/material/Typography";
 import { BondReport } from "../../sdk/GetBonds";
-import { formatCurrency, formatDate } from '../../common/Formats';
-import YTMReportEntry from "./BondCardYTMSection";
+import { formatCurrency } from '../../common/Formats';
 import { CardSection, CardEntry, CardValue } from "../Cards";
 import { InterestPercentilesByInterestBaseType, interestBaseType } from "../../bonds/statistics";
 import { getNominalValueColorCode, getInterestConstColorCode } from '../../bonds/BondIndicators';
-import { ColorCode } from "../../common/ColorCodes";
+import BondCardCurrentInterestSection from './BondCardCurrentInterestSection';
+import YTMReportEntry from "./BondCardYTMSection";
 
 type BondCardParam = {
   bondReport: BondReport;
   statistics: InterestPercentilesByInterestBaseType;
-}
-
-type BondReportParam = {
-  bondReport: BondReport;
 }
 
 function BondCardMainInformationSection({ bondReport, statistics }: BondCardParam): JSX.Element {
@@ -50,37 +46,6 @@ function BondCardMainInformationSection({ bondReport, statistics }: BondCardPara
           <CardValue colorCode={interestConstColorCode}>
             {details.interestVariable && `${details.interestVariable} + `}{details.interestConst}%
           </CardValue>
-        </CardEntry>
-      </CardSection>
-    </>
-  );
-}
-
-function BondCardCurrentInterestSection({ bondReport }: BondReportParam): JSX.Element {
-  const accuredInterestColorCode: ColorCode = bondReport.currentValues.accuredInterest == 0 ? 'green' : 'none';
-
-  return (
-    <>
-      <CardSection>
-        <CardEntry caption='First day' width='33%'>
-          <CardValue>{formatDate(bondReport.currentValues.interestFirstDay)}</CardValue>
-        </CardEntry>
-        <CardEntry caption='Record day' textAlign="center" width='33%'>
-          <CardValue>{formatDate(bondReport.currentValues.interestRecordDay)}</CardValue>
-        </CardEntry>
-        <CardEntry caption='Payable' textAlign="end" width='33%'>
-          <CardValue>{formatDate(bondReport.currentValues.interestPayableDay)}</CardValue>
-        </CardEntry>
-      </CardSection>
-      <CardSection>
-        <CardEntry caption='Current interest' width='33%'>
-          <CardValue variant='h6'>{bondReport.currentValues.interestRate.toFixed(2)}%</CardValue>
-        </CardEntry>
-        <CardEntry caption='Accured interest' textAlign="center" width='33%'>
-          <CardValue colorCode={accuredInterestColorCode}>{formatCurrency(bondReport.currentValues.accuredInterest, bondReport.details.currency)}</CardValue>
-        </CardEntry>
-        <CardEntry caption='Full interest' textAlign="end" width='33%'>
-          <CardValue>{formatCurrency(bondReport.currentValues.fullInterest, bondReport.details.currency)}</CardValue>
         </CardEntry>
       </CardSection>
     </>
