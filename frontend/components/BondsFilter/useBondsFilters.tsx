@@ -16,6 +16,10 @@ export type BondsFilterType = {
   addMarketFilter: (market: string) => void;
   removeMarketFilter: (market: string) => void;
 
+  interestBaseTypeFilterStrings: string[];
+  addInterestBaseTypeFilterString: (interestBaseType: string) => void;
+  removeInterestBaseTypeFilterString: (interestBaseType: string) => void;
+
   count: number;
   setCount: (value: number) => void;
 }
@@ -23,6 +27,8 @@ export type BondsFilterType = {
 const DEFAULT_ISSUERS: string[] = [];
 
 const DEFAULT_MARKETS = ['GPW RR', 'GPW ASO'];
+
+const DEFAULT_INTEREST_BASE_TYPES: string[] = [];
 
 const DEFAULT_BONDS_FILTERS_CONTEXT: BondsFilterType = {
   bondTypeFilterString: '',
@@ -35,6 +41,9 @@ const DEFAULT_BONDS_FILTERS_CONTEXT: BondsFilterType = {
   marketsFilterStrings: DEFAULT_MARKETS,
   addMarketFilter: (market: string) => { return; },
   removeMarketFilter: (market: string) => { return; },
+  interestBaseTypeFilterStrings: DEFAULT_INTEREST_BASE_TYPES,
+  addInterestBaseTypeFilterString: (interestBaseType: string) => { return; },
+  removeInterestBaseTypeFilterString: (interestBaseType: string) => { return; },
   count: 0,
   setCount: (value: number) => { return; }
 }
@@ -50,14 +59,16 @@ export function BondsFiltersProvider({ children }: BondFiltersProviderPropsType)
   const [issuersFilterStrings, addIssuerFilterString, removeIssuerFilterString] = useArrayLocalStorage('filter.issuer', DEFAULT_ISSUERS);
   const [maxNominalValueFilterNumber, setMaxNominalValueFilterNumber] = useLocalStorage<number>('filter.maxNominalValue', 10000);
   const [marketsFilterStrings, addMarketFilter, removeMarketFilter] = useArrayLocalStorage<string>('filter.market', DEFAULT_MARKETS);
+  const [interestBaseTypeFilterStrings, addInterestBaseTypeFilterString, removeInterestBaseTypeFilterString] = useArrayLocalStorage<string>('filter.interestBaseType', DEFAULT_INTEREST_BASE_TYPES);
 
   const [count, setCount] = useState(0);
 
-  const value = {
+  const value: BondsFilterType = {
     bondTypeFilterString, setBondTypeFilterString,
     issuersFilterStrings, addIssuerFilterString, removeIssuerFilterString,
     maxNominalValueFilterNumber, setMaxNominalValueFilterNumber,
     marketsFilterStrings, addMarketFilter, removeMarketFilter,
+    interestBaseTypeFilterStrings, addInterestBaseTypeFilterString, removeInterestBaseTypeFilterString,
     count, setCount
   };
 

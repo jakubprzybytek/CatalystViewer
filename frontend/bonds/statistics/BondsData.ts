@@ -12,6 +12,7 @@ const nominalValue = R.compose<BondReport[], BondDetails, number>(R.prop('nomina
 // Predicates
 export const isBondType = (type: string) => type !== 'all' ? (bondReport: BondReport) => bondReport.details.type === type : R.always(true);
 export const isIssuedBy = (issuers: string[]) => issuers.length > 0 ? (bondReport: BondReport) => issuers.includes(bondReport.details.issuer) : R.always(true);
+export const isInterestBaseType = (interestbaseTypes: string[]) => interestbaseTypes.length > 0 ? (bondReport: BondReport) => interestbaseTypes.includes(bondReport.details.interestVariable || 'Const') : R.always(true);
 export const nominalValueLessThan = (maxNominalValue: number) => (bondReport: BondReport) => bondReport.details.nominalValue <= maxNominalValue;
 export const isOnMarkets = (markets: string[]) => (bondReport: BondReport) => markets.includes(bondReport.details.market);
 
@@ -19,11 +20,13 @@ export const isOnMarkets = (markets: string[]) => (bondReport: BondReport) => ma
 export const getBondTypes = R.map(bondType);
 export const getIssuers = R.map(issuer);
 export const getMarkets = R.map(market);
+export const getInterestBaseTypes = R.map(interestBaseType);
 export const getInterestConstParts = R.map(interestConstPart);
 export const getNominalValues = R.map(nominalValue);
 
 // Getters with unique values
 export const getUniqueBondTypes = (bondReports: BondReport[]): string[] => R.uniq(getBondTypes(bondReports));
+export const getUniqueInterestBaseTypes = (bondReports: BondReport[]): string[] => R.uniq(getInterestBaseTypes(bondReports));
 export const getUniqueIssuers = (bondReports: BondReport[]): string[] => R.uniq(getIssuers(bondReports));
 export const getUniqueMarkets = (bondReports: BondReport[]): string[] => R.uniq(getMarkets(bondReports));
 
