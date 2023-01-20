@@ -56,7 +56,6 @@ export const handler = lambdaHandler<BondReport[]>(async event => {
             details: details,
             currentValues: currentValues,
 
-            detailsUpdated: dbBond.updated,
             detailsUpdatedTs: dbBond.updatedTs,
 
             ...(dbBond.referencePrice && {

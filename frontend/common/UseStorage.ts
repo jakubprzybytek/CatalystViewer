@@ -37,7 +37,7 @@ export function useLocalStorage<T>(key: string, initialValue: T): [T, Dispatch<S
     return [storedValue, setValue];
 }
 
-export function useArrayLocalStorage<T>(key: string, initialValue: T[]): [T[], (newElement: T) => void, (elementToRemove: T) => void] {
+export function useArrayLocalStorage<T>(key: string, initialValue: T[]): [T[], (newElement: T) => void, (elementToRemove: T) => void, () => void] {
     const [storedArray, setStoredArray] = useLocalStorage<T[]>(key, initialValue);
 
     const addElement = (newElement: T) => {
@@ -54,5 +54,10 @@ export function useArrayLocalStorage<T>(key: string, initialValue: T[]): [T[], (
         setStoredArray(newArray);
     }
 
-    return [storedArray, addElement, removeElement];
+    const removeAll = () => {
+        console.log('remove all')
+        setStoredArray([]);
+    }
+
+    return [storedArray, addElement, removeElement, removeAll];
 }

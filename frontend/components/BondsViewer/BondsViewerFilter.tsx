@@ -10,15 +10,17 @@ import Button from '@mui/material/Button';
 import Menu from '@mui/material/Menu';
 import Check from '@mui/icons-material/Check';
 import AddCircle from '@mui/icons-material/AddCircle';
+import RemoveCircle from '@mui/icons-material/RemoveCircle';
 
 type BondsViewerFilterParams = {
   allIssuers: string[];
   selectedIssuers: string[];
   addIssuer: (issuer: string) => void;
   removeIssuer: (issuer: string) => void;
+  removeAllIssuers: () => void;
 };
 
-export default function BondsViewerFilter({ allIssuers, selectedIssuers, addIssuer, removeIssuer }: BondsViewerFilterParams): JSX.Element {
+export default function BondsViewerFilter({ allIssuers, selectedIssuers, addIssuer, removeIssuer, removeAllIssuers }: BondsViewerFilterParams): JSX.Element {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
 
@@ -29,6 +31,10 @@ export default function BondsViewerFilter({ allIssuers, selectedIssuers, addIssu
           <Button startIcon={(<AddCircle />)}
             onClick={(event: React.MouseEvent<HTMLButtonElement>) => setAnchorEl(event.currentTarget)}>
             Select Issuers
+          </Button>
+          <Button startIcon={(<RemoveCircle />)} disabled={selectedIssuers.length === 0}
+            onClick={removeAllIssuers}>
+            Remove all
           </Button>
           <Menu anchorEl={anchorEl} open={open} onClose={() => setAnchorEl(null)}>
             {allIssuers.map(issuer =>

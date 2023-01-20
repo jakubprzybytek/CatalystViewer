@@ -6,7 +6,6 @@ export type BondReport = {
     details: BondDetails;
     currentValues: BondCurrentValues;
 
-    detailsUpdated: string;
     detailsUpdatedTs: number;
 
     referencePrice?: number;
