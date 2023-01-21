@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { NextPage } from 'next';
+import { AxiosError } from 'axios';
 import Head from 'next/head';
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
@@ -11,6 +12,8 @@ import Drawer from '@mui/material/Drawer';
 import Toolbar from '@mui/material/Toolbar';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
+import Alert from '@mui/material/Alert';
+import AlertTitle from '@mui/material/AlertTitle';
 import Refresh from '@mui/icons-material/Refresh';
 import FilterAlt from '@mui/icons-material/FilterAlt';
 import useScrollTrigger from '@mui/material/useScrollTrigger';
@@ -66,14 +69,23 @@ const Home: NextPage = () => {
   const [view, setView] = useState(View.Issuers);
 
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | undefined>();
+
   const [allBondReports, setAllBondReports] = useState<BondReport[]>([]);
 
   const [filteredBondReports, setFilteredBondReports] = useState<BondReport[]>([]);
   const filteredBondsStatistics = useMemo(() => computeStatisticsForInterestBaseTypes(filteredBondReports), [filteredBondReports]);
 
   const fetchData = async () => {
-    const bonds = await getBonds();
-    setAllBondReports(bonds);
+    try {
+      const bonds = await getBonds();
+      setErrorMessage(undefined);
+      setAllBondReports(bonds);
+    } catch (error) {
+      if (error instanceof AxiosError) {
+        setErrorMessage(`${error.message} (${error.code})`);
+      }
+    }
     setIsLoading(false);
   };
 
@@ -132,7 +144,12 @@ const Home: NextPage = () => {
             </Box>
           </Drawer>
         </Box>
-        <Toolbar sx={{ height: 88 }} />
+        <Box sx={{ height: 88 }} />
+        {errorMessage && <Alert severity="error">
+          <AlertTitle>Network Error</AlertTitle>
+          Cannot fetch data!
+          <pre>{errorMessage}</pre>
+        </Alert>}
         <Panel shown={view === View.Issuers}>
           <IssuersViewer bondReports={filteredBondReports} loadingBonds={isLoading} statistics={filteredBondsStatistics} />
         </Panel>
