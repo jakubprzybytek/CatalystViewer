@@ -1,7 +1,11 @@
 import { BondDetails, BondCurrentValues } from '../sdk/GetBonds';
 
 export type YieldToMaturityReport = {
-  currency: string;
+  bondDetails: BondDetails;
+  bondCurrentValues: BondCurrentValues;
+
+  taxRate: number;
+  commissionRate: number;
 
   buyingPrice: number;
   buyingCommision: number;
@@ -52,7 +56,11 @@ export class YieldToMaturityCalculator {
     const ytm = Math.pow(profitRate + 1, 1 / timeToMature) - 1;
 
     return {
-      currency: this.bondDetails.currency,
+      bondDetails: this.bondDetails,
+      bondCurrentValues: this.bondCurrentValues,
+
+      taxRate,
+      commissionRate: this.commisionRate,
 
       buyingPrice,
       buyingCommision,
