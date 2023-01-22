@@ -4,6 +4,7 @@ export type YieldToMaturityReport = {
   bondDetails: BondDetails;
   bondCurrentValues: BondCurrentValues;
 
+  price: number;
   taxRate: number;
   commissionRate: number;
 
@@ -59,6 +60,7 @@ export class YieldToMaturityCalculator {
       bondDetails: this.bondDetails,
       bondCurrentValues: this.bondCurrentValues,
 
+      price,
       taxRate,
       commissionRate: this.commisionRate,
 

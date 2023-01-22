@@ -61,8 +61,7 @@ export default function BondYTMReportDialog({ ytmReport, onClose }: BondYTMRepor
             right: 8,
             top: 8,
             color: (theme) => theme.palette.grey[500],
-          }}
-        >
+          }}>
           <CloseIcon />
         </IconButton>
       </DialogTitle>
@@ -71,6 +70,7 @@ export default function BondYTMReportDialog({ ytmReport, onClose }: BondYTMRepor
           <Grid xs={12} sm={6}>
             <Box sx={{ pr: 1, pl: 1 }}>
               <ReportSectionTitle>Parameters</ReportSectionTitle>
+              <ReportEntry caption='Price'>{ytmReport.price}</ReportEntry>
               <ReportEntry caption='Tax rate'>{ytmReport.taxRate * 100}%</ReportEntry>
               <ReportEntry caption='Commision rate'>{ytmReport.commissionRate * 100}%</ReportEntry>
             </Box>
@@ -79,8 +79,8 @@ export default function BondYTMReportDialog({ ytmReport, onClose }: BondYTMRepor
             <Box sx={{ pr: 1, pl: 1 }}>
               <ReportSectionTitle>Bond details</ReportSectionTitle>
               <ReportEntry caption='Nominal value'>{formatCurrency(bondDetails.nominalValue, bondDetails.currency)}</ReportEntry>
-              <ReportEntry caption='Accured interest'>{formatCurrency(bondCurrentValues.accuredInterest, bondDetails.currency)}</ReportEntry>
               <ReportEntry caption='Current interest rate'>{bondCurrentValues.interestRate}%</ReportEntry>
+              <ReportEntry caption='Accured interest'>{formatCurrency(bondCurrentValues.accuredInterest, bondDetails.currency)}</ReportEntry>
             </Box>
           </Grid>
           <Grid xs={12} sm={6}>
