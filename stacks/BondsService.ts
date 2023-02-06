@@ -1,8 +1,16 @@
-import { StackContext, Api, Table } from '@serverless-stack/resources';
+import { StackContext, Cognito, Api, Table } from '@serverless-stack/resources';
 import { RemovalPolicy } from 'aws-cdk-lib';
+import { UserPool, UserPoolClient } from 'aws-cdk-lib/aws-cognito';
 import * as iam from 'aws-cdk-lib/aws-iam';
 
 export function BondsService({ stack }: StackContext) {
+  const auth = new Cognito(stack, "Auth", {
+    cdk: {
+      userPool: UserPool.fromUserPoolId(stack, "IUserPool", "eu-west-1_IVai0KEAA"),
+      userPoolClient: UserPoolClient.fromUserPoolClientId(stack, "IUserPoolClient", "3qt6td581r3qqsk23tgv9r5duh"),
+    },
+  });
+
   const bondDetailsTable = new Table(stack, 'BondDetails', {
     fields: {
       bondStatus: 'string',
@@ -58,8 +66,23 @@ export function BondsService({ stack }: StackContext) {
   });
 
   const api = new Api(stack, "api", {
+    authorizers: {
+      jwt: {
+        type: "user_pool",
+        userPool: {
+          id: auth.userPoolId,
+          clientIds: [auth.userPoolClientId],
+        },
+      },
+    },
+    defaults: {
+      authorizer: "jwt",
+      throttle: {
+        burst: 1,
+        rate: 1
+      }
+    },
     routes: {
-      'GET /': 'api/lambda.handler',
       'GET /api/bonds': {
         function: {
           handler: 'api/bonds/getBonds.handler',
@@ -72,12 +95,16 @@ export function BondsService({ stack }: StackContext) {
       }
     }
   });
+  //auth.attachPermissionsForAuthUsers(stack, [api]);
 
   stack.addOutputs({
-    ApiEndpoint: api.url
+    ApiEndpoint: api.url,
+    UserPoolId: auth.userPoolId,
+    UserPoolClientId: auth.userPoolClientId
   });
 
   return {
+    auth,
     api,
     bondDetailsTable,
   };

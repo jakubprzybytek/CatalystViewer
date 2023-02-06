@@ -6,7 +6,8 @@ import { Frontend } from "./Frontend";
 export default function (app: App) {
   app.setDefaultFunctionProps({
     runtime: "nodejs16.x",
-    memorySize: '256 MB',
+    memorySize: '128 MB',
+    timeout: '20 seconds',
     srcPath: "services",
     bundle: {
       format: "esm",

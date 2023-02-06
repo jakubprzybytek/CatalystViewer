@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { NextPage } from 'next';
-import { AxiosError } from 'axios';
+import { Auth } from 'aws-amplify';
+import { withAuthenticator } from '@aws-amplify/ui-react';
 import Head from 'next/head';
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
@@ -16,6 +17,7 @@ import Alert from '@mui/material/Alert';
 import AlertTitle from '@mui/material/AlertTitle';
 import Refresh from '@mui/icons-material/Refresh';
 import FilterAlt from '@mui/icons-material/FilterAlt';
+import Logout from '@mui/icons-material/Logout';
 import useScrollTrigger from '@mui/material/useScrollTrigger';
 import BondsFilter from '../components/BondsFilter/BondsFilter';
 import BondsViewer from '../components/BondsViewer/BondsViewer';
@@ -23,6 +25,7 @@ import IssuersViewer from '../components/IssuersViewer/IssuersViewer';
 import { BondReport, getBonds } from '../sdk/GetBonds';
 import { computeStatisticsForInterestBaseTypes } from '../bonds/statistics';
 import { BondsFiltersProvider, useBondsFilters } from '../components/BondsFilter/useBondsFilters';
+import '@aws-amplify/ui-react/styles.css';
 
 enum View {
   Bonds,
@@ -82,9 +85,8 @@ const Home: NextPage = () => {
       setErrorMessage(undefined);
       setAllBondReports(bonds);
     } catch (error) {
-      if (error instanceof AxiosError) {
-        setErrorMessage(`${error.message} (${error.code})`);
-      }
+      setErrorMessage(Object(error));
+      setAllBondReports([]);
     }
     setIsLoading(false);
   };
@@ -118,8 +120,12 @@ const Home: NextPage = () => {
                       <Refresh />
                     </IconButton>
                     <IconButton color='inherit'
-                      onClick={() => { setDrawerOpen(true); }}>
+                      onClick={() => setDrawerOpen(true)}>
                       <FilterAlt />
+                    </IconButton>
+                    <IconButton color='inherit'
+                      onClick={() => Auth.signOut()}>
+                      <Logout />
                     </IconButton>
                   </Stack>
                 </Stack>
@@ -161,4 +167,4 @@ const Home: NextPage = () => {
   )
 }
 
-export default Home;
+export default withAuthenticator(Home);
