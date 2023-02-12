@@ -25,11 +25,12 @@ import IssuersViewer from '../components/IssuersViewer/IssuersViewer';
 import { BondReport, getBonds } from '../sdk/GetBonds';
 import { computeStatisticsForInterestBaseTypes } from '../bonds/statistics';
 import { BondsFiltersProvider, useBondsFilters } from '../components/BondsFilter/useBondsFilters';
+import { useLocalStorage } from '../common/UseStorage';
 import '@aws-amplify/ui-react/styles.css';
 
 enum View {
-  Bonds,
-  Issuers
+  Issuers,
+  Bonds
 }
 
 type HideOnScrollParams = {
@@ -69,7 +70,7 @@ function Panel({ shown, children }: PanelParams): JSX.Element {
 
 const Home: NextPage = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [view, setView] = useState(View.Issuers);
+  const [view, setView] = useLocalStorage('view', View.Issuers);
 
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
