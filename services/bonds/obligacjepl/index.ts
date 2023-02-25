@@ -9,8 +9,8 @@ export type ObligacjeBondInformation = {
     name: string;
     issuer: string;
     market: string;
-    emissionValue: number;
     nominalValue: number;
+    issueValue: number;
     interestType: string;
     interestVariable: string | undefined;
     interestConst: number;

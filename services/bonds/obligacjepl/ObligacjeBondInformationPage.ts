@@ -4,8 +4,8 @@ import { InterestType, ObligacjeBondInformation } from ".";
 const BOND_NAME_REGEX = /<h1>(\w+)<\/h1>/;
 const ISSUER_REGEX = /"nazwa-emitenta">(.+)<\/a>/;
 const MARKET_REGEX = /<th>Rynek:<\/th>\s+<td>(.+)<\/td>/;
-const EMISSION_VALUE_REGEX = /<th>Wartość emisji w obrocie:<\/th>\s+<td>(.+) \w{3}<\/td>/;
 const NOMINAL_VALUE_REGEX = /<th>Wartość nominalna:<\/th>\s+<td>(.+) \w{3}<\/td>/;
+const ISSUE_VALUE_REGEX = /<th>Wartość emisji w obrocie:<\/th>\s+<td>(.+) \w{3}<\/td>/;
 const INTEREST_TYPE_REGEX = /<th>Typ oprocentowania:<\/th>\s+<td>(.+)<\/td>/;
 const CURRENCY_REGEX = /<th>Wartość nominalna:<\/th>\s+<td>.+ (\w{3})<\/td>/;
 const INTEREST_FIRST_DAYS_REGEX = /<h4>Pierwsze dni okresów odsetkowych<\/h4>.+?<ul>(.+?)<\/ul>/s;
@@ -78,7 +78,7 @@ export function parseObligacjeBondInformationPage(markup: string): ObligacjeBond
         name: firstGroup(markup, BOND_NAME_REGEX),
         issuer: firstGroup(markup, ISSUER_REGEX),
         market: firstGroup(markup, MARKET_REGEX),
-        emissionValue: Number(firstGroup(markup, EMISSION_VALUE_REGEX).replaceAll(' ', '')),
+        issueValue: Number(firstGroup(markup, ISSUE_VALUE_REGEX).replaceAll(' ', '')),
         nominalValue: Number(firstGroup(markup, NOMINAL_VALUE_REGEX).replaceAll(' ', '')),
         interestType: interestType,
         interestVariable: interestTypeParsed?.variable,

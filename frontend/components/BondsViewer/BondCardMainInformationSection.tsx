@@ -30,13 +30,16 @@ export default function BondCardMainInformationSection({ bondReport, statistics 
         <CardEntry caption='Type' textAlign='end'>{details.type}</CardEntry>
       </CardSection>
       <CardSection>
-        <CardEntry caption='Maturity day'>
-          {formatDate(details.maturityDayTs)}
-        </CardEntry>
+        <CardEntry caption='Issue Value'>{details.issueValue > 0 ? formatCurrency(details.issueValue, details.currency) : 'n/a'}</CardEntry>
         <CardEntry caption='Nominal value' textAlign='center'>
           <CardValue colorCode={nominalValueColorCode}>
             {formatCurrency(details.nominalValue, details.currency)}
           </CardValue>
+        </CardEntry>
+      </CardSection>
+      <CardSection>
+        <CardEntry caption='Maturity day'>
+          {formatDate(details.maturityDayTs)}
         </CardEntry>
         <CardEntry caption='Interest Type' textAlign='end'>
           <CardValue colorCode={interestConstColorCode}>

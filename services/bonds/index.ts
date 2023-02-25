@@ -5,6 +5,7 @@ export type BondDetails = {
     readonly market: string;
     readonly type: string;
     readonly nominalValue: number;
+    readonly issueValue: number;
     readonly currency: string;
     readonly maturityDayTs: number;
     readonly interestType: string;

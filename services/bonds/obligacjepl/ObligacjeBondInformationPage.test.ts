@@ -101,7 +101,7 @@ describe("ObligacjeBondInformationPage", () => {
             name: 'KRU0827',
             issuer: 'Kruk S.A.',
             market: 'GPW RR',
-            emissionValue: 60000000,
+            issueValue: 60000000,
             nominalValue: 100,
             interestType: 'zmienne WIBOR 3M + 3.3%',
             interestVariable: 'WIBOR 3M',

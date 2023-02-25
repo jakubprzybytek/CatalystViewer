@@ -10,6 +10,7 @@ export type DbBondDetails = {
     issuer: string;
     type: string;
     nominalValue: number;
+    issueValue: number;
     currency: string;
     maturityDay: Date;
     maturityDayTs: number;

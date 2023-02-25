@@ -16,7 +16,6 @@ export async function handler(event: any) {
         throw new Error('Bond Details Table Name is not defined');
     }
 
-    const currentTime = new Date();
     const bondsFailed: string[] = [];
 
     const bondDetailsTable = new BondDetailsTable(dynamoDbClient, process.env.BOND_DETAILS_TABLE_NAME);
@@ -36,6 +35,8 @@ export async function handler(event: any) {
         try {
             const storedBond = storedBonds[bondId(bondStats)];
             const bondQuotes = bondsQuotes[bondId(bondStats)];
+
+            const currentTime = new Date();
 
             if (storedBond !== undefined) {
                 // update existing bond information
@@ -67,6 +68,7 @@ export async function handler(event: any) {
                     issuer: bondInformation.issuer,
                     type: bondStats.type,
                     nominalValue: bondStats.nominalValue,
+                    issueValue: bondInformation.issueValue,
                     currency: bondStats.tradingCurrency,
                     maturityDay: bondStats.maturityDay,
                     maturityDayTs: bondStats.maturityDay.getTime(),

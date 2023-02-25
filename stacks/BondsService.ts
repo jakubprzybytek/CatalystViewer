@@ -23,6 +23,7 @@ export function BondsService({ stack }: StackContext) {
       issuer: 'string',
       type: 'string',
       nominalValue: 'number',
+      issueValue: 'number',
       currency: 'string',
       maturityDay: 'string',
       maturityDayTs: 'number',

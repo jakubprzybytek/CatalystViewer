@@ -1,4 +1,4 @@
-import { BondDetails } from '../sdk/GetBonds';
+import { BondCurrentValues, BondDetails } from '../sdk/GetBonds';
 import { describe, it, expect } from "vitest";
 import { YieldToMaturityCalculator } from "./YieldToMaturity";
 
@@ -10,18 +10,25 @@ const bondDetails: BondDetails = {
   type: 'Corporate Bond',
   nominalValue: 1000,
   currency: 'PLN',
-  maturityDay: new Date('2023-10-01T00:00:00.000Z'),
   maturityDayTs: new Date('2023-10-01T00:00:00.000Z').getTime(),
   interestType: 'zmienne WIBOR 6m + 1%',
   interestVariable: 'WIBOR 6M',
-  interestConst: 1,
-  currentInterestRate: 10,
-  accuredInterest: 20
+  interestConst: 1
+};
+
+const bondCurrentValues: BondCurrentValues = {
+  interestFirstDay: 0, // not needed
+  interestRecordDay: 0, // not needed
+  interestPayableDay: 0, // not needed
+
+  interestRate: 10,
+  accuredInterest: 20,
+  fullInterest: 0, // not needed
 };
 
 describe("YieldToMatorityCalculator", () => {
   it("should calculate net ytm", () => {
-    const ytmCalculator = new YieldToMaturityCalculator(bondDetails, 0.0019);
+    const ytmCalculator = new YieldToMaturityCalculator(bondDetails, bondCurrentValues, 0.0019);
     const ytm = ytmCalculator.forPrice(95, 0.19, new Date('2022-10-01T00:00:00.000Z'));
 
     expect(ytm.buyingPrice).toBe(1000 * 0.95 + 20);
@@ -45,7 +52,7 @@ describe("YieldToMatorityCalculator", () => {
   });
 
   it("should calculate gross ytm", () => {
-    const ytmCalculator = new YieldToMaturityCalculator(bondDetails, 0.0019);
+    const ytmCalculator = new YieldToMaturityCalculator(bondDetails, bondCurrentValues, 0.0019);
     const ytm = ytmCalculator.forPrice(95, 0, new Date('2022-10-01T00:00:00.000Z'));
 
     expect(ytm.buyingPrice).toBe(1000 * 0.95 + 20);
