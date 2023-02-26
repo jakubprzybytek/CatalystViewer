@@ -26,6 +26,7 @@ export default function IssuerCard({ issuerReport, statistics }: IssuerCardParam
   return (
     <>
       <Paper sx={{
+        pb: 1,
         '& .MuiTypography-caption': {
           color: 'gray',
           lineHeight: 1.3
@@ -49,7 +50,7 @@ export default function IssuerCard({ issuerReport, statistics }: IssuerCardParam
           <CardEntry caption='Bonds'>
             <CardValue variant='h6'>{issuerReport.count}</CardValue>
           </CardEntry>
-          <CardEntry caption='Nominal values' textAlign='center'>
+          <CardEntry caption='Nominal value(s)' textAlign='center'>
             {issuerReport.minNominalValue === issuerReport.maxNominalValue &&
               <CardValue colorCode={minNominalValueColorCode}>{formatCurrency(issuerReport.minNominalValue, issuerReport.currency)}</CardValue>}
             {issuerReport.minNominalValue !== issuerReport.maxNominalValue &&
@@ -59,8 +60,16 @@ export default function IssuerCard({ issuerReport, statistics }: IssuerCardParam
                 <CardValue colorCode={getNominalValueColorCode(issuerReport.maxNominalValue)}>{formatCurrency(issuerReport.maxNominalValue, issuerReport.currency)}</CardValue>
               </Stack>}
           </CardEntry>
-          <CardEntry caption='Interest Type' textAlign='end'>
+          <CardEntry caption='Avg interest Type' textAlign='end'>
             <CardValue colorCode={interestConstColorCode}>{issuerReport.interestBaseType} + {issuerReport.interestConstAverage.toPrecision(2)}%</CardValue>
+          </CardEntry>
+        </CardSection>
+        <CardSection>
+          <CardEntry caption='Avg issue value'>
+            <CardValue colorCode='white'>{formatCurrency(issuerReport.avgIssueValue, issuerReport.currency)}</CardValue>
+          </CardEntry>
+          <CardEntry caption='Total issue value' textAlign='end'>
+            <CardValue colorCode='white'>{formatCurrency(issuerReport.totalIssueValue, issuerReport.currency)}</CardValue>
           </CardEntry>
         </CardSection>
       </Paper>

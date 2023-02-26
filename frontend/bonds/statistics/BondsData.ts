@@ -8,6 +8,7 @@ const market = R.compose<BondReport[], BondDetails, string>(R.prop('market'), R.
 export const interestBaseType = R.compose<BondReport[], BondDetails, string | undefined, string>(R.defaultTo('Const'), R.prop('interestVariable'), R.prop('details'));
 export const interestConstPart = R.compose<BondReport[], BondDetails, number>(R.prop('interestConst'), R.prop('details'));
 const nominalValue = R.compose<BondReport[], BondDetails, number>(R.prop('nominalValue'), R.prop('details'));
+const issueValue = R.compose<BondReport[], BondDetails, number>(R.prop('issueValue'), R.prop('details'));
 
 // Predicates
 export const isBondType = (type: string) => type !== 'all' ? (bondReport: BondReport) => bondReport.details.type === type : R.always(true);
@@ -23,6 +24,7 @@ export const getMarkets = R.map(market);
 export const getInterestBaseTypes = R.map(interestBaseType);
 export const getInterestConstParts = R.map(interestConstPart);
 export const getNominalValues = R.map(nominalValue);
+export const getIssueValues = R.map(issueValue);
 
 // Getters with unique values
 export const getUniqueBondTypes = (bondReports: BondReport[]): string[] => R.uniq(getBondTypes(bondReports));
