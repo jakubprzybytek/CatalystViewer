@@ -9,6 +9,7 @@ const bondDetails: BondDetails = {
   market: 'GPW RR',
   type: 'Corporate Bond',
   nominalValue: 1000,
+  issueValue: 1000000,
   currency: 'PLN',
   maturityDayTs: new Date('2023-10-01T00:00:00.000Z').getTime(),
   interestType: 'zmienne WIBOR 6m + 1%',
@@ -17,13 +18,15 @@ const bondDetails: BondDetails = {
 };
 
 const bondCurrentValues: BondCurrentValues = {
+  yearsToMaturity: 0, // not needed
+
   interestFirstDay: 0, // not needed
   interestRecordDay: 0, // not needed
   interestPayableDay: 0, // not needed
 
   interestRate: 10,
   accuredInterest: 20,
-  fullInterest: 0, // not needed
+  periodInterest: 0, // not needed
 };
 
 describe("YieldToMatorityCalculator", () => {

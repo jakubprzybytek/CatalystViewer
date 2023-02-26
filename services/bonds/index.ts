@@ -14,13 +14,15 @@ export type BondDetails = {
 }
 
 export type BondCurrentValues = {
+    readonly yearsToMaturity: number;
+
     readonly interestFirstDay: number;
     readonly interestRecordDay: number;
     readonly interestPayableDay: number;
 
     readonly interestRate: number;
     readonly accuredInterest: number;
-    readonly fullInterest: number;
+    readonly periodInterest: number;
 }
 
 export function parseUTCDate(dateString: string): Date {

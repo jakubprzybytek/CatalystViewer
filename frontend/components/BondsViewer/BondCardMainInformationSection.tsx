@@ -12,7 +12,7 @@ type BondCardMainInformationSectionParam = {
 }
 
 export default function BondCardMainInformationSection({ bondReport, statistics }: BondCardMainInformationSectionParam): JSX.Element {
-  const { details } = bondReport;
+  const { details, currentValues } = bondReport;
 
   const nominalValueColorCode = getNominalValueColorCode(details.nominalValue);
   const interestConstColorCode = getInterestConstColorCode(details.interestConst, statistics[interestBaseType(bondReport)]);
@@ -27,11 +27,15 @@ export default function BondCardMainInformationSection({ bondReport, statistics 
         <CardEntry caption='Issuer'>
           <CardValue variant='h6'>{details.issuer}</CardValue>
         </CardEntry>
-        <CardEntry caption='Type' textAlign='end'>{details.type}</CardEntry>
+        <CardEntry caption='Type' textAlign='end'>
+          <CardValue>{details.type}</CardValue>
+        </CardEntry>
       </CardSection>
       <CardSection>
-        <CardEntry caption='Issue Value'>{details.issueValue > 0 ? formatCurrency(details.issueValue, details.currency) : 'n/a'}</CardEntry>
-        <CardEntry caption='Nominal value' textAlign='center'>
+        <CardEntry caption='Issue Value'>
+          <CardValue colorCode='white'>{details.issueValue > 0 ? formatCurrency(details.issueValue, details.currency) : 'n/a'}</CardValue>
+        </CardEntry>
+        <CardEntry caption='Nominal value' textAlign='end'>
           <CardValue colorCode={nominalValueColorCode}>
             {formatCurrency(details.nominalValue, details.currency)}
           </CardValue>
@@ -39,7 +43,10 @@ export default function BondCardMainInformationSection({ bondReport, statistics 
       </CardSection>
       <CardSection>
         <CardEntry caption='Maturity day'>
-          {formatDate(details.maturityDayTs)}
+          <CardValue>{formatDate(details.maturityDayTs)}</CardValue>
+        </CardEntry>
+        <CardEntry caption='To maturity' textAlign='center'>
+          <CardValue>{currentValues.yearsToMaturity.toFixed(2)} yrs</CardValue>
         </CardEntry>
         <CardEntry caption='Interest Type' textAlign='end'>
           <CardValue colorCode={interestConstColorCode}>
