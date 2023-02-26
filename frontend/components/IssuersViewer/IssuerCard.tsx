@@ -20,6 +20,8 @@ type IssuerCardParam = {
 export default function IssuerCard({ issuerReport, statistics }: IssuerCardParam): JSX.Element {
   const { issuersFilterStrings, addIssuerFilterString, removeIssuerFilterString } = useBondsFilters();
 
+  const isChecked = issuersFilterStrings.includes(issuerReport.name);
+
   const minNominalValueColorCode = getNominalValueColorCode(issuerReport.minNominalValue);
   const interestConstColorCode = getInterestConstColorCode(issuerReport.interestConstAverage, statistics[issuerReport.interestBaseType]);
 
@@ -27,6 +29,7 @@ export default function IssuerCard({ issuerReport, statistics }: IssuerCardParam
     <>
       <Paper sx={{
         pb: 1,
+        ...(isChecked && { backgroundColor: 'oldlace' }),
         '& .MuiTypography-caption': {
           color: 'gray',
           lineHeight: 1.3
@@ -42,7 +45,7 @@ export default function IssuerCard({ issuerReport, statistics }: IssuerCardParam
           <Stack direction='row' flexGrow={1} justifyContent='space-between'>
             <Typography variant='h6'>{issuerReport.name}</Typography>
             <Checkbox
-              checked={issuersFilterStrings.includes(issuerReport.name)}
+              checked={isChecked}
               onChange={(event: React.ChangeEvent<HTMLInputElement>) => event.target.checked ? addIssuerFilterString(issuerReport.name) : removeIssuerFilterString(issuerReport.name)} />
           </Stack>
         </CardSection>
