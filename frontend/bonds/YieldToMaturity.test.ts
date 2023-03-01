@@ -40,18 +40,40 @@ describe("YieldToMatorityCalculator", () => {
 
     expect(ytm.timeToMature).toBe(1);
 
-    expect(ytm.totalInterests).toBe(20 + 100);
-    expect(ytm.interestsTax).toBe(120 * 0.19);
+    expect(ytm.totalPayableInterest).toBe(20 + 100);
+    expect(ytm.interestTax).toBe(120 * 0.19);
+    expect(ytm.netTotalPayableInterest).toBe(97.2);
+
     expect(ytm.saleProfit).toBeCloseTo(28.157, 3); // 1000 - (970 * 1.0019)
     expect(ytm.saleTax).toBeCloseTo(5.34983, 5); // (1000 - (970 * 1.0019)) * 0.19
-
-    expect(ytm.totalSaleIncome).toBe(1000 + 120);
-    expect(ytm.totalSaleCosts).toBeCloseTo(28.14983, 5); // 120 * 0.19 + (1000 - (970 * 1.0019)) * 0.19
-    expect(ytm.totalSaleProfit).toBeCloseTo(1091.85017, 5); // 1120 - 28.14983
+    expect(ytm.saleIncome).toBeCloseTo(1000 - 5.34983, 5); // (1000 - (970 * 1.0019)) * 0.19
 
     expect(ytm.profit).toBeCloseTo(120.00717, 5); // 1120 - 28.14983 - 971.843
 
     expect(ytm.ytm).toBeCloseTo(0.12, 2);
+  });
+
+  it("should calculate net ytm for price > 100", () => {
+    const ytmCalculator = new YieldToMaturityCalculator(bondDetails, bondCurrentValues, 0.0019);
+    const ytm = ytmCalculator.forPrice(105, 0.19, new Date('2022-10-01T00:00:00.000Z'));
+
+    expect(ytm.buyingPrice).toBe(1050 + 20);
+    expect(ytm.buyingCommision).toBe(1070 * 0.0019);
+    expect(ytm.totalBuyingPrice).toBe(1072.033);
+
+    expect(ytm.timeToMature).toBe(1);
+
+    expect(ytm.totalPayableInterest).toBe(20 + 100);
+    expect(ytm.interestTax).toBe(120 * 0.19);
+    expect(ytm.netTotalPayableInterest).toBe(97.2);
+
+    expect(ytm.saleProfit).toBeCloseTo(-72.033, 3);
+    expect(ytm.saleTax).toBe(0);
+    expect(ytm.saleIncome).toBe(1000);
+
+    expect(ytm.profit).toBeCloseTo(1000 + 97.2 - 1072.033, 5); // 1120 - 28.14983 - 971.843
+
+    expect(ytm.ytm).toBeCloseTo(0.02, 2);
   });
 
   it("should calculate gross ytm", () => {
@@ -64,16 +86,15 @@ describe("YieldToMatorityCalculator", () => {
 
     expect(ytm.timeToMature).toBe(1);
 
-    expect(ytm.totalInterests).toBe(20 + 100);
-    expect(ytm.interestsTax).toBe(0);
+    expect(ytm.totalPayableInterest).toBe(20 + 100);
+    expect(ytm.interestTax).toBe(0);
+    expect(ytm.netTotalPayableInterest).toBe(20 + 100);
+
     expect(ytm.saleProfit).toBeCloseTo(28.157, 3); // 1000 - (970 * 1.0019)
     expect(ytm.saleTax).toBe(0);
+    expect(ytm.saleIncome).toBe(1000);
 
-    expect(ytm.totalSaleIncome).toBe(1000 + 120);
-    expect(ytm.totalSaleCosts).toBe(0);
-    expect(ytm.totalSaleProfit).toBe(1120);
-
-    expect(ytm.profit).toBeCloseTo(148.157, 5); // 1120 - 971.843
+    expect(ytm.profit).toBeCloseTo(120 + 1000 - 971.843, 3); // 1120 - 971.843
 
     expect(ytm.ytm).toBeCloseTo(0.15, 2);
   });

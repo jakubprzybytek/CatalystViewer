@@ -8,17 +8,20 @@ export type YieldToMaturityReport = {
   taxRate: number;
   commissionRate: number;
 
+  nominalPrice: number;
   buyingPrice: number;
   buyingCommision: number;
   totalBuyingPrice: number;
   timeToMature: number;
-  totalInterests: number;
-  interestsTax: number;
+
+  totalPayableInterest: number;
+  interestTax: number;
+  netTotalPayableInterest: number;
+
   saleProfit: number;
   saleTax: number;
-  totalSaleIncome: number;
-  totalSaleCosts: number;
-  totalSaleProfit: number;
+  saleIncome: number;
+
   profit: number;
   ytm: number;
 }
@@ -35,23 +38,22 @@ export class YieldToMaturityCalculator {
   }
 
   forPrice(price: number, taxRate: number, today: Date = new Date()): YieldToMaturityReport {
-    const buyingPrice = this.bondDetails.nominalValue * price / 100 + this.bondCurrentValues.accuredInterest;
+    const nominalPrice = this.bondDetails.nominalValue * price / 100;
+    const buyingPrice = nominalPrice + this.bondCurrentValues.accuredInterest;
     const buyingCommision = buyingPrice * this.commisionRate;
     const totalBuyingPrice = buyingPrice + buyingCommision;
 
     const timeToMature = Math.ceil(this.bondDetails.maturityDayTs - today.valueOf()) / (1000 * 3600 * 24) / 365;
 
-    const totalInterests = this.bondCurrentValues.accuredInterest + (this.bondDetails.nominalValue * this.bondCurrentValues.interestRate / 100) * timeToMature;
-    const interestsTax = totalInterests * taxRate;
+    const totalPayableInterest = this.bondCurrentValues.accuredInterest + (this.bondDetails.nominalValue * this.bondCurrentValues.interestRate / 100) * timeToMature;
+    const interestTax = totalPayableInterest * taxRate;
+    const netTotalPayableInterest = totalPayableInterest - interestTax;
+
     const saleProfit = this.bondDetails.nominalValue - totalBuyingPrice;
     const saleTax = saleProfit > 0 ? saleProfit * taxRate : 0;
+    const saleIncome = this.bondDetails.nominalValue - saleTax;
 
-    const totalSaleIncome = this.bondDetails.nominalValue + totalInterests;
-    const totalSaleCosts = interestsTax + saleTax;
-
-    const totalSaleProfit = totalSaleIncome - totalSaleCosts;
-
-    const profit = totalSaleProfit - totalBuyingPrice;
+    const profit = saleIncome + netTotalPayableInterest - totalBuyingPrice;
 
     const profitRate = profit / totalBuyingPrice;
     const ytm = Math.pow(profitRate + 1, 1 / timeToMature) - 1;
@@ -64,17 +66,20 @@ export class YieldToMaturityCalculator {
       taxRate,
       commissionRate: this.commisionRate,
 
+      nominalPrice,
       buyingPrice,
       buyingCommision,
       totalBuyingPrice,
       timeToMature,
-      totalInterests,
-      interestsTax,
+
+      totalPayableInterest,
+      interestTax,
+      netTotalPayableInterest,
+
       saleProfit,
       saleTax,
-      totalSaleIncome,
-      totalSaleCosts,
-      totalSaleProfit,
+      saleIncome,
+
       profit,
       ytm
     }
