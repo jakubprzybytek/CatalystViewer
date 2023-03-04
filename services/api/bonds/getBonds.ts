@@ -13,7 +13,9 @@ export const handler = lambdaHandler<BondReport[]>(async event => {
     }
 
     const bondDetailsTable = new BondDetailsTable(dynamoDBClient, process.env.BOND_DETAILS_TABLE_NAME);
-    const dbBonds = await bondDetailsTable.getAll();
+    const dbBonds = await bondDetailsTable.getAllActive();
+await bondDetailsTable.getAllTypes();
+    const today = new Date().getTime();
 
     const bonds = dbBonds.map(dbBond => {
         const details: BondDetails = {
@@ -31,8 +33,6 @@ export const handler = lambdaHandler<BondReport[]>(async event => {
             interestConst: dbBond.interestConst,
         };
 
-        const today = new Date().getTime();
-
         const daysToMaturity = differenceInDays(dbBond.maturityDayTs, today);
 
         const interestPeriodIndex = dbBond.interestPayoffDayTss.findIndex(day => day >= today);
@@ -47,7 +47,7 @@ export const handler = lambdaHandler<BondReport[]>(async event => {
         const accuredInterest = currentInterestRecordDay > today ? accumulatedInterest : 0;
 
         const currentValues: BondCurrentValues = {
-            yearsToMaturity: daysToMaturity / 365.24,
+            yearsToMaturity: daysToMaturity / 365,
             interestFirstDay: currentInterestFirstDay,
             interestRecordDay: currentInterestRecordDay,
             interestPayableDay: currentInterestPayableDay,

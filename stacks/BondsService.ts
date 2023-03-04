@@ -21,7 +21,7 @@ export function BondsService({ stack }: StackContext) {
       'name#market': 'string',
       isin: 'string',
       issuer: 'string',
-      type: 'string',
+      bondType: 'string',
       nominalValue: 'number',
       issueValue: 'number',
       currency: 'string',
@@ -50,7 +50,7 @@ export function BondsService({ stack }: StackContext) {
       askCount: 'number'
     },
     primaryIndex: {
-      partitionKey: 'issuer',
+      partitionKey: 'bondType',
       sortKey: 'name#market'
     },
     cdk: {

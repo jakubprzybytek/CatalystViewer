@@ -86,9 +86,15 @@ const Home: NextPage = () => {
       setErrorMessage(undefined);
       setAllBondReports(bonds);
     } catch (error) {
-      setErrorMessage(Object(error));
-      setAllBondReports([]);
+      if (error instanceof Error) {
+        setErrorMessage(error.message);
+        setAllBondReports([]);
+      } else {
+        setErrorMessage(Object(error));
+        setAllBondReports([]);
+      }
     }
+
     setIsLoading(false);
   };
 
