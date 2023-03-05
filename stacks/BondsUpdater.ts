@@ -1,4 +1,4 @@
-import { StackContext, Function, use } from '@serverless-stack/resources';
+import { StackContext, Function, use } from 'sst/constructs';
 import { Duration } from 'aws-cdk-lib';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as sfn from 'aws-cdk-lib/aws-stepfunctions';
@@ -17,13 +17,14 @@ export function BondsUpdater({ stack, app }: StackContext) {
   });
 
   const bondsUpdaterFunction = new Function(stack, 'BondsUpdaterFunction', {
-    handler: 'api/bonds/updateBonds.handler',
+    handler: 'services/api/bonds/updateBonds.handler',
     environment: {
       BOND_DETAILS_TABLE_NAME: bondDetailsTable.tableName,
       TEMP_FOLDER: app.local ? '.' : '/tmp'
     },
     timeout: '10 minutes',
-    permissions: [bondDetailsTableWriteAccess]
+    permissions: [bondDetailsTableWriteAccess],
+    // bind: [bondDetailsTable]
   })
 
   const bondsUpdaterStateMachine = new sfn.StateMachine(stack, stack.stage + '-BondsUpdaterStateMachine', {
@@ -49,7 +50,7 @@ export function BondsUpdater({ stack, app }: StackContext) {
   api.addRoutes(stack, {
     'GET /api/updates': {
       function: {
-        handler: 'api/stepFunctions/getExecutions.handler',
+        handler: 'services/api/stepFunctions/getExecutions.handler',
         environment: {
           BOND_DETAILS_TABLE_NAME: bondDetailsTable.tableName
         },

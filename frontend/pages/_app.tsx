@@ -1,8 +1,8 @@
 import '../styles/globals.css';
 import type { AppProps } from 'next/app';
-import { Amplify } from "aws-amplify";
+import { Amplify, Auth, API } from "aws-amplify";
 
-Amplify.configure({
+const amplifyConfig = {
   Auth: {
     region: process.env.NEXT_PUBLIC_AWS_REGION,
     userPoolId: process.env.NEXT_PUBLIC_USER_POOL_ID,
@@ -17,7 +17,13 @@ Amplify.configure({
       },
     ],
   },
-});
+};
+
+// console.log(Amplify.configure(amplifyConfig));
+Auth.configure(amplifyConfig.Auth);
+API.configure(amplifyConfig.API);
+
+Auth.currentSession().then(a => console.log(a));
 
 function MyApp({ Component, pageProps }: AppProps) {
   return <Component {...pageProps} />

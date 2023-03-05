@@ -1,8 +1,10 @@
-import { use, StackContext, NextjsSite } from '@serverless-stack/resources';
+import { use, StackContext, NextjsSite } from 'sst/constructs';
+// import { NextjsSite } from "sst/constructs/deprecated";
 import { BondsService } from './BondsService';
 
 export function Frontend({ stack }: StackContext) {
     const { api, auth } = use(BondsService);
+    // const { api } = use(BondsService);
 
     const customDomainPrefix = stack.stage === 'int' ? '' : stack.stage + '.';
 
@@ -22,7 +24,7 @@ export function Frontend({ stack }: StackContext) {
 
     // Show the site URL in the output
     stack.addOutputs({
-        URL: site.url,
+        URL: site.url || 'http://localhost:3000',
         CustomDomainURL: site.customDomainUrl || 'n/a'
     });
 }

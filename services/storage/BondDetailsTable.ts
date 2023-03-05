@@ -1,3 +1,4 @@
+import * as R from 'ramda';
 import { DynamoDBClient, BatchWriteItemCommandInput, BatchWriteItemCommand, ScanCommand } from '@aws-sdk/client-dynamodb';
 import { DbBondDetails } from '.';
 import { scanAll } from './ScanCommandUtil';
@@ -153,10 +154,12 @@ export class BondDetailsTable {
 
     const result = await scanAll(this.dynamoDBClient, scanCommand);
     const endTimestamp = new Date().getTime();
-    console.log(`BondDetailsTable: Returning ${result.Count ? result.Count : 0} bond types in ${endTimestamp - startTimestamp} ms.`);
+    
+    const allBondTypes = result.Items ? result.Items.map(item => item['bondType']['S'] || '') : [];
+    const uniqueBondTypes = R.uniq(allBondTypes);
+    
+    console.log(`BondDetailsTable: Returning ${uniqueBondTypes.length} bond types in ${endTimestamp - startTimestamp} ms.`);
 
-    const bondTypes = result.Items ? result.Items.map(item => item['type']['S'] || '') : [];
-
-    return bondTypes;
+    return uniqueBondTypes;
   }
 };

@@ -1,4 +1,4 @@
-import { StackContext, Cognito, Api, Table } from '@serverless-stack/resources';
+import { StackContext, Cognito, Api, Table } from 'sst/constructs';
 import { RemovalPolicy } from 'aws-cdk-lib';
 import { UserPool, UserPoolClient } from 'aws-cdk-lib/aws-cognito';
 import * as iam from 'aws-cdk-lib/aws-iam';
@@ -86,11 +86,12 @@ export function BondsService({ stack }: StackContext) {
     routes: {
       'GET /api/bonds': {
         function: {
-          handler: 'api/bonds/getBonds.handler',
+          handler: 'services/api/bonds/getBonds.handler',
           environment: {
             BOND_DETAILS_TABLE_NAME: bondDetailsTable.tableName
           },
-          permissions: [bondDetailsTableReadAccess],
+          //permissions: [bondDetailsTableReadAccess],
+          //bind: [bondDetailsTable],
           timeout: '20 seconds'
         }
       }

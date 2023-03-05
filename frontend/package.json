@@ -1,9 +1,9 @@
 {
-  "name": "frontend",
-  "version": "0.1.0",
+  "name": "catalyst-viewer-frontend",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "sst-env -- next dev",
+    "dev": "sst env next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
@@ -21,7 +21,6 @@
     "simple-statistics": "^7.7.6"
   },
   "devDependencies": {
-    "@serverless-stack/static-site-env": "^1.10.6",
     "@types/node": "18.7.15",
     "@types/react": "18.0.18",
     "@types/react-dom": "18.0.6",
