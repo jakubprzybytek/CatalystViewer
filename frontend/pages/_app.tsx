@@ -1,6 +1,6 @@
 import '../styles/globals.css';
 import type { AppProps } from 'next/app';
-import { Amplify, Auth, API } from "aws-amplify";
+import { Amplify } from "aws-amplify";
 
 const amplifyConfig = {
   Auth: {
@@ -19,14 +19,8 @@ const amplifyConfig = {
   },
 };
 
-// console.log(Amplify.configure(amplifyConfig));
-Auth.configure(amplifyConfig.Auth);
-API.configure(amplifyConfig.API);
+Amplify.configure(amplifyConfig);
 
-Auth.currentSession().then(a => console.log(a));
-
-function MyApp({ Component, pageProps }: AppProps) {
+export default function App({ Component, pageProps }: AppProps) {
   return <Component {...pageProps} />
 }
-
-export default MyApp;

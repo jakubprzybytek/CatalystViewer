@@ -91,7 +91,7 @@ export function BondsService({ stack }: StackContext) {
             BOND_DETAILS_TABLE_NAME: bondDetailsTable.tableName
           },
           //permissions: [bondDetailsTableReadAccess],
-          //bind: [bondDetailsTable],
+          bind: [bondDetailsTable],
           timeout: '20 seconds'
         }
       }
