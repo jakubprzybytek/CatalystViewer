@@ -25,7 +25,7 @@ export async function handler(event: any) {
     const bondsQuotesList: CatalystBondQuote[] = await getCurrentCatalystBondsQuotes();
     const bondsQuotes: Record<string, CatalystBondQuote> = mapByBondId(bondsQuotesList);
 
-    const storedBondsList: DbBondDetails[] = await bondDetailsTable.getAll();
+    const storedBondsList: DbBondDetails[] = await bondDetailsTable.getAllActive();
     const storedBonds: Record<string, DbBondDetails> = mapByBondId(storedBondsList);
 
     const newBondsToStore: DbBondDetails[] = [];
@@ -42,7 +42,6 @@ export async function handler(event: any) {
                 // update existing bond information
                 updatedBondsToStore.push({
                     ...storedBond,
-                    updated: currentTime.toISOString(),
                     updatedTs: currentTime.getTime(),
                     currentInterestRate: bondStats.currentInterestRate,
                     accuredInterest: bondStats.accuredInterest,
@@ -82,7 +81,6 @@ export async function handler(event: any) {
                     interestPayoffDays: bondInformation.interestPayoffDays,
                     interestPayoffDayTss: bondInformation.interestPayoffDays.map(parseUTCDate).map(getTime),
 
-                    updated: currentTime.toISOString(),
                     updatedTs: currentTime.getTime(),
                     currentInterestRate: bondStats.currentInterestRate,
                     accuredInterest: bondStats.accuredInterest,

@@ -2,7 +2,7 @@ import '../styles/globals.css';
 import type { AppProps } from 'next/app';
 import { Amplify } from "aws-amplify";
 
-Amplify.configure({
+const amplifyConfig = {
   Auth: {
     region: process.env.NEXT_PUBLIC_AWS_REGION,
     userPoolId: process.env.NEXT_PUBLIC_USER_POOL_ID,
@@ -17,10 +17,10 @@ Amplify.configure({
       },
     ],
   },
-});
+};
 
-function MyApp({ Component, pageProps }: AppProps) {
+Amplify.configure(amplifyConfig);
+
+export default function App({ Component, pageProps }: AppProps) {
   return <Component {...pageProps} />
 }
-
-export default MyApp;

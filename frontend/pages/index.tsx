@@ -86,9 +86,15 @@ const Home: NextPage = () => {
       setErrorMessage(undefined);
       setAllBondReports(bonds);
     } catch (error) {
-      setErrorMessage(Object(error));
-      setAllBondReports([]);
+      if (error instanceof Error) {
+        setErrorMessage(error.message);
+        setAllBondReports([]);
+      } else {
+        setErrorMessage(Object(error));
+        setAllBondReports([]);
+      }
     }
+
     setIsLoading(false);
   };
 
@@ -153,8 +159,7 @@ const Home: NextPage = () => {
         </Box>
         <Box sx={{ height: 88 }} />
         {errorMessage && <Alert severity="error">
-          <AlertTitle>Network Error</AlertTitle>
-          Cannot fetch data!
+          <AlertTitle>Cannot fetch data!</AlertTitle>
           <pre>{errorMessage}</pre>
         </Alert>}
         <Panel shown={view === View.Issuers}>
