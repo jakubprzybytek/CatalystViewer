@@ -8,7 +8,7 @@ import * as targets from 'aws-cdk-lib/aws-events-targets';
 import { BondsService } from './BondsService';
 
 export function BondsUpdater({ stack, app }: StackContext) {
-  const { api, bondDetailsTable } = use(BondsService);
+  const { bondDetailsTable } = use(BondsService);
 
   const bondDetailsTableWriteAccess = new iam.PolicyStatement({
     actions: ['dynamodb:Scan', 'dynamodb:BatchWriteItem'],
@@ -46,17 +46,4 @@ export function BondsUpdater({ stack, app }: StackContext) {
       targets: [new targets.SfnStateMachine(bondsUpdaterStateMachine)]
     });
   }
-
-  api.addRoutes(stack, {
-    'GET /api/updates': {
-      function: {
-        handler: 'services/api/stepFunctions/getExecutions.handler',
-        environment: {
-          BOND_DETAILS_TABLE_NAME: bondDetailsTable.tableName
-        },
-        permissions: [],
-        timeout: '10 seconds'
-      }
-    }
-  });
 }
