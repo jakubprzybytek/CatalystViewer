@@ -1,5 +1,6 @@
 import { API, Auth } from "aws-amplify";
-import { BondReport, BondDetails, BondCurrentValues } from '../../services/api/bonds';
+import { BondDetails, BondCurrentValues } from '@catalyst-viewer/core/bonds';
+import { BondReport } from '@catalyst-viewer/functions/bonds';
 
 export type { BondReport, BondDetails, BondCurrentValues };
 

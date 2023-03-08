@@ -1,4 +1,4 @@
-import { BondDetails, BondCurrentValues } from '../../bonds';
+import { BondDetails, BondCurrentValues } from '@catalyst-viewer/core/bonds';
 
 export type { BondDetails, BondCurrentValues };
 

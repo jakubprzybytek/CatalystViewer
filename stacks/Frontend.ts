@@ -9,7 +9,7 @@ export function Frontend({ stack }: StackContext) {
     const customDomainPrefix = stack.stage === 'int' ? '' : stack.stage + '.';
 
     const site = new NextjsSite(stack, 'Site', {
-        path: 'frontend',
+        path: 'packages/frontend',
         customDomain: {
             hostedZone: 'albedoonline.com',
             domainName: customDomainPrefix + 'catalyst.albedoonline.com',
