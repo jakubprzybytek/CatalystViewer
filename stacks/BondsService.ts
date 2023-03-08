@@ -86,7 +86,8 @@ export function BondsService({ stack }: StackContext) {
     routes: {
       'GET /api/bonds': {
         function: {
-          handler: 'services/api/bonds/getBonds.handler',
+          handler: 'packages/functions/src/bonds/getBonds.handler',
+          memorySize: "256 MB",
           environment: {
             BOND_DETAILS_TABLE_NAME: bondDetailsTable.tableName
           },

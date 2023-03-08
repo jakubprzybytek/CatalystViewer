@@ -1,10 +1,10 @@
 import * as R from 'ramda';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { parseUTCDate } from 'bonds';
+import { parseUTCDate } from '@catalyst-viewer/core/bonds';
 import { getTime } from 'date-fns';
-import { CatalystBondQuery as CatalystBondQuote, CatalystDailyStatisticsBondDetails, getCurrentCatalystBondsQuotes, getLatestCatalystDailyStatistics } from '../../bonds/catalyst';
-import { getBondInformation } from '../../bonds/obligacjepl';
-import { BondDetailsTable, DbBondDetails } from '../../storage';
+import { CatalystBondQuery as CatalystBondQuote, CatalystDailyStatisticsBondDetails, getCurrentCatalystBondsQuotes, getLatestCatalystDailyStatistics } from '@catalyst-viewer/core/bonds/catalyst';
+import { getBondInformation } from '@catalyst-viewer/core/bonds/obligacjepl';
+import { BondDetailsTable, DbBondDetails } from '@catalyst-viewer/core/storage';
 
 const dynamoDbClient = new DynamoDBClient({});
 
