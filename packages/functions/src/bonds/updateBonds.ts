@@ -1,6 +1,6 @@
 import * as R from 'ramda';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { parseUTCDate } from '@catalyst-viewer/core/bonds';
+import { parseUTCDate } from '@catalyst-viewer/core';
 import { getTime } from 'date-fns';
 import { CatalystBondQuery as CatalystBondQuote, CatalystDailyStatisticsBondDetails, getCurrentCatalystBondsQuotes, getLatestCatalystDailyStatistics } from '@catalyst-viewer/core/bonds/catalyst';
 import { getBondInformation } from '@catalyst-viewer/core/bonds/obligacjepl';
