@@ -12,6 +12,10 @@ export const handler = lambdaHandler<BondReport[]>(async event => {
         throw new Error('Bond Details Table Name is not defined');
     }
 
+    const bondTypeFilter = event.queryStringParameters?.['type'];
+
+    console.log(`Requested active bond reports, type=${bondTypeFilter}`);
+
     const bondDetailsTable = new BondDetailsTable(dynamoDBClient, process.env.BOND_DETAILS_TABLE_NAME);
     const dbBonds = await bondDetailsTable.getAllActive();
 await bondDetailsTable.getAllTypes();
