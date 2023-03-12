@@ -9,7 +9,7 @@ type StringFilterParam = {
   setSelected: (value: string) => void;
 }
 
-export default function StringFilter({ label, all, selected, setSelected }: StringFilterParam) {
+export function StringFilter({ label, all, selected, setSelected }: StringFilterParam) {
   return (
     <FormControl fullWidth>
       <TextField label={label} size="small" fullWidth select
