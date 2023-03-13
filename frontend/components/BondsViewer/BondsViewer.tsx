@@ -6,7 +6,7 @@ import BondsViewerFilter from './BondsViewerFilter';
 import BondsListStats from './BondsListStats';
 import { BondReport } from '../../sdk/GetBonds';
 import { filterByIssuer, getUniqueIssuers, InterestPercentilesByInterestBaseType, sortStrings } from '../../bonds/statistics';
-import { useBondsFilters } from '../BondsFilter/useBondsFilters';
+import { useBondsFilters } from '../BondReportsFilter';
 
 type BondsViewerParams = {
   bondReports: BondReport[];
