@@ -95,6 +95,18 @@ export function BondsService({ stack }: StackContext) {
           bind: [bondDetailsTable],
           timeout: '20 seconds'
         }
+      },
+      'GET /api/bonds/{bondType}': {
+        function: {
+          handler: 'packages/functions/src/bonds/getBonds.handler',
+          memorySize: "256 MB",
+          environment: {
+            BOND_DETAILS_TABLE_NAME: bondDetailsTable.tableName
+          },
+          //permissions: [bondDetailsTableReadAccess],
+          bind: [bondDetailsTable],
+          timeout: '20 seconds'
+        }
       }
     }
   });
