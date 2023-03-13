@@ -7,7 +7,7 @@ type NominalValueFilterParam = {
   setSelectedNominalValue: (nominalValue: number) => void;
 }
 
-export default function NominalValueFilter({ selectedNominalValue, setSelectedNominalValue }: NominalValueFilterParam) {
+export function NominalValueFilter({ selectedNominalValue, setSelectedNominalValue }: NominalValueFilterParam) {
   return (
     <FormControl fullWidth>
       <TextField label="Max nominal value" size="small" fullWidth select

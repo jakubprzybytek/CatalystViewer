@@ -18,3 +18,10 @@ export type BondReport = {
     askVolume?: number;
     askCount?: number;
 };
+
+export type BondReportsQueryResult = {
+    bondReports: BondReport[];
+    facets: {
+        type: string[];
+    };
+}

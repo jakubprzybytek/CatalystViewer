@@ -1,5 +1,7 @@
 import { useState, createContext, useContext } from "react";
 import { useArrayLocalStorage, useLocalStorage } from "../../common/UseStorage";
+import { BondReport } from "../../sdk/GetBonds";
+import { filterBy, isBondType, isInterestBaseType, isOnMarkets, nominalValueLessThan } from "../../bonds/statistics";
 
 export type BondsFilterType = {
   bondTypeFilterString: string;
@@ -33,21 +35,21 @@ const DEFAULT_INTEREST_BASE_TYPES: string[] = [];
 
 const DEFAULT_BONDS_FILTERS_CONTEXT: BondsFilterType = {
   bondTypeFilterString: '',
-  setBondTypeFilterString: (bondType: string) => { return; },
+  setBondTypeFilterString: () => { return; },
   issuersFilterStrings: DEFAULT_ISSUERS,
-  addIssuerFilterString: (issuer: string) => { return; },
-  removeIssuerFilterString: (issuer: string) => { return; },
+  addIssuerFilterString: () => { return; },
+  removeIssuerFilterString: () => { return; },
   removeAllIssuersFilterStrings: () => { return; },
   maxNominalValueFilterNumber: 0,
-  setMaxNominalValueFilterNumber: (maxNominalValue: number) => { return; },
+  setMaxNominalValueFilterNumber: () => { return; },
   marketsFilterStrings: DEFAULT_MARKETS,
-  addMarketFilter: (market: string) => { return; },
-  removeMarketFilter: (market: string) => { return; },
+  addMarketFilter: () => { return; },
+  removeMarketFilter: () => { return; },
   interestBaseTypeFilterStrings: DEFAULT_INTEREST_BASE_TYPES,
-  addInterestBaseTypeFilterString: (interestBaseType: string) => { return; },
-  removeInterestBaseTypeFilterString: (interestBaseType: string) => { return; },
+  addInterestBaseTypeFilterString: () => { return; },
+  removeInterestBaseTypeFilterString: () => { return; },
   count: 0,
-  setCount: (value: number) => { return; }
+  setCount: () => { return; }
 }
 
 const BondFiltersContext = createContext<BondsFilterType>(DEFAULT_BONDS_FILTERS_CONTEXT);
@@ -84,8 +86,18 @@ export function BondsFiltersProvider({ children }: BondFiltersProviderPropsType)
 export const useBondsFilters = () => {
   const context = useContext(BondFiltersContext);
   if (!context) {
-    throw new Error(`Component must be wrapped in the CountContextProvider`)
+    throw new Error('Component must be wrapped in the CountContextProvider');
   }
 
   return context;
+}
+
+export function useBondReportsFilterFuntion(): (bondReports: BondReport[]) => BondReport[] {
+  const { bondTypeFilterString, maxNominalValueFilterNumber, marketsFilterStrings, interestBaseTypeFilterStrings } = useBondsFilters();
+  return filterBy([
+    isBondType(bondTypeFilterString),
+    nominalValueLessThan(maxNominalValueFilterNumber),
+    isOnMarkets(marketsFilterStrings),
+    isInterestBaseType(interestBaseTypeFilterStrings)
+  ]);
 }

@@ -4,7 +4,7 @@ import FormGroup from "@mui/material/FormGroup";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import Checkbox from "@mui/material/Checkbox";
 
-type InterestBaseTypeFilterParam = {
+type MultiStringFilterParam = {
   label: string;
   all: string[];
   selected: string[];
@@ -12,7 +12,7 @@ type InterestBaseTypeFilterParam = {
   remove: (item: string) => void;
 }
 
-export default function InterestBaseTypeFilter({ label, all, selected, add, remove }: InterestBaseTypeFilterParam) {
+export function MultiStringFilter({ label, all, selected, add, remove }: MultiStringFilterParam) {
   return (
     <FormControl fullWidth>
       <FormLabel component="legend">{label}</FormLabel>

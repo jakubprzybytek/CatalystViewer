@@ -8,7 +8,7 @@ import { getInterestConstColorCode, getNominalValueColorCode } from "../../bonds
 import { IssuerReport } from '.';
 import { InterestPercentilesByInterestBaseType } from "../../bonds/statistics";
 import { formatCurrency } from "../../common/Formats";
-import { useBondsFilters } from "../BondsFilter/useBondsFilters";
+import { useBondsFilters } from "../BondReportsFilter";
 
 export const interestConstPartColors: ColorCode[] = ['green', 'yellow', 'orange', 'red'];
 

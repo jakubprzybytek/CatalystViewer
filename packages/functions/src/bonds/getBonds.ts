@@ -3,21 +3,34 @@ import { differenceInDays } from 'date-fns';
 import { lambdaHandler, Success } from "../HandlerProxy";
 import { BondDetails, BondCurrentValues } from '@catalyst-viewer/core/bonds';
 import { BondDetailsTable } from '@catalyst-viewer/core/storage';
-import { BondReport } from ".";
+import { BondReportsQueryResult } from ".";
 
 const dynamoDBClient = new DynamoDBClient({});
 
-export const handler = lambdaHandler<BondReport[]>(async event => {
+const cachedBondTypes: string[] = [];
+
+export const handler = lambdaHandler<BondReportsQueryResult>(async event => {
     if (process.env.BOND_DETAILS_TABLE_NAME === undefined) {
         throw new Error('Bond Details Table Name is not defined');
     }
 
+    const bondTypeFilter = event.pathParameters?.['bondType'];
+    console.log(`Requested active bond reports, type=${bondTypeFilter}`);
+
     const bondDetailsTable = new BondDetailsTable(dynamoDBClient, process.env.BOND_DETAILS_TABLE_NAME);
-    const dbBonds = await bondDetailsTable.getAllActive();
-await bondDetailsTable.getAllTypes();
+
+    const dbBonds = bondTypeFilter ? await bondDetailsTable.getActive(bondTypeFilter) : await bondDetailsTable.getAllActive();
+
+    if (cachedBondTypes.length == 0) {
+        const bondTypes = await bondDetailsTable.getAllTypes();
+        bondTypes.forEach(bondType => cachedBondTypes.push(bondType));
+    } else {
+        console.log(`Using cached bond types (${cachedBondTypes.length})`);
+    }
+
     const today = new Date().getTime();
 
-    const bonds = dbBonds.map(dbBond => {
+    const bondReports = dbBonds.map(dbBond => {
         const details: BondDetails = {
             name: dbBond.name,
             isin: dbBond.isin,
@@ -82,5 +95,10 @@ await bondDetailsTable.getAllTypes();
         }
     });
 
-    return Success(bonds);
+    return Success({
+        bondReports,
+        facets: {
+            type: cachedBondTypes
+        }
+    });
 });

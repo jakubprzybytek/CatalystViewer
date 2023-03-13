@@ -1,11 +1,11 @@
 import { API, Auth } from "aws-amplify";
 import { BondDetails, BondCurrentValues } from '@catalyst-viewer/core/bonds';
-import { BondReport } from '@catalyst-viewer/functions/bonds';
+import { BondReportsQueryResult, BondReport } from '@catalyst-viewer/functions/bonds';
 
-export type { BondReport, BondDetails, BondCurrentValues };
+export type { BondReportsQueryResult, BondReport, BondDetails, BondCurrentValues };
 
-export async function getBonds(): Promise<BondReport[]> {
-  const path = '/api/bonds';
+export async function getBonds(bondType?: string): Promise<BondReportsQueryResult> {
+  const path = '/api/bonds' + (bondType ? `/${bondType}` : '');
   return await API.get('api', path, {
     headers: {
       Authorization: `Bearer ${(await Auth.currentSession())

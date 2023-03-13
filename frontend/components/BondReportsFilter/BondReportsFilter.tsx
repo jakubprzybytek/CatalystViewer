@@ -1,19 +1,18 @@
 import { useEffect, useMemo } from "react";
 import Grid from "@mui/material/Grid";
 import Typography from "@mui/material/Typography";
-import NominalValueFilter from "./NominalValueFilter";
-import MultiStringFilter from "./MultiStringFilter";
-import StringFilter from "./StringFilter";
-import { useBondsFilters } from "./useBondsFilters";
+import { NominalValueFilter, StringFilter, MultiStringFilter } from "./fields";
+import { useBondsFilters } from "./useBondReportsFilters";
 import { filterBy, getUniqueBondTypes, getUniqueInterestBaseTypes, getUniqueMarkets, isBondType, isInterestBaseType, isOnMarkets, nominalValueLessThan, sortStrings } from "../../bonds/statistics";
 import { BondReport } from "../../sdk/GetBonds";
 
 type BondsFilterParams = {
   allBondReports: BondReport[];
+  allBondTypes: string[];
   setFilteredBondReports: (filteredBonds: BondReport[]) => void;
 };
 
-export default function BondsFilter({ allBondReports, setFilteredBondReports }: BondsFilterParams): JSX.Element {
+export default function BondReportsFilter({ allBondReports, allBondTypes, setFilteredBondReports }: BondsFilterParams): JSX.Element {
   const { bondTypeFilterString, setBondTypeFilterString } = useBondsFilters();
   const { maxNominalValueFilterNumber, setMaxNominalValueFilterNumber } = useBondsFilters();
   const { marketsFilterStrings, addMarketFilter, removeMarketFilter } = useBondsFilters();
@@ -21,7 +20,7 @@ export default function BondsFilter({ allBondReports, setFilteredBondReports }: 
   const { count, setCount } = useBondsFilters();
 
   // Populate filtering options
-  const availableBondTypes = useMemo(() => getUniqueBondTypes(allBondReports), [allBondReports]);
+  //const availableBondTypes = useMemo(() => getUniqueBondTypes(allBondReports), [allBondReports]);
   const allInterestBaseTypes = useMemo(() => sortStrings(getUniqueInterestBaseTypes(allBondReports)), [allBondReports]);
   const allMarkets = useMemo(() => sortStrings(getUniqueMarkets(allBondReports)), [allBondReports]);
 
@@ -45,7 +44,7 @@ export default function BondsFilter({ allBondReports, setFilteredBondReports }: 
       <Grid container item xs={12} sm={6} md={4}>
         <Typography paddingBottom={1}>Select bond type:</Typography>
         <StringFilter label='Bond Type'
-          all={availableBondTypes} selected={bondTypeFilterString} setSelected={setBondTypeFilterString} />
+          all={allBondTypes} selected={bondTypeFilterString} setSelected={setBondTypeFilterString} />
       </Grid>
       <Grid container spacing={1} marginTop={1}>
         <Grid item xs={12} sm={6} md={4}>

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { NextPage } from 'next';
 import { Auth } from 'aws-amplify';
-import { withAuthenticator } from '@aws-amplify/ui-react';
+import { Authenticator, withAuthenticator } from '@aws-amplify/ui-react';
 import Head from 'next/head';
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
@@ -19,12 +19,11 @@ import Refresh from '@mui/icons-material/Refresh';
 import FilterAlt from '@mui/icons-material/FilterAlt';
 import Logout from '@mui/icons-material/Logout';
 import useScrollTrigger from '@mui/material/useScrollTrigger';
-import BondsFilter from '../components/BondsFilter/BondsFilter';
+import BondReportsFilter, { BondsFiltersProvider, useBondsFilters } from '../components/BondReportsFilter';
 import BondsViewer from '../components/BondsViewer/BondsViewer';
 import IssuersViewer from '../components/IssuersViewer/IssuersViewer';
-import { BondReport, getBonds } from '../sdk/GetBonds';
-import { computeStatisticsForInterestBaseTypes } from '../bonds/statistics';
-import { BondsFiltersProvider, useBondsFilters } from '../components/BondsFilter/useBondsFilters';
+import { BondReport, getBonds } from '../sdk';
+import { computeStatisticsForInterestBaseTypes, InterestPercentilesByInterestBaseType } from '../bonds/statistics';
 import { useLocalStorage } from '../common/UseStorage';
 import '@aws-amplify/ui-react/styles.css';
 
@@ -75,16 +74,21 @@ const Home: NextPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
 
+  const { bondTypeFilterString } = useBondsFilters();
   const [allBondReports, setAllBondReports] = useState<BondReport[]>([]);
+  const [allBondTypes, setAllBondTypes] = useState<string[]>([]);
 
   const [filteredBondReports, setFilteredBondReports] = useState<BondReport[]>([]);
   const filteredBondsStatistics = useMemo(() => computeStatisticsForInterestBaseTypes(filteredBondReports), [filteredBondReports]);
 
-  const fetchData = async () => {
+
+  const fetchData = async (bondType: string) => {
+    console.log(`Fetching reports for bond type: ${bondType}`);
     try {
-      const bonds = await getBonds();
+      const bonds = await getBonds(bondType);
       setErrorMessage(undefined);
-      setAllBondReports(bonds);
+      setAllBondReports(bonds.bondReports);
+      setAllBondTypes(bonds.facets.type);
     } catch (error) {
       if (error instanceof Error) {
         setErrorMessage(error.message);
@@ -100,8 +104,8 @@ const Home: NextPage = () => {
 
   useEffect(() => {
     setIsLoading(true);
-    fetchData();
-  }, []);
+    fetchData(bondTypeFilterString);
+  }, [bondTypeFilterString]);
 
   return (
     <>
@@ -110,67 +114,75 @@ const Home: NextPage = () => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <BondsFiltersProvider>
-        <HideOnScroll>
-          <AppBar component="nav">
-            <Toolbar variant='dense'>
-              <Stack flexGrow={1}>
-                <Stack direction='row' sx={{
-                  justifyContent: 'space-between'
-                }}>
-                  <Stack flexGrow={1} justifyContent='center'>
-                    <Title />
-                  </Stack>
-                  <Stack direction='row'>
-                    <IconButton color='inherit' disabled={isLoading}
-                      onClick={() => { setIsLoading(true); fetchData(); }}>
-                      <Refresh />
-                    </IconButton>
-                    <IconButton color='inherit'
-                      onClick={() => setDrawerOpen(true)}>
-                      <FilterAlt />
-                    </IconButton>
-                    <IconButton color='inherit'
-                      onClick={() => Auth.signOut()}>
-                      <Logout />
-                    </IconButton>
-                  </Stack>
+      <HideOnScroll>
+        <AppBar component="nav">
+          <Toolbar variant='dense'>
+            <Stack flexGrow={1}>
+              <Stack direction='row' sx={{
+                justifyContent: 'space-between'
+              }}>
+                <Stack flexGrow={1} justifyContent='center'>
+                  <Title />
                 </Stack>
-                <Tabs indicatorColor="secondary" textColor="inherit" centered
-                  value={view} onChange={(event: React.SyntheticEvent, newValue: View) => setView(newValue)}>
-                  <Tab label='Issuers' value={View.Issuers} />
-                  <Tab label='Bonds' value={View.Bonds} />
-                </Tabs>
+                <Stack direction='row'>
+                  <IconButton color='inherit' disabled={isLoading}
+                    onClick={() => { setIsLoading(true); fetchData(bondTypeFilterString); }}>
+                    <Refresh />
+                  </IconButton>
+                  <IconButton color='inherit'
+                    onClick={() => setDrawerOpen(true)}>
+                    <FilterAlt />
+                  </IconButton>
+                  <IconButton color='inherit'
+                    onClick={() => Auth.signOut()}>
+                    <Logout />
+                  </IconButton>
+                </Stack>
               </Stack>
-            </Toolbar>
-          </AppBar>
-        </HideOnScroll>
-        <Box component="nav">
-          <Drawer anchor='top' open={drawerOpen}
-            //variant='temporary'
-            onClose={() => setDrawerOpen(false)}
-            ModalProps={{
-              keepMounted: true, // Better open performance on mobile.
-            }}>
-            <Box padding={1}>
-              <BondsFilter allBondReports={allBondReports} setFilteredBondReports={setFilteredBondReports} />
-            </Box>
-          </Drawer>
-        </Box>
-        <Box sx={{ height: 88 }} />
-        {errorMessage && <Alert severity="error">
-          <AlertTitle>Cannot fetch data!</AlertTitle>
-          <pre>{errorMessage}</pre>
-        </Alert>}
-        <Panel shown={view === View.Issuers}>
-          <IssuersViewer bondReports={filteredBondReports} loadingBonds={isLoading} statistics={filteredBondsStatistics} />
-        </Panel>
-        <Panel shown={view === View.Bonds}>
-          <BondsViewer bondReports={filteredBondReports} loadingBonds={isLoading} statistics={filteredBondsStatistics} />
-        </Panel>
-      </BondsFiltersProvider>
+              <Tabs indicatorColor="secondary" textColor="inherit" centered
+                value={view} onChange={(event: React.SyntheticEvent, newValue: View) => setView(newValue)}>
+                <Tab label='Issuers' value={View.Issuers} />
+                <Tab label='Bonds' value={View.Bonds} />
+              </Tabs>
+            </Stack>
+          </Toolbar>
+        </AppBar>
+      </HideOnScroll>
+      <Box component="nav">
+        <Drawer anchor='top' open={drawerOpen}
+          //variant='temporary'
+          onClose={() => setDrawerOpen(false)}
+          ModalProps={{
+            keepMounted: true, // Better open performance on mobile.
+          }}>
+          <Box padding={1}>
+            <BondReportsFilter allBondReports={allBondReports} allBondTypes={allBondTypes} setFilteredBondReports={setFilteredBondReports} />
+          </Box>
+        </Drawer>
+      </Box>
+      <Box sx={{ height: 88 }} />
+      {errorMessage && <Alert severity="error">
+        <AlertTitle>Cannot fetch data!</AlertTitle>
+        <pre>{errorMessage}</pre>
+      </Alert>}
+      <Panel shown={view === View.Issuers}>
+        <IssuersViewer bondReports={filteredBondReports} loadingBonds={isLoading} statistics={filteredBondsStatistics} />
+      </Panel>
+      <Panel shown={view === View.Bonds}>
+        <BondsViewer bondReports={filteredBondReports} loadingBonds={isLoading} statistics={filteredBondsStatistics} />
+      </Panel>
     </>
   )
 }
 
-export default withAuthenticator(Home);
+const HomeWrapper: NextPage = () => {
+  return (
+    <BondsFiltersProvider>
+      <Authenticator>
+        <Home />
+      </Authenticator>
+    </BondsFiltersProvider>
+  )
+}
+
+export default HomeWrapper;
