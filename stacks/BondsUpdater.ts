@@ -28,7 +28,7 @@ export function BondsUpdater({ stack, app }: StackContext) {
   })
 
   const bondsUpdaterStateMachine = new sfn.StateMachine(stack, stack.stage + '-BondsUpdaterStateMachine', {
-    definition: new tasks.LambdaInvoke(stack, "UpdateBondsTask", {
+    definition: new tasks.LambdaInvoke(stack, "Update Bonds", {
       lambdaFunction: bondsUpdaterFunction,
       timeout: Duration.minutes(10)
     })
