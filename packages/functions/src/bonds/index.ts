@@ -25,3 +25,10 @@ export type BondReportsQueryResult = {
         type: string[];
     };
 }
+
+export type UpdateBondsResult = {
+    bondsUpdated: number,
+    newBonds: string[],
+    bondsDeactivated: string[],
+    bondsFailed: string[]
+}

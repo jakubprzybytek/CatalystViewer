@@ -5,13 +5,14 @@ import { getTime } from 'date-fns';
 import { CatalystBondQuery as CatalystBondQuote, CatalystDailyStatisticsBondDetails, getCurrentCatalystBondsQuotes, getLatestCatalystDailyStatistics } from '@catalyst-viewer/core/bonds/catalyst';
 import { getBondInformation } from '@catalyst-viewer/core/bonds/obligacjepl';
 import { BondDetailsTable, DbBondDetails } from '@catalyst-viewer/core/storage';
+import { UpdateBondsResult } from '.';
 
 const dynamoDbClient = new DynamoDBClient({});
 
 const bondId = (bond: DbBondDetails | CatalystBondQuote | CatalystDailyStatisticsBondDetails): string => `${bond.name}#${bond.market}`;
 const mapByBondId = R.reduce((map: Record<string, DbBondDetails | CatalystBondQuote>, curr: DbBondDetails | CatalystBondQuote) => R.assoc(bondId(curr), curr, map), {});
 
-export async function handler(event: any) {
+export async function handler(): Promise<UpdateBondsResult> {
     if (process.env.BOND_DETAILS_TABLE_NAME === undefined) {
         throw new Error('Bond Details Table Name is not defined');
     }
