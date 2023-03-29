@@ -27,31 +27,24 @@ async function getNotificationRecipientEmails(): Promise<string[]> {
 }
 
 export async function handler(updateBondsReport: UpdateBondsResult): Promise<SendNotificationResult> {
-  if (updateBondsReport.newBonds.length > 0 || updateBondsReport.bondsDeactivated.length > 0) {
-    console.log('Sending notification with bonds update results');
-    console.log(`Bonds updated: ${updateBondsReport.bondsUpdated}`);
-    console.log(`New bonds: ${updateBondsReport.newBonds.join(', ')}`);
-    console.log(`Decomissioned bonds: ${updateBondsReport.bondsDeactivated.join(', ')}`);
+  console.log('Sending notification with bonds update results');
+  console.log(`Bonds updated: ${updateBondsReport.bondsUpdated}`);
+  console.log(`New bonds: ${updateBondsReport.newBonds.join(', ')}`);
+  console.log(`Decomissioned bonds: ${updateBondsReport.bondsDeactivated.join(', ')}`);
 
-    const emailBody = 
-      `Bonds updated: ${updateBondsReport.bondsUpdated}<br \>
-      New bonds: ${updateBondsReport.newBonds.join(', ')}<br \>
-      Decomissioned bonds: ${updateBondsReport.bondsDeactivated.join(', ')}`;
+  const emailBody = 
+    `Bonds updated: ${updateBondsReport.bondsUpdated}<br \>
+    New bonds: ${updateBondsReport.newBonds.join(', ')}<br \>
+    Decomissioned bonds: ${updateBondsReport.bondsDeactivated.join(', ')}`;
 
-    const params: SendEmailParams = {
-      to: await getNotificationRecipientEmails(),
-      subject: 'Bonds Update Report',
-      htmlBody: emailBody,
-      textBody: emailBody
-    };
+  const params: SendEmailParams = {
+    to: await getNotificationRecipientEmails(),
+    subject: 'Bonds Update Report',
+    htmlBody: emailBody,
+    textBody: emailBody
+  };
 
-    return {
-      emailSent: await sendEmail(params)
-    };
-  } else {
-    console.log('Skipping sending notification (no new or decomissioned bonds)');
-    return {
-      emailSent: false
-    };
-  }
+  return {
+    emailSent: await sendEmail(params)
+  };
 }

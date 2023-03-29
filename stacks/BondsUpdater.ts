@@ -49,15 +49,22 @@ export function BondsUpdater({ stack, app }: StackContext) {
     permissions: [getRecipientsEmailsPolicy, sendEmailPolicy]
   });
 
-  const bondsUpdaterStateMachine = new sfn.StateMachine(stack, stack.stage + '-BondsUpdaterStateMachine', {
-    definition: new tasks.LambdaInvoke(stack, "Update Bonds", {
-      lambdaFunction: bondsUpdaterFunction,
-      timeout: Duration.minutes(10)
-    }).next(new tasks.LambdaInvoke(stack, "Send Notification", {
+  const sendNotificationFlow = new sfn.Choice(stack, "Major changes?")
+    .when(sfn.Condition.and(
+      sfn.Condition.isPresent('$.Payload.newBonds[0]'),
+      sfn.Condition.isPresent('$.Payload.bondsDeactivated[0]')
+    ), new tasks.LambdaInvoke(stack, "Send Notification", {
       lambdaFunction: notificationSenderFunction,
       payload: sfn.TaskInput.fromJsonPathAt('$.Payload'),
       timeout: Duration.seconds(10)
     }))
+    .otherwise(new sfn.Succeed(stack, 'Skip'));
+
+  const bondsUpdaterStateMachine = new sfn.StateMachine(stack, stack.stage + '-BondsUpdaterStateMachine', {
+    definition: new tasks.LambdaInvoke(stack, "Update Bonds", {
+      lambdaFunction: bondsUpdaterFunction,
+      timeout: Duration.minutes(10)
+    }).next(sendNotificationFlow)
   });
 
   if (!app.local) {
