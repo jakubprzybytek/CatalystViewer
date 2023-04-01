@@ -23,14 +23,16 @@ export default function BondCard({ bondReport, statistics }: BondCardParam): JSX
         '& .MuiTypography-subtitle2': {
           lineHeight: '24px'
         },
-        '& > hr': {
-          paddingTop: 1
+        '& .MuiDivider-root': {
+          paddingTop: 0.5,
+          color: 'gray',
+          fontSize: '0.75em'
         }
       }}>
         <BondCardMainInformationSection bondReport={bondReport} statistics={statistics} />
-        <Divider />
+        <Divider>Current interest</Divider>
         <BondCardCurrentInterestSection bondReport={bondReport} />
-        <Divider />
+        <Divider>Yield to maturity</Divider>
         {!bondReport.lastPrice && bondReport.referencePrice && <BondCardYTMSection title='Reference price' bondReport={bondReport} price={bondReport.referencePrice} />}
         {bondReport.lastPrice && <BondCardYTMSection title='Last price (date/time)' bondReport={bondReport} price={bondReport.lastPrice} secondary={bondReport.lastDateTime} />}
         {bondReport.bidPrice && <BondCardYTMSection title='Bid price (vol, cnt)' bondReport={bondReport} price={bondReport.bidPrice} secondary={`${bondReport.bidVolume}, ${bondReport.bidCount}`} />}

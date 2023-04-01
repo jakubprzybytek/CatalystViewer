@@ -35,23 +35,26 @@ export default function BondCardMainInformationSection({ bondReport, statistics 
         <CardEntry caption='Issue Value'>
           <CardValue colorCode='white'>{details.issueValue > 0 ? formatCurrency(details.issueValue, details.currency) : 'n/a'}</CardValue>
         </CardEntry>
-        <CardEntry caption='Nominal value' textAlign='end'>
+        <CardEntry caption='Nominal value' textAlign='center'>
           <CardValue colorCode={nominalValueColorCode}>
             {formatCurrency(details.nominalValue, details.currency)}
           </CardValue>
-        </CardEntry>
-      </CardSection>
-      <CardSection>
-        <CardEntry caption='Maturity day'>
-          <CardValue>{formatDate(details.maturityDayTs)}</CardValue>
-        </CardEntry>
-        <CardEntry caption='To maturity' textAlign='center'>
-          <CardValue>{currentValues.yearsToMaturity.toFixed(2)} yrs</CardValue>
         </CardEntry>
         <CardEntry caption='Interest Type' textAlign='end'>
           <CardValue colorCode={interestConstColorCode}>
             {details.interestVariable && `${details.interestVariable} + `}{details.interestConst}%
           </CardValue>
+        </CardEntry>
+      </CardSection>
+      <CardSection>
+        <CardEntry caption='First day'>
+          <CardValue>{formatDate(details.firstDayTs)}</CardValue>
+        </CardEntry>
+        <CardEntry caption='Maturity day' textAlign='center'>
+          <CardValue>{formatDate(details.maturityDayTs)}</CardValue>
+        </CardEntry>
+        <CardEntry caption='To maturity' textAlign='end'>
+          <CardValue>{currentValues.yearsToMaturity.toFixed(2)} yrs</CardValue>
         </CardEntry>
       </CardSection>
     </>
