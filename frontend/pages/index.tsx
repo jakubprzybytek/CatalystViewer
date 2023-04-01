@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { NextPage } from 'next';
 import { Auth } from 'aws-amplify';
-import { Authenticator, withAuthenticator } from '@aws-amplify/ui-react';
+import { Authenticator } from '@aws-amplify/ui-react';
 import Head from 'next/head';
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
@@ -16,6 +16,7 @@ import Typography from '@mui/material/Typography';
 import Alert from '@mui/material/Alert';
 import AlertTitle from '@mui/material/AlertTitle';
 import Refresh from '@mui/icons-material/Refresh';
+import Sort from '@mui/icons-material/SortRounded';
 import FilterAlt from '@mui/icons-material/FilterAlt';
 import Logout from '@mui/icons-material/Logout';
 import useScrollTrigger from '@mui/material/useScrollTrigger';
@@ -23,9 +24,10 @@ import BondReportsFilter, { BondsFiltersProvider, useBondsFilters } from '../com
 import BondsViewer from '../components/BondsViewer/BondsViewer';
 import IssuersViewer from '../components/IssuersViewer/IssuersViewer';
 import { BondReport, getBonds } from '../sdk';
-import { computeStatisticsForInterestBaseTypes, InterestPercentilesByInterestBaseType } from '../bonds/statistics';
+import { computeStatisticsForInterestBaseTypes } from '../bonds/statistics';
 import { useLocalStorage } from '../common/UseStorage';
 import '@aws-amplify/ui-react/styles.css';
+import BondReportsSort, { BondReportsSortOrder, getBondReportsSortingFunction } from '../components/BondReportsSort';
 
 enum View {
   Issuers,
@@ -68,11 +70,12 @@ function Panel({ shown, children }: PanelParams): JSX.Element {
 }
 
 const Home: NextPage = () => {
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [view, setView] = useLocalStorage('view', View.Issuers);
-
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
+
+  // filtering
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [view, setView] = useLocalStorage('view', View.Issuers);
 
   const { bondTypeFilterString } = useBondsFilters();
   const [allBondReports, setAllBondReports] = useState<BondReport[]>([]);
@@ -81,8 +84,19 @@ const Home: NextPage = () => {
   const [filteredBondReports, setFilteredBondReports] = useState<BondReport[]>([]);
   const filteredBondsStatistics = useMemo(() => computeStatisticsForInterestBaseTypes(filteredBondReports), [filteredBondReports]);
 
+  // sorting
+  const [sortMenuTriggerEl, setSortMenuTriggerEl] = useState<null | HTMLElement>(null);
+  const [selectedBondReportsSortOrder, setSelectedBondReportsSortOrder] = useState(BondReportsSortOrder.Name);
 
-  const fetchData = async (bondType: string) => {
+  const filteredAndSortedBondsStatistics = useMemo(() =>
+    getBondReportsSortingFunction(selectedBondReportsSortOrder)(filteredBondReports), [selectedBondReportsSortOrder, filteredBondReports]);
+
+  function selectBondReportsSortOrder(sortOrder: BondReportsSortOrder) {
+    setSelectedBondReportsSortOrder(sortOrder);
+    setSortMenuTriggerEl(null);
+  }
+
+  async function fetchData(bondType: string) {
     console.log(`Fetching reports for bond type: ${bondType}`);
     try {
       const bonds = await getBonds(bondType);
@@ -98,7 +112,6 @@ const Home: NextPage = () => {
         setAllBondReports([]);
       }
     }
-
     setIsLoading(false);
   };
 
@@ -128,6 +141,10 @@ const Home: NextPage = () => {
                   <IconButton color='inherit' disabled={isLoading}
                     onClick={() => { setIsLoading(true); fetchData(bondTypeFilterString); }}>
                     <Refresh />
+                  </IconButton>
+                  <IconButton color='inherit'
+                    onClick={(event: React.MouseEvent<HTMLButtonElement>) => setSortMenuTriggerEl(event.currentTarget)}>
+                    <Sort />
                   </IconButton>
                   <IconButton color='inherit'
                     onClick={() => setDrawerOpen(true)}>
@@ -165,11 +182,12 @@ const Home: NextPage = () => {
         <AlertTitle>Cannot fetch data!</AlertTitle>
         <pre>{errorMessage}</pre>
       </Alert>}
+      <BondReportsSort anchorEl={sortMenuTriggerEl} selectedBondReportsSortOrder={selectedBondReportsSortOrder} setBondReportsSortOrder={selectBondReportsSortOrder} />
       <Panel shown={view === View.Issuers}>
-        <IssuersViewer bondReports={filteredBondReports} loadingBonds={isLoading} statistics={filteredBondsStatistics} />
+        <IssuersViewer bondReports={filteredAndSortedBondsStatistics} loadingBonds={isLoading} statistics={filteredBondsStatistics} />
       </Panel>
       <Panel shown={view === View.Bonds}>
-        <BondsViewer bondReports={filteredBondReports} loadingBonds={isLoading} statistics={filteredBondsStatistics} />
+        <BondsViewer bondReports={filteredAndSortedBondsStatistics} loadingBonds={isLoading} statistics={filteredBondsStatistics} />
       </Panel>
     </>
   )

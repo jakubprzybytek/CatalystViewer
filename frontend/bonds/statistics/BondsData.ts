@@ -1,7 +1,8 @@
 import * as R from 'ramda';
-import { BondReport, BondDetails } from '../../sdk/GetBonds';
+import { BondReport, BondDetails, BondCurrentValues } from '../../sdk/GetBonds';
 
-// Properties extractors
+// Properties extractors - BondDetails
+const name = R.compose<BondReport[], BondDetails, string>(R.prop('name'), R.prop('details'));
 const bondType = R.compose<BondReport[], BondDetails, string>(R.prop('type'), R.prop('details'));
 const issuer = R.compose<BondReport[], BondDetails, string>(R.prop('issuer'), R.prop('details'));
 const market = R.compose<BondReport[], BondDetails, string>(R.prop('market'), R.prop('details'));
@@ -9,6 +10,10 @@ export const interestBaseType = R.compose<BondReport[], BondDetails, string | un
 export const interestConstPart = R.compose<BondReport[], BondDetails, number>(R.prop('interestConst'), R.prop('details'));
 const nominalValue = R.compose<BondReport[], BondDetails, number>(R.prop('nominalValue'), R.prop('details'));
 const issueValue = R.compose<BondReport[], BondDetails, number>(R.prop('issueValue'), R.prop('details'));
+
+// Properties extractors - CurrentValues
+const timeToMaturity = R.compose<BondReport[], BondCurrentValues, number>(R.prop('yearsToMaturity'), R.prop('currentValues'));
+const interestProgress = R.compose<BondReport[], BondCurrentValues, number>(R.prop('interestProgress'), R.prop('currentValues'));
 
 // Predicates
 export const isBondType = (type: string) => type !== 'all' ? (bondReport: BondReport) => bondReport.details.type === type : R.always(true);
@@ -45,3 +50,7 @@ export const filterBy = (predicates: BondReportPredicate[]) => R.filter(R.allPas
 
 // Sorting
 export const sortStrings = R.sortBy<string>(R.identity);
+
+export const sortByName = R.sortBy<BondReport>(name);
+export const sortByTimeToMaturityAsc = R.sortBy<BondReport>(timeToMaturity);
+export const sortByInterestProgress = R.sortBy<BondReport>(interestProgress);

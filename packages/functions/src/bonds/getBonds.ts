@@ -54,19 +54,21 @@ export const handler = lambdaHandler<BondReportsQueryResult>(async event => {
         const currentInterestPayableDay = dbBond.interestPayoffDayTss[interestPeriodIndex];
 
         const currentInterestDays = differenceInDays(today, currentInterestFirstDay) + 1;
-        const accumulatedInterest = currentInterestDays * dbBond.nominalValue * dbBond.currentInterestRate / 100 / 365;
         const currentInterestPeriod = differenceInDays(currentInterestPayableDay, currentInterestFirstDay);
+        const currentInterestProgress = 100 * currentInterestDays / currentInterestPeriod;
+        const accumulatedInterest = currentInterestDays * dbBond.nominalValue * dbBond.currentInterestRate / 100 / 365;
         const periodInterest = currentInterestPeriod * dbBond.nominalValue * dbBond.currentInterestRate / 100 / 365;
         const accuredInterest = currentInterestRecordDay > today ? accumulatedInterest : 0;
 
         const currentValues: BondCurrentValues = {
-            yearsToMaturity: daysToMaturity / 365,
+            yearsToMaturity: Number((daysToMaturity / 365).toFixed(2)),
             interestFirstDay: currentInterestFirstDay,
             interestRecordDay: currentInterestRecordDay,
             interestPayableDay: currentInterestPayableDay,
+            interestProgress: Number(currentInterestProgress.toFixed(2)),
             interestRate: dbBond.currentInterestRate,
-            accuredInterest,
-            periodInterest
+            accuredInterest: Number(accuredInterest.toFixed(2)),
+            periodInterest: Number(periodInterest.toFixed(2))
         };
 
         return {

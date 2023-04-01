@@ -6,13 +6,13 @@ import { useBondsFilters } from "./useBondReportsFilters";
 import { filterBy, getUniqueBondTypes, getUniqueInterestBaseTypes, getUniqueMarkets, isBondType, isInterestBaseType, isOnMarkets, nominalValueLessThan, sortStrings } from "../../bonds/statistics";
 import { BondReport } from "../../sdk/GetBonds";
 
-type BondsFilterParams = {
+type BondReportsFilterParams = {
   allBondReports: BondReport[];
   allBondTypes: string[];
   setFilteredBondReports: (filteredBonds: BondReport[]) => void;
 };
 
-export default function BondReportsFilter({ allBondReports, allBondTypes, setFilteredBondReports }: BondsFilterParams): JSX.Element {
+export default function BondReportsFilter({ allBondReports, allBondTypes, setFilteredBondReports }: BondReportsFilterParams): JSX.Element {
   const { bondTypeFilterString, setBondTypeFilterString } = useBondsFilters();
   const { maxNominalValueFilterNumber, setMaxNominalValueFilterNumber } = useBondsFilters();
   const { marketsFilterStrings, addMarketFilter, removeMarketFilter } = useBondsFilters();

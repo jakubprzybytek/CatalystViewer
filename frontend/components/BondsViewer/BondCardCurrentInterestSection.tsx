@@ -25,9 +25,6 @@ type BondCardCurrentInterestSectionParams = {
 
 export default function BondCardCurrentInterestSection({ bondReport: { currentValues, details: { currency } } }: BondCardCurrentInterestSectionParams): JSX.Element {
   const today = new Date();
-  const interestDaysPassed = differenceInDays(currentValues.interestFirstDay, today);
-  const interestPeriod = differenceInDays(currentValues.interestFirstDay, currentValues.interestPayableDay);
-  const interestProgress = 100 * interestDaysPassed / interestPeriod;
   const interestBarColor = today.getTime() >= currentValues.interestRecordDay ? 'success' : 'error';
 
   const accuredInterestColorCode: ColorCode = currentValues.accuredInterest == 0 ? 'green' : 'none';
@@ -36,7 +33,7 @@ export default function BondCardCurrentInterestSection({ bondReport: { currentVa
     <>
       <CardSection>
         <Box flexGrow={1}>
-          <BorderLinearProgress variant='determinate' color={interestBarColor} value={interestProgress} />
+          <BorderLinearProgress variant='determinate' color={interestBarColor} value={currentValues.interestProgress} />
         </Box>
       </CardSection>
       <CardSection>
