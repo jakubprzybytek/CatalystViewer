@@ -69,7 +69,7 @@ export default function IssuerCard({ issuerReport, statistics }: IssuerCardParam
         </CardSection>
         <CardSection>
           <CardEntry caption='Avg issue value'>
-            <CardValue colorCode='white'>{formatCurrency(issuerReport.avgIssueValue, issuerReport.currency)}</CardValue>
+            {issuerReport.count > 1 && <CardValue colorCode='white'>{formatCurrency(issuerReport.avgIssueValue, issuerReport.currency)}</CardValue>}
           </CardEntry>
           <CardEntry caption='Total issue value' textAlign='end'>
             <CardValue colorCode='white'>{formatCurrency(issuerReport.totalIssueValue, issuerReport.currency)}</CardValue>
