@@ -1,6 +1,6 @@
 // npx esrun .\services\bonds\catalyst\testQuotes.ts
 
-import { CatalystBondQuery } from '.';
+import { CatalystBondQuote } from '.';
 
 const QUOTES_TABLE_REGEX_STRING = '{TITLE} \\({CURRENCY}\\).+?<table(.+?)<\/table>';
 const QUOTE_ROW_REGEX = /<tr>(.+?)<\/tr>/sg;
@@ -33,7 +33,7 @@ function parseFloat(number: string): number {
     return Number.parseFloat(number.replace(',', '.'));
 }
 
-export function parseBondsQuotesPage(markup: string, title: string, currency: string): CatalystBondQuery[] {
+export function parseBondsQuotesPage(markup: string, title: string, currency: string): CatalystBondQuote[] {
     const quotesTableRegex = new RegExp(QUOTES_TABLE_REGEX_STRING
         .replace('{TITLE}', title)
         .replace('{CURRENCY}', currency), 's');
@@ -74,7 +74,7 @@ export function parseBondsQuotesPage(markup: string, title: string, currency: st
                 currency
             };
         })
-        .filter((quote): quote is CatalystBondQuery => quote !== undefined);
+        .filter((quote): quote is CatalystBondQuote => quote !== undefined);
 
     return quotes;
 };
