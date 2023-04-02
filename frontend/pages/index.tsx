@@ -86,7 +86,7 @@ const Home: NextPage = () => {
 
   // sorting
   const [sortMenuTriggerEl, setSortMenuTriggerEl] = useState<null | HTMLElement>(null);
-  const [selectedBondReportsSortOrder, setSelectedBondReportsSortOrder] = useState(BondReportsSortOrder.Name);
+  const [selectedBondReportsSortOrder, setSelectedBondReportsSortOrder] = useLocalStorage<BondReportsSortOrder>('sort.order', BondReportsSortOrder.Name);
 
   const filteredAndSortedBondsStatistics = useMemo(() =>
     getBondReportsSortingFunction(selectedBondReportsSortOrder)(filteredBondReports), [selectedBondReportsSortOrder, filteredBondReports]);

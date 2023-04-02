@@ -1,6 +1,22 @@
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
+import ListItemIcon from '@mui/material/ListItemIcon/ListItemIcon';
+import Check from '@mui/icons-material/Check';
 import { BondReportsSortOrder } from '.';
+import ListItemText from '@mui/material/ListItemText/ListItemText';
+
+type SortOrderMenuItemParams = {
+  selected: boolean;
+  onSelect: () => void;
+  children: React.ReactNode,
+};
+
+function SortOrderMenuItem({ selected, onSelect, children }: SortOrderMenuItemParams): JSX.Element {
+  return (<MenuItem onClick={onSelect}>
+    {selected && <ListItemIcon><Check /></ListItemIcon>}
+    <ListItemText inset={!selected}>{children}</ListItemText>
+  </MenuItem>);
+}
 
 type BondReportsSortParams = {
   anchorEl: null | Element,
@@ -20,12 +36,12 @@ export default function BondReportsSort({ anchorEl, selectedBondReportsSortOrder
         vertical: 'top',
         horizontal: 'right',
       }}>
-      <MenuItem selected={selectedBondReportsSortOrder === BondReportsSortOrder.Name}
-        onClick={() => setBondReportsSortOrder(BondReportsSortOrder.Name)}>Name</MenuItem>
-      <MenuItem selected={selectedBondReportsSortOrder === BondReportsSortOrder.TimeToMaturityAsc}
-        onClick={() => setBondReportsSortOrder(BondReportsSortOrder.TimeToMaturityAsc)}>Time to maturity (ascending)</MenuItem>
-      <MenuItem selected={selectedBondReportsSortOrder === BondReportsSortOrder.InterestProgressAsc}
-        onClick={() => setBondReportsSortOrder(BondReportsSortOrder.InterestProgressAsc)}>Interest progress (ascending)</MenuItem>
+      <SortOrderMenuItem selected={selectedBondReportsSortOrder === BondReportsSortOrder.Name}
+        onSelect={() => setBondReportsSortOrder(BondReportsSortOrder.Name)}>Name</SortOrderMenuItem>
+      <SortOrderMenuItem selected={selectedBondReportsSortOrder === BondReportsSortOrder.TimeToMaturityAsc}
+        onSelect={() => setBondReportsSortOrder(BondReportsSortOrder.TimeToMaturityAsc)}>Time to maturity (asc)</SortOrderMenuItem>
+      <SortOrderMenuItem selected={selectedBondReportsSortOrder === BondReportsSortOrder.InterestProgressAsc}
+        onSelect={() => setBondReportsSortOrder(BondReportsSortOrder.InterestProgressAsc)}>Interest progress (asc)</SortOrderMenuItem>
     </Menu>
   );
 }
