@@ -50,7 +50,7 @@ export function BondsUpdater({ stack, app }: StackContext) {
   });
 
   const sendNotificationFlow = new sfn.Choice(stack, "Major changes?")
-    .when(sfn.Condition.and(
+    .when(sfn.Condition.or(
       sfn.Condition.isPresent('$.Payload.newBonds[0]'),
       sfn.Condition.isPresent('$.Payload.bondsDeactivated[0]')
     ), new tasks.LambdaInvoke(stack, "Send Notification", {
