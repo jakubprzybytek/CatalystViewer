@@ -2,7 +2,7 @@ import Stack from "@mui/material/Stack";
 import { Variant } from "@mui/material/styles/createTypography";
 import Typography from "@mui/material/Typography";
 import { Box } from "@mui/system";
-import { ColorCode, colorMarkers } from "../../common/ColorCodes";
+import { ColorCode, colorMarkers } from "../ColorCodes";
 
 type BondCardEntryParam = {
   caption: string;

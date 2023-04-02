@@ -2,7 +2,7 @@ import Link from "@mui/material/Link";
 import Typography from "@mui/material/Typography";
 import { BondReport } from "../../sdk/GetBonds";
 import { formatCurrency, formatDate } from '../../common/Formats';
-import { CardSection, CardEntry, CardValue } from "../Cards";
+import { CardSection, CardEntry, CardValue } from "../../common/Cards";
 import { InterestPercentilesByInterestBaseType, interestBaseType } from "../../bonds/statistics";
 import { getNominalValueColorCode, getInterestConstColorCode } from '../../bonds/BondIndicators';
 

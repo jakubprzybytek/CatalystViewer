@@ -2,7 +2,7 @@ import { styled } from '@mui/material/styles';
 import LinearProgress, { linearProgressClasses } from '@mui/material/LinearProgress';
 import { BondReport } from '../../sdk/GetBonds';
 import { formatCurrency, formatDate } from '../../common/Formats';
-import { CardSection, CardEntry, CardValue } from '../Cards';
+import { CardSection, CardEntry, CardValue } from '../../common/Cards';
 import { ColorCode } from '../../common/ColorCodes';
 import { Box } from '@mui/material';
 import { differenceInDays } from 'date-fns';

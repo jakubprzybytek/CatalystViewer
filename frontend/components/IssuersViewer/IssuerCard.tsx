@@ -2,7 +2,7 @@ import Stack from "@mui/material/Stack";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
 import Checkbox from "@mui/material/Checkbox";
-import { CardSection, CardEntry, CardValue } from "../Cards";
+import { CardSection, CardEntry, CardValue } from "../../common/Cards";
 import { ColorCode } from "../../common/ColorCodes";
 import { getInterestConstColorCode, getNominalValueColorCode } from "../../bonds/BondIndicators";
 import { IssuerReport } from '.';
