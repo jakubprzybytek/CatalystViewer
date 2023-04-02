@@ -20,14 +20,14 @@ import Sort from '@mui/icons-material/SortRounded';
 import FilterAlt from '@mui/icons-material/FilterAlt';
 import Logout from '@mui/icons-material/Logout';
 import useScrollTrigger from '@mui/material/useScrollTrigger';
-import BondReportsFilter, { BondsFiltersProvider, useBondsFilters } from '../components/BondReportsFilter';
 import BondsViewer from '../components/BondReportsViewer/BondsViewer';
 import IssuersViewer from '../components/IssuersViewer/IssuersViewer';
+import BondReportsFilter, { BondsFiltersProvider, useBondsFilters } from '../components/BondReportsFilter';
+import BondReportsSort, { BondReportsSortOrder, getBondReportsSortingFunction } from '../components/BondReportsSort';
 import { BondReport, getBonds } from '../sdk';
 import { computeStatisticsForInterestBaseTypes } from '../bonds/statistics';
 import { useLocalStorage } from '../common/UseStorage';
 import '@aws-amplify/ui-react/styles.css';
-import BondReportsSort, { BondReportsSortOrder, getBondReportsSortingFunction } from '../components/BondReportsSort';
 
 enum View {
   Issuers,

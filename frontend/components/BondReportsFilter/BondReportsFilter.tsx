@@ -2,8 +2,8 @@ import { useEffect, useMemo } from "react";
 import Grid from "@mui/material/Grid";
 import Typography from "@mui/material/Typography";
 import { NominalValueFilter, StringFilter, MultiStringFilter } from "./fields";
-import { useBondsFilters } from "./useBondReportsFilters";
-import { filterBy, getUniqueBondTypes, getUniqueInterestBaseTypes, getUniqueMarkets, isBondType, isInterestBaseType, isOnMarkets, nominalValueLessThan, sortStrings } from "../../bonds/statistics";
+import { useBondsFilters } from "./BondReportsFiltersContext";
+import { filterBy, getUniqueInterestBaseTypes, getUniqueMarkets, isBondType, isInterestBaseType, isOnMarkets, nominalValueLessThan, sortStrings } from "../../bonds/statistics";
 import { BondReport } from "../../sdk/GetBonds";
 
 type BondReportsFilterParams = {
