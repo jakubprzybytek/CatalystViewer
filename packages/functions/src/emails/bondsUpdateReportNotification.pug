@@ -42,17 +42,19 @@ html
           div(class="bond")
             h3 #{bond.name}
             div
-              span(class="key") Type: 
-              span #{bond.type}
-            div
               span(class="key") Issuer: 
               span #{bond.issuer}
             div
+              span(class="key") Type: 
+              span #{bond.type}
+            div
               span(class="key") Interest: 
-              span #{bond.interestVariable} #{bond.interestConst}
+              span #{bond.interestVariable} + #{bond.interestConst}
             div
               span(class="key") Nominal: 
               span #{bond.nominalValue} #{bond.currency}
+        else
+          span None
       div(class="section")
         h2 Decomissioned Bonds
         each bond in bondsDeactivated
@@ -70,3 +72,5 @@ html
             div
               span(class="key") Nominal: 
               span #{bond.nominalValue} #{bond.currency}
+        else
+          span None
