@@ -43,7 +43,7 @@ export function BondsUpdater({ stack, app }: StackContext) {
 
   const notificationSenderFunction = new Function(stack, 'NotificationSenderFunction', {
     handler: 'packages/functions/src/emails/sendNotification.handler',
-    copyFiles: [{ from: 'src/emails/bondsUpdateReportNotification.pug' }],
+    copyFiles: [{ from: 'packages/functions/src/emails/bondsUpdateReportNotification.pug' }],
     timeout: '10 seconds',
     permissions: [getRecipientsEmailsPolicy, sendEmailPolicy]
   });
