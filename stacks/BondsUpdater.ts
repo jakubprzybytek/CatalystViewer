@@ -38,13 +38,12 @@ export function BondsUpdater({ stack, app }: StackContext) {
   const getRecipientsEmailsPolicy = new iam.PolicyStatement({
     actions: ['ssm:GetParameter'],
     effect: iam.Effect.ALLOW,
-    resources: [ 'arn:aws:ssm:eu-west-1:198805281865:parameter/catalyst-viewer/notifications/recipients' ]
+    resources: ['arn:aws:ssm:eu-west-1:198805281865:parameter/catalyst-viewer/notifications/recipients']
   });
 
   const notificationSenderFunction = new Function(stack, 'NotificationSenderFunction', {
     handler: 'packages/functions/src/emails/sendNotification.handler',
-    environment: {
-    },
+    copyFiles: [{ from: 'src/emails/bondsUpdateReportNotification.pug' }],
     timeout: '10 seconds',
     permissions: [getRecipientsEmailsPolicy, sendEmailPolicy]
   });

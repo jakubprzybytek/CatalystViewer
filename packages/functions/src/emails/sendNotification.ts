@@ -1,6 +1,7 @@
 import { SSMClient, GetParameterCommand, GetParameterCommandInput } from "@aws-sdk/client-ssm";
 import { UpdateBondsResult } from "../bonds";
 import { sendEmail, SendEmailParams } from "./EmailClient";
+import { compileFile } from "pug";
 
 const RECIPIENTS_PARAM_NAME = '/catalyst-viewer/notifications/recipients';
 
@@ -29,13 +30,20 @@ async function getNotificationRecipientEmails(): Promise<string[]> {
 export async function handler(updateBondsReport: UpdateBondsResult): Promise<SendNotificationResult> {
   console.log('Sending notification with bonds update results');
   console.log(`Bonds updated: ${updateBondsReport.bondsUpdated}`);
-  console.log(`New bonds: ${updateBondsReport.newBonds.join(', ')}`);
-  console.log(`Decomissioned bonds: ${updateBondsReport.bondsDeactivated.join(', ')}`);
+  console.log(`New bonds: ${updateBondsReport.newBonds.map(b => b.name).join(', ')}`);
+  console.log(`Decomissioned bonds: ${updateBondsReport.bondsDeactivated.map(b => b.name).join(', ')}`);
 
-  const emailBody = 
-    `Bonds updated: ${updateBondsReport.bondsUpdated}<br \>
-    New bonds: ${updateBondsReport.newBonds.join(', ')}<br \>
-    Decomissioned bonds: ${updateBondsReport.bondsDeactivated.join(', ')}`;
+  const bondsUpdateReportNotificationTemplate = compileFile('packages/functions/src/emails/bondsUpdateReportNotification.pug');
+  const emailBody = bondsUpdateReportNotificationTemplate({
+    dateTime: new Date(),
+    newBonds: updateBondsReport.newBonds,
+    bondsDeactivated: updateBondsReport.bondsDeactivated
+  })
+console.log(emailBody);
+  // const emailBody = 
+  //   `Bonds updated: ${updateBondsReport.bondsUpdated}<br \>
+  //   New bonds: ${updateBondsReport.newBonds.join(', ')}<br \>
+  //   Decomissioned bonds: ${updateBondsReport.bondsDeactivated.join(', ')}`;
 
   const params: SendEmailParams = {
     to: await getNotificationRecipientEmails(),

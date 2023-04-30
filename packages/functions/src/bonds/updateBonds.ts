@@ -117,8 +117,8 @@ export async function handler(): Promise<UpdateBondsResult> {
 
     return {
         bondsUpdated: updatedBondsToStore.length,
-        newBonds: newBondsToStore.map(bond => bond.name),
-        bondsDeactivated: deactivatedBondsToStore.map(bond => bond.name),
+        newBonds: newBondsToStore,
+        bondsDeactivated: deactivatedBondsToStore,
         bondsFailed
     }
 }
