@@ -49,7 +49,7 @@ html
               span #{bond.type}
             div
               span(class="key") Interest: 
-              span #{bond.interestVariable} + #{bond.interestConst}
+              span #{bond.interestVariable} + #{bond.interestConst}%
             div
               span(class="key") Nominal: 
               span #{bond.nominalValue} #{bond.currency}
@@ -61,14 +61,14 @@ html
           div(class="bond")
             h3 #{bond.name}
             div
-              span(class="key") Type: 
-              span #{bond.type}
-            div
               span(class="key") Issuer: 
               span #{bond.issuer}
             div
+              span(class="key") Type: 
+              span #{bond.type}
+            div
               span(class="key") Interest: 
-              span #{bond.interestVariable} #{bond.interestConst}
+              span #{bond.interestVariable} + #{bond.interestConst}%
             div
               span(class="key") Nominal: 
               span #{bond.nominalValue} #{bond.currency}
