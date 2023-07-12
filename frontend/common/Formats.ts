@@ -16,6 +16,11 @@ export function formatCurrency(value: number, currency: string) {
     return currencyFormatters[currency](value);
 }
 
-export function formatDate(date: number) {
-    return format(date, "d-MM-yyyy");
+export function formatDate(date: number): string {
+    try {
+        return format(date, "d-MM-yyyy");
+    } catch(e) {
+        console.error(`Cannot format date '${date}': ${e}`);
+        return "n/a";
+    }
 }
