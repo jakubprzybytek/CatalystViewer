@@ -4,6 +4,8 @@ node_modules
 # sst
 .sst
 .build
+
+# opennext
 .open-next
 
 # misc
@@ -12,5 +14,4 @@ node_modules
 # local env files
 .env*.local
 
-*.xls
-*.xlsx
+.vscode

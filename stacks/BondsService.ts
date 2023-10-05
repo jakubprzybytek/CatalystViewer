@@ -77,6 +77,10 @@ export function BondsService({ stack }: StackContext) {
     timeout: '20 seconds'                                                                    
   });
 
+  const timeFunction = new Function(stack, "time", {
+    handler: 'packages/functions/time.handler',
+  });
+
   const api = new Api(stack, "api", {
     authorizers: {
       jwt: {
@@ -88,13 +92,17 @@ export function BondsService({ stack }: StackContext) {
       },
     },
     defaults: {
-      authorizer: "jwt",
+      authorizer: "none",
       throttle: {
         burst: 1,
         rate: 1
       }
     },
     routes: {
+      'GET /time': {
+        function: timeFunction,
+        authorizer: 'none'
+      }, 
       'GET /api/bonds': getBondsFunction,
       'GET /api/bonds/{bondType}': getBondsFunction
     }

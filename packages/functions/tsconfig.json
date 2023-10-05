@@ -1,9 +1,10 @@
 {
-  "extends": "@tsconfig/node16/tsconfig.json",
+  "extends": "@tsconfig/node18/tsconfig.json",
   "compilerOptions": {
     "module": "esnext",
+    "moduleResolution": "node",
+    "baseUrl": ".",
     "paths": {
-      "@catalyst-viewer/core": ["../core/src"],
       "@catalyst-viewer/core/*": ["../core/src/*"]
     }
   }
