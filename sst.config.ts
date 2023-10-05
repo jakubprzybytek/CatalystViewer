@@ -1,7 +1,8 @@
 import { SSTConfig } from "sst";
-import { BondsService } from "./stacks/BondsService";
-import { BondsUpdater } from "./stacks/BondsUpdater";
-import { Frontend } from "./stacks/Frontend";
+import { BondsService } from "@/stacks/BondsService";
+import { BondsUpdater } from "@/stacks/BondsUpdater";
+import { Frontend } from "@/stacks/Frontend";
+import { NextjsSite } from "sst/constructs";
 
 export default {
   config(_input) {
@@ -12,17 +13,17 @@ export default {
   },
   stacks(app) {
     app.setDefaultFunctionProps({
-      //runtime: "nodejs16.x",
-      architecture: "arm_64",
-      memorySize: '128 MB',
-      timeout: '20 seconds',
+      runtime: "nodejs18.x",
       // srcPath: "services",
-      // bundle: {
-      //   format: "esm",
-      // },
     });
 
-    app.stack(BondsService).stack(Frontend).stack(BondsUpdater);
-    // app.stack(BondsService).stack(BondsUpdater);
+    app.stack(BondsService).stack(Frontend);//.stack(BondsUpdater);
+    // app.stack(function Site({ stack }) {
+    //   const site = new NextjsSite(stack, "site");
+
+    //   stack.addOutputs({
+    //     SiteUrl: site.url,
+    //   });
+    // });
   },
 } satisfies SSTConfig;
