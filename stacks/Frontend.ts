@@ -20,7 +20,6 @@ export function Frontend({ stack }: StackContext) {
             NEXT_PUBLIC_USER_POOL_ID: auth.userPoolId,
             NEXT_PUBLIC_USER_POOL_CLIENT_ID: auth.userPoolClientId,
         },
-        bind: [api],
     });
 
     // Show the site URL in the output

@@ -3,25 +3,34 @@ import { differenceInDays } from 'date-fns';
 import { lambdaHandler, Success } from "../HandlerProxy";
 import { BondDetails, BondCurrentValues } from '@catalyst-viewer/core/bonds';
 import { BondDetailsTable } from '@catalyst-viewer/core/storage';
-import { BondReport } from ".";
+import { BondReportsQueryResult } from ".";
 
 const dynamoDBClient = new DynamoDBClient({});
 
-export const handler = lambdaHandler<BondReport[]>(async event => {
+const cachedBondTypes: string[] = [];
+
+export const handler = lambdaHandler<BondReportsQueryResult>(async event => {
     if (process.env.BOND_DETAILS_TABLE_NAME === undefined) {
         throw new Error('Bond Details Table Name is not defined');
     }
 
-    const bondTypeFilter = event.queryStringParameters?.['type'];
-
+    const bondTypeFilter = event.pathParameters?.['bondType'];
     console.log(`Requested active bond reports, type=${bondTypeFilter}`);
 
     const bondDetailsTable = new BondDetailsTable(dynamoDBClient, process.env.BOND_DETAILS_TABLE_NAME);
-    const dbBonds = await bondDetailsTable.getAllActive();
-await bondDetailsTable.getAllTypes();
+
+    const dbBonds = bondTypeFilter ? await bondDetailsTable.getActive(bondTypeFilter) : await bondDetailsTable.getAllActive();
+
+    if (cachedBondTypes.length == 0) {
+        const bondTypes = await bondDetailsTable.getAllTypes();
+        bondTypes.forEach(bondType => cachedBondTypes.push(bondType));
+    } else {
+        console.log(`Using cached bond types (${cachedBondTypes.length})`);
+    }
+
     const today = new Date().getTime();
 
-    const bonds = dbBonds.map(dbBond => {
+    const bondReports = dbBonds.map(dbBond => {
         const details: BondDetails = {
             name: dbBond.name,
             isin: dbBond.isin,
@@ -31,6 +40,7 @@ await bondDetailsTable.getAllTypes();
             nominalValue: dbBond.nominalValue,
             issueValue: dbBond.issueValue,
             currency: dbBond.currency,
+            firstDayTs: dbBond.interestFirstDayTss[0],
             maturityDayTs: dbBond.maturityDayTs,
             interestType: dbBond.interestType,
             interestVariable: dbBond.interestVariable,
@@ -45,19 +55,21 @@ await bondDetailsTable.getAllTypes();
         const currentInterestPayableDay = dbBond.interestPayoffDayTss[interestPeriodIndex];
 
         const currentInterestDays = differenceInDays(today, currentInterestFirstDay) + 1;
-        const accumulatedInterest = currentInterestDays * dbBond.nominalValue * dbBond.currentInterestRate / 100 / 365;
         const currentInterestPeriod = differenceInDays(currentInterestPayableDay, currentInterestFirstDay);
+        const currentInterestProgress = 100 * currentInterestDays / currentInterestPeriod;
+        const accumulatedInterest = currentInterestDays * dbBond.nominalValue * dbBond.currentInterestRate / 100 / 365;
         const periodInterest = currentInterestPeriod * dbBond.nominalValue * dbBond.currentInterestRate / 100 / 365;
         const accuredInterest = currentInterestRecordDay > today ? accumulatedInterest : 0;
 
         const currentValues: BondCurrentValues = {
-            yearsToMaturity: daysToMaturity / 365,
+            yearsToMaturity: Number((daysToMaturity / 365).toFixed(2)),
             interestFirstDay: currentInterestFirstDay,
             interestRecordDay: currentInterestRecordDay,
             interestPayableDay: currentInterestPayableDay,
+            interestProgress: Number(currentInterestProgress.toFixed(2)),
             interestRate: dbBond.currentInterestRate,
-            accuredInterest,
-            periodInterest
+            accuredInterest: Number(accuredInterest.toFixed(2)),
+            periodInterest: Number(periodInterest.toFixed(2))
         };
 
         return {
@@ -86,5 +98,10 @@ await bondDetailsTable.getAllTypes();
         }
     });
 
-    return Success(bonds);
+    return Success({
+        bondReports,
+        facets: {
+            type: cachedBondTypes
+        }
+    });
 });

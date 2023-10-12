@@ -1,4 +1,5 @@
 import { BondDetails, BondCurrentValues } from '@catalyst-viewer/core/bonds';
+import { DbBondDetails } from '@catalyst-viewer/core/storage';
 
 export type { BondDetails, BondCurrentValues };
 
@@ -18,3 +19,17 @@ export type BondReport = {
     askVolume?: number;
     askCount?: number;
 };
+
+export type BondReportsQueryResult = {
+    bondReports: BondReport[];
+    facets: {
+        type: string[];
+    };
+}
+
+export type UpdateBondsResult = {
+    bondsUpdated: number,
+    newBonds: DbBondDetails[],
+    bondsDeactivated: DbBondDetails[],
+    bondsFailed: string[]
+}

@@ -1,12 +1,12 @@
 import { downloadLatestCatalystDailyStatisticsFile, fetchBankSecuritiesBondsQuotes, fetchCooperativeBondsQuotes, fetchCorporateBondsQuotes, fetchMortgageCoveredBondsQuotes, fetchMunicipalBondsQuotes, fetchTreasuryBondsQuotes } from "./fetch";
-import { readCatalystDailyStatisticsXlsFile, parseBondsQuotesPage, CatalystBondQuery, CatalystDailyStatisticsBondDetails } from "./sources";
+import { readCatalystDailyStatisticsXlsFile, parseBondsQuotesPage, CatalystBondQuote, CatalystDailyStatisticsBondDetails } from "./sources";
 
 export async function getLatestCatalystDailyStatistics(): Promise<CatalystDailyStatisticsBondDetails[]> {
     const catalystDailyStatisticsFileName = await downloadLatestCatalystDailyStatisticsFile();
     return readCatalystDailyStatisticsXlsFile(catalystDailyStatisticsFileName);
 };
 
-export async function getCurrentCatalystBondsQuotes(): Promise<CatalystBondQuery[]> {
+export async function getCurrentCatalystBondsQuotes(): Promise<CatalystBondQuote[]> {
     const corporateBondsQuotesMarkup = await fetchCorporateBondsQuotes();
     const corporatePLNBondQuotes = parseBondsQuotesPage(corporateBondsQuotesMarkup, 'Obligacje przedsiębiorstw', 'PLN');
     const corporateEURBondQuotes = parseBondsQuotesPage(corporateBondsQuotesMarkup, 'przedsiębiorstw', 'EUR');

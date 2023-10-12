@@ -5,6 +5,7 @@
     "moduleResolution": "node",
     "baseUrl": ".",
     "paths": {
+      "@catalyst-viewer/core": ["../core/src"],
       "@catalyst-viewer/core/*": ["../core/src/*"]
     }
   }

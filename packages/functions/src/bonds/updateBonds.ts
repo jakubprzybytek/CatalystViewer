@@ -5,13 +5,14 @@ import { getTime } from 'date-fns';
 import { CatalystBondQuery as CatalystBondQuote, CatalystDailyStatisticsBondDetails, getCurrentCatalystBondsQuotes, getLatestCatalystDailyStatistics } from '@catalyst-viewer/core/bonds/catalyst';
 import { getBondInformation } from '@catalyst-viewer/core/bonds/obligacjepl';
 import { BondDetailsTable, DbBondDetails } from '@catalyst-viewer/core/storage';
+import { UpdateBondsResult } from '.';
 
 const dynamoDbClient = new DynamoDBClient({});
 
 const bondId = (bond: DbBondDetails | CatalystBondQuote | CatalystDailyStatisticsBondDetails): string => `${bond.name}#${bond.market}`;
 const mapByBondId = R.reduce((map: Record<string, DbBondDetails | CatalystBondQuote>, curr: DbBondDetails | CatalystBondQuote) => R.assoc(bondId(curr), curr, map), {});
 
-export async function handler(event: any) {
+export async function handler(): Promise<UpdateBondsResult> {
     if (process.env.BOND_DETAILS_TABLE_NAME === undefined) {
         throw new Error('Bond Details Table Name is not defined');
     }
@@ -23,10 +24,10 @@ export async function handler(event: any) {
     const bondsStats: CatalystDailyStatisticsBondDetails[] = await getLatestCatalystDailyStatistics();
 
     const bondsQuotesList: CatalystBondQuote[] = await getCurrentCatalystBondsQuotes();
-    const bondsQuotes: Record<string, CatalystBondQuote> = mapByBondId(bondsQuotesList);
+    const bondsQuotes = mapByBondId(bondsQuotesList) as Record<string, CatalystBondQuote>;
 
     const storedBondsList: DbBondDetails[] = await bondDetailsTable.getAllActive();
-    const storedBonds: Record<string, DbBondDetails> = mapByBondId(storedBondsList);
+    const storedBonds = mapByBondId(storedBondsList) as Record<string, DbBondDetails>;
 
     const newBondsToStore: DbBondDetails[] = [];
     const updatedBondsToStore: DbBondDetails[] = [];
@@ -116,8 +117,8 @@ export async function handler(event: any) {
 
     return {
         bondsUpdated: updatedBondsToStore.length,
-        newBonds: newBondsToStore.map(bond => bond.name),
-        bondsDeactivated: deactivatedBondsToStore.map(bond => bond.name),
+        newBonds: [], //newBondsToStore,
+        bondsDeactivated: deactivatedBondsToStore,
         bondsFailed
     }
 }
