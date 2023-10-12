@@ -119,5 +119,6 @@ export function BondsService({ stack }: StackContext) {
     auth,
     api,
     bondDetailsTable,
+    apiUrl: api.url
   };
 }
