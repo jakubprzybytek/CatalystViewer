@@ -1,4 +1,4 @@
-import { StackContext, Function, Cognito, Api, Table } from 'sst/constructs';
+import { StackContext, Cognito, Api, Table } from 'sst/constructs';
 import { RemovalPolicy } from 'aws-cdk-lib';
 import { UserPool, UserPoolClient } from 'aws-cdk-lib/aws-cognito';
 import * as iam from 'aws-cdk-lib/aws-iam';
@@ -66,17 +66,6 @@ export function BondsService({ stack }: StackContext) {
     resources: [bondDetailsTable.tableArn]
   });
 
-  const getBondsFunction = new Function(stack, "getBonds", {
-    handler: 'packages/functions/src/bonds/getBonds.handler',
-    memorySize: "256 MB",
-    environment: {
-      BOND_DETAILS_TABLE_NAME: bondDetailsTable.tableName
-    },
-    //permissions: [bondDetailsTableReadAccess],
-    bind: [bondDetailsTable],
-    timeout: '20 seconds'                                                                    
-  });
-
   const api = new Api(stack, "api", {
     authorizers: {
       jwt: {
@@ -95,8 +84,18 @@ export function BondsService({ stack }: StackContext) {
       }
     },
     routes: {
-      'GET /api/bonds': getBondsFunction,
-      'GET /api/bonds/{bondType}': getBondsFunction
+      'GET /api/bonds': {
+        function: {
+          handler: 'packages/functions/src/bonds/getBonds.handler',
+          memorySize: "256 MB",
+          environment: {
+            BOND_DETAILS_TABLE_NAME: bondDetailsTable.tableName
+          },
+          //permissions: [bondDetailsTableReadAccess],
+          bind: [bondDetailsTable],
+          timeout: '20 seconds'
+        }
+      }
     }
   });
   //auth.attachPermissionsForAuthUsers(stack, [api]);

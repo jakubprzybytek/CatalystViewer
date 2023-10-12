@@ -1,5 +1,5 @@
-import { CatalystDailyStatisticsBondDetails, CatalystBondQuote } from './sources';
+import { CatalystDailyStatisticsBondDetails, CatalystBondQuery } from './sources';
 
 export * from './CatalystWebsite';
 
-export type { CatalystDailyStatisticsBondDetails, CatalystBondQuote as CatalystBondQuery };
+export type { CatalystDailyStatisticsBondDetails, CatalystBondQuery };

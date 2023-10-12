@@ -25,45 +25,13 @@ export function BondsUpdater({ stack, app }: StackContext) {
     timeout: '10 minutes',
     permissions: [bondDetailsTableWriteAccess],
     // bind: [bondDetailsTable]
-  });
-
-  const sendEmailPolicy = new iam.PolicyStatement({
-    actions: ['ses:SendEmail'],
-    effect: iam.Effect.ALLOW,
-    resources: [
-      'arn:aws:ses:eu-west-1:198805281865:identity/*'
-    ]
-  });
-
-  const getRecipientsEmailsPolicy = new iam.PolicyStatement({
-    actions: ['ssm:GetParameter'],
-    effect: iam.Effect.ALLOW,
-    resources: ['arn:aws:ssm:eu-west-1:198805281865:parameter/catalyst-viewer/notifications/recipients']
-  });
-
-  const notificationSenderFunction = new Function(stack, 'NotificationSenderFunction', {
-    handler: 'packages/functions/src/emails/sendNotification.handler',
-    copyFiles: [{ from: 'packages/functions/src/emails/bondsUpdateReportNotification.pug' }],
-    timeout: '10 seconds',
-    permissions: [getRecipientsEmailsPolicy, sendEmailPolicy]
-  });
-
-  const sendNotificationFlow = new sfn.Choice(stack, "Major changes?")
-    .when(sfn.Condition.or(
-      sfn.Condition.isPresent('$.Payload.newBonds[0]'),
-      sfn.Condition.isPresent('$.Payload.bondsDeactivated[0]')
-    ), new tasks.LambdaInvoke(stack, "Send Notification", {
-      lambdaFunction: notificationSenderFunction,
-      payload: sfn.TaskInput.fromJsonPathAt('$.Payload'),
-      timeout: Duration.seconds(10)
-    }))
-    .otherwise(new sfn.Succeed(stack, 'Skip'));
+  })
 
   const bondsUpdaterStateMachine = new sfn.StateMachine(stack, stack.stage + '-BondsUpdaterStateMachine', {
-    definition: new tasks.LambdaInvoke(stack, "Update Bonds", {
+    definition: new tasks.LambdaInvoke(stack, "UpdateBondsTask", {
       lambdaFunction: bondsUpdaterFunction,
       timeout: Duration.minutes(10)
-    }).next(sendNotificationFlow)
+    })
   });
 
   if (!app.local) {

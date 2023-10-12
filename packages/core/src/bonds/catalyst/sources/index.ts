@@ -14,7 +14,7 @@ export type CatalystDailyStatisticsBondDetails = {
     readonly closingPrice: number;
 };
 
-export type CatalystBondQuote = {
+export type CatalystBondQuery = {
     readonly name: string;
     readonly market: string;
     readonly referencePrice: number;

@@ -9,7 +9,7 @@ export function Frontend({ stack }: StackContext) {
     const customDomainPrefix = stack.stage === 'int' ? '' : stack.stage + '.';
 
     const site = new NextjsSite(stack, 'Site', {
-        path: 'frontend',
+        path: 'packages/web',
         customDomain: {
             hostedZone: 'albedoonline.com',
             domainName: customDomainPrefix + 'catalyst.albedoonline.com',
@@ -20,6 +20,7 @@ export function Frontend({ stack }: StackContext) {
             NEXT_PUBLIC_USER_POOL_ID: auth.userPoolId,
             NEXT_PUBLIC_USER_POOL_CLIENT_ID: auth.userPoolClientId,
         },
+        bind: [api],
     });
 
     // Show the site URL in the output

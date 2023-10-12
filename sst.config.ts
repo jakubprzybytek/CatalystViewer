@@ -1,7 +1,8 @@
 import { SSTConfig } from "sst";
+import { Default } from "./stacks/Default";
 import { BondsService } from "./stacks/BondsService";
-import { BondsUpdater } from "./stacks/BondsUpdater";
 import { Frontend } from "./stacks/Frontend";
+import { BondsUpdater } from "./stacks/BondsUpdater";
 
 export default {
   config(_input) {
@@ -12,17 +13,10 @@ export default {
   },
   stacks(app) {
     app.setDefaultFunctionProps({
-      //runtime: "nodejs16.x",
-      architecture: "arm_64",
-      memorySize: '128 MB',
-      timeout: '20 seconds',
-      // srcPath: "services",
-      // bundle: {
-      //   format: "esm",
-      // },
+      runtime: "nodejs18.x",
     });
 
+    //app.stack(Default).stack(BondsService);
     app.stack(BondsService).stack(Frontend).stack(BondsUpdater);
-    // app.stack(BondsService).stack(BondsUpdater);
-  },
+  }
 } satisfies SSTConfig;
