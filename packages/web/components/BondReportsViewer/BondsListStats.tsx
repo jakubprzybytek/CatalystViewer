@@ -104,7 +104,7 @@ export default function BondsListStats({ bondReports, statistics }: BondsListPar
             <BondInterestBaseTypeStat
               interestBaseType={interestBaseType}
               interestConstPercentiles={statistics[interestBaseType]}
-              bondReports={bondsByInterestBaseTypes[interestBaseType]} />
+              bondReports={bondsByInterestBaseTypes[interestBaseType] as BondReport[]} />
           </Grid>
         ))}
       </Grid>

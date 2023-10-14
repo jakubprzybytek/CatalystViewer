@@ -20,7 +20,9 @@ export default function IssuersViewer({ bondReports, loadingBonds, statistics }:
     const issuerReports: IssuerReport[] = [];
 
     Object.entries(bondsByIssuer).map(([issuer, issuerBonds]) => {
-      Object.entries(groupByInterestBaseType(issuerBonds)).map(([interestVariableType, bondsByInterestVariablePart]) => {
+      Object.entries(groupByInterestBaseType(issuerBonds as BondReport[])).map(([interestVariableType, bondsByInterestVariablePartUndefined]) => {
+
+        const bondsByInterestVariablePart = bondsByInterestVariablePartUndefined as BondReport[];
 
         const nominalValues = getNominalValues(bondsByInterestVariablePart);
         const issueValues = getIssueValues(bondsByInterestVariablePart);

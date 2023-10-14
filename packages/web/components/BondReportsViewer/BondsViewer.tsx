@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import Box from '@mui/system/Box';
+import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import BondsList from './BondsList';
 import BondsViewerFilter from './BondsViewerFilter';

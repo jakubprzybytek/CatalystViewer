@@ -8,7 +8,7 @@ export function computeStatisticsForInterestBaseTypes(bonds: BondReport[]): Inte
     const interestVariableTypePercentiles: InterestPercentilesByInterestBaseType = {};
     Object.keys(bondsByInterestBaseType)
         .forEach(interestBaseType => {
-            const interestConstValues = getInterestConstParts(bondsByInterestBaseType[interestBaseType]);
+            const interestConstValues = getInterestConstParts(bondsByInterestBaseType[interestBaseType] as BondReport[]);
             const quartiles = quantile(interestConstValues, [0.25, 0.5, 0.75, 1]);
             interestVariableTypePercentiles[interestBaseType] = [min(interestConstValues), ...quartiles];
         });

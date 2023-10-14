@@ -12,6 +12,6 @@ export type IssuerReport = {
     totalIssueValue: number;
 }
 
-const interestConstAverage = R.prop<'interestConstAverage', number>('interestConstAverage');
+const interestConstAverage = R.prop<'interestConstAverage'>('interestConstAverage');
 
 export const sortByInterestConstAverage = R.sortBy<IssuerReport>(interestConstAverage);
