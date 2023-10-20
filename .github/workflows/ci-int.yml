@@ -22,13 +22,9 @@ jobs:
     name: Deploy Int
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - uses: bahmutov/npm-install@v1.8.29
-
-      - uses: bahmutov/npm-install@v1.8.29
-        with:
-          working-directory: frontend
+      - uses: bahmutov/npm-install@v1.8.35
 
       - name: Run unit tests
         run: npm test
