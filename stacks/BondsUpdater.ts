@@ -66,11 +66,11 @@ export function BondsUpdater({ stack, app }: StackContext) {
     ), notificationSenderTask)
     .otherwise(new sfn.Succeed(stack, 'Skip'));
 
-  const bondsUpdatedDefinition = bondsUpdaterTask
-    .next(sendNotificationFlow);
-
   const bondsUpdaterStateMachine = new sfn.StateMachine(stack, stack.stage + '-BondsUpdaterStateMachine', {
-    definitionBody: sfn.DefinitionBody.fromChainable(bondsUpdatedDefinition)
+    definitionBody: sfn.DefinitionBody.fromChainable(
+      bondsUpdaterTask
+        .next(sendNotificationFlow)
+    )
   });
 
   if (!app.local) {
