@@ -18,7 +18,7 @@
     "jsx": "preserve",
     "incremental": true,
     "paths": {
-      "@/*": [ "./*" ],
+      "@/*": [ "./src/*" ],
       "@catalyst-viewer/core/*": [ "../core/src/*" ],
       "@catalyst-viewer/functions/*": [ "../functions/src/*" ]
     }

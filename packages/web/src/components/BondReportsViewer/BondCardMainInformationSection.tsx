@@ -1,7 +1,7 @@
 import Link from "@mui/material/Link";
 import Typography from "@mui/material/Typography";
 import { BondReport } from "../../sdk/GetBonds";
-import { formatCurrency, formatDate } from '../../common/Formats';
+import { formatCompactCurrency, formatCurrency, formatDate } from '../../common/Formats';
 import { CardSection, CardEntry, CardValue } from "../../common/Cards";
 import { InterestPercentilesByInterestBaseType, interestBaseType } from "../../bonds/statistics";
 import { getNominalValueColorCode, getInterestConstColorCode } from '../../bonds/BondIndicators';
@@ -33,7 +33,7 @@ export default function BondCardMainInformationSection({ bondReport, statistics 
       </CardSection>
       <CardSection>
         <CardEntry caption='Issue Value'>
-          <CardValue colorCode='white'>{details.issueValue > 0 ? formatCurrency(details.issueValue, details.currency) : 'n/a'}</CardValue>
+          <CardValue colorCode='white'>{details.issueValue > 0 ? formatCompactCurrency(details.issueValue, details.currency) : 'n/a'}</CardValue>
         </CardEntry>
         <CardEntry caption='Nominal value' textAlign='center'>
           <CardValue colorCode={nominalValueColorCode}>

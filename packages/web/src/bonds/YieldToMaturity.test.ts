@@ -11,6 +11,7 @@ const bondDetails: BondDetails = {
   nominalValue: 1000,
   issueValue: 1000000,
   currency: 'PLN',
+  firstDayTs: 0,
   maturityDayTs: new Date('2023-10-01T00:00:00.000Z').getTime(),
   interestType: 'zmienne WIBOR 6m + 1%',
   interestVariable: 'WIBOR 6M',
@@ -27,6 +28,8 @@ const bondCurrentValues: BondCurrentValues = {
   interestRate: 10,
   accuredInterest: 20,
   periodInterest: 0, // not needed
+
+  interestProgress: 0 // not needed
 };
 
 describe("YieldToMatorityCalculator", () => {
