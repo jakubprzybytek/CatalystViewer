@@ -29,7 +29,7 @@ export function BondsUpdater({ stack, app }: StackContext) {
 
   const bondsUpdaterTask = new tasks.LambdaInvoke(stack, "Update Bonds", {
     lambdaFunction: bondsUpdaterFunction,
-    timeout: Duration.minutes(10)
+    taskTimeout: sfn.Timeout.duration(Duration.minutes(10))
   })
 
   const sendEmailPolicy = new iam.PolicyStatement({
@@ -56,7 +56,7 @@ export function BondsUpdater({ stack, app }: StackContext) {
   const notificationSenderTask = new tasks.LambdaInvoke(stack, "Send Notification", {
     lambdaFunction: notificationSenderFunction,
     payload: sfn.TaskInput.fromJsonPathAt('$.Payload'),
-    timeout: Duration.seconds(10)
+    taskTimeout: sfn.Timeout.duration(Duration.seconds(10))
   });
 
   const sendNotificationFlow = new sfn.Choice(stack, "Major changes?")
