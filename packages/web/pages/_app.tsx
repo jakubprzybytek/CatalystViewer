@@ -19,6 +19,10 @@ const amplifyConfig = {
   },
 };
 
+console.log(`region: ${process.env.NEXT_PUBLIC_AWS_REGION}`)
+console.log(`api url: ${process.env.NEXT_PUBLIC_API_URL}`)
+console.log(`pool id: ${process.env.NEXT_PUBLIC_USER_POOL_ID}`)
+
 Amplify.configure(amplifyConfig);
 
 export default function App({ Component, pageProps }: AppProps) {
