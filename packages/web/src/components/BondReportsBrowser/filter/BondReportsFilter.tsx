@@ -11,37 +11,11 @@ type BondReportsFilterParams = {
   allBondTypes: string[];
   filteringOptions: BondReportsFilteringOptions;
   setFilteringOptions: (param: BondReportsFilteringOptions) => void;
-  // setFilteredBondReports: (filteredBonds: BondReport[]) => void;
 };
 
 export default function BondReportsFilter({ allBondReports, allBondTypes, filteringOptions, setFilteringOptions, /*setFilteredBondReports*/ }: BondReportsFilterParams): JSX.Element {
-  //const { bondTypeFilterString, setBondTypeFilterString } = useBondsFilters();
-
-  // const { maxNominalValueFilterNumber, setMaxNominalValueFilterNumber } = useBondsFilters();
-  // const { marketsFilterStrings, addMarketFilter, removeMarketFilter } = useBondsFilters();
-  // const { interestBaseTypeFilterStrings, addInterestBaseTypeFilterString, removeInterestBaseTypeFilterString } = useBondsFilters();
-  // const { count, setCount } = useBondsFilters();
-
-  // Populate filtering options
-  //const availableBondTypes = useMemo(() => getUniqueBondTypes(allBondReports), [allBondReports]);
   const allInterestBaseTypes = useMemo(() => sortStrings(getUniqueInterestBaseTypes(allBondReports)), [allBondReports]);
   const allMarkets = useMemo(() => sortStrings(getUniqueMarkets(allBondReports)), [allBondReports]);
-
-  // Perform actual bonds filtering
-  // useEffect(() => {
-  //   const filterBondReports = filterBy([
-  //     isBondType(bondTypeFilterString),
-  //     nominalValueLessThan(maxNominalValueFilterNumber),
-  //     isOnMarkets(marketsFilterStrings),
-  //     isInterestBaseType(interestBaseTypeFilterStrings)
-  //   ]);
-
-  //   const filteredBondReports = filterBondReports(allBondReports);
-  //   console.log(`Filtering bonds: ${filteredBondReports.length}, bond type: ${bondTypeFilterString}, max nominal value: ${maxNominalValueFilterNumber}, markets: ${marketsFilterStrings}, base Types: ${interestBaseTypeFilterStrings}`);
-  //   setFilteredBondReports(filteredBondReports);
-  //   setCount(filteredBondReports.length);
-  // }, [allBondReports, bondTypeFilterString, maxNominalValueFilterNumber, marketsFilterStrings, interestBaseTypeFilterStrings]);
-
 
   const removeElement = (array: string[], elementToRemove: string) => {
     const index = array.indexOf(elementToRemove, 0);
