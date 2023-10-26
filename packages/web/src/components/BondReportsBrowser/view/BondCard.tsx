@@ -1,8 +1,8 @@
 import Divider from '@mui/material/Divider';
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
-import { BondReport } from "../../sdk/GetBonds";
-import { InterestPercentilesByInterestBaseType } from "../../bonds/statistics";
+import { BondReport } from "../../../sdk/GetBonds";
+import { InterestPercentilesByInterestBaseType } from "../../../bonds/statistics";
 import BondCardMainInformationSection from './BondCardMainInformationSection';
 import BondCardCurrentInterestSection from './BondCardCurrentInterestSection';
 import BondCardYTMSection from "./BondCardYTMSection";

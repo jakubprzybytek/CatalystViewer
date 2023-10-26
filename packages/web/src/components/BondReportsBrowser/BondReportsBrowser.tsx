@@ -3,8 +3,17 @@ import Box from "@mui/material/Box";
 import Alert from "@mui/material/Alert";
 import AlertTitle from "@mui/material/AlertTitle";
 import { BondReport, getBonds } from "@/sdk/GetBonds";
-import BondsList from "./BondsList";
+import BondsList from "./view/BondsList";
 import { computeStatisticsForInterestBaseTypes } from "@/bonds/statistics";
+import { BondReportsFilteringOptions, filterUsing } from "./filter";
+import BondReportsFilter from "./filter/BondReportsFilter";
+
+const DEFAULT_FILTERING_OPTIONS: BondReportsFilteringOptions = {
+  bondType: 'Corporate bonds',
+  maxNominal: 10000,
+  markets: ['GPW ASO', 'GPW RR'],
+  interestBaseTypes: ['WIBOR 3M', 'WIBOR 6M']
+}
 
 type BondReportsBrowserParam = {
   bondReports: BondReport[];
@@ -17,7 +26,9 @@ export default function BondReportsBrowser(/*{ bondReports }: BondReportsBrowser
   const [allBondReports, setAllBondReports] = useState<BondReport[]>([]);
   const [allBondTypes, setAllBondTypes] = useState<string[]>([]);
 
-  const filteredBondReports = allBondReports;
+  const [filteringOptions, setFilteringOptions] = useState<BondReportsFilteringOptions>(DEFAULT_FILTERING_OPTIONS);
+
+  const [filteredBondReports, setFilteredBondReports] = useState<BondReport[]>([]);
 
   const filteredBondsStatistics = useMemo(() => computeStatisticsForInterestBaseTypes(filteredBondReports), [filteredBondReports]);
 
@@ -43,11 +54,23 @@ export default function BondReportsBrowser(/*{ bondReports }: BondReportsBrowser
 
   useEffect(() => {
     setIsLoading(true);
-    fetchData('Corporate bonds');
-  }, ['Corporate bonds']);
-  
+    fetchData(filteringOptions.bondType);
+  }, [filteringOptions.bondType]);
+
+  // Perform bonds filtering
+  useEffect(() => {
+    console.log(`Applying filters: ${JSON.stringify(filteringOptions)} to ${allBondReports.length} bond reports`);
+
+    const filterBondReports = filterUsing(filteringOptions);
+    const filteredBondReports = filterBondReports(allBondReports);
+
+    console.log(`Filtering result: ${filteredBondReports.length} bond reports`);
+    setFilteredBondReports(filteredBondReports);
+  }, [allBondReports, filteringOptions.maxNominal, filteringOptions.markets, filteringOptions.interestBaseTypes]);
+
   return (
     <Box>
+      <BondReportsFilter allBondReports={allBondReports} allBondTypes={allBondTypes} filteringOptions={filteringOptions} setFilteringOptions={setFilteringOptions} />
       <BondsList bondReports={filteredBondReports} statistics={filteredBondsStatistics} />
       {errorMessage && <Alert severity="error">
         <AlertTitle>Cannot fetch data!</AlertTitle>

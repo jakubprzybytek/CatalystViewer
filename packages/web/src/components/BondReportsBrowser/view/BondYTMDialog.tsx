@@ -9,8 +9,8 @@ import Divider from "@mui/material/Divider";
 import IconButton from "@mui/material/IconButton";
 import CloseIcon from '@mui/icons-material/Close';
 import { useMediaQuery, useTheme } from "@mui/material";
-import { YieldToMaturityReport } from "../../bonds/YieldToMaturity";
-import { formatDate, formatCurrency } from "../../common/Formats";
+import { YieldToMaturityReport } from "../../../bonds/YieldToMaturity";
+import { formatDate, formatCurrency } from "../../../common/Formats";
 
 type ReportSectionTitleParam = {
   children: React.ReactNode;
