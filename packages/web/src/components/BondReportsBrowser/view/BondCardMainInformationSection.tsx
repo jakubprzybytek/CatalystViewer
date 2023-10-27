@@ -1,21 +1,23 @@
 import Link from "@mui/material/Link";
 import Typography from "@mui/material/Typography";
-import { BondReport } from "../../../sdk/GetBonds";
-import { formatCompactCurrency, formatCurrency, formatDate } from '../../../common/Formats';
-import { CardSection, CardEntry, CardValue } from "../../../common/Cards";
-import { InterestPercentilesByInterestBaseType, interestBaseType } from "../../../bonds/statistics";
-import { getNominalValueColorCode, getInterestConstColorCode } from '../../../bonds/BondIndicators';
+import { BondReport } from "@/sdk/GetBonds";
+import { formatCompactCurrency, formatCurrency, formatDate } from '@/common/Formats';
+import { CardSection, CardEntry, CardValue } from "@/common/Cards";
+import { InterestPercentilesByInterestBaseType, interestBaseType } from "@/bonds/statistics";
+import { getNominalValueColorCode, getInterestConstColorCode } from '@/bonds/BondIndicators';
 
 type BondCardMainInformationSectionParam = {
+  disabled: boolean;
   bondReport: BondReport;
   statistics: InterestPercentilesByInterestBaseType;
 }
 
-export default function BondCardMainInformationSection({ bondReport, statistics }: BondCardMainInformationSectionParam): JSX.Element {
+export default function BondCardMainInformationSection({ disabled, bondReport, statistics }: BondCardMainInformationSectionParam): JSX.Element {
   const { details, currentValues } = bondReport;
 
-  const nominalValueColorCode = getNominalValueColorCode(details.nominalValue);
-  const interestConstColorCode = getInterestConstColorCode(details.interestConst, statistics[interestBaseType(bondReport)]);
+  const issueValueColorCode = disabled ? 'disabled' : 'white';
+  const nominalValueColorCode = disabled ? 'disabled' : getNominalValueColorCode(details.nominalValue);
+  const interestConstColorCode = disabled ? 'disabled' : getInterestConstColorCode(details.interestConst, statistics[interestBaseType(bondReport)]);
 
   return (
     <>
@@ -33,7 +35,7 @@ export default function BondCardMainInformationSection({ bondReport, statistics 
       </CardSection>
       <CardSection>
         <CardEntry caption='Issue Value'>
-          <CardValue colorCode='white'>{details.issueValue > 0 ? formatCompactCurrency(details.issueValue, details.currency) : 'n/a'}</CardValue>
+          <CardValue colorCode={issueValueColorCode}>{details.issueValue > 0 ? formatCompactCurrency(details.issueValue, details.currency) : 'n/a'}</CardValue>
         </CardEntry>
         <CardEntry caption='Nominal value' textAlign='center'>
           <CardValue colorCode={nominalValueColorCode}>

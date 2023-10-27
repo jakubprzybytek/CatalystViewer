@@ -1,4 +1,4 @@
-export type ColorCode = 'red' | 'orange' | 'yellow' | 'green' | 'white' | 'none';
+export type ColorCode = 'red' | 'orange' | 'yellow' | 'green' | 'white' | 'disabled' | 'none';
 
 export type ColorMarker = {
   color: string,
@@ -25,6 +25,10 @@ export const colorMarkers: Record<ColorCode, ColorMarker | undefined> = {
   'white': {
     color: 'black',
     backgroundColor: 'white'
+  },
+  'disabled': {
+    color: 'grey',
+    backgroundColor: 'lightgrey'
   },
   'none': undefined
 }

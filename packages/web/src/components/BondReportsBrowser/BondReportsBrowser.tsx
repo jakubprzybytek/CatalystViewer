@@ -91,11 +91,11 @@ export default function BondReportsBrowser(): JSX.Element {
             onClick={() => { setIsLoading(true); fetchData(filteringOptions.bondType); }}>
             <Refresh />
           </IconButton>
-          <IconButton color='inherit'
+          <IconButton color='inherit' disabled={isLoading}
             onClick={(event: React.MouseEvent<HTMLButtonElement>) => setSortMenuTriggerEl(event.currentTarget)}>
             <Sort />
           </IconButton>
-          <IconButton color='inherit'
+          <IconButton color='inherit' disabled={isLoading}
             onClick={() => setFilteringDrawerOpen(true)}>
             <FilterAlt />
           </IconButton>
@@ -105,7 +105,7 @@ export default function BondReportsBrowser(): JSX.Element {
       <BondReportsFilterDrawer open={filteringDrawerOpen} onClose={() => setFilteringDrawerOpen(false)} allBondReports={allBondReports} allBondTypes={allBondTypes} filteringOptions={filteringOptions} setFilteringOptions={setFilteringOptions} />
       <Box sx={{ height: 48 }} />
       <Box padding={1}>
-        <BondsList bondReports={filteredAndSortedBondsStatistics} statistics={filteredBondsStatistics} />
+        <BondsList disabled={isLoading} bondReports={filteredAndSortedBondsStatistics} statistics={filteredBondsStatistics} />
         {errorMessage && <Alert severity="error">
           <AlertTitle>Cannot fetch data!</AlertTitle>
           <pre>{errorMessage}</pre>

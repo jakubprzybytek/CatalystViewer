@@ -1,11 +1,10 @@
 import { styled } from '@mui/material/styles';
 import LinearProgress, { linearProgressClasses } from '@mui/material/LinearProgress';
-import { BondReport } from '../../../sdk/GetBonds';
-import { formatCurrency, formatDate } from '../../../common/Formats';
-import { CardSection, CardEntry, CardValue } from '../../../common/Cards';
-import { ColorCode } from '../../../common/ColorCodes';
+import { BondReport } from '@/sdk/GetBonds';
+import { formatCurrency, formatDate } from '@/common/Formats';
+import { CardSection, CardEntry, CardValue } from '@/common/Cards';
+import { ColorCode } from '@/common/ColorCodes';
 import { Box } from '@mui/material';
-import { differenceInDays } from 'date-fns';
 
 const BorderLinearProgress = styled(LinearProgress)(({ theme }) => ({
   height: 10,
@@ -20,14 +19,15 @@ const BorderLinearProgress = styled(LinearProgress)(({ theme }) => ({
 }));
 
 type BondCardCurrentInterestSectionParams = {
+  disabled: boolean;
   bondReport: BondReport;
 }
 
-export default function BondCardCurrentInterestSection({ bondReport: { currentValues, details: { currency } } }: BondCardCurrentInterestSectionParams): JSX.Element {
+export default function BondCardCurrentInterestSection({ disabled, bondReport: { currentValues, details: { currency } } }: BondCardCurrentInterestSectionParams): JSX.Element {
   const today = new Date();
   const interestBarColor = today.getTime() >= currentValues.interestRecordDay ? 'success' : 'error';
 
-  const accuredInterestColorCode: ColorCode = currentValues.accuredInterest == 0 ? 'green' : 'none';
+  const accuredInterestColorCode: ColorCode = currentValues.accuredInterest == 0 ? disabled ? 'disabled' : 'green' : 'none';
 
   return (
     <>

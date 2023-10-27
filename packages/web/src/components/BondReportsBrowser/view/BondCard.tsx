@@ -8,14 +8,20 @@ import BondCardCurrentInterestSection from './BondCardCurrentInterestSection';
 import BondCardYTMSection from "./BondCardYTMSection";
 
 type BondCardParam = {
+  disabled: boolean;
   bondReport: BondReport;
   statistics: InterestPercentilesByInterestBaseType;
 }
 
-export default function BondCard({ bondReport, statistics }: BondCardParam): JSX.Element {
+export default function BondCard({ disabled, bondReport, statistics }: BondCardParam): JSX.Element {
   return (
     <>
       <Paper sx={{
+
+        ...(disabled && {
+          backgroundColor: 'lightgrey' ,
+          color: 'grey'
+        }),
         '& .MuiTypography-caption': {
           color: 'gray',
           lineHeight: 1.3
@@ -29,9 +35,9 @@ export default function BondCard({ bondReport, statistics }: BondCardParam): JSX
           fontSize: '0.75em'
         }
       }}>
-        <BondCardMainInformationSection bondReport={bondReport} statistics={statistics} />
+        <BondCardMainInformationSection disabled={disabled} bondReport={bondReport} statistics={statistics} />
         <Divider>Current interest</Divider>
-        <BondCardCurrentInterestSection bondReport={bondReport} />
+        <BondCardCurrentInterestSection disabled={disabled} bondReport={bondReport} />
         <Divider>Yield to maturity</Divider>
         {!bondReport.lastPrice && bondReport.referencePrice && <BondCardYTMSection title='Reference price' bondReport={bondReport} price={bondReport.referencePrice} />}
         {bondReport.lastPrice && <BondCardYTMSection title='Last price (date/time)' bondReport={bondReport} price={bondReport.lastPrice} secondary={bondReport.lastDateTime} />}
