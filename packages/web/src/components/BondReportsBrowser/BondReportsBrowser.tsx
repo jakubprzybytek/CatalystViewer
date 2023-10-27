@@ -8,12 +8,11 @@ import IconButton from "@mui/material/IconButton";
 import FilterAlt from "@mui/icons-material/FilterAlt";
 import Refresh from "@mui/icons-material/Refresh";
 import Sort from "@mui/icons-material/Sort";
+import MainNavigation from "../MainNavigation";
+import BondReportsFilterPanel, { BondReportsFilteringOptions, filterUsing } from "./filter";
+import BondReportsSortMenu, { BondReportsSortOrder, getBondReportsSortingFunction } from "./sort";
 import { BondReport, getBonds } from "@/sdk/GetBonds";
 import { computeStatisticsForInterestBaseTypes } from "@/bonds/statistics";
-import { BondReportsFilteringOptions, filterUsing } from "./filter";
-import MainNavigation from "../MainNavigation";
-import BondReportsFilter from "./filter/BondReportsFilter";
-import BondReportsSortMenu, { BondReportsSortOrder, getBondReportsSortingFunction } from "./sort";
 
 const DEFAULT_FILTERING_OPTIONS: BondReportsFilteringOptions = {
   bondType: 'Corporate bonds',
@@ -112,7 +111,7 @@ export default function BondReportsBrowser(): JSX.Element {
             keepMounted: true, // Better open performance on mobile.
           }}>
           <Box padding={1}>
-            <BondReportsFilter allBondReports={allBondReports} allBondTypes={allBondTypes} filteringOptions={filteringOptions} setFilteringOptions={setFilteringOptions} />
+            <BondReportsFilterPanel allBondReports={allBondReports} allBondTypes={allBondTypes} filteringOptions={filteringOptions} setFilteringOptions={setFilteringOptions} />
           </Box>
         </Drawer>
       </Box>

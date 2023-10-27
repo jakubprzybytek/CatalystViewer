@@ -6,14 +6,14 @@ import { filterBy, getUniqueInterestBaseTypes, getUniqueMarkets, isBondType, isI
 import { BondReport } from "@/sdk/GetBonds";
 import { BondReportsFilteringOptions } from ".";
 
-type BondReportsFilterParams = {
+type BondReportsFilterPanelParams = {
   allBondReports: BondReport[];
   allBondTypes: string[];
   filteringOptions: BondReportsFilteringOptions;
   setFilteringOptions: (param: BondReportsFilteringOptions) => void;
 };
 
-export default function BondReportsFilter({ allBondReports, allBondTypes, filteringOptions, setFilteringOptions, /*setFilteredBondReports*/ }: BondReportsFilterParams): JSX.Element {
+export default function BondReportsFilterPanel({ allBondReports, allBondTypes, filteringOptions, setFilteringOptions }: BondReportsFilterPanelParams): JSX.Element {
   const allInterestBaseTypes = useMemo(() => sortStrings(getUniqueInterestBaseTypes(allBondReports)), [allBondReports]);
   const allMarkets = useMemo(() => sortStrings(getUniqueMarkets(allBondReports)), [allBondReports]);
 
