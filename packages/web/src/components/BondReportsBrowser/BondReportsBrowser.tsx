@@ -7,11 +7,13 @@ import BondsList from "./view/BondsList";
 import IconButton from "@mui/material/IconButton";
 import FilterAlt from "@mui/icons-material/FilterAlt";
 import Refresh from "@mui/icons-material/Refresh";
+import Sort from "@mui/icons-material/Sort";
 import { BondReport, getBonds } from "@/sdk/GetBonds";
 import { computeStatisticsForInterestBaseTypes } from "@/bonds/statistics";
 import { BondReportsFilteringOptions, filterUsing } from "./filter";
 import MainNavigation from "../MainNavigation";
 import BondReportsFilter from "./filter/BondReportsFilter";
+import BondReportsSortMenu, { BondReportsSortOrder, getBondReportsSortingFunction } from "./sort";
 
 const DEFAULT_FILTERING_OPTIONS: BondReportsFilteringOptions = {
   bondType: 'Corporate bonds',
@@ -24,6 +26,7 @@ export default function BondReportsBrowser(): JSX.Element {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
 
+  // filtering
   const [filteringDrawerOpen, setFilteringDrawerOpen] = useState(false);
 
   const [allBondReports, setAllBondReports] = useState<BondReport[]>([]);
@@ -33,6 +36,15 @@ export default function BondReportsBrowser(): JSX.Element {
   const [filteredBondReports, setFilteredBondReports] = useState<BondReport[]>([]);
 
   const filteredBondsStatistics = useMemo(() => computeStatisticsForInterestBaseTypes(filteredBondReports), [filteredBondReports]);
+
+  // sorting
+  const [sortMenuTriggerEl, setSortMenuTriggerEl] = useState<null | HTMLElement>(null);
+  const [selectedBondReportsSortOrder, setSelectedBondReportsSortOrder] = useState<BondReportsSortOrder>(BondReportsSortOrder.Name);
+
+  function selectBondReportsSortOrder(sortOrder: BondReportsSortOrder) {
+    setSelectedBondReportsSortOrder(sortOrder);
+    setSortMenuTriggerEl(null);
+  }
 
   async function fetchData(bondType: string) {
     console.log(`Fetching reports for bond type: ${bondType}`);
@@ -70,6 +82,9 @@ export default function BondReportsBrowser(): JSX.Element {
     setFilteredBondReports(filteredBondReports);
   }, [allBondReports, filteringOptions.maxNominal, filteringOptions.markets, filteringOptions.interestBaseTypes]);
 
+  const filteredAndSortedBondsStatistics = useMemo(() =>
+    getBondReportsSortingFunction(selectedBondReportsSortOrder)(filteredBondReports), [selectedBondReportsSortOrder, filteredBondReports]);
+
   return (
     <>
       <MainNavigation>
@@ -79,11 +94,16 @@ export default function BondReportsBrowser(): JSX.Element {
             <Refresh />
           </IconButton>
           <IconButton color='inherit'
+            onClick={(event: React.MouseEvent<HTMLButtonElement>) => setSortMenuTriggerEl(event.currentTarget)}>
+            <Sort />
+          </IconButton>
+          <IconButton color='inherit'
             onClick={() => setFilteringDrawerOpen(true)}>
             <FilterAlt />
           </IconButton>
         </>
       </MainNavigation>
+      <BondReportsSortMenu anchorEl={sortMenuTriggerEl} selectedBondReportsSortOrder={selectedBondReportsSortOrder} setBondReportsSortOrder={selectBondReportsSortOrder} />
       <Box component="nav">
         <Drawer anchor='top' open={filteringDrawerOpen}
           variant='temporary'
@@ -98,7 +118,7 @@ export default function BondReportsBrowser(): JSX.Element {
       </Box>
       <Box sx={{ height: 48 }} />
       <Box padding={1}>
-        <BondsList bondReports={filteredBondReports} statistics={filteredBondsStatistics} />
+        <BondsList bondReports={filteredAndSortedBondsStatistics} statistics={filteredBondsStatistics} />
         {errorMessage && <Alert severity="error">
           <AlertTitle>Cannot fetch data!</AlertTitle>
           <pre>{errorMessage}</pre>
