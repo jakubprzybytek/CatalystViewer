@@ -1,10 +1,10 @@
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import Grid from "@mui/material/Grid";
 import Typography from "@mui/material/Typography";
-import { NominalValueFilter, StringFilter, MultiStringFilter } from "./fields";
-import { filterBy, getUniqueInterestBaseTypes, getUniqueMarkets, isBondType, isInterestBaseType, isOnMarkets, nominalValueLessThan, sortStrings } from "@/bonds/statistics";
+import { getUniqueInterestBaseTypes, getUniqueMarkets, sortStrings } from "@/bonds/statistics";
 import { BondReport } from "@/sdk/GetBonds";
 import { BondReportsFilteringOptions } from ".";
+import { NominalValueFilter, StringFilter, MultiStringFilter } from "./fields";
 
 type BondReportsFilterPanelParams = {
   allBondReports: BondReport[];
@@ -13,7 +13,7 @@ type BondReportsFilterPanelParams = {
   setFilteringOptions: (param: BondReportsFilteringOptions) => void;
 };
 
-export default function BondReportsFilterPanel({ allBondReports, allBondTypes, filteringOptions, setFilteringOptions }: BondReportsFilterPanelParams): JSX.Element {
+export function BondReportsFilterPanel({ allBondReports, allBondTypes, filteringOptions, setFilteringOptions }: BondReportsFilterPanelParams): JSX.Element {
   const allInterestBaseTypes = useMemo(() => sortStrings(getUniqueInterestBaseTypes(allBondReports)), [allBondReports]);
   const allMarkets = useMemo(() => sortStrings(getUniqueMarkets(allBondReports)), [allBondReports]);
 

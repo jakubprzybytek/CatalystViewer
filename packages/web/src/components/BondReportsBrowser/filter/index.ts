@@ -1,7 +1,9 @@
-import BondReportsFilterPanel from './BondReportsFilterPanel';
+import BondReportsFilterDrawer from './BondReportsFilterDrawer';
 import { filterBy, isBondType, isInterestBaseType, isOnMarkets, nominalValueLessThan } from "@/bonds/statistics";
 
-export default BondReportsFilterPanel;
+export default BondReportsFilterDrawer;
+
+export * from './BondReportsFilterPanel';
 
 export type BondReportsFilteringOptions = {
   bondType: string;

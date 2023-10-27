@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import Box from "@mui/material/Box";
-import Drawer from "@mui/material/Drawer";
 import Alert from "@mui/material/Alert";
 import AlertTitle from "@mui/material/AlertTitle";
 import BondsList from "./view/BondsList";
@@ -9,7 +8,7 @@ import FilterAlt from "@mui/icons-material/FilterAlt";
 import Refresh from "@mui/icons-material/Refresh";
 import Sort from "@mui/icons-material/Sort";
 import MainNavigation from "../MainNavigation";
-import BondReportsFilterPanel, { BondReportsFilteringOptions, filterUsing } from "./filter";
+import BondReportsFilterDrawer, { BondReportsFilteringOptions, filterUsing } from "./filter";
 import BondReportsSortMenu, { BondReportsSortOrder, getBondReportsSortingFunction } from "./sort";
 import { BondReport, getBonds } from "@/sdk/GetBonds";
 import { computeStatisticsForInterestBaseTypes } from "@/bonds/statistics";
@@ -103,18 +102,7 @@ export default function BondReportsBrowser(): JSX.Element {
         </>
       </MainNavigation>
       <BondReportsSortMenu anchorEl={sortMenuTriggerEl} selectedBondReportsSortOrder={selectedBondReportsSortOrder} setBondReportsSortOrder={selectBondReportsSortOrder} />
-      <Box component="nav">
-        <Drawer anchor='top' open={filteringDrawerOpen}
-          variant='temporary'
-          onClose={() => setFilteringDrawerOpen(false)}
-          ModalProps={{
-            keepMounted: true, // Better open performance on mobile.
-          }}>
-          <Box padding={1}>
-            <BondReportsFilterPanel allBondReports={allBondReports} allBondTypes={allBondTypes} filteringOptions={filteringOptions} setFilteringOptions={setFilteringOptions} />
-          </Box>
-        </Drawer>
-      </Box>
+      <BondReportsFilterDrawer open={filteringDrawerOpen} onClose={() => setFilteringDrawerOpen(false)} allBondReports={allBondReports} allBondTypes={allBondTypes} filteringOptions={filteringOptions} setFilteringOptions={setFilteringOptions} />
       <Box sx={{ height: 48 }} />
       <Box padding={1}>
         <BondsList bondReports={filteredAndSortedBondsStatistics} statistics={filteredBondsStatistics} />
