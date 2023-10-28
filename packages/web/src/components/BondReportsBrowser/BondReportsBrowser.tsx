@@ -83,9 +83,11 @@ export default function BondReportsBrowser(): JSX.Element {
   const filteredAndSortedBondsStatistics = useMemo(() =>
     getBondReportsSortingFunction(selectedBondReportsSortOrder)(filteredBondReports), [selectedBondReportsSortOrder, filteredBondReports]);
 
+  const title = `${filteredBondReports.length} ${filteringOptions.bondType}`;
+
   return (
     <>
-      <MainNavigation>
+      <MainNavigation title={title}>
         <>
           <IconButton color='inherit' disabled={isLoading}
             onClick={() => { setIsLoading(true); fetchData(filteringOptions.bondType); }}>
