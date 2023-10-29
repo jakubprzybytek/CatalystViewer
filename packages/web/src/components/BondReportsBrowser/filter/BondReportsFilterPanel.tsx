@@ -5,6 +5,7 @@ import { getUniqueInterestBaseTypes, getUniqueMarkets, sortStrings } from "@/bon
 import { BondReport } from "@/sdk/GetBonds";
 import { BondReportsFilteringOptions } from ".";
 import { NominalValueFilter, StringFilter, MultiStringFilter } from "./fields";
+import IssuersSelector from "./IssuersSelector";
 
 type BondReportsFilterPanelParams = {
   allBondReports: BondReport[];
@@ -54,6 +55,7 @@ export function BondReportsFilterPanel({ allBondReports, allBondTypes, filtering
             all={allInterestBaseTypes} selected={filteringOptions.interestBaseTypes} add={addInterestBaseTyp} remove={removeInterestBasetType} />
         </Grid>
       </Grid>
+      {/* <IssuersSelector allIssuers={[]} selectedIssuers={[]} addIssuer={} removeIssuer={} removeAllIssuers={} /> */}
       <Typography>Listing (count) bonds</Typography>
     </>
   );
