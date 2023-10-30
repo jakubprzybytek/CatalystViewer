@@ -17,7 +17,8 @@ const DEFAULT_FILTERING_OPTIONS: BondReportsFilteringOptions = {
   bondType: 'Corporate bonds',
   maxNominal: 10000,
   markets: ['GPW ASO', 'GPW RR'],
-  interestBaseTypes: ['WIBOR 3M', 'WIBOR 6M']
+  interestBaseTypes: ['WIBOR 3M', 'WIBOR 6M'],
+  issuers: []
 }
 
 export default function BondReportsBrowser(): JSX.Element {

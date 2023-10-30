@@ -10,6 +10,7 @@ export type BondReportsFilteringOptions = {
   maxNominal: number;
   markets: string[];
   interestBaseTypes: string[];
+  issuers: string[];
 }
 
 export function filterUsing(filteringOptions: BondReportsFilteringOptions) {
