@@ -1,5 +1,5 @@
 import BondReportsFilterDrawer from './BondReportsFilterDrawer';
-import { filterBy, isBondType, isInterestBaseType, isOnMarkets, nominalValueLessThan } from "@/bonds/statistics";
+import { filterBy, isBondType, isInterestBaseType, isIssuedBy, isOnMarkets, nominalValueLessThan } from "@/bonds/statistics";
 
 export default BondReportsFilterDrawer;
 
@@ -18,6 +18,7 @@ export function filterUsing(filteringOptions: BondReportsFilteringOptions) {
     // isBondType(filteringOptions.bondType),
     nominalValueLessThan(filteringOptions.maxNominal),
     isOnMarkets(filteringOptions.markets),
-    isInterestBaseType(filteringOptions.interestBaseTypes)
+    isInterestBaseType(filteringOptions.interestBaseTypes),
+    isIssuedBy(filteringOptions.issuers)
   ])
 };

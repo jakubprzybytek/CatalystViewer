@@ -37,7 +37,7 @@ export function BondReportsFilterPanel({ allBondReports, allBondTypes, filtering
   const allIssuers = getUniqueIssuers(allBondReports);
   const addIssuer = (newIssuer: string) => setFilteringOption({ issuers: [...filteringOptions.issuers, newIssuer] });
   const removeIssuer = (issuerToRemove: string) => setFilteringOption({ issuers: removeElement(filteringOptions.issuers, issuerToRemove) });
-  const removeAllIssuers = () => setFilteringOption({ markets: [] });
+  const removeAllIssuers = () => setFilteringOption({ issuers: [] });
 
   return (
     <>

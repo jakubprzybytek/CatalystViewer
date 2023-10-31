@@ -79,7 +79,7 @@ export default function BondReportsBrowser(): JSX.Element {
 
     console.log(`Filtering result: ${filteredBondReports.length} bond reports`);
     setFilteredBondReports(filteredBondReports);
-  }, [allBondReports, filteringOptions.maxNominal, filteringOptions.markets, filteringOptions.interestBaseTypes]);
+  }, [allBondReports, filteringOptions.maxNominal, filteringOptions.markets, filteringOptions.interestBaseTypes, filteringOptions.issuers]);
 
   const filteredAndSortedBondsStatistics = useMemo(() =>
     getBondReportsSortingFunction(selectedBondReportsSortOrder)(filteredBondReports), [selectedBondReportsSortOrder, filteredBondReports]);
