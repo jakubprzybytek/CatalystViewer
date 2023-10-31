@@ -1,5 +1,6 @@
 import Box from "@mui/material/Box";
 import Drawer from "@mui/material/Drawer";
+import Typography from "@mui/material/Typography";
 import { BondReportsFilterPanel, BondReportsFilteringOptions } from ".";
 import { BondReport } from "@/sdk/GetBonds";
 
@@ -10,9 +11,10 @@ type BondReportsFilterDrawerParams = {
   allBondTypes: string[];
   filteringOptions: BondReportsFilteringOptions;
   setFilteringOptions: (param: BondReportsFilteringOptions) => void;
+  filteredBondReports: BondReport[];
 };
 
-export default function BondReportsFilterDrawer({ open, onClose, allBondReports, allBondTypes, filteringOptions, setFilteringOptions }: BondReportsFilterDrawerParams): JSX.Element {
+export default function BondReportsFilterDrawer({ open, onClose, allBondReports, allBondTypes, filteringOptions, setFilteringOptions, filteredBondReports }: BondReportsFilterDrawerParams): JSX.Element {
   return (
     <Box component="nav">
       <Drawer anchor='top' open={open}
@@ -23,6 +25,7 @@ export default function BondReportsFilterDrawer({ open, onClose, allBondReports,
         }}>
         <Box padding={1}>
           <BondReportsFilterPanel allBondReports={allBondReports} allBondTypes={allBondTypes} filteringOptions={filteringOptions} setFilteringOptions={setFilteringOptions} />
+          <Typography>Listing {filteredBondReports.length} bonds</Typography>
         </Box>
       </Drawer>
     </Box>

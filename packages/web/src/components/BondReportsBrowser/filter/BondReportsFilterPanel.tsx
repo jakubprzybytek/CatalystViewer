@@ -66,7 +66,6 @@ export function BondReportsFilterPanel({ allBondReports, allBondTypes, filtering
         <Typography paddingBottom={1}>Select issuers:</Typography>
         <IssuersSelector allIssuers={allIssuers} selectedIssuers={filteringOptions.issuers} addIssuer={addIssuer} removeIssuer={removeIssuer} removeAllIssuers={removeAllIssuers} />
       </Grid>
-      <Typography>Listing (count) bonds</Typography>
     </>
   );
 }
