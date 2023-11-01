@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Box from "@mui/material/Box";
+import Collapse from "@mui/material/Collapse";
+import Typography from "@mui/material/Typography";
 import Alert from "@mui/material/Alert";
 import AlertTitle from "@mui/material/AlertTitle";
 import BondsList from "./view/BondsList";
@@ -12,6 +14,8 @@ import BondReportsFilterDrawer, { BondReportsFilteringOptions, filterUsing } fro
 import BondReportsSortMenu, { BondReportsSortOrder, getBondReportsSortingFunction } from "./sort";
 import { BondReport, getBonds } from "@/sdk/GetBonds";
 import { computeStatisticsForInterestBaseTypes } from "@/bonds/statistics";
+import BondsListStats from "./view/BondsListStats";
+import { Link } from "@mui/material";
 
 const DEFAULT_FILTERING_OPTIONS: BondReportsFilteringOptions = {
   bondType: 'Corporate bonds',
@@ -34,6 +38,8 @@ export default function BondReportsBrowser(): JSX.Element {
   const [filteringOptions, setFilteringOptions] = useState<BondReportsFilteringOptions>(DEFAULT_FILTERING_OPTIONS);
   const [filteredBondReports, setFilteredBondReports] = useState<BondReport[]>([]);
 
+  // stats
+  const [statsShown, setStatsShown] = useState(false);
   const filteredBondsStatistics = useMemo(() => computeStatisticsForInterestBaseTypes(filteredBondReports), [filteredBondReports]);
 
   // sorting
@@ -108,12 +114,17 @@ export default function BondReportsBrowser(): JSX.Element {
       <BondReportsFilterDrawer open={filteringDrawerOpen} onClose={() => setFilteringDrawerOpen(false)} allBondReports={allBondReports} allBondTypes={allBondTypes} filteringOptions={filteringOptions} setFilteringOptions={setFilteringOptions} filteredBondReports={filteredBondReports} />
       <Box sx={{ height: 48 }} />
       <Box padding={1}>
+        <Typography component='p' sx={{ textAlign: 'end', cursor: 'pointer' }}
+          onClick={() => setStatsShown(!statsShown)}>{statsShown ? 'Hide' : 'Show'} stats</Typography>
+        <Collapse in={statsShown} sx={{ marginBottom: 1 }}>
+          <BondsListStats bondReports={filteredBondReports} statistics={filteredBondsStatistics} />
+        </Collapse>
         <BondsList disabled={isLoading} bondReports={filteredAndSortedBondsStatistics} statistics={filteredBondsStatistics} />
         {errorMessage && <Alert severity="error">
           <AlertTitle>Cannot fetch data!</AlertTitle>
           <pre>{errorMessage}</pre>
         </Alert>}
-      </Box>
+      </Box >
     </>
   );
 }
