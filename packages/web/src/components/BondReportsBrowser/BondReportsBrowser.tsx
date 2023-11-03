@@ -15,7 +15,25 @@ import BondReportsSortMenu, { BondReportsSortOrder, getBondReportsSortingFunctio
 import { BondReport, getBonds } from "@/sdk/GetBonds";
 import { computeStatisticsForInterestBaseTypes } from "@/bonds/statistics";
 import BondsListStats from "./view/BondsListStats";
-import { Link } from "@mui/material";
+import IssuersViewer from "./issuers/IssuersViewer";
+
+type ConditionParams = {
+  render: boolean;
+  children: React.ReactElement;
+}
+
+function Condition({ render, children }: ConditionParams): JSX.Element {
+  if (render) {
+    return (<>{children} </>);
+  } else {
+    return (<></>);
+  }
+}
+
+enum View {
+  Issuers,
+  Bonds
+}
 
 const DEFAULT_FILTERING_OPTIONS: BondReportsFilteringOptions = {
   bondType: 'Corporate bonds',
@@ -28,6 +46,8 @@ const DEFAULT_FILTERING_OPTIONS: BondReportsFilteringOptions = {
 export default function BondReportsBrowser(): JSX.Element {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
+
+  const [view, setView] = useState(View.Issuers);
 
   // filtering
   const [filteringDrawerOpen, setFilteringDrawerOpen] = useState(false);
@@ -115,15 +135,24 @@ export default function BondReportsBrowser(): JSX.Element {
       <Box sx={{ height: 48 }} />
       <Box padding={1}>
         <Typography component='p' sx={{ textAlign: 'end', cursor: 'pointer' }}
+          onClick={() => setView(view === View.Bonds ? View.Issuers : View.Bonds)}>List {view === View.Bonds ? 'issuers' : 'bonds'}</Typography>
+        <Typography component='p' sx={{ textAlign: 'end', cursor: 'pointer' }}
           onClick={() => setStatsShown(!statsShown)}>{statsShown ? 'Hide' : 'Show'} stats</Typography>
         <Collapse in={statsShown} sx={{ marginBottom: 1 }}>
           <BondsListStats bondReports={filteredBondReports} statistics={filteredBondsStatistics} />
         </Collapse>
-        <BondsList disabled={isLoading} bondReports={filteredAndSortedBondsStatistics} statistics={filteredBondsStatistics} />
-        {errorMessage && <Alert severity="error">
-          <AlertTitle>Cannot fetch data!</AlertTitle>
-          <pre>{errorMessage}</pre>
-        </Alert>}
+        <Condition render={view == View.Bonds}>
+          <BondsList disabled={isLoading} bondReports={filteredAndSortedBondsStatistics} statistics={filteredBondsStatistics} />
+        </Condition>
+        <Condition render={view == View.Issuers}>
+          <IssuersViewer disabled={isLoading} bondReports={filteredAndSortedBondsStatistics} statistics={filteredBondsStatistics} filteringOptions={filteringOptions} setFilteringOptions={setFilteringOptions} />
+        </Condition>
+        <Condition render={errorMessage !== undefined}>
+          <Alert severity="error">
+            <AlertTitle>Cannot fetch data!</AlertTitle>
+            <pre>{errorMessage}</pre>
+          </Alert>
+        </Condition>
       </Box >
     </>
   );
