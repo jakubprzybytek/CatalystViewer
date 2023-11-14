@@ -51,17 +51,7 @@ export default function IssuersViewer({ disabled, bondReports, statistics, filte
       p: { sm: 1 },
       '& > div': { mb: 1 }
     }}>
-      {disabled && <Box sx={{
-        display: 'flex',
-        height: '60vh',
-        justifyContent: 'center',
-        alignItems: 'center'
-      }}>
-        <CircularProgress />
-      </Box>}
-      {!disabled && <>
-        <IssuersList issuers={issuerReports} statistics={statistics} filteringOptions={filteringOptions} setFilteringOptions={setFilteringOptions} />
-      </>}
+      <IssuersList issuers={issuerReports} statistics={statistics} filteringOptions={filteringOptions} setFilteringOptions={setFilteringOptions} />
     </Box>
   );
 }

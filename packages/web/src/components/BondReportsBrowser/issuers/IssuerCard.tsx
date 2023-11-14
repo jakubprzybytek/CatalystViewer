@@ -29,7 +29,7 @@ export default function IssuerCard({ issuerReport, statistics, selectedIssuers, 
     <>
       <Paper sx={{
         pb: 1,
-        // ...(isChecked && { backgroundColor: 'oldlace' }),
+         ...(isChecked && { backgroundColor: 'oldlace' }),
         '& .MuiTypography-caption': {
           color: 'gray',
           lineHeight: 1.3

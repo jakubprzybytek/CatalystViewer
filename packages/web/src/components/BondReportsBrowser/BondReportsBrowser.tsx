@@ -6,6 +6,7 @@ import Alert from "@mui/material/Alert";
 import AlertTitle from "@mui/material/AlertTitle";
 import BondsList from "./view/BondsList";
 import IconButton from "@mui/material/IconButton";
+import CircularProgress from "@mui/material/CircularProgress";
 import FilterAlt from "@mui/icons-material/FilterAlt";
 import Refresh from "@mui/icons-material/Refresh";
 import Sort from "@mui/icons-material/Sort";
@@ -44,23 +45,20 @@ const DEFAULT_FILTERING_OPTIONS: BondReportsFilteringOptions = {
 }
 
 export default function BondReportsBrowser(): JSX.Element {
-  const [isLoading, setIsLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | undefined>();
-
   const [view, setView] = useState(View.Issuers);
 
-  // filtering
-  const [filteringDrawerOpen, setFilteringDrawerOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | undefined>();
 
   const [allBondReports, setAllBondReports] = useState<BondReport[]>([]);
   const [allBondTypes, setAllBondTypes] = useState<string[]>([]);
 
-  const [filteringOptions, setFilteringOptions] = useState<BondReportsFilteringOptions>(DEFAULT_FILTERING_OPTIONS);
-  const [filteredBondReports, setFilteredBondReports] = useState<BondReport[]>([]);
-
   // stats
   const [statsShown, setStatsShown] = useState(false);
-  const filteredBondsStatistics = useMemo(() => computeStatisticsForInterestBaseTypes(filteredBondReports), [filteredBondReports]);
+
+  // filtering
+  const [filteringDrawerOpen, setFilteringDrawerOpen] = useState(false);
+  const [filteringOptions, setFilteringOptions] = useState<BondReportsFilteringOptions>(DEFAULT_FILTERING_OPTIONS);
 
   // sorting
   const [sortMenuTriggerEl, setSortMenuTriggerEl] = useState<null | HTMLElement>(null);
@@ -96,24 +94,27 @@ export default function BondReportsBrowser(): JSX.Element {
     fetchData(filteringOptions.bondType);
   }, [filteringOptions.bondType]);
 
-  const filteredBondReportsForIssuersView = useMemo(() =>
+  // first, filter without issuers - it will be used to display all issuers
+  const filteredBondReportsWithoutIssuers = useMemo(() =>
     filterUsing({ ...filteringOptions, issuers: [] })(allBondReports)
     , [allBondReports, filteringOptions.maxNominal, filteringOptions.markets, filteringOptions.interestBaseTypes]);
 
-  const filteredBondReportsStatisticsForIssuersView = useMemo(() =>
-    computeStatisticsForInterestBaseTypes(filteredBondReportsForIssuersView)
-    , [filteredBondReportsForIssuersView]);
+  const filteredBondReportsWithoutIssuersStatistics = useMemo(() =>
+    computeStatisticsForInterestBaseTypes(filteredBondReportsWithoutIssuers)
+    , [filteredBondReportsWithoutIssuers]);
 
   // Perform bonds filtering
-  useEffect(() => {
+  const filteredBondReports = useMemo(() => {
     console.log(`Applying filters: ${JSON.stringify(filteringOptions)} to ${allBondReports.length} bond reports`);
 
     const filterBondReports = filterUsing(filteringOptions);
     const filteredBondReports = filterBondReports(allBondReports);
 
     console.log(`Filtering result: ${filteredBondReports.length} bond reports`);
-    setFilteredBondReports(filteredBondReports);
+
+    return filteredBondReports;
   }, [allBondReports, filteringOptions.maxNominal, filteringOptions.markets, filteringOptions.interestBaseTypes, filteringOptions.issuers]);
+  const filteredBondsStatistics = useMemo(() => computeStatisticsForInterestBaseTypes(filteredBondReports), [filteredBondReports]);
 
   const filteredAndSortedBondsStatistics = useMemo(() =>
     getBondReportsSortingFunction(selectedBondReportsSortOrder)(filteredBondReports), [selectedBondReportsSortOrder, filteredBondReports]);
@@ -141,6 +142,20 @@ export default function BondReportsBrowser(): JSX.Element {
       <BondReportsSortMenu anchorEl={sortMenuTriggerEl} selectedBondReportsSortOrder={selectedBondReportsSortOrder} setBondReportsSortOrder={selectBondReportsSortOrder} />
       <BondReportsFilterDrawer open={filteringDrawerOpen} onClose={() => setFilteringDrawerOpen(false)} allBondReports={allBondReports} allBondTypes={allBondTypes} filteringOptions={filteringOptions} setFilteringOptions={setFilteringOptions} filteredBondReports={filteredBondReports} />
       <Box sx={{ height: 48 }} />
+      <Condition render={isLoading}>
+        <Box sx={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          height: '100%',
+          width: '100%',
+          backgroundColor: 'rgba(0, 0, 0, 0.3)',
+          textAlign: 'center',
+          zIndex: 1000
+        }}>
+          <CircularProgress size='6rem' sx={{ marginTop: 60 }} />
+        </Box>
+      </Condition>
       <Box padding={1}>
         <Typography component='p' sx={{ textAlign: 'end', cursor: 'pointer' }}
           onClick={() => setView(view === View.Bonds ? View.Issuers : View.Bonds)}>List {view === View.Bonds ? 'issuers' : 'bonds'}</Typography>
@@ -153,7 +168,7 @@ export default function BondReportsBrowser(): JSX.Element {
           <BondsList disabled={isLoading} bondReports={filteredAndSortedBondsStatistics} statistics={filteredBondsStatistics} />
         </Condition>
         <Condition render={view == View.Issuers}>
-          <IssuersViewer disabled={isLoading} bondReports={filteredBondReportsForIssuersView} statistics={filteredBondReportsStatisticsForIssuersView} filteringOptions={filteringOptions} setFilteringOptions={setFilteringOptions} />
+          <IssuersViewer disabled={isLoading} bondReports={filteredBondReportsWithoutIssuers} statistics={filteredBondReportsWithoutIssuersStatistics} filteringOptions={filteringOptions} setFilteringOptions={setFilteringOptions} />
         </Condition>
         <Condition render={errorMessage !== undefined}>
           <Alert severity="error">
