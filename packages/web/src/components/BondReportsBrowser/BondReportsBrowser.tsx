@@ -96,6 +96,14 @@ export default function BondReportsBrowser(): JSX.Element {
     fetchData(filteringOptions.bondType);
   }, [filteringOptions.bondType]);
 
+  const filteredBondReportsForIssuersView = useMemo(() =>
+    filterUsing({ ...filteringOptions, issuers: [] })(allBondReports)
+    , [allBondReports, filteringOptions.maxNominal, filteringOptions.markets, filteringOptions.interestBaseTypes]);
+
+  const filteredBondReportsStatisticsForIssuersView = useMemo(() =>
+    computeStatisticsForInterestBaseTypes(filteredBondReportsForIssuersView)
+    , [filteredBondReportsForIssuersView]);
+
   // Perform bonds filtering
   useEffect(() => {
     console.log(`Applying filters: ${JSON.stringify(filteringOptions)} to ${allBondReports.length} bond reports`);
@@ -145,7 +153,7 @@ export default function BondReportsBrowser(): JSX.Element {
           <BondsList disabled={isLoading} bondReports={filteredAndSortedBondsStatistics} statistics={filteredBondsStatistics} />
         </Condition>
         <Condition render={view == View.Issuers}>
-          <IssuersViewer disabled={isLoading} bondReports={filteredAndSortedBondsStatistics} statistics={filteredBondsStatistics} filteringOptions={filteringOptions} setFilteringOptions={setFilteringOptions} />
+          <IssuersViewer disabled={isLoading} bondReports={filteredBondReportsForIssuersView} statistics={filteredBondReportsStatisticsForIssuersView} filteringOptions={filteringOptions} setFilteringOptions={setFilteringOptions} />
         </Condition>
         <Condition render={errorMessage !== undefined}>
           <Alert severity="error">
