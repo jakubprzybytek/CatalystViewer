@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
+import Stack from "@mui/material/Stack";
 import Box from "@mui/material/Box";
 import Collapse from "@mui/material/Collapse";
-import Typography from "@mui/material/Typography";
+import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
+import ToggleButton from "@mui/material/ToggleButton";
 import Alert from "@mui/material/Alert";
 import AlertTitle from "@mui/material/AlertTitle";
 import BondsList from "./view/BondsList";
@@ -134,10 +136,10 @@ export default function BondReportsBrowser(): JSX.Element {
             onClick={(event: React.MouseEvent<HTMLButtonElement>) => setSortMenuTriggerEl(event.currentTarget)}>
             <Sort />
           </IconButton>
+          <BondReportsSortMenu anchorEl={sortMenuTriggerEl} selectedBondReportsSortOrder={selectedBondReportsSortOrder} setBondReportsSortOrder={selectBondReportsSortOrder} />
+          <BondReportsFilterDrawer open={filteringDrawerOpen} onClose={() => setFilteringDrawerOpen(false)} allBondReports={allBondReports} allBondTypes={allBondTypes} filteringOptions={filteringOptions} setFilteringOptions={setFilteringOptions} filteredBondReports={filteredBondReports} />
         </>
       </MainNavigation>
-      <BondReportsSortMenu anchorEl={sortMenuTriggerEl} selectedBondReportsSortOrder={selectedBondReportsSortOrder} setBondReportsSortOrder={selectBondReportsSortOrder} />
-      <BondReportsFilterDrawer open={filteringDrawerOpen} onClose={() => setFilteringDrawerOpen(false)} allBondReports={allBondReports} allBondTypes={allBondTypes} filteringOptions={filteringOptions} setFilteringOptions={setFilteringOptions} filteredBondReports={filteredBondReports} />
       <Box sx={{ height: 48 }} />
       <Condition render={isLoading}>
         <Box sx={{
@@ -150,15 +152,23 @@ export default function BondReportsBrowser(): JSX.Element {
           textAlign: 'center',
           zIndex: 1000
         }}>
-          <CircularProgress size='6rem' sx={{ marginTop: 60 }} />
+          <CircularProgress size='6rem' sx={{ mt: 10 }} />
         </Box>
       </Condition>
-      <Box padding={1}>
-        <Typography component='p' sx={{ textAlign: 'end', cursor: 'pointer' }}
-          onClick={() => setView(view === View.Bonds ? View.Issuers : View.Bonds)}>List {view === View.Bonds ? 'issuers' : 'bonds'}</Typography>
-        <Typography component='p' sx={{ textAlign: 'end', cursor: 'pointer' }}
-          onClick={() => setStatsShown(!statsShown)}>{statsShown ? 'Hide' : 'Show'} stats</Typography>
-        <Collapse in={statsShown} sx={{ marginBottom: 1 }}>
+      <Box sx={{ '& > div.MuiStack-root, & div.MuiCollapse-wrapper, & > div.MuiBox-root': { mt: 1, pl: { sm: 1 }, pr: { sm: 1 } } }}>
+        <Stack direction="row" spacing={1}>
+          <ToggleButtonGroup size="small" exclusive
+            value={view}
+            onChange={(event: React.MouseEvent<HTMLElement>, newView: View) => setView(newView)}>
+            <ToggleButton value={View.Issuers}>Issuers</ToggleButton>
+            <ToggleButton value={View.Bonds}>Bonds</ToggleButton>
+          </ToggleButtonGroup>
+          <ToggleButton size="small" value="check" selected={statsShown}
+            onChange={() => setStatsShown(!statsShown)}>
+            Show stats
+          </ToggleButton>
+        </Stack>
+        <Collapse in={statsShown}>
           <BondsListStats bondReports={filteredBondReports} statistics={bondReportsStatistics} />
         </Collapse>
         <Condition render={view == View.Bonds}>

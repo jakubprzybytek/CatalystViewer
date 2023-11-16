@@ -47,11 +47,6 @@ export default function IssuersViewer({ disabled, bondReports, statistics, filte
   }, [bondReports]);
 
   return (
-    <Box sx={{
-      p: { sm: 1 },
-      '& > div': { mb: 1 }
-    }}>
-      <IssuersList issuers={issuerReports} statistics={statistics} filteringOptions={filteringOptions} setFilteringOptions={setFilteringOptions} />
-    </Box>
+    <IssuersList issuers={issuerReports} statistics={statistics} filteringOptions={filteringOptions} setFilteringOptions={setFilteringOptions} />
   );
 }
