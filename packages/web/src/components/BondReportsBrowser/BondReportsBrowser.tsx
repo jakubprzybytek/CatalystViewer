@@ -99,10 +99,6 @@ export default function BondReportsBrowser(): JSX.Element {
     filterUsing({ ...filteringOptions, issuers: [] })(allBondReports)
     , [allBondReports, filteringOptions.maxNominal, filteringOptions.markets, filteringOptions.interestBaseTypes]);
 
-  const filteredBondReportsWithoutIssuersStatistics = useMemo(() =>
-    computeStatisticsForInterestBaseTypes(filteredBondReportsWithoutIssuers)
-    , [filteredBondReportsWithoutIssuers]);
-
   // Perform bonds filtering
   const filteredBondReports = useMemo(() => {
     console.log(`Applying filters: ${JSON.stringify(filteringOptions)} to ${allBondReports.length} bond reports`);
@@ -114,10 +110,11 @@ export default function BondReportsBrowser(): JSX.Element {
 
     return filteredBondReports;
   }, [allBondReports, filteringOptions.maxNominal, filteringOptions.markets, filteringOptions.interestBaseTypes, filteringOptions.issuers]);
-  const filteredBondsStatistics = useMemo(() => computeStatisticsForInterestBaseTypes(filteredBondReports), [filteredBondReports]);
 
-  const filteredAndSortedBondsStatistics = useMemo(() =>
+  const filteredAndSortedBondsReports = useMemo(() =>
     getBondReportsSortingFunction(selectedBondReportsSortOrder)(filteredBondReports), [selectedBondReportsSortOrder, filteredBondReports]);
+
+  const bondReportsStatistics = useMemo(() => computeStatisticsForInterestBaseTypes(allBondReports), [allBondReports]);
 
   const title = `${filteredBondReports.length} ${filteringOptions.bondType}`;
 
@@ -130,12 +127,12 @@ export default function BondReportsBrowser(): JSX.Element {
             <Refresh />
           </IconButton>
           <IconButton color='inherit' disabled={isLoading}
-            onClick={(event: React.MouseEvent<HTMLButtonElement>) => setSortMenuTriggerEl(event.currentTarget)}>
-            <Sort />
-          </IconButton>
-          <IconButton color='inherit' disabled={isLoading}
             onClick={() => setFilteringDrawerOpen(true)}>
             <FilterAlt />
+          </IconButton>
+          <IconButton color='inherit' disabled={isLoading}
+            onClick={(event: React.MouseEvent<HTMLButtonElement>) => setSortMenuTriggerEl(event.currentTarget)}>
+            <Sort />
           </IconButton>
         </>
       </MainNavigation>
@@ -162,13 +159,13 @@ export default function BondReportsBrowser(): JSX.Element {
         <Typography component='p' sx={{ textAlign: 'end', cursor: 'pointer' }}
           onClick={() => setStatsShown(!statsShown)}>{statsShown ? 'Hide' : 'Show'} stats</Typography>
         <Collapse in={statsShown} sx={{ marginBottom: 1 }}>
-          <BondsListStats bondReports={filteredBondReports} statistics={filteredBondsStatistics} />
+          <BondsListStats bondReports={filteredBondReports} statistics={bondReportsStatistics} />
         </Collapse>
         <Condition render={view == View.Bonds}>
-          <BondsList disabled={isLoading} bondReports={filteredAndSortedBondsStatistics} statistics={filteredBondsStatistics} />
+          <BondsList disabled={isLoading} bondReports={filteredAndSortedBondsReports} statistics={bondReportsStatistics} />
         </Condition>
         <Condition render={view == View.Issuers}>
-          <IssuersViewer disabled={isLoading} bondReports={filteredBondReportsWithoutIssuers} statistics={filteredBondReportsWithoutIssuersStatistics} filteringOptions={filteringOptions} setFilteringOptions={setFilteringOptions} />
+          <IssuersViewer disabled={isLoading} bondReports={filteredBondReportsWithoutIssuers} statistics={bondReportsStatistics} filteringOptions={filteringOptions} setFilteringOptions={setFilteringOptions} />
         </Condition>
         <Condition render={errorMessage !== undefined}>
           <Alert severity="error">
