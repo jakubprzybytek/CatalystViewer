@@ -3,6 +3,7 @@ import { Authenticator } from '@aws-amplify/ui-react';
 import Head from 'next/head';
 import Box from "@mui/material/Box";
 import BondReportsBrowser from '@/components/BondReportsBrowser/BondReportsBrowser';
+import BondReportsBrowserSelector from '@/components/BondReportsBrowserSelector';
 
 const Bonds: NextPage = () => {
 
@@ -16,6 +17,7 @@ const Bonds: NextPage = () => {
       <Box>
         <BondReportsBrowser />
       </Box>
+      <BondReportsBrowserSelector />
     </>
   )
 }
