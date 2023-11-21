@@ -31,8 +31,8 @@ const DEFAULT_BOND_REPORTS_BROWSER_SETTINGS_COLLECTION: BondReportsBrowserSettin
 
 const Bonds: NextPage = () => {
   const [settingsCollection, setSettingsCollection] = useState<BondReportsBrowserSettings[]>(DEFAULT_BOND_REPORTS_BROWSER_SETTINGS_COLLECTION);
+  const [currentSettingsIndex, setCurrentSettingsIndex] = useState(0);
 
-  const currentSettingsIndex = 0;
   const currectSettings = settingsCollection[currentSettingsIndex];
   const setCurrentSettings = (settings: BondReportsBrowserSettings) => setSettingsCollection(settingsCollection.with(currentSettingsIndex, settings));
 
@@ -46,7 +46,7 @@ const Bonds: NextPage = () => {
       <Box>
         <BondReportsBrowser settings={currectSettings} setSettings={setCurrentSettings} />
       </Box>
-      <BondReportsBrowserSelector />
+      <BondReportsBrowserSelector settingsCollection={settingsCollection} currentSettingsIndex={currentSettingsIndex} setCurrentSettingsIndex={setCurrentSettingsIndex} />
     </>
   )
 }
