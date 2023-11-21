@@ -169,13 +169,13 @@ export default function BondReportsBrowser({ settings, setSettings }: BondReport
       </Condition>
       <Box sx={{ '& > div.MuiStack-root, & div.MuiCollapse-wrapper, & > div.MuiBox-root': { mt: 1, pl: { sm: 1 }, pr: { sm: 1 } } }}>
         <Stack direction="row" spacing={1}>
-          <ToggleButtonGroup size="small" exclusive
+          <ToggleButtonGroup color="secondary" size="small" exclusive
             value={view}
             onChange={(event: React.MouseEvent<HTMLElement>, newView: View) => setView(newView)}>
             <ToggleButton value={View.Issuers}>Issuers</ToggleButton>
             <ToggleButton value={View.Bonds}>Bonds</ToggleButton>
           </ToggleButtonGroup>
-          <ToggleButton size="small" value="check" selected={statsShown}
+          <ToggleButton color="secondary" size="small" value="check" selected={statsShown}
             onChange={() => setStatsShown(!statsShown)}>
             Show stats
           </ToggleButton>

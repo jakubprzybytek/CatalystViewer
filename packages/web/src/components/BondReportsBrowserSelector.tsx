@@ -11,13 +11,16 @@ type BondReportsBrowserSelectorParams = {
 
 export default function BondReportsBrowserSelector({ }: BondReportsBrowserSelectorParams): JSX.Element {
   return (
-    <AppBar position="fixed" color="primary" sx={{ top: 'auto', bottom: 0 }}>
+    <AppBar component="footer" position="fixed" color="default" sx={{ top: 'auto', bottom: 0 }}>
       <Toolbar variant='dense'
-        sx={{ '& > button.MuiButton-root': { fontSize: '1.2rem', minWidth: '2rem', height: '2rem', border: '2px solid #fff', borderRadius: '50%', mr: 1 } }}>
-        <Button color="inherit">1</Button>
-        <Button color="inherit">2</Button>
+        sx={{
+          justifyContent: 'center',
+          '& > button.MuiButton-root': { textTransform: 'none', fontSize: '1rem', minWidth: '2rem', height: '2rem', border: '1.8px solid #000', borderRadius: 3, mr: 1 }
+        }}>
+        <Button color="inherit">Hello</Button>
+        <Button color="inherit">World</Button>
         <IconButton color="inherit">
-          <AddCircleOutlineIcon />
+          <AddCircleOutlineIcon fontSize='large' color='action'/>
         </IconButton>
       </Toolbar>
     </AppBar>
