@@ -20,6 +20,11 @@ import { computeStatisticsForInterestBaseTypes } from "@/bonds/statistics";
 import BondsListStats from "./view/BondsListStats";
 import IssuersViewer from "./issuers/IssuersViewer";
 
+export type BondReportsBrowserSettings = {
+  name: string;
+  filteringOptions: BondReportsFilteringOptions;
+}
+
 type ConditionParams = {
   render: boolean;
   children: React.ReactElement;
@@ -46,9 +51,13 @@ const DEFAULT_FILTERING_OPTIONS: BondReportsFilteringOptions = {
   issuers: []
 }
 
-export default function BondReportsBrowser(): JSX.Element {
-  const [view, setView] = useState(View.Issuers);
+type BondReportsBrowserParams = {
+  settings: BondReportsBrowserSettings;
+  setSettings: (newSettings: BondReportsBrowserSettings) => void;
+}
 
+export default function BondReportsBrowser({ settings, setSettings }: BondReportsBrowserParams): JSX.Element {
+  const [view, setView] = useState(View.Issuers);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
 
@@ -60,7 +69,7 @@ export default function BondReportsBrowser(): JSX.Element {
 
   // filtering
   const [filteringDrawerOpen, setFilteringDrawerOpen] = useState(false);
-  const [filteringOptions, setFilteringOptions] = useState<BondReportsFilteringOptions>(DEFAULT_FILTERING_OPTIONS);
+  //const [filteringOptions, setFilteringOptions] = useState<BondReportsFilteringOptions>(DEFAULT_FILTERING_OPTIONS);
 
   // sorting
   const [sortMenuTriggerEl, setSortMenuTriggerEl] = useState<null | HTMLElement>(null);
@@ -90,6 +99,9 @@ export default function BondReportsBrowser(): JSX.Element {
     }
     setIsLoading(false);
   };
+
+  const filteringOptions = settings.filteringOptions;
+  const setFilteringOptions = (filteringOptions: BondReportsFilteringOptions) => setSettings({ ...settings, filteringOptions });
 
   useEffect(() => {
     setIsLoading(true);
