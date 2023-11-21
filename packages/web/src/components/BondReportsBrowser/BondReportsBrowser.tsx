@@ -160,7 +160,7 @@ export default function BondReportsBrowser({ settings, setSettings }: BondReport
           left: 0,
           height: '100%',
           width: '100%',
-          backgroundColor: 'rgba(0, 0, 0, 0.3)',
+          backgroundColor: 'rgba(0, 0, 0, 0.4)',
           textAlign: 'center',
           zIndex: 1000
         }}>
@@ -184,10 +184,10 @@ export default function BondReportsBrowser({ settings, setSettings }: BondReport
           <BondsListStats bondReports={filteredBondReports} statistics={bondReportsStatistics} />
         </Collapse>
         <Condition render={view == View.Bonds}>
-          <BondsList disabled={isLoading} bondReports={filteredAndSortedBondsReports} statistics={bondReportsStatistics} />
+          <BondsList bondReports={filteredAndSortedBondsReports} statistics={bondReportsStatistics} />
         </Condition>
         <Condition render={view == View.Issuers}>
-          <IssuersViewer disabled={isLoading} bondReports={filteredBondReportsWithoutIssuers} statistics={bondReportsStatistics} filteringOptions={filteringOptions} setFilteringOptions={setFilteringOptions} />
+          <IssuersViewer bondReports={filteredBondReportsWithoutIssuers} statistics={bondReportsStatistics} filteringOptions={filteringOptions} setFilteringOptions={setFilteringOptions} />
         </Condition>
         <Condition render={errorMessage !== undefined}>
           <Alert severity="error">

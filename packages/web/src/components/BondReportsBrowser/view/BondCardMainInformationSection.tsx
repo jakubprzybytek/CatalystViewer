@@ -7,17 +7,16 @@ import { InterestPercentilesByInterestBaseType, interestBaseType } from "@/bonds
 import { getNominalValueColorCode, getInterestConstColorCode } from '@/bonds/BondIndicators';
 
 type BondCardMainInformationSectionParam = {
-  disabled: boolean;
   bondReport: BondReport;
   statistics: InterestPercentilesByInterestBaseType;
 }
 
-export default function BondCardMainInformationSection({ disabled, bondReport, statistics }: BondCardMainInformationSectionParam): JSX.Element {
+export default function BondCardMainInformationSection({ bondReport, statistics }: BondCardMainInformationSectionParam): JSX.Element {
   const { details, currentValues } = bondReport;
 
-  const issueValueColorCode = disabled ? 'disabled' : 'white';
-  const nominalValueColorCode = disabled ? 'disabled' : getNominalValueColorCode(details.nominalValue);
-  const interestConstColorCode = disabled ? 'disabled' : getInterestConstColorCode(details.interestConst, statistics[interestBaseType(bondReport)]);
+  const issueValueColorCode = 'white';
+  const nominalValueColorCode = getNominalValueColorCode(details.nominalValue);
+  const interestConstColorCode = getInterestConstColorCode(details.interestConst, statistics[interestBaseType(bondReport)]);
 
   return (
     <>

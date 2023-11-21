@@ -19,15 +19,14 @@ const BorderLinearProgress = styled(LinearProgress)(({ theme }) => ({
 }));
 
 type BondCardCurrentInterestSectionParams = {
-  disabled: boolean;
   bondReport: BondReport;
 }
 
-export default function BondCardCurrentInterestSection({ disabled, bondReport: { currentValues, details: { currency } } }: BondCardCurrentInterestSectionParams): JSX.Element {
+export default function BondCardCurrentInterestSection({ bondReport: { currentValues, details: { currency } } }: BondCardCurrentInterestSectionParams): JSX.Element {
   const today = new Date();
   const interestBarColor = today.getTime() >= currentValues.interestRecordDay ? 'success' : 'error';
 
-  const accuredInterestColorCode: ColorCode = currentValues.accuredInterest == 0 ? disabled ? 'disabled' : 'green' : 'none';
+  const accuredInterestColorCode: ColorCode = currentValues.accuredInterest == 0 ? 'green' : 'none';
 
   return (
     <>

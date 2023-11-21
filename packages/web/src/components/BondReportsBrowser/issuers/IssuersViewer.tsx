@@ -9,14 +9,13 @@ import { IssuerReport, sortByInterestConstAverage } from '.';
 import { BondReportsFilteringOptions } from '../filter';
 
 type IssuersViewerParams = {
-  disabled: boolean;
   bondReports: BondReport[];
   statistics: InterestPercentilesByInterestBaseType;
   filteringOptions: BondReportsFilteringOptions;
   setFilteringOptions: (param: BondReportsFilteringOptions) => void;
 }
 
-export default function IssuersViewer({ disabled, bondReports, statistics, filteringOptions, setFilteringOptions }: IssuersViewerParams): JSX.Element {
+export default function IssuersViewer({ bondReports, statistics, filteringOptions, setFilteringOptions }: IssuersViewerParams): JSX.Element {
   const issuerReports = useMemo(() => {
     const bondsByIssuer = groupByIssuer(bondReports);
     const issuerReports: IssuerReport[] = [];
