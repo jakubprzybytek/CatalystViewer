@@ -1,5 +1,8 @@
 import { KeyboardEventHandler, useState } from 'react';
+import Stack from '@mui/material/Stack';
 import Box from '@mui/material/Box';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
 import AppBar from '@mui/material/AppBar';
 import Toolbar from '@mui/material/Toolbar';
 import TextField from '@mui/material/TextField';
@@ -10,8 +13,10 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import CancelIcon from '@mui/icons-material/Cancel';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import { BondReportsBrowserSettings } from './BondReportsBrowser/BondReportsBrowser';
-import { Stack } from '@mui/material';
 import Condition from '@/common/Condition';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContentText from '@mui/material/DialogContentText';
 
 type SelectorItemParams = {
   settings: BondReportsBrowserSettings;
@@ -36,10 +41,13 @@ function SelectorItem({ settings, active, setActive, setInEdit }: SelectorItemPa
 type EditorItemParams = {
   settings: BondReportsBrowserSettings;
   setSettings: (settings: BondReportsBrowserSettings) => void;
+  onDelete: () => void;
   onCancel: () => void;
 }
 
-function EditorItem({ settings, setSettings, onCancel }: EditorItemParams): JSX.Element {
+function EditorItem({ settings, setSettings, onDelete, onCancel }: EditorItemParams): JSX.Element {
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+
   return (
     <Stack direction="row">
       <TextField color='primary' size="small" sx={{ width: '5rem', height: '1rem' }}
@@ -47,12 +55,25 @@ function EditorItem({ settings, setSettings, onCancel }: EditorItemParams): JSX.
       <IconButton>
         <SaveIcon color='primary' />
       </IconButton>
-      <IconButton>
+      <IconButton onClick={() => setConfirmDialogOpen(true)}>
         <DeleteIcon color='primary' />
       </IconButton>
       <IconButton onClick={onCancel}>
         <CancelIcon color='primary' />
       </IconButton>
+      <Dialog open={confirmDialogOpen}
+        onClose={() => setConfirmDialogOpen(false)}>
+        <DialogTitle>{"Delete tab?"}</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure to delete this tab?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setConfirmDialogOpen(false)}>Cancel</Button>
+          <Button onClick={() => { setConfirmDialogOpen(false); onDelete(); }} autoFocus>Delete</Button>
+        </DialogActions>
+      </Dialog>
     </Stack>
   )
 }
@@ -83,7 +104,9 @@ export default function BondReportsBrowserSelector({ settingsCollection, setSett
             '& > button.MuiIconButton-root': { pl: 1 }
           }}>
           {settingsInEditIndex !== undefined && (
-            <EditorItem settings={settingsCollection[settingsInEditIndex]} setSettings={getSetSettings(settingsInEditIndex)} onCancel={() => setSettingsInEditIndex(undefined)} />
+            <EditorItem settings={settingsCollection[settingsInEditIndex]} setSettings={getSetSettings(settingsInEditIndex)}
+              onDelete={() => setSettingsInEditIndex(undefined)}
+              onCancel={() => setSettingsInEditIndex(undefined)} />
           )}
           <Condition render={settingsInEditIndex === undefined}>
             <>
