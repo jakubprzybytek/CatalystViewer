@@ -46,7 +46,7 @@ const Bonds: NextPage = () => {
       <Box>
         <BondReportsBrowser settings={currectSettings} setSettings={setCurrentSettings} />
       </Box>
-      <BondReportsBrowserSelector settingsCollection={settingsCollection} currentSettingsIndex={currentSettingsIndex} setCurrentSettingsIndex={setCurrentSettingsIndex} />
+      <BondReportsBrowserSelector settingsCollection={settingsCollection} setSettingsCollection={setSettingsCollection} currentSettingsIndex={currentSettingsIndex} setCurrentSettingsIndex={setCurrentSettingsIndex} />
     </>
   )
 }
