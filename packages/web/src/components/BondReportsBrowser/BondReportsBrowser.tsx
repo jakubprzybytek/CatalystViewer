@@ -12,30 +12,18 @@ import CircularProgress from "@mui/material/CircularProgress";
 import FilterAlt from "@mui/icons-material/FilterAlt";
 import Refresh from "@mui/icons-material/Refresh";
 import Sort from "@mui/icons-material/Sort";
+import Condition from "@/common/Condition";
 import MainNavigation from "../MainNavigation";
+import BondsListStats from "./view/BondsListStats";
+import IssuersViewer from "./issuers/IssuersViewer";
 import BondReportsFilterDrawer, { BondReportsFilteringOptions, filterUsing } from "./filter";
 import BondReportsSortMenu, { BondReportsSortOrder, getBondReportsSortingFunction } from "./sort";
 import { BondReport, getBonds } from "@/sdk/GetBonds";
 import { computeStatisticsForInterestBaseTypes } from "@/bonds/statistics";
-import BondsListStats from "./view/BondsListStats";
-import IssuersViewer from "./issuers/IssuersViewer";
 
 export type BondReportsBrowserSettings = {
   name: string;
   filteringOptions: BondReportsFilteringOptions;
-}
-
-type ConditionParams = {
-  render: boolean;
-  children: React.ReactElement;
-}
-
-function Condition({ render, children }: ConditionParams): JSX.Element {
-  if (render) {
-    return (<>{children} </>);
-  } else {
-    return (<></>);
-  }
 }
 
 enum View {
