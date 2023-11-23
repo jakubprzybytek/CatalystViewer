@@ -28,16 +28,12 @@ type SelectorItemParams = {
 }
 
 function SelectorItem({ settings, active, setActive, setInEdit }: SelectorItemParams): JSX.Element {
-  if (active) {
-    return (
-      <Button color="primary" className='active' onClick={setInEdit}>{settings.name}</Button>
-    )
-  }
-  else {
-    return (
-      <Button color="primary" onClick={setActive}>{settings.name}</Button>
-    )
-  }
+  return (
+    <Button color="primary" variant={active ? 'contained' : 'outlined'}
+      onClick={active ? setInEdit : setActive}>
+      {settings.name}
+    </Button>
+  )
 }
 
 type EditorItemParams = {
@@ -141,7 +137,6 @@ export default function BondReportsBrowserSelector({ settingsCollection, setSett
           sx={{
             justifyContent: 'center',
             '& > button.MuiButton-root': { textTransform: 'none', fontSize: '1rem', minWidth: '2rem', height: '2rem', borderWidth: '1px', borderStyle: 'solid', borderColor: 'primary.main', borderRadius: 3, mr: 1 },
-            '& > button.MuiButton-root.active': { fontWeight: 600, borderWidth: '1.8px' },
             '& .MuiOutlinedInput-root': { mt: 0.5, height: '2rem', borderRadius: 3 },
             '& > button.MuiIconButton-root': { pl: 1 }
           }}>
