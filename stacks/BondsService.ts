@@ -74,7 +74,7 @@ export function BondsService({ stack }: StackContext) {
     },
     //permissions: [bondDetailsTableReadAccess],
     bind: [bondDetailsTable],
-    timeout: '20 seconds'                                                                    
+    timeout: '60 seconds'                                                                    
   });
 
   const api = new Api(stack, "api", {

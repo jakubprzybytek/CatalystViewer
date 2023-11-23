@@ -1,11 +1,11 @@
-import { KeyboardEventHandler, useState } from 'react';
+import { useRef, useState } from 'react';
 import Stack from '@mui/material/Stack';
 import Box from '@mui/material/Box';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import AppBar from '@mui/material/AppBar';
 import Toolbar from '@mui/material/Toolbar';
-import TextField from '@mui/material/TextField';
+import TextField, { TextFieldProps } from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
 import SaveIcon from '@mui/icons-material/Save';
@@ -43,32 +43,41 @@ function SelectorItem({ settings, active, setActive, setInEdit }: SelectorItemPa
 type EditorItemParams = {
   settings: BondReportsBrowserSettings;
   setSettings: (settings: BondReportsBrowserSettings) => void;
+  onCopy: (settings: BondReportsBrowserSettings) => void;
+  deleteEnabled: boolean;
   onDelete: () => void;
-  onCancel: () => void;
+  exitEdit: () => void;
 }
 
-function EditorItem({ settings, setSettings, onDelete, onCancel }: EditorItemParams): JSX.Element {
+function EditorItem({ settings, setSettings, onCopy, deleteEnabled, onDelete, exitEdit }: EditorItemParams): JSX.Element {
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const nameRef = useRef<TextFieldProps>();
 
   return (
     <Stack direction="row">
-      <TextField color='primary' size="small" sx={{ width: '5rem', height: '1rem' }}
+      <TextField color='primary' size="small" sx={{ width: '7rem', height: '1rem' }}
+        inputRef={nameRef}
         defaultValue={settings.name} />
-      <IconButton title='Save'>
-        <SaveIcon color='primary' />
+      <IconButton title='Save' color='primary'
+        onClick={() => { setSettings({ ...settings, name: (nameRef.current?.value || 'name') as string }); exitEdit(); }}>
+        <SaveIcon />
       </IconButton>
-      <IconButton title='Copy as new'>
-        <ContentCopyIcon color='primary' />
+      <IconButton title='Copy as new' color='primary'
+        onClick={() => { onCopy(settings); exitEdit(); }}>
+        <ContentCopyIcon />
       </IconButton>
-      <IconButton title='Delete' onClick={() => setConfirmDialogOpen(true)}>
-        <DeleteIcon color='primary' />
+      <IconButton title='Delete' color='primary'
+        disabled={!deleteEnabled}
+        onClick={() => setConfirmDialogOpen(true)}>
+        <DeleteIcon />
       </IconButton>
-      <IconButton title='Cancel' onClick={onCancel}>
-        <CancelIcon color='primary' />
+      <IconButton title='Cancel' color='primary'
+        onClick={exitEdit}>
+        <CancelIcon />
       </IconButton>
       <Dialog open={confirmDialogOpen}
         onClose={() => setConfirmDialogOpen(false)}>
-        <DialogTitle>{"Delete tab?"}</DialogTitle>
+        <DialogTitle>{"Delete tab"}</DialogTitle>
         <DialogContent>
           <DialogContentText>
             Are you sure to delete this tab?
@@ -76,11 +85,22 @@ function EditorItem({ settings, setSettings, onDelete, onCancel }: EditorItemPar
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setConfirmDialogOpen(false)}>Cancel</Button>
-          <Button onClick={() => { setConfirmDialogOpen(false); onDelete(); }} autoFocus>Delete</Button>
+          <Button onClick={() => { setConfirmDialogOpen(false); onDelete(); exitEdit(); }} autoFocus>Delete</Button>
         </DialogActions>
       </Dialog>
     </Stack>
   )
+}
+
+const NEW_BOND_REPORTS_SETTINGS: BondReportsBrowserSettings = {
+  name: 'New',
+  filteringOptions: {
+    bondType: 'Corporate bonds',
+    maxNominal: 10000,
+    markets: ['GPW ASO', 'GPW RR'],
+    interestBaseTypes: ['WIBOR 3M', 'WIBOR 6M'],
+    issuers: []
+  }
 }
 
 type BondReportsBrowserSelectorParams = {
@@ -97,10 +117,20 @@ export default function BondReportsBrowserSelector({ settingsCollection, setSett
     return (settings: BondReportsBrowserSettings) => setSettingsCollection(settingsCollection.with(index, settings));
   }
 
+  function handleCreateNew() {
+    setSettingsCollection([...settingsCollection, NEW_BOND_REPORTS_SETTINGS]);
+    setCurrentSettingsIndex(settingsCollection.length);
+  }
+
+  function handleCopy(settings: BondReportsBrowserSettings) {
+    setSettingsCollection([...settingsCollection, { ...settings, name: settings.name + " copy" }]);
+    setCurrentSettingsIndex(settingsCollection.length);
+  }
+
   function handleDelete() {
     if (settingsInEditIndex !== undefined) {
-      setSettingsInEditIndex(undefined);
       setSettingsCollection(removeAt(settingsCollection, settingsInEditIndex));
+      setCurrentSettingsIndex(currentSettingsIndex > 0 ? currentSettingsIndex - 1 : 0);
     }
   }
 
@@ -117,8 +147,10 @@ export default function BondReportsBrowserSelector({ settingsCollection, setSett
           }}>
           {settingsInEditIndex !== undefined && (
             <EditorItem settings={settingsCollection[settingsInEditIndex]} setSettings={getSetSettings(settingsInEditIndex)}
+              onCopy={handleCopy}
+              deleteEnabled={settingsCollection.length > 1}
               onDelete={handleDelete}
-              onCancel={() => setSettingsInEditIndex(undefined)} />
+              exitEdit={() => setSettingsInEditIndex(undefined)} />
           )}
           <Condition render={settingsInEditIndex === undefined}>
             <>
@@ -127,7 +159,7 @@ export default function BondReportsBrowserSelector({ settingsCollection, setSett
                   setActive={() => setCurrentSettingsIndex(index)}
                   setInEdit={() => setSettingsInEditIndex(index)} />
               ))}
-              <IconButton>
+              <IconButton onClick={handleCreateNew}>
                 <AddCircleOutlineIcon color='primary' />
               </IconButton>
             </>
