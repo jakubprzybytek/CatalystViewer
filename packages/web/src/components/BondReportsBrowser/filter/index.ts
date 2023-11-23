@@ -1,3 +1,4 @@
+import { removeElement } from '@/common/Arrays';
 import BondReportsFilterDrawer from './BondReportsFilterDrawer';
 import { filterBy, isBondType, isInterestBaseType, isIssuedBy, isOnMarkets, nominalValueLessThan } from "@/bonds/statistics";
 
@@ -22,15 +23,6 @@ export function filterUsing(filteringOptions: BondReportsFilteringOptions) {
     isIssuedBy(filteringOptions.issuers)
   ])
 };
-
-const removeElement = (array: string[], elementToRemove: string) => {
-  const index = array.indexOf(elementToRemove, 0);
-  const newArray = [...array];
-  if (index > -1) {
-    newArray.splice(index, 1);
-  }
-  return newArray;
-}
 
 export function bondTypeModifier(filteringOptions: BondReportsFilteringOptions, setFilteringOptions: (newFilteringOptions: BondReportsFilteringOptions) => void) {
   return (newBondType: string) => setFilteringOptions({ ...filteringOptions, bondType: newBondType });

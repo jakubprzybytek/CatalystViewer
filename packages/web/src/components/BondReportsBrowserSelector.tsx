@@ -9,6 +9,7 @@ import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
 import SaveIcon from '@mui/icons-material/Save';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import DeleteIcon from '@mui/icons-material/Delete';
 import CancelIcon from '@mui/icons-material/Cancel';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
@@ -17,6 +18,7 @@ import Condition from '@/common/Condition';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContentText from '@mui/material/DialogContentText';
+import { removeAt } from '@/common/Arrays';
 
 type SelectorItemParams = {
   settings: BondReportsBrowserSettings;
@@ -52,13 +54,16 @@ function EditorItem({ settings, setSettings, onDelete, onCancel }: EditorItemPar
     <Stack direction="row">
       <TextField color='primary' size="small" sx={{ width: '5rem', height: '1rem' }}
         defaultValue={settings.name} />
-      <IconButton>
+      <IconButton title='Save'>
         <SaveIcon color='primary' />
       </IconButton>
-      <IconButton onClick={() => setConfirmDialogOpen(true)}>
+      <IconButton title='Copy as new'>
+        <ContentCopyIcon color='primary' />
+      </IconButton>
+      <IconButton title='Delete' onClick={() => setConfirmDialogOpen(true)}>
         <DeleteIcon color='primary' />
       </IconButton>
-      <IconButton onClick={onCancel}>
+      <IconButton title='Cancel' onClick={onCancel}>
         <CancelIcon color='primary' />
       </IconButton>
       <Dialog open={confirmDialogOpen}
@@ -92,6 +97,13 @@ export default function BondReportsBrowserSelector({ settingsCollection, setSett
     return (settings: BondReportsBrowserSettings) => setSettingsCollection(settingsCollection.with(index, settings));
   }
 
+  function handleDelete() {
+    if (settingsInEditIndex !== undefined) {
+      setSettingsInEditIndex(undefined);
+      setSettingsCollection(removeAt(settingsCollection, settingsInEditIndex));
+    }
+  }
+
   return (
     <>
       <AppBar component="footer" position="fixed" color="default" sx={{ top: 'auto', bottom: 0 }}>
@@ -105,7 +117,7 @@ export default function BondReportsBrowserSelector({ settingsCollection, setSett
           }}>
           {settingsInEditIndex !== undefined && (
             <EditorItem settings={settingsCollection[settingsInEditIndex]} setSettings={getSetSettings(settingsInEditIndex)}
-              onDelete={() => setSettingsInEditIndex(undefined)}
+              onDelete={handleDelete}
               onCancel={() => setSettingsInEditIndex(undefined)} />
           )}
           <Condition render={settingsInEditIndex === undefined}>
