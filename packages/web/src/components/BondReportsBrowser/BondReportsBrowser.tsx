@@ -20,6 +20,7 @@ import BondReportsFilterDrawer, { BondReportsFilteringOptions, filterUsing } fro
 import BondReportsSortMenu, { BondReportsSortOrder, getBondReportsSortingFunction } from "./sort";
 import { BondReport, getBonds } from "@/sdk/GetBonds";
 import { computeStatisticsForInterestBaseTypes } from "@/bonds/statistics";
+import { getProfile } from "@/sdk/GetProfile";
 
 export type BondReportsBrowserSettings = {
   name: string;
@@ -69,6 +70,10 @@ export default function BondReportsBrowser({ settings, setSettings }: BondReport
   }
 
   async function fetchData(bondType: string) {
+    const profile = await getProfile();
+    console.log(profile);
+
+
     console.log(`Fetching reports for bond type: ${bondType}`);
     try {
       const bondsResponse = await getBonds(bondType);
@@ -103,12 +108,12 @@ export default function BondReportsBrowser({ settings, setSettings }: BondReport
 
   // Perform bonds filtering
   const filteredBondReports = useMemo(() => {
-    console.log(`Applying filters: ${JSON.stringify(filteringOptions)} to ${allBondReports.length} bond reports`);
+    //console.log(`Applying filters: ${JSON.stringify(filteringOptions)} to ${allBondReports.length} bond reports`);
 
     const filterBondReports = filterUsing(filteringOptions);
     const filteredBondReports = filterBondReports(allBondReports);
 
-    console.log(`Filtering result: ${filteredBondReports.length} bond reports`);
+    //console.log(`Filtering result: ${filteredBondReports.length} bond reports`);
 
     return filteredBondReports;
   }, [allBondReports, filteringOptions.maxNominal, filteringOptions.markets, filteringOptions.interestBaseTypes, filteringOptions.issuers]);

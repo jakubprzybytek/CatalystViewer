@@ -74,7 +74,18 @@ export function BondsService({ stack }: StackContext) {
     },
     //permissions: [bondDetailsTableReadAccess],
     bind: [bondDetailsTable],
-    timeout: '60 seconds'                                                                    
+    timeout: '60 seconds'
+  });
+
+  const getProfileFunction = new Function(stack, "getProfile", {
+    handler: 'packages/functions/src/profile/getProfile.handler',
+    memorySize: "256 MB",
+    environment: {
+      BOND_DETAILS_TABLE_NAME: bondDetailsTable.tableName
+    },
+    //permissions: [bondDetailsTableReadAccess],
+    // bind: [bondDetailsTable],
+    timeout: '10 seconds'
   });
 
   const api = new Api(stack, "api", {
@@ -96,7 +107,8 @@ export function BondsService({ stack }: StackContext) {
     },
     routes: {
       'GET /api/bonds': getBondsFunction,
-      'GET /api/bonds/{bondType}': getBondsFunction
+      'GET /api/bonds/{bondType}': getBondsFunction,
+      'GET /api/profile': getProfileFunction
     }
   });
   //auth.attachPermissionsForAuthUsers(stack, [api]);

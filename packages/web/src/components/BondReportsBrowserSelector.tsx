@@ -150,7 +150,7 @@ export default function BondReportsBrowserSelector({ settingsCollection, setSett
           <Condition render={settingsInEditIndex === undefined}>
             <>
               {settingsCollection.map((settings, index) => (
-                <SelectorItem settings={settings} active={index === currentSettingsIndex}
+                <SelectorItem key={index} settings={settings} active={index === currentSettingsIndex}
                   setActive={() => setCurrentSettingsIndex(index)}
                   setInEdit={() => setSettingsInEditIndex(index)} />
               ))}
