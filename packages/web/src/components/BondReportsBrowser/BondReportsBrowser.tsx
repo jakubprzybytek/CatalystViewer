@@ -20,7 +20,7 @@ import BondReportsFilterDrawer, { BondReportsFilteringOptions, filterUsing } fro
 import BondReportsSortMenu, { BondReportsSortOrder, getBondReportsSortingFunction } from "./sort";
 import { BondReport, getBonds } from "@/sdk/GetBonds";
 import { computeStatisticsForInterestBaseTypes } from "@/bonds/statistics";
-import { getProfile } from "@/sdk/GetProfile";
+import { getProfile } from "@/sdk/Profile";
 
 export type BondReportsBrowserSettings = {
   name: string;
@@ -30,14 +30,6 @@ export type BondReportsBrowserSettings = {
 enum View {
   Issuers,
   Bonds
-}
-
-const DEFAULT_FILTERING_OPTIONS: BondReportsFilteringOptions = {
-  bondType: 'Corporate bonds',
-  maxNominal: 10000,
-  markets: ['GPW ASO', 'GPW RR'],
-  interestBaseTypes: ['WIBOR 3M', 'WIBOR 6M'],
-  issuers: []
 }
 
 type BondReportsBrowserParams = {
@@ -70,10 +62,6 @@ export default function BondReportsBrowser({ settings, setSettings }: BondReport
   }
 
   async function fetchData(bondType: string) {
-    const profile = await getProfile();
-    console.log(profile);
-
-
     console.log(`Fetching reports for bond type: ${bondType}`);
     try {
       const bondsResponse = await getBonds(bondType);

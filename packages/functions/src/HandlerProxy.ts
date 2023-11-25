@@ -14,7 +14,7 @@ export type LambdaType<T> = (event: APIGatewayProxyEventV2) => Promise<LambdaRes
 
 export const Success = <T>(data: T): LambdaResponse<T> => ({ data: data, statusCode: 200 });
 
-export const Failure = (message: string): LambdaResponse<ErrorResponse> => ({ data: { message }, statusCode: 400 });
+export const Failure = (message: string, statusCode: number = 400): LambdaResponse<ErrorResponse> => ({ data: { message }, statusCode });
 
 export const lambdaHandler = <T>(lambda: LambdaType<T>): APIGatewayProxyHandlerV2 => {
     return async function (event: APIGatewayProxyEventV2) {

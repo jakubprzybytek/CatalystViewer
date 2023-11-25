@@ -11,6 +11,21 @@ export function BondsService({ stack }: StackContext) {
     },
   });
 
+  const profilesTable = new Table(stack, 'Profiles', {
+    fields: {
+      userName: 'string',
+      bondReportsBrowserSettings: 'string',
+    },
+    primaryIndex: {
+      partitionKey: 'userName'
+    },
+    cdk: {
+      table: {
+        removalPolicy: RemovalPolicy.DESTROY,
+      },
+    },
+  });
+
   const bondDetailsTable = new Table(stack, 'BondDetails', {
     fields: {
       bondStatus: 'string',
@@ -66,6 +81,28 @@ export function BondsService({ stack }: StackContext) {
     resources: [bondDetailsTable.tableArn]
   });
 
+  const getProfileFunction = new Function(stack, "getProfile", {
+    handler: 'packages/functions/src/profile/getProfile.handler',
+    memorySize: "256 MB",
+    environment: {
+      BOND_DETAILS_TABLE_NAME: bondDetailsTable.tableName
+    },
+    //permissions: [bondDetailsTableReadAccess],
+    bind: [profilesTable],
+    timeout: '10 seconds'
+  });
+
+  const updateProfileFunction = new Function(stack, "updateProfile", {
+    handler: 'packages/functions/src/profile/updateProfile.handler',
+    memorySize: "256 MB",
+    environment: {
+      BOND_DETAILS_TABLE_NAME: bondDetailsTable.tableName
+    },
+    //permissions: [bondDetailsTableReadAccess],
+    bind: [profilesTable],
+    timeout: '10 seconds'
+  });
+
   const getBondsFunction = new Function(stack, "getBonds", {
     handler: 'packages/functions/src/bonds/getBonds.handler',
     memorySize: "256 MB",
@@ -75,17 +112,6 @@ export function BondsService({ stack }: StackContext) {
     //permissions: [bondDetailsTableReadAccess],
     bind: [bondDetailsTable],
     timeout: '60 seconds'
-  });
-
-  const getProfileFunction = new Function(stack, "getProfile", {
-    handler: 'packages/functions/src/profile/getProfile.handler',
-    memorySize: "256 MB",
-    environment: {
-      BOND_DETAILS_TABLE_NAME: bondDetailsTable.tableName
-    },
-    //permissions: [bondDetailsTableReadAccess],
-    // bind: [bondDetailsTable],
-    timeout: '10 seconds'
   });
 
   const api = new Api(stack, "api", {
@@ -108,7 +134,8 @@ export function BondsService({ stack }: StackContext) {
     routes: {
       'GET /api/bonds': getBondsFunction,
       'GET /api/bonds/{bondType}': getBondsFunction,
-      'GET /api/profile': getProfileFunction
+      'GET /api/profile': getProfileFunction,
+      'PUT /api/profile': updateProfileFunction
     }
   });
   //auth.attachPermissionsForAuthUsers(stack, [api]);
