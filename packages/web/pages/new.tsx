@@ -37,12 +37,15 @@ const Bonds: NextPage = () => {
   // const currectSettings = settingsCollection[currentSettingsIndex];
   // const setCurrentSettings = (settings: BondReportsBrowserSettings) => setSettingsCollectionWrapper(settingsCollection.with(currentSettingsIndex, settings));
 
-  async function fetchProfileAndApplySettings(): Promise<Profile> {
+  async function fetchProfileAndApplySettings(): Promise<void> {
     console.log('Loading profile');
     const profile = await getProfile();
     console.log(`Profile: ${JSON.stringify(profile)}`);
-    setSettingsCollection(profile.bondsReportsBrowserSettings);
-    return profile;
+    if (profile !== undefined) {
+      setSettingsCollection(profile.bondsReportsBrowserSettings);
+    } else {
+      setSettingsCollection(DEFAULT_BOND_REPORTS_BROWSER_SETTINGS_COLLECTION);
+    }
   }
 
   useEffect(() => {
