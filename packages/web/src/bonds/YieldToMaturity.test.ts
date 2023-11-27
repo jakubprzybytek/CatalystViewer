@@ -1,4 +1,4 @@
-import { BondCurrentValues, BondDetails } from '../sdk/GetBonds';
+import { BondCurrentValues, BondDetails } from '@/sdk/Bonds';
 import { describe, it, expect } from "vitest";
 import { YieldToMaturityCalculator } from "./YieldToMaturity";
 

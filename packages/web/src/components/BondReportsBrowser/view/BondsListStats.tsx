@@ -7,7 +7,7 @@ import Stack from "@mui/material/Stack";
 import Box from "@mui/material/Box";
 import Paper from "@mui/material/Paper";
 import Divider from '@mui/material/Divider';
-import { BondReport } from "@/sdk/GetBonds";
+import { BondReport } from "@/sdk/Bonds";
 import { getInterestConstParts, groupByInterestBaseType } from '@/bonds/statistics';
 import { InterestPercentilesByInterestBaseType } from '@/bonds/statistics';
 import { colorMarkers } from "@/common/ColorCodes";

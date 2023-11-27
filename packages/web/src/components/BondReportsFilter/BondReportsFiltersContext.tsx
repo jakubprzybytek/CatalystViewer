@@ -1,6 +1,6 @@
 import { useState, createContext, useContext } from "react";
 import { useArrayLocalStorage, useLocalStorage } from "../../common/UseStorage";
-import { BondReport } from "../../sdk/GetBonds";
+import { BondReport } from "../../sdk/Bonds";
 import { filterBy, isBondType, isInterestBaseType, isOnMarkets, nominalValueLessThan } from "../../bonds/statistics";
 
 export type BondsFilterType = {

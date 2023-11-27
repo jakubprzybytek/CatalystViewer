@@ -2,7 +2,7 @@ import Box from "@mui/material/Box";
 import Drawer from "@mui/material/Drawer";
 import Typography from "@mui/material/Typography";
 import { BondReportsFilterPanel, BondReportsFilteringOptions } from ".";
-import { BondReport } from "@/sdk/GetBonds";
+import { BondReport } from "@/sdk/Bonds";
 
 type BondReportsFilterDrawerParams = {
   open: boolean;

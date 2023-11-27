@@ -1,2 +1,2 @@
-export * from './GetBonds';
-export * from './Profile';
+export * from './Bonds';
+export * from './Profiles';

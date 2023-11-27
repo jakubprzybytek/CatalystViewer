@@ -1,6 +1,6 @@
 import { styled } from '@mui/material/styles';
 import LinearProgress, { linearProgressClasses } from '@mui/material/LinearProgress';
-import { BondReport } from '@/sdk/GetBonds';
+import { BondReport } from '@/sdk/Bonds';
 import { formatCurrency, formatDate } from '@/common/Formats';
 import { CardSection, CardEntry, CardValue } from '@/common/Cards';
 import { ColorCode } from '@/common/ColorCodes';

@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import Grid from "@mui/material/Grid";
 import Typography from "@mui/material/Typography";
 import { getUniqueInterestBaseTypes, getUniqueIssuers, getUniqueMarkets, sortStrings } from "@/bonds/statistics";
-import { BondReport } from "@/sdk/GetBonds";
+import { BondReport } from "@/sdk/Bonds";
 import { BondReportsFilteringOptions, marketsModifiers, interestBaseTypesModifiers, issuersModifiers, bondTypeModifier, maxNominalValueModifier } from ".";
 import { NominalValueFilter, StringFilter, MultiStringFilter } from "./fields";
 import IssuersSelector from "./IssuersSelector";

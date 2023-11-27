@@ -18,9 +18,8 @@ import BondsListStats from "./view/BondsListStats";
 import IssuersViewer from "./issuers/IssuersViewer";
 import BondReportsFilterDrawer, { BondReportsFilteringOptions, filterUsing } from "./filter";
 import BondReportsSortMenu, { BondReportsSortOrder, getBondReportsSortingFunction } from "./sort";
-import { BondReport, getBonds } from "@/sdk/GetBonds";
+import { BondReport, getBonds } from "@/sdk/Bonds";
 import { computeStatisticsForInterestBaseTypes } from "@/bonds/statistics";
-import { getProfile } from "@/sdk/Profile";
 
 export type BondReportsBrowserSettings = {
   name: string;

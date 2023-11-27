@@ -4,7 +4,7 @@ import Typography from "@mui/material/Typography";
 import { NominalValueFilter, StringFilter, MultiStringFilter } from "./fields";
 import { useBondsFilters } from "./BondReportsFiltersContext";
 import { filterBy, getUniqueInterestBaseTypes, getUniqueMarkets, isBondType, isInterestBaseType, isOnMarkets, nominalValueLessThan, sortStrings } from "../../bonds/statistics";
-import { BondReport } from "../../sdk/GetBonds";
+import { BondReport } from "../../sdk/Bonds";
 
 type BondReportsFilterParams = {
   allBondReports: BondReport[];

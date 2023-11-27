@@ -3,7 +3,7 @@ import { average, min, max, sum } from 'simple-statistics';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import IssuersList from './IssuersList';
-import { BondReport } from '@/sdk/GetBonds';
+import { BondReport } from '@/sdk/Bonds';
 import { InterestPercentilesByInterestBaseType, getInterestConstParts, groupByIssuer, groupByInterestBaseType, getNominalValues, getIssueValues } from '@/bonds/statistics';
 import { IssuerReport, sortByInterestConstAverage } from '.';
 import { BondReportsFilteringOptions } from '../filter';

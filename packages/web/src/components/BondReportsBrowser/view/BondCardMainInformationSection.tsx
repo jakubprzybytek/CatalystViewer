@@ -1,6 +1,6 @@
 import Link from "@mui/material/Link";
 import Typography from "@mui/material/Typography";
-import { BondReport } from "@/sdk/GetBonds";
+import { BondReport } from "@/sdk/Bonds";
 import { formatCompactCurrency, formatCurrency, formatDate } from '@/common/Formats';
 import { CardSection, CardEntry, CardValue } from "@/common/Cards";
 import { InterestPercentilesByInterestBaseType, interestBaseType } from "@/bonds/statistics";

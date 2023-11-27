@@ -4,7 +4,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 import BondsList from './BondsList';
 import BondsViewerFilter from './BondsViewerFilter';
 import BondsListStats from './BondsListStats';
-import { BondReport } from '../../sdk/GetBonds';
+import { BondReport } from '../../sdk/Bonds';
 import { filterByIssuer, getUniqueIssuers, InterestPercentilesByInterestBaseType, sortStrings } from '../../bonds/statistics';
 import { useBondsFilters } from '../BondReportsFilter';
 

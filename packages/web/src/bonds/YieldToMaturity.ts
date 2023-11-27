@@ -1,4 +1,4 @@
-import { BondDetails, BondCurrentValues } from '../sdk/GetBonds';
+import { BondDetails, BondCurrentValues } from '@/sdk/Bonds';
 
 export type YieldToMaturityReport = {
   bondDetails: BondDetails;

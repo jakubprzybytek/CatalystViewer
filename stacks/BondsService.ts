@@ -87,7 +87,6 @@ export function BondsService({ stack }: StackContext) {
     environment: {
       BOND_DETAILS_TABLE_NAME: bondDetailsTable.tableName
     },
-    //permissions: [bondDetailsTableReadAccess],
     bind: [profilesTable],
     timeout: '10 seconds'
   });
@@ -98,7 +97,6 @@ export function BondsService({ stack }: StackContext) {
     environment: {
       BOND_DETAILS_TABLE_NAME: bondDetailsTable.tableName
     },
-    //permissions: [bondDetailsTableReadAccess],
     bind: [profilesTable],
     timeout: '10 seconds'
   });
@@ -127,8 +125,8 @@ export function BondsService({ stack }: StackContext) {
     defaults: {
       authorizer: "jwt",
       throttle: {
-        burst: 1,
-        rate: 1
+        burst: 2,
+        rate: 2
       }
     },
     routes: {

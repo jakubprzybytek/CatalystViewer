@@ -5,7 +5,7 @@ import Head from 'next/head';
 import Box from "@mui/material/Box";
 import BondReportsBrowser, { BondReportsBrowserSettings } from '@/components/BondReportsBrowser/BondReportsBrowser';
 import BondReportsBrowserSelector from '@/components/BondReportsBrowserSelector';
-import { getProfile, putProfile } from '@/sdk/Profile';
+import { getProfile, putProfile } from '@/sdk/Profiles';
 import { Profile } from '@/common/Profile';
 
 const DEFAULT_BOND_REPORTS_BROWSER_SETTINGS_COLLECTION: BondReportsBrowserSettings[] = [

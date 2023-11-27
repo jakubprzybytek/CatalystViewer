@@ -1,5 +1,5 @@
 import * as R from 'ramda';
-import { BondReport, BondDetails, BondCurrentValues } from '../../sdk/GetBonds';
+import { BondReport, BondDetails, BondCurrentValues } from '@/sdk/Bonds';
 
 // Properties extractors - BondDetails
 const name = R.compose<BondReport[], BondDetails, string>(R.prop('name'), R.prop('details'));
