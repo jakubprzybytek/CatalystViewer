@@ -151,7 +151,7 @@ export default function BondReportsBrowser({ settings, setSettings }: BondReport
         <Stack direction="row" spacing={1}>
           <ToggleButtonGroup color="secondary" size="small" exclusive
             value={view}
-            onChange={(event: React.MouseEvent<HTMLElement>, newView: View) => setView(newView)}>
+            onChange={(event: React.MouseEvent<HTMLElement>, newView: View) => setView(newView !== null ? newView : view)}>
             <ToggleButton value={View.Issuers}>Issuers</ToggleButton>
             <ToggleButton value={View.Bonds}>Bonds</ToggleButton>
           </ToggleButtonGroup>
