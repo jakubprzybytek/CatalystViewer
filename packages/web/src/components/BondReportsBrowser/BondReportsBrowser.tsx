@@ -147,7 +147,10 @@ export default function BondReportsBrowser({ settings, setSettings }: BondReport
           <CircularProgress size='6rem' sx={{ mt: 10 }} />
         </Box>
       </Condition>
-      <Box sx={{ '& > div.MuiStack-root, & div.MuiCollapse-wrapper, & > div.MuiBox-root': { mt: 1, pl: { sm: 1 }, pr: { sm: 1 } } }}>
+      <Box sx={{
+        '& > div.MuiStack-root': { mt: 1, pl: 1, pr: 1 },
+        '& div.MuiCollapse-wrapper, & > div.MuiBox-root': { mt: 1, pl: { sm: 1 }, pr: { sm: 1 } }
+      }}>
         <Stack direction="row" spacing={1}>
           <ToggleButtonGroup color="secondary" size="small" exclusive
             value={view}

@@ -40,7 +40,7 @@ export default function BondCardCurrentInterestSection({ bondReport: { currentVa
           <CardValue>{formatDate(currentValues.interestFirstDay)}</CardValue>
         </CardEntry>
         <CardEntry caption='Record day' textAlign='center' width='33%'>
-          <CardValue>{formatDate(currentValues.interestRecordDay)}</CardValue>
+          <CardValue bold>{formatDate(currentValues.interestRecordDay)}</CardValue>
         </CardEntry>
         <CardEntry caption='Payable' textAlign='end' width='33%'>
           <CardValue>{formatDate(currentValues.interestPayableDay)}</CardValue>
@@ -48,7 +48,7 @@ export default function BondCardCurrentInterestSection({ bondReport: { currentVa
       </CardSection>
       <CardSection>
         <CardEntry caption='Current interest' width='33%'>
-          <CardValue variant='h6'>{currentValues.interestRate.toFixed(2)}%</CardValue>
+          <CardValue bold>{currentValues.interestRate.toFixed(2)}%</CardValue>
         </CardEntry>
         <CardEntry caption='Accured interest' textAlign='center' width='33%'>
           <CardValue colorCode={accuredInterestColorCode}>{formatCurrency(currentValues.accuredInterest, currency)}</CardValue>

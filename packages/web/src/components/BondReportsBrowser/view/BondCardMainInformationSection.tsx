@@ -26,7 +26,7 @@ export default function BondCardMainInformationSection({ bondReport, statistics 
       </CardSection>
       <CardSection>
         <CardEntry caption='Issuer'>
-          <CardValue variant='h6'>{details.issuer}</CardValue>
+          <CardValue bold>{details.issuer}</CardValue>
         </CardEntry>
         <CardEntry caption='Type' textAlign='end'>
           <CardValue>{details.type}</CardValue>

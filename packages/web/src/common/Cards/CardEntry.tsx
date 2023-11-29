@@ -28,23 +28,25 @@ export function CardEntry({ caption, width, textAlign = 'left', children }: Bond
 
 type CardValueParam = {
   colorCode?: ColorCode;
-  variant?: Variant;
+  bold?: boolean;
   children: React.ReactNode;
 }
 
-export function CardValue({ variant = 'body1', colorCode = 'none', children }: CardValueParam): JSX.Element {
+export function CardValue({ colorCode = 'none', bold = false, children }: CardValueParam): JSX.Element {
   const colorMarker = colorMarkers[colorCode];
+  const fontWeight = bold ? 500 : 400;
 
   if (colorMarker === undefined) {
     return (
-      <Typography component='span' variant={variant}>{children}</Typography>
+      <Typography component='span' variant='body1' fontWeight={fontWeight} >{children}</Typography>
     );
   }
 
   return (
     <Box component='span'>
-      <Typography component='span' variant={variant} sx={{
+      <Typography component='span' variant='body1' sx={{
         color: colorMarker.color,
+        fontWeight,
         backgroundColor: colorMarker.backgroundColor,
         borderWidth: '1px',
         borderStyle: 'solid',
