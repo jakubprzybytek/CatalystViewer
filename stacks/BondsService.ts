@@ -75,6 +75,27 @@ export function BondsService({ stack }: StackContext) {
     },
   });
 
+  const bondStatisticsTable = new Table(stack, 'BondStatistics', {
+    fields: {
+      name: 'string',
+      market: 'string',
+      'name#market': 'string',
+      year: 'number',
+      month: 'number',
+      'year#month': 'string',
+      quotes: 'string'
+    },
+    primaryIndex: {
+      partitionKey: 'name#market',
+      sortKey: 'year#month'
+    },
+    cdk: {
+      table: {
+        removalPolicy: RemovalPolicy.DESTROY,
+      },
+    },
+  });
+
   const bondDetailsTableReadAccess = new iam.PolicyStatement({
     actions: ['dynamodb:Scan'],
     effect: iam.Effect.ALLOW,

@@ -26,5 +26,8 @@ export type CatalystBondQuote = {
     readonly askPrice: number;
     readonly askVolume: number;
     readonly askCount: number;
+    readonly transactions: number;
+    readonly volume: number;
+    readonly turnover: number;
     readonly currency: string;
 };
