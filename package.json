@@ -10,7 +10,8 @@
     "remove": "sst remove",
     "console": "sst console",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "quote": "esrun packages/core/src/bonds/catalyst/catalyst.ts quote"
   },
   "devDependencies": {
     "@tsconfig/node18": "^18.2.2",
