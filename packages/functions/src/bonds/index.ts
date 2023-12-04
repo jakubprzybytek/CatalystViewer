@@ -27,6 +27,10 @@ export type BondReportsQueryResult = {
     };
 }
 
+export type BondStatisticsQueryResult = {
+    hello: string;
+}
+
 export type UpdateBondsResult = {
     bondsUpdated: number,
     newBonds: DbBondDetails[],

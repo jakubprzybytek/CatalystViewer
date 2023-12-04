@@ -10,21 +10,21 @@ import { BondsService } from './BondsService';
 export function BondsUpdater({ stack, app }: StackContext) {
   const { bondDetailsTable } = use(BondsService);
 
-  const bondDetailsTableWriteAccess = new iam.PolicyStatement({
-    actions: ['dynamodb:Scan', 'dynamodb:BatchWriteItem'],
-    effect: iam.Effect.ALLOW,
-    resources: [bondDetailsTable.tableArn]
-  });
+  // const bondDetailsTableWriteAccess = new iam.PolicyStatement({
+  //   actions: ['dynamodb:Scan', 'dynamodb:BatchWriteItem'],
+  //   effect: iam.Effect.ALLOW,
+  //   resources: [bondDetailsTable.tableArn]
+  // });
 
   const bondsUpdaterFunction = new Function(stack, 'BondsUpdaterFunction', {
-    handler: 'packages/functions/src/bonds/updateBonds.handler',
+    handler: 'packages/functions/src/bonds/updateBondReports.handler',
     environment: {
       BOND_DETAILS_TABLE_NAME: bondDetailsTable.tableName,
       TEMP_FOLDER: app.local ? '.' : '/tmp'
     },
     timeout: '10 minutes',
-    permissions: [bondDetailsTableWriteAccess],
-    // bind: [bondDetailsTable]
+    // permissions: [bondDetailsTableWriteAccess],
+    bind: [bondDetailsTable]
   });
 
   const bondsUpdaterTask = new tasks.LambdaInvoke(stack, "Update Bonds", {

@@ -11,14 +11,18 @@ export class BondStatisticsTable {
     this.tableName = tableName;
   }
 
-  async store(bondStatistics: DbBondStatistics) {
+  async store(bondStatistics: DbBondStatistics): Promise<void> {
     console.log(`BondStatisticsTable: Storing bond statistics for ${bondStatistics.name} | ${bondStatistics.market}`);
 
     const putInput: PutItemInput = {
       TableName: this.tableName,
       Item: {
         name: { S: bondStatistics.name },
-        market: { S: bondStatistics.market }
+        market: { S: bondStatistics.market },
+        'name#market': { S: `${bondStatistics.market}#${bondStatistics.market}` },
+        year: { N: bondStatistics.year.toString() },
+        month: { N: bondStatistics.month.toString() },
+        'year#month': { S: `${bondStatistics.market}#${bondStatistics.market}` }
       }
     }
 

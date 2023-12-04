@@ -51,7 +51,7 @@ export default function IssuerCard({ issuerReport, statistics, selectedIssuers, 
         </CardSection>
         <CardSection>
           <CardEntry caption='Bonds'>
-            <CardValue variant='h6'>{issuerReport.count}</CardValue>
+            <CardValue bold>{issuerReport.count}</CardValue>
           </CardEntry>
           <CardEntry caption='Nominal value(s)' textAlign='center'>
             {issuerReport.minNominalValue === issuerReport.maxNominalValue &&

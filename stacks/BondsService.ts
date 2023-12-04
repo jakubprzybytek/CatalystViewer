@@ -133,6 +133,13 @@ export function BondsService({ stack }: StackContext) {
     timeout: '60 seconds'
   });
 
+  const getBondStatisticsFunction = new Function(stack, "getBondStatistics", {
+    handler: 'packages/functions/src/bonds/getBondStatistics.handler',
+    memorySize: "256 MB",
+    bind: [bondStatisticsTable],
+    timeout: '10 seconds'
+  });
+
   const api = new Api(stack, "api", {
     authorizers: {
       jwt: {
@@ -151,10 +158,11 @@ export function BondsService({ stack }: StackContext) {
       }
     },
     routes: {
+      'GET /api/profile': getProfileFunction,
+      'PUT /api/profile': updateProfileFunction,
       'GET /api/bonds': getBondsFunction,
       'GET /api/bonds/{bondType}': getBondsFunction,
-      'GET /api/profile': getProfileFunction,
-      'PUT /api/profile': updateProfileFunction
+      'GET /api/bondStatistics': getBondStatisticsFunction
     }
   });
   //auth.attachPermissionsForAuthUsers(stack, [api]);
