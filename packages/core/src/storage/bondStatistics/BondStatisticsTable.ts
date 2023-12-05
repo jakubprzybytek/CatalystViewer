@@ -12,7 +12,7 @@ export class BondStatisticsTable {
   }
 
   async store(bondStatistics: DbBondStatistics): Promise<void> {
-    console.log(`BondStatisticsTable: Storing bond statistics for ${bondStatistics.name} | ${bondStatistics.market}`);
+    console.log(`BondStatisticsTable: Storing bond statistics for '${bondStatistics.name}#${bondStatistics.market}'`);
 
     const putInput: PutItemInput = {
       TableName: this.tableName,
@@ -23,35 +23,54 @@ export class BondStatisticsTable {
         year: { N: bondStatistics.year.toString() },
         month: { N: bondStatistics.month.toString() },
         'year#month': { S: `${bondStatistics.year}#${bondStatistics.month}` },
-        'quotes': { M: { "abc": { "S": "123" } } }
+        'quotes': { M: {} }
       }
     }
 
     await this.dynamoDBClient.send(new PutItemCommand(putInput));
   }
 
-  async updateQuote(bondStatistics: DbBondStatistics): Promise<void> {
+  async updateQuotes(bondStatistics: DbBondStatistics): Promise<boolean> {
     console.log(`BondStatisticsTable: Updateing quote for '${bondStatistics.name}#${bondStatistics.market}'`);
+
+    const quote = bondStatistics.quotes[0];
+    const dateKey = quote.date.toISOString().substring(0, 10);
 
     const updateInput: UpdateItemCommandInput = {
       TableName: this.tableName,
       ExpressionAttributeNames: {
-        "#Q": "quotes",
-        "#DATE": "2023.12.05"
+        "#QUOTES": "quotes",
+        "#DATE": dateKey
       },
       ExpressionAttributeValues: {
-        ":q": {
-          S: "kek"
+        ":quote": {
+          M: {
+            bid: { N: quote.bid.toString() },
+            ask: { N: quote.ask.toString() },
+            volume: { N: quote.volume.toString() },
+            turnover: { N: quote.turnover.toString() },
+          }
         }
       },
       Key: {
         'name#market': { S: `${bondStatistics.name}#${bondStatistics.market}` },
         'year#month': { S: `${bondStatistics.year}#${bondStatistics.month}` }
       },
-      UpdateExpression: "SET #Q.#DATE = :q"
+      UpdateExpression: "SET #QUOTES.#DATE = :quote",
+      ConditionExpression: "attribute_exists(#QUOTES)"
     };
 
-    await this.dynamoDBClient.send(new UpdateItemCommand(updateInput));
+    try {
+      await this.dynamoDBClient.send(new UpdateItemCommand(updateInput));
+      return true;
+    } catch (error: any) {
+      if (error.name === 'ConditionalCheckFailedException') {
+        return false;
+      }
+      else {
+        throw error;
+      }
+    }
   }
 
   async get(name: string, market: string, year: number, month: number): Promise<DbBondStatistics | undefined> {
@@ -73,7 +92,7 @@ export class BondStatisticsTable {
       market: item['market']['S'] || '',
       year: Number(item['year']?.['N']) || 0,
       month: Number(item['month']?.['N']) || 0,
-      quotes: item['quotes']['S'] || '',
+      quotes: [],
     } : undefined;
   }
 }

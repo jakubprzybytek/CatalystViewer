@@ -15,12 +15,22 @@ export const handler = lambdaHandler<BondStatisticsQueryResult>(async event => {
     market: 'GPW RR',
     year: 2023,
     month: 12,
-    quotes: ''
+    quotes: [{
+      date: new Date(),
+      bid: 99,
+      ask: 102.2,
+      volume: 10,
+      turnover: 1002.32
+    }]
   }
 
-  await bondStatisticsTable.store(dbBondStatistics);
+  // await bondStatisticsTable.store(dbBondStatistics);
 
-  await bondStatisticsTable.updateQuote(dbBondStatistics);
+  const updated = await bondStatisticsTable.updateQuotes(dbBondStatistics);
+  if (!updated) {
+    console.log('Item not existing yet. Creating.')
+    await bondStatisticsTable.store(dbBondStatistics);
+  }
 
   return Success({
     hello: 'world'
