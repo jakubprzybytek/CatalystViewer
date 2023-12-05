@@ -14,6 +14,9 @@ export class BondStatisticsTable {
   async store(bondStatistics: DbBondStatistics): Promise<void> {
     console.log(`BondStatisticsTable: Storing bond statistics for '${bondStatistics.name}#${bondStatistics.market}'`);
 
+    const quote = bondStatistics.quotes[0];
+    const dateKey = quote.date.toISOString().substring(0, 10);
+
     const putInput: PutItemInput = {
       TableName: this.tableName,
       Item: {
@@ -23,7 +26,18 @@ export class BondStatisticsTable {
         year: { N: bondStatistics.year.toString() },
         month: { N: bondStatistics.month.toString() },
         'year#month': { S: `${bondStatistics.year}#${bondStatistics.month}` },
-        'quotes': { M: {} }
+        'quotes': {
+          M: {
+            [dateKey]: {
+              M: {
+                bid: { N: quote.bid.toString() },
+                ask: { N: quote.ask.toString() },
+                volume: { N: quote.volume.toString() },
+                turnover: { N: quote.turnover.toString() }
+              }
+            }
+          }
+        }
       }
     }
 
