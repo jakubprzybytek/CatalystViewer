@@ -96,18 +96,10 @@ export function BondsService({ stack }: StackContext) {
     },
   });
 
-  const bondDetailsTableReadAccess = new iam.PolicyStatement({
-    actions: ['dynamodb:Scan'],
-    effect: iam.Effect.ALLOW,
-    resources: [bondDetailsTable.tableArn]
-  });
 
   const getProfileFunction = new Function(stack, "getProfile", {
     handler: 'packages/functions/src/profile/getProfile.handler',
     memorySize: "256 MB",
-    environment: {
-      BOND_DETAILS_TABLE_NAME: bondDetailsTable.tableName
-    },
     bind: [profilesTable],
     timeout: '10 seconds'
   });
@@ -115,20 +107,13 @@ export function BondsService({ stack }: StackContext) {
   const updateProfileFunction = new Function(stack, "updateProfile", {
     handler: 'packages/functions/src/profile/updateProfile.handler',
     memorySize: "256 MB",
-    environment: {
-      BOND_DETAILS_TABLE_NAME: bondDetailsTable.tableName
-    },
     bind: [profilesTable],
     timeout: '10 seconds'
   });
 
   const getBondsFunction = new Function(stack, "getBonds", {
-    handler: 'packages/functions/src/bonds/getBonds.handler',
+    handler: 'packages/functions/src/bonds/getBondReports.handler',
     memorySize: "256 MB",
-    environment: {
-      BOND_DETAILS_TABLE_NAME: bondDetailsTable.tableName
-    },
-    //permissions: [bondDetailsTableReadAccess],
     bind: [bondDetailsTable],
     timeout: '60 seconds'
   });

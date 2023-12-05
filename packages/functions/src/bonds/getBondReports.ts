@@ -1,4 +1,5 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
+import { Table } from 'sst/node/table';
 import { differenceInDays } from 'date-fns';
 import { lambdaHandler, Success } from "../HandlerProxy";
 import { BondDetails, BondCurrentValues } from '@catalyst-viewer/core/bonds';
@@ -10,14 +11,10 @@ const dynamoDBClient = new DynamoDBClient({});
 const cachedBondTypes: string[] = [];
 
 export const handler = lambdaHandler<BondReportsQueryResult>(async event => {
-    if (process.env.BOND_DETAILS_TABLE_NAME === undefined) {
-        throw new Error('Bond Details Table Name is not defined');
-    }
-
     const bondTypeFilter = event.pathParameters?.['bondType'];
     console.log(`Requested active bond reports, type=${bondTypeFilter}`);
 
-    const bondDetailsTable = new BondDetailsTable(dynamoDBClient, process.env.BOND_DETAILS_TABLE_NAME);
+    const bondDetailsTable = new BondDetailsTable(dynamoDBClient, Table.BondDetails.tableName);
 
     const dbBonds = bondTypeFilter ? await bondDetailsTable.getActive(bondTypeFilter) : await bondDetailsTable.getAllActive();
 
