@@ -1,7 +1,7 @@
 import * as R from 'ramda';
 import { DynamoDBClient, BatchWriteItemCommandInput, BatchWriteItemCommand, ScanCommand, QueryCommand } from '@aws-sdk/client-dynamodb';
 import { DbBondDetails } from '.';
-import { queryAll, scanAll } from './utils';
+import { queryAll, scanAll } from '../utils';
 import { DbBondDetailsToPutRequest, ItemToDbBondDetails } from './BondDetailsTableMapper';
 
 const BATCH_SIZE = 25;

@@ -1,10 +1,11 @@
 import * as R from 'ramda';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
+import { Table } from 'sst/node/table';
 import { parseUTCDate } from '@catalyst-viewer/core';
 import { getTime } from 'date-fns';
 import { CatalystBondQuote, CatalystDailyStatisticsBondDetails, getCurrentCatalystBondsQuotes, getLatestCatalystDailyStatistics } from '@catalyst-viewer/core/bonds/catalyst';
 import { getBondInformation } from '@catalyst-viewer/core/bonds/obligacjepl';
-import { BondDetailsTable, DbBondDetails } from '@catalyst-viewer/core/storage';
+import { BondDetailsTable, DbBondDetails } from '@catalyst-viewer/core/storage/bondDetails';
 import { UpdateBondsResult } from '.';
 
 const dynamoDbClient = new DynamoDBClient({});
@@ -13,14 +14,9 @@ const bondId = (bond: DbBondDetails | CatalystBondQuote | CatalystDailyStatistic
 const mapByBondId = R.reduce((map: Record<string, DbBondDetails | CatalystBondQuote>, curr: DbBondDetails | CatalystBondQuote) => R.assoc(bondId(curr), curr, map), {});
 
 export async function handler(): Promise<UpdateBondsResult> {
-  if (process.env.BOND_DETAILS_TABLE_NAME === undefined) {
-    throw new Error('Bond Details Table Name is not defined');
-  }
-
+  const bondDetailsTable = new BondDetailsTable(dynamoDbClient, Table.BondDetails.tableName);
+  
   const bondsFailed: string[] = [];
-
-  const bondDetailsTable = new BondDetailsTable(dynamoDbClient, process.env.BOND_DETAILS_TABLE_NAME);
-
   const bondsStats: CatalystDailyStatisticsBondDetails[] = await getLatestCatalystDailyStatistics();
 
   const bondsQuotesList: CatalystBondQuote[] = await getCurrentCatalystBondsQuotes();

@@ -1,5 +1,5 @@
 import { BondDetails, BondCurrentValues } from '@catalyst-viewer/core/bonds';
-import { DbBondDetails } from '@catalyst-viewer/core/storage';
+import { DbBondDetails } from '@catalyst-viewer/core/storage/bondDetails';
 
 export type { BondDetails, BondCurrentValues };
 
@@ -27,13 +27,13 @@ export type BondReportsQueryResult = {
     };
 }
 
-export type BondStatisticsQueryResult = {
-    hello: string;
-}
-
 export type UpdateBondsResult = {
     bondsUpdated: number,
     newBonds: DbBondDetails[],
     bondsDeactivated: DbBondDetails[],
     bondsFailed: string[]
+}
+
+export type BondStatisticsQueryResult = {
+    hello: string;
 }
