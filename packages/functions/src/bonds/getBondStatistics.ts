@@ -11,7 +11,7 @@ export const handler = lambdaHandler<BondStatisticsQueryResult>(async event => {
   const bondStatisticsTable = new BondStatisticsTable(dynamoDBClient, Table.BondStatistics.tableName);
 
   const dbBondStatistics: DbBondStatistics = {
-    name: 'hello',
+    name: 'git',
     market: 'GPW RR',
     year: 2023,
     month: 12,
@@ -19,6 +19,8 @@ export const handler = lambdaHandler<BondStatisticsQueryResult>(async event => {
   }
 
   await bondStatisticsTable.store(dbBondStatistics);
+
+  await bondStatisticsTable.updateQuote(dbBondStatistics);
 
   return Success({
     hello: 'world'

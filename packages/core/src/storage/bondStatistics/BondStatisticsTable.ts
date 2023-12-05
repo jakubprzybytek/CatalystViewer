@@ -1,4 +1,4 @@
-import { DynamoDBClient, GetItemCommand, GetItemInput, PutItemCommand, PutItemInput } from "@aws-sdk/client-dynamodb";
+import { DynamoDBClient, GetItemCommand, GetItemInput, PutItemCommand, PutItemInput, UpdateItemCommand, UpdateItemCommandInput } from "@aws-sdk/client-dynamodb";
 import { DbBondStatistics } from ".";
 import { Table } from "sst/node/table";
 
@@ -19,14 +19,39 @@ export class BondStatisticsTable {
       Item: {
         name: { S: bondStatistics.name },
         market: { S: bondStatistics.market },
-        'name#market': { S: `${bondStatistics.market}#${bondStatistics.market}` },
+        'name#market': { S: `${bondStatistics.name}#${bondStatistics.market}` },
         year: { N: bondStatistics.year.toString() },
         month: { N: bondStatistics.month.toString() },
-        'year#month': { S: `${bondStatistics.market}#${bondStatistics.market}` }
+        'year#month': { S: `${bondStatistics.year}#${bondStatistics.month}` },
+        'quotes': { M: { "abc": { "S": "123" } } }
       }
     }
 
     await this.dynamoDBClient.send(new PutItemCommand(putInput));
+  }
+
+  async updateQuote(bondStatistics: DbBondStatistics): Promise<void> {
+    console.log(`BondStatisticsTable: Updateing quote for '${bondStatistics.name}#${bondStatistics.market}'`);
+
+    const updateInput: UpdateItemCommandInput = {
+      TableName: this.tableName,
+      ExpressionAttributeNames: {
+        "#Q": "quotes",
+        "#DATE": "2023.12.05"
+      },
+      ExpressionAttributeValues: {
+        ":q": {
+          S: "kek"
+        }
+      },
+      Key: {
+        'name#market': { S: `${bondStatistics.name}#${bondStatistics.market}` },
+        'year#month': { S: `${bondStatistics.year}#${bondStatistics.month}` }
+      },
+      UpdateExpression: "SET #Q.#DATE = :q"
+    };
+
+    await this.dynamoDBClient.send(new UpdateItemCommand(updateInput));
   }
 
   async get(name: string, market: string, year: number, month: number): Promise<DbBondStatistics | undefined> {
