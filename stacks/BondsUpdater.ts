@@ -8,7 +8,7 @@ import * as targets from 'aws-cdk-lib/aws-events-targets';
 import { BondsService } from './BondsService';
 
 export function BondsUpdater({ stack, app }: StackContext) {
-  const { bondDetailsTable } = use(BondsService);
+  const { bondDetailsTable, bondStatisticsTable } = use(BondsService);
 
   const bondsUpdaterFunction = new Function(stack, 'BondsUpdaterFunction', {
     handler: 'packages/functions/src/bonds/updateBondReports.handler',
@@ -16,7 +16,7 @@ export function BondsUpdater({ stack, app }: StackContext) {
       TEMP_FOLDER: app.local ? '.' : '/tmp'
     },
     timeout: '10 minutes',
-    bind: [bondDetailsTable]
+    bind: [bondDetailsTable, bondStatisticsTable]
   });
 
   const bondsUpdaterTask = new tasks.LambdaInvoke(stack, "Update Bonds", {

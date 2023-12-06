@@ -6,6 +6,7 @@ import { getTime } from 'date-fns';
 import { CatalystBondQuote, CatalystDailyStatisticsBondDetails, getCurrentCatalystBondsQuotes, getLatestCatalystDailyStatistics } from '@catalyst-viewer/core/bonds/catalyst';
 import { getBondInformation } from '@catalyst-viewer/core/bonds/obligacjepl';
 import { BondDetailsTable, DbBondDetails } from '@catalyst-viewer/core/storage/bondDetails';
+import { BondStatisticsTable, DbBondStatistics } from '@catalyst-viewer/core/storage/bondStatistics';
 import { UpdateBondsResult } from '.';
 
 const dynamoDbClient = new DynamoDBClient({});
@@ -15,7 +16,7 @@ const mapByBondId = R.reduce((map: Record<string, DbBondDetails | CatalystBondQu
 
 export async function handler(): Promise<UpdateBondsResult> {
   const bondDetailsTable = new BondDetailsTable(dynamoDbClient, Table.BondDetails.tableName);
-  
+
   const bondsFailed: string[] = [];
   const bondsStats: CatalystDailyStatisticsBondDetails[] = await getLatestCatalystDailyStatistics();
 
@@ -111,10 +112,39 @@ export async function handler(): Promise<UpdateBondsResult> {
     .concat(newBondsToStore)
     .concat(deactivatedBondsToStore));
 
+  await storeBondQuotes(bondsQuotesList);
+
   return {
     bondsUpdated: updatedBondsToStore.length,
     newBonds: [], //newBondsToStore,
     bondsDeactivated: deactivatedBondsToStore,
     bondsFailed
   }
+}
+
+async function storeBondQuotes(bondsQuotesList: CatalystBondQuote[]): Promise<void> {
+  const now = new Date();
+  const bondStatisticsTable = new BondStatisticsTable(dynamoDbClient, Table.BondStatistics.tableName);
+
+  const bondStatistics: DbBondStatistics[] = bondsQuotesList.map(quote => ({
+    name: quote.name,
+    market: quote.market,
+    year: now.getFullYear(),
+    month: now.getMonth(),
+    quotes: [{
+      date: now,
+      bid: quote.bidPrice,
+      ask: quote.askPrice,
+      volume: quote.volume,
+      turnover: quote.turnover
+    }]
+  }));
+
+  for (const bondQuote of bondStatistics) {
+    const updated = await bondStatisticsTable.updateQuotes(bondQuote);
+    if (!updated) {
+      console.log('Item not existing yet. Creating.')
+      await bondStatisticsTable.store(bondQuote);
+    }
+  };
 }

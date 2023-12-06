@@ -30,10 +30,10 @@ export class BondStatisticsTable {
           M: {
             [dateKey]: {
               M: {
-                bid: { N: quote.bid.toString() },
-                ask: { N: quote.ask.toString() },
-                volume: { N: quote.volume.toString() },
-                turnover: { N: quote.turnover.toString() }
+                ...(quote.bid && { bid: { N: quote.bid.toString() } }),
+                ...(quote.ask && { ask: { N: quote.ask.toString() } }),
+                ...(quote.volume && { volume: { N: quote.volume.toString() } }),
+                ...(quote.turnover && { turnover: { N: quote.turnover.toString() } })
               }
             }
           }
@@ -59,10 +59,10 @@ export class BondStatisticsTable {
       ExpressionAttributeValues: {
         ":quote": {
           M: {
-            bid: { N: quote.bid.toString() },
-            ask: { N: quote.ask.toString() },
-            volume: { N: quote.volume.toString() },
-            turnover: { N: quote.turnover.toString() },
+            ...(quote.bid && { bid: { N: quote.bid.toString() } }),
+            ...(quote.ask && { ask: { N: quote.ask.toString() } }),
+            ...(quote.volume && { volume: { N: quote.volume.toString() } }),
+            ...(quote.turnover && { turnover: { N: quote.turnover.toString() } })
           }
         }
       },

@@ -162,5 +162,6 @@ export function BondsService({ stack }: StackContext) {
     auth,
     api,
     bondDetailsTable,
+    bondStatisticsTable
   };
 }
