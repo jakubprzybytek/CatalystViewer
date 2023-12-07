@@ -5,7 +5,13 @@ const QUOTE_ROW_REGEX = /<tr>(.+?)<\/tr>/sg;
 
 const QUOTE_BOND_NAME_REGEX = /"o-instrumentach-instrument\?nazwa=(.+?)"/;
 const QUOTE_MARKET_REGEX = /<td.+?class="col2">(.+?)<\/td>/;
-const QUOTE_BID_ASK_REGEX = /"col4">(?<referencePrice>.+?)<\/td>.+?"col8">(?<lastDateTime>.+?)<\/td>.+?col10">(?<lastPrice>.+?)<\/td>.+?"col12">(?<bidCount>.+?)<\/td>.+?"col12">(?<bidVolume>.+?)<\/td>.+?"col12">(?<bidPrice>.+?)<\/td>.+?"col13">(?<askPrice>.+?)<\/td>.+?"col13">(?<askVolume>.+?)<\/td>.+?"col13">(?<askCount>.+?)<\/td>.+?"col14">(?<transactions>.+?)<\/td>.+?"col15">(?<volume>.+?)<\/td>.+?"col15">(?<turnover>.+?)<\/td>/s;
+const QUOTE_BID_ASK_REGEX = new RegExp([
+    '"col4">(?<referencePrice>.+?)<\/td>',
+    '.+?"col8">(?<lastDateTime>.+?)<\/td>.+?col10">(?<lastPrice>.+?)<\/td>',
+    '.+?"col12">(?<bidCount>.+?)<\/td>.+?"col12">(?<bidVolume>.+?)<\/td>.+?"col12">(?<bidPrice>.+?)<\/td>',
+    '.+?"col13">(?<askPrice>.+?)<\/td>.+?"col13">(?<askVolume>.+?)<\/td>.+?"col13">(?<askCount>.+?)<\/td>',
+    '.+?"col14">(?<transactions>.+?)<\/td>.+?"col15">(?<volume>.+?)<\/td>.+?"col15">(?<turnover>.+?)<\/td>'
+].join(''), 's');
 
 function firstGroup(markup: string, regexp: RegExp): string | undefined {
     const regexpMatch = markup.match(regexp);
