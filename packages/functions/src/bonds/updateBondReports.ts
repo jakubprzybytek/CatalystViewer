@@ -136,7 +136,7 @@ async function storeBondQuotes(bondsQuotesList: CatalystBondQuote[]): Promise<vo
       quotes: [{
         date: now,
         close: quote.lastPrice,
-        transactions: quote.lastPrice,
+        transactions: quote.transactions,
         volume: quote.volume,
         turnover: quote.turnover
       }]
