@@ -15,7 +15,6 @@ const QUOTE_BID_ASK_REGEX = new RegExp([
 
 function firstGroup(markup: string, regexp: RegExp): string | undefined {
     const regexpMatch = markup.match(regexp);
-
     return regexpMatch?.[1];
 }
 

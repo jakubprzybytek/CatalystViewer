@@ -2,8 +2,8 @@ export * from './BondStatisticsTable';
 
 type BondQuote = {
   date: Date;
-  bid: number;
-  ask: number;
+  close: number;
+  transactions: number;
   volume: number;
   turnover: number;
 }

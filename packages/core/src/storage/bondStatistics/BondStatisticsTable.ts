@@ -30,8 +30,8 @@ export class BondStatisticsTable {
           M: {
             [dateKey]: {
               M: {
-                ...(quote.bid && { bid: { N: quote.bid.toString() } }),
-                ...(quote.ask && { ask: { N: quote.ask.toString() } }),
+                ...(quote.close && { close: { N: quote.close.toString() } }),
+                ...(quote.transactions && { transactions: { N: quote.transactions.toString() } }),
                 ...(quote.volume && { volume: { N: quote.volume.toString() } }),
                 ...(quote.turnover && { turnover: { N: quote.turnover.toString() } })
               }
@@ -59,8 +59,8 @@ export class BondStatisticsTable {
       ExpressionAttributeValues: {
         ":quote": {
           M: {
-            ...(quote.bid && { bid: { N: quote.bid.toString() } }),
-            ...(quote.ask && { ask: { N: quote.ask.toString() } }),
+            ...(quote.close && { close: { N: quote.close.toString() } }),
+            ...(quote.transactions && { transactions: { N: quote.transactions.toString() } }),
             ...(quote.volume && { volume: { N: quote.volume.toString() } }),
             ...(quote.turnover && { turnover: { N: quote.turnover.toString() } })
           }
@@ -87,14 +87,15 @@ export class BondStatisticsTable {
     }
   }
 
-  async get(name: string, market: string, year: number, month: number): Promise<DbBondStatistics | undefined> {
+  async get(bondId: string, year: number, month: number): Promise<DbBondStatistics | undefined> {
 
-    console.log(`DbBondStatistics: Fetching statistics for: ${name} | ${name}`);
-
+    console.log(`DbBondStatistics: Fetching statistics for: ${bondId}`);
+    
     const getInput: GetItemInput = {
       TableName: Table.Profiles.tableName,
       Key: {
-        'name#market': { S: `${name}#${market}` }
+        'name#market': { S: `${bondId}` },
+        'year#month': { S: `${year}#${month}` }
       }
     }
 
@@ -104,8 +105,8 @@ export class BondStatisticsTable {
     return item !== undefined ? {
       name: item['name']['S'] || '',
       market: item['market']['S'] || '',
-      year: Number(item['year']?.['N']) || 0,
-      month: Number(item['month']?.['N']) || 0,
+      year: Number(item['year']?.['N']),
+      month: Number(item['month']?.['N']),
       quotes: [],
     } : undefined;
   }

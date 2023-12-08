@@ -126,19 +126,21 @@ async function storeBondQuotes(bondsQuotesList: CatalystBondQuote[]): Promise<vo
   const now = new Date();
   const bondStatisticsTable = new BondStatisticsTable(dynamoDbClient, Table.BondStatistics.tableName);
 
-  const bondStatistics: DbBondStatistics[] = bondsQuotesList.map(quote => ({
-    name: quote.name,
-    market: quote.market,
-    year: now.getFullYear(),
-    month: now.getMonth(),
-    quotes: [{
-      date: now,
-      bid: quote.bidPrice,
-      ask: quote.askPrice,
-      volume: quote.volume,
-      turnover: quote.turnover
-    }]
-  }));
+  const bondStatistics: DbBondStatistics[] = bondsQuotesList
+  .filter(quote => quote.transactions > 0)  
+  .map(quote => ({
+      name: quote.name,
+      market: quote.market,
+      year: now.getFullYear(),
+      month: now.getMonth(),
+      quotes: [{
+        date: now,
+        close: quote.lastPrice,
+        transactions: quote.lastPrice,
+        volume: quote.volume,
+        turnover: quote.turnover
+      }]
+    }));
 
   for (const bondQuote of bondStatistics) {
     const updated = await bondStatisticsTable.updateQuotes(bondQuote);
@@ -147,4 +149,6 @@ async function storeBondQuotes(bondsQuotesList: CatalystBondQuote[]): Promise<vo
       await bondStatisticsTable.store(bondQuote);
     }
   };
+
+  console.log(`Stored ${bondId.length} quotes.`);
 }
