@@ -135,6 +135,8 @@ async function storeBondQuotes(bondsQuotesList: CatalystBondQuote[]): Promise<vo
       month: now.getMonth() + 1,
       quotes: [{
         date: now,
+        bid: quote.bidPrice,
+        ask: quote.askPrice,
         close: quote.lastPrice,
         transactions: quote.transactions,
         volume: quote.volume,

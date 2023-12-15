@@ -31,6 +31,8 @@ export class BondStatisticsTable {
             [dateKey]: {
               M: {
                 ...(quote.date && { date: { N: quote.date.getTime().toString() } }),
+                ...(quote.bid && { bid: { N: quote.bid.toString() } }),
+                ...(quote.ask && { ask: { N: quote.ask.toString() } }),
                 ...(quote.close && { close: { N: quote.close.toString() } }),
                 ...(quote.transactions && { transactions: { N: quote.transactions.toString() } }),
                 ...(quote.volume && { volume: { N: quote.volume.toString() } }),
@@ -61,6 +63,8 @@ export class BondStatisticsTable {
         ":quote": {
           M: {
             ...(quote.date && { date: { N: quote.date.getTime().toString() } }),
+            ...(quote.bid && { bid: { N: quote.bid.toString() } }),
+            ...(quote.ask && { ask: { N: quote.ask.toString() } }),
             ...(quote.close && { close: { N: quote.close.toString() } }),
             ...(quote.transactions && { transactions: { N: quote.transactions.toString() } }),
             ...(quote.volume && { volume: { N: quote.volume.toString() } }),

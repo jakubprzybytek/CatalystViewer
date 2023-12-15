@@ -3,6 +3,8 @@ export * from './BondQuotesQuery';
 
 export type BondQuote = {
   date: Date;
+  bid: number;
+  ask: number;
   close: number;
   transactions: number;
   volume: number;
