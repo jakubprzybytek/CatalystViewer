@@ -2,7 +2,7 @@ import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { Table } from 'sst/node/table';
 import { Failure, lambdaHandler, Success } from "../HandlerProxy";
 import { BondStatisticsQueryResult } from ".";
-import { BondStatisticsTable, DbBondStatistics } from '@catalyst-viewer/core/storage/bondStatistics';
+import { DbBondStatistics, BondStatisticsTable, BondQuotesQuery } from '@catalyst-viewer/core/storage/bondStatistics';
 
 const dynamoDBClient = new DynamoDBClient({});
 
@@ -15,6 +15,8 @@ export const handler = lambdaHandler<BondStatisticsQueryResult>(async event => {
 
   const bondIds = bondIdsParamString.split(',');
 
+  console.log(`Received request for statistics of: ${bondIds}`);
+
   const bondStatisticsTable = new BondStatisticsTable(dynamoDBClient, Table.BondStatistics.tableName);
 
   const bondStatisticsList: DbBondStatistics[] = [];
@@ -24,6 +26,11 @@ export const handler = lambdaHandler<BondStatisticsQueryResult>(async event => {
       bondStatisticsList.push(bondStatistics);
     }
   }
+
+  const bondQuotesQuery = new BondQuotesQuery(bondStatisticsTable);
+  const quotes = await bondQuotesQuery.get('FPC0427', 'GPW RR', new Date('2023-12-04'), new Date('2023-12-15 23:59:59.999'));
+
+  console.log(quotes);
 
   return Success(bondStatisticsList);
 });

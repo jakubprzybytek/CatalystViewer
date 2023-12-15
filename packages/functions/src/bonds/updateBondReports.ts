@@ -6,7 +6,7 @@ import { getTime } from 'date-fns';
 import { CatalystBondQuote, CatalystDailyStatisticsBondDetails, getCurrentCatalystBondsQuotes, getLatestCatalystDailyStatistics } from '@catalyst-viewer/core/bonds/catalyst';
 import { getBondInformation } from '@catalyst-viewer/core/bonds/obligacjepl';
 import { BondDetailsTable, DbBondDetails } from '@catalyst-viewer/core/storage/bondDetails';
-import { BondStatisticsTable, DbBondStatistics } from '@catalyst-viewer/core/storage/bondStatistics';
+import { BondQuotesQuery, BondStatisticsTable, DbBondStatistics } from '@catalyst-viewer/core/storage/bondStatistics';
 import { UpdateBondsResult } from '.';
 
 const dynamoDbClient = new DynamoDBClient({});
@@ -127,12 +127,12 @@ async function storeBondQuotes(bondsQuotesList: CatalystBondQuote[]): Promise<vo
   const bondStatisticsTable = new BondStatisticsTable(dynamoDbClient, Table.BondStatistics.tableName);
 
   const bondStatistics: DbBondStatistics[] = bondsQuotesList
-  .filter(quote => quote.transactions > 0)  
-  .map(quote => ({
+    .filter(quote => quote.transactions > 0)
+    .map(quote => ({
       name: quote.name,
       market: quote.market,
       year: now.getFullYear(),
-      month: now.getMonth(),
+      month: now.getMonth() + 1,
       quotes: [{
         date: now,
         close: quote.lastPrice,
@@ -150,5 +150,11 @@ async function storeBondQuotes(bondsQuotesList: CatalystBondQuote[]): Promise<vo
     }
   };
 
-  console.log(`Stored ${bondId.length} quotes.`);
+  const bondQuotesQuery = new BondQuotesQuery(bondStatisticsTable);
+  for (const bondQuote of bondStatistics) {
+    const quotes = await bondQuotesQuery.get(bondQuote.name, bondQuote.market, new Date('2023-12-04'), new Date('2023-12-15 23:59:59.999'));
+    console.log(quotes.map(quote => quote.date));
+  }
+
+  console.log(`Stored ${bondStatistics.length} quotes.`);
 }

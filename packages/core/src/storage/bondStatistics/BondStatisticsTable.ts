@@ -1,6 +1,6 @@
-import { DynamoDBClient, GetItemCommand, GetItemInput, PutItemCommand, PutItemInput, UpdateItemCommand, UpdateItemCommandInput } from "@aws-sdk/client-dynamodb";
-import { DbBondStatistics } from ".";
-import { Table } from "sst/node/table";
+import { marshall, unmarshall } from "@aws-sdk/util-dynamodb";
+import { AttributeValue, DynamoDBClient, GetItemCommand, GetItemInput, PutItemCommand, PutItemInput, UpdateItemCommand, UpdateItemCommandInput } from "@aws-sdk/client-dynamodb";
+import { BondQuote, DbBondStatistics } from ".";
 
 export class BondStatisticsTable {
   readonly dynamoDBClient: DynamoDBClient;
@@ -30,6 +30,7 @@ export class BondStatisticsTable {
           M: {
             [dateKey]: {
               M: {
+                ...(quote.date && { date: { N: quote.date.getTime().toString() } }),
                 ...(quote.close && { close: { N: quote.close.toString() } }),
                 ...(quote.transactions && { transactions: { N: quote.transactions.toString() } }),
                 ...(quote.volume && { volume: { N: quote.volume.toString() } }),
@@ -59,6 +60,7 @@ export class BondStatisticsTable {
       ExpressionAttributeValues: {
         ":quote": {
           M: {
+            ...(quote.date && { date: { N: quote.date.getTime().toString() } }),
             ...(quote.close && { close: { N: quote.close.toString() } }),
             ...(quote.transactions && { transactions: { N: quote.transactions.toString() } }),
             ...(quote.volume && { volume: { N: quote.volume.toString() } }),
@@ -88,11 +90,10 @@ export class BondStatisticsTable {
   }
 
   async get(bondId: string, year: number, month: number): Promise<DbBondStatistics | undefined> {
-
     console.log(`DbBondStatistics: Fetching statistics for: ${bondId}`);
-    
+
     const getInput: GetItemInput = {
-      TableName: Table.Profiles.tableName,
+      TableName: this.tableName,
       Key: {
         'name#market': { S: `${bondId}` },
         'year#month': { S: `${year}#${month}` }
@@ -107,7 +108,18 @@ export class BondStatisticsTable {
       market: item['market']['S'] || '',
       year: Number(item['year']?.['N']),
       month: Number(item['month']?.['N']),
-      quotes: [],
+      quotes: this.unmarshallQuotes(item['quotes']?.['M']),
     } : undefined;
   }
+
+  unmarshallQuotes(map: Record<string, AttributeValue> | undefined): BondQuote[] {
+    if (map === undefined) {
+      return [];
+    }
+    return Object.values(map)
+      .map(quoteAttributeValue => quoteAttributeValue['M'])
+      .filter((quoteObject): quoteObject is Record<string, AttributeValue> => !!quoteObject)
+      .map(quoteAttributeValue => unmarshall(quoteAttributeValue) as BondQuote);
+  }
+
 }

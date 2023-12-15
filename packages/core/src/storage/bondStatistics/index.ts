@@ -1,6 +1,7 @@
 export * from './BondStatisticsTable';
+export * from './BondQuotesQuery';
 
-type BondQuote = {
+export type BondQuote = {
   date: Date;
   close: number;
   transactions: number;
