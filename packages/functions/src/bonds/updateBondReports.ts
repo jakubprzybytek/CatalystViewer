@@ -150,38 +150,38 @@ function toUpdatedBond(dbBond: DbBondDetails): UpdatedBond {
   }
 }
 
-  async function storeBondQuotes(bondsQuotesList: CatalystBondQuote[]): Promise<void> {
-    const now = new Date();
-    const bondStatisticsTable = new BondStatisticsTable(dynamoDbClient, Table.BondStatistics.tableName);
+async function storeBondQuotes(bondsQuotesList: CatalystBondQuote[]): Promise<void> {
+  const now = new Date();
+  const bondStatisticsTable = new BondStatisticsTable(dynamoDbClient, Table.BondStatistics.tableName);
 
-    const bondStatistics: DbBondStatistics[] = bondsQuotesList
-      .filter(quote => quote.turnover > 0 || quote.bidPrice != undefined || quote.askPrice != undefined)
-      .map(quote => ({
-        name: quote.name,
-        market: quote.market,
-        year: now.getFullYear(),
-        month: now.getMonth() + 1,
-        quotes: [{
-          date: now,
-          bid: quote.bidPrice,
-          ask: quote.askPrice,
-          ...(quote.transactions > 0 && { close: quote.lastPrice }),
-          transactions: quote.transactions,
-          volume: quote.volume,
-          turnover: quote.turnover
-        }]
-      }));
+  const bondStatistics: DbBondStatistics[] = bondsQuotesList
+    .filter(quote => quote.turnover > 0 || quote.bidPrice != undefined || quote.askPrice != undefined)
+    .map(quote => ({
+      name: quote.name,
+      market: quote.market,
+      year: now.getFullYear(),
+      month: now.getMonth() + 1,
+      quotes: [{
+        date: now,
+        bid: quote.bidPrice,
+        ask: quote.askPrice,
+        ...(quote.transactions > 0 && { close: quote.lastPrice }),
+        transactions: quote.transactions,
+        volume: quote.volume,
+        turnover: quote.turnover
+      }]
+    }));
 
-    for (const bondQuote of bondStatistics) {
-      const updated = await bondStatisticsTable.updateQuotes(bondQuote);
-      if (!updated) {
-        console.log('Item not existing yet. Creating.')
-        await bondStatisticsTable.store(bondQuote);
-      }
-    };
+  for (const bondQuote of bondStatistics) {
+    const updated = await bondStatisticsTable.updateQuotes(bondQuote);
+    if (!updated) {
+      console.log('Item not existing yet. Creating.')
+      await bondStatisticsTable.store(bondQuote);
+    }
+  };
 
-    console.log(`Stored ${bondStatistics.length} quotes.`);
-  }
+  console.log(`Stored ${bondStatistics.length} quotes.`);
+}
 
 type LiquidityStatistics = {
   averageTurnover?: number;
@@ -194,15 +194,10 @@ async function computeLiquidityStatistics(bondName: string, market: string, star
   const bondQuotesQuery = new BondQuotesQuery(bondStatisticsTable);
 
   const quotes = await bondQuotesQuery.get(bondName, market, startDate, endDate);
-  console.log(`Qs: ${JSON.stringify(quotes)}`);
   const turnoverValues = getTurnover(quotes);
-  console.log(`T: ${turnoverValues}`);
   const averageTurnover = turnoverValues.length > 0 ? average(turnoverValues) : undefined;
-  console.log(`AT: ${averageTurnover}`);
   const spreadValues = getSpread(quotes);
-  console.log(`S: ${spreadValues}`);
   const averageSpread = spreadValues.length > 0 ? average(spreadValues) : undefined;
-  console.log(`AS: ${averageSpread}`);
 
   return {
     averageTurnover: averageTurnover !== undefined ? Number(averageTurnover.toFixed(3)) : undefined,
