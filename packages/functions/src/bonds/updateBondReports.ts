@@ -9,7 +9,7 @@ import { CatalystBondQuote, CatalystDailyStatisticsBondDetails, getCurrentCataly
 import { getBondInformation } from '@catalyst-viewer/core/bonds/obligacjepl';
 import { BondDetailsTable, DbBondDetails } from '@catalyst-viewer/core/storage/bondDetails';
 import { BondQuotesQuery, BondStatisticsTable, DbBondStatistics } from '@catalyst-viewer/core/storage/bondStatistics';
-import { UpdateBondsResult } from '.';
+import { UpdateBondsResult, UpdatedBond } from '.';
 
 const dynamoDbClient = new DynamoDBClient({});
 
@@ -119,7 +119,7 @@ export async function handler(): Promise<UpdateBondsResult> {
 
   // look for bonds to deactivate
   const newAndUpdatedBondIdies = bondsStats.map(bondId);
-  const deactivatedBondsToStore = storedBondsList
+  const deactivatedBondsToStore: DbBondDetails[] = storedBondsList
     .filter(bond => !newAndUpdatedBondIdies.includes(bondId(bond)))
     .map(bond => ({
       ...bond,
@@ -132,45 +132,56 @@ export async function handler(): Promise<UpdateBondsResult> {
 
   return {
     bondsUpdated: updatedBondsToStore.length,
-    // FixMe:
-    newBonds: [], //newBondsToStore,
-    bondsDeactivated: deactivatedBondsToStore,
+    newBonds: newBondsToStore.map(toUpdatedBond),
+    bondsDeactivated: deactivatedBondsToStore.map(toUpdatedBond),
     bondsFailed
   }
 }
 
-async function storeBondQuotes(bondsQuotesList: CatalystBondQuote[]): Promise<void> {
-  const now = new Date();
-  const bondStatisticsTable = new BondStatisticsTable(dynamoDbClient, Table.BondStatistics.tableName);
-
-  const bondStatistics: DbBondStatistics[] = bondsQuotesList
-    .filter(quote => quote.turnover > 0 || quote.bidPrice != undefined || quote.askPrice != undefined)
-    .map(quote => ({
-      name: quote.name,
-      market: quote.market,
-      year: now.getFullYear(),
-      month: now.getMonth() + 1,
-      quotes: [{
-        date: now,
-        bid: quote.bidPrice,
-        ask: quote.askPrice,
-        ...(quote.transactions > 0 && { close: quote.lastPrice }),
-        transactions: quote.transactions,
-        volume: quote.volume,
-        turnover: quote.turnover
-      }]
-    }));
-
-  for (const bondQuote of bondStatistics) {
-    const updated = await bondStatisticsTable.updateQuotes(bondQuote);
-    if (!updated) {
-      console.log('Item not existing yet. Creating.')
-      await bondStatisticsTable.store(bondQuote);
-    }
-  };
-
-  console.log(`Stored ${bondStatistics.length} quotes.`);
+function toUpdatedBond(dbBond: DbBondDetails): UpdatedBond {
+  return {
+    name: dbBond.name,
+    issuer: dbBond.issuer,
+    type: dbBond.type,
+    interestVariable: dbBond.interestVariable,
+    interestConst: dbBond.interestConst,
+    nominalValue: dbBond.nominalValue,
+    currency: dbBond.currency
+  }
 }
+
+  async function storeBondQuotes(bondsQuotesList: CatalystBondQuote[]): Promise<void> {
+    const now = new Date();
+    const bondStatisticsTable = new BondStatisticsTable(dynamoDbClient, Table.BondStatistics.tableName);
+
+    const bondStatistics: DbBondStatistics[] = bondsQuotesList
+      .filter(quote => quote.turnover > 0 || quote.bidPrice != undefined || quote.askPrice != undefined)
+      .map(quote => ({
+        name: quote.name,
+        market: quote.market,
+        year: now.getFullYear(),
+        month: now.getMonth() + 1,
+        quotes: [{
+          date: now,
+          bid: quote.bidPrice,
+          ask: quote.askPrice,
+          ...(quote.transactions > 0 && { close: quote.lastPrice }),
+          transactions: quote.transactions,
+          volume: quote.volume,
+          turnover: quote.turnover
+        }]
+      }));
+
+    for (const bondQuote of bondStatistics) {
+      const updated = await bondStatisticsTable.updateQuotes(bondQuote);
+      if (!updated) {
+        console.log('Item not existing yet. Creating.')
+        await bondStatisticsTable.store(bondQuote);
+      }
+    };
+
+    console.log(`Stored ${bondStatistics.length} quotes.`);
+  }
 
 type LiquidityStatistics = {
   averageTurnover?: number;

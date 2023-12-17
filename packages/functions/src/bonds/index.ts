@@ -28,10 +28,20 @@ export type BondReportsQueryResult = {
     };
 }
 
+export type UpdatedBond = {
+    name: string;
+    issuer: string;
+    type: string;
+    interestVariable?: string;
+    interestConst: number;
+    nominalValue: number;
+    currency: string;
+}
+
 export type UpdateBondsResult = {
     bondsUpdated: number,
-    newBonds: DbBondDetails[],
-    bondsDeactivated: DbBondDetails[],
+    newBonds: UpdatedBond[],
+    bondsDeactivated: UpdatedBond[],
     bondsFailed: string[]
 }
 
