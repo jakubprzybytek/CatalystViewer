@@ -15,7 +15,7 @@ export type DbBondDetails = {
     maturityDayTs: number;
     interestType: string;
     interestVariable: string | undefined;
-    interestConst: number;    
+    interestConst: number;
     interestFirstDays: string[];
     interestFirstDayTss: number[];
     interestRightsDays: string[];
@@ -34,4 +34,8 @@ export type DbBondDetails = {
     askPrice?: number;
     askVolume?: number;
     askCount?: number;
+
+    averageTurnover?: number;
+    tradingDaysRatio: number;
+    averageSpread?: number;
 };

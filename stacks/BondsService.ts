@@ -62,7 +62,11 @@ export function BondsService({ stack }: StackContext) {
       bidPrice: 'number',
       askPrice: 'number',
       askVolume: 'number',
-      askCount: 'number'
+      askCount: 'number',
+
+      averageTurnover: 'number',
+      tradingDaysRation: 'number',
+      averageSpread: 'number'
     },
     primaryIndex: {
       partitionKey: 'bondType',

@@ -25,4 +25,8 @@ export type BondCurrentValues = {
     readonly interestRate: number;
     readonly accuredInterest: number;
     readonly periodInterest: number;
+    
+    readonly averageTurnover?: number;
+    readonly tradingDaysRatio: number;
+    readonly averageSpread?: number;
 }

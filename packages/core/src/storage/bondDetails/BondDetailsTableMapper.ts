@@ -39,7 +39,11 @@ export function DbBondDetailsToPutRequest(dbBondDetails: DbBondDetails): WriteRe
         ...(dbBondDetails.askPrice && { askPrice: { N: dbBondDetails.askPrice.toString() } }),
         ...(dbBondDetails.askVolume && { askVolume: { N: dbBondDetails.askVolume.toString() } }),
         ...(dbBondDetails.askCount && { askCount: { N: dbBondDetails.askCount.toString() } }),
-      },
+
+        ...(dbBondDetails.averageTurnover && { averageTurnover: { N: dbBondDetails.averageTurnover.toString() } }),
+        tradingDaysRatio: { N: dbBondDetails.tradingDaysRatio.toString() },
+        ...(dbBondDetails.averageSpread && { averageSpread: { N: dbBondDetails.averageSpread.toString() } }),
+      }
     }
   }
 }
@@ -79,5 +83,9 @@ export function ItemToDbBondDetails(item: Record<string, AttributeValue>): DbBon
     ...(item['askPrice']?.['N'] && { askPrice: Number(item['askPrice']?.['N']) }),
     ...(item['askVolume']?.['N'] && { askVolume: Number(item['askVolume']?.['N']) }),
     ...(item['askCount']?.['N'] && { askCount: Number(item['askCount']?.['N']) }),
+
+    ...(item['averageTurnover']?.['N'] && { averageTurnover: Number(item['averageTurnover']?.['N']) }),
+    tradingDaysRatio: Number(item['tradingDaysRatio']?.['N'] || 0),
+    ...(item['averageSpread']?.['N'] && { averageSpread: Number(item['averageSpread']?.['N']) })
   };
 }

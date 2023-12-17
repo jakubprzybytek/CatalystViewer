@@ -6,6 +6,7 @@ import { InterestPercentilesByInterestBaseType } from "../../../bonds/statistics
 import BondCardMainInformationSection from './BondCardMainInformationSection';
 import BondCardCurrentInterestSection from './BondCardCurrentInterestSection';
 import BondCardYTMSection from "./BondCardYTMSection";
+import BondCardLiquiditySection from './BondCardLiquiditySection';
 
 type BondCardParam = {
   bondReport: BondReport;
@@ -33,6 +34,7 @@ export default function BondCard({ bondReport, statistics }: BondCardParam): JSX
         <Divider>Current interest</Divider>
         <BondCardCurrentInterestSection bondReport={bondReport} />
         <Divider>Yield to maturity</Divider>
+        <BondCardLiquiditySection bondReport={bondReport} />
         {!bondReport.lastPrice && bondReport.referencePrice && <BondCardYTMSection title='Reference price' bondReport={bondReport} price={bondReport.referencePrice} />}
         {bondReport.lastPrice && <BondCardYTMSection title='Last price (date/time)' bondReport={bondReport} price={bondReport.lastPrice} secondary={bondReport.lastDateTime} />}
         {bondReport.bidPrice && <BondCardYTMSection title='Bid price (vol, cnt)' bondReport={bondReport} price={bondReport.bidPrice} secondary={`${bondReport.bidVolume}, ${bondReport.bidCount}`} />}

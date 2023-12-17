@@ -1,8 +1,10 @@
 import * as R from 'ramda';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { Table } from 'sst/node/table';
+import { differenceInBusinessDays, getTime, sub } from 'date-fns';
+import { average } from 'simple-statistics'
 import { parseUTCDate } from '@catalyst-viewer/core';
-import { getTime } from 'date-fns';
+import { getSpread, getTurnover } from '@catalyst-viewer/core/bonds/statistics';
 import { CatalystBondQuote, CatalystDailyStatisticsBondDetails, getCurrentCatalystBondsQuotes, getLatestCatalystDailyStatistics } from '@catalyst-viewer/core/bonds/catalyst';
 import { getBondInformation } from '@catalyst-viewer/core/bonds/obligacjepl';
 import { BondDetailsTable, DbBondDetails } from '@catalyst-viewer/core/storage/bondDetails';
@@ -17,41 +19,53 @@ const mapByBondId = R.reduce((map: Record<string, DbBondDetails | CatalystBondQu
 export async function handler(): Promise<UpdateBondsResult> {
   const bondDetailsTable = new BondDetailsTable(dynamoDbClient, Table.BondDetails.tableName);
 
+  const bondsQuotesList: CatalystBondQuote[] = await getCurrentCatalystBondsQuotes();
+  await storeBondQuotes(bondsQuotesList);
+
+  const bondsQuotes = mapByBondId(bondsQuotesList) as Record<string, CatalystBondQuote>;
+
   const bondsFailed: string[] = [];
   const bondsStats: CatalystDailyStatisticsBondDetails[] = await getLatestCatalystDailyStatistics();
-
-  const bondsQuotesList: CatalystBondQuote[] = await getCurrentCatalystBondsQuotes();
-  const bondsQuotes = mapByBondId(bondsQuotesList) as Record<string, CatalystBondQuote>;
 
   const storedBondsList: DbBondDetails[] = await bondDetailsTable.getAllActive();
   const storedBonds = mapByBondId(storedBondsList) as Record<string, DbBondDetails>;
 
+  const now = new Date();
+  const liquidityStatisticsEndDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+  const liquidityStatisticsStartDate = sub(liquidityStatisticsEndDate, { days: 30, hours: 23, minutes: 59, seconds: 59 });
   const newBondsToStore: DbBondDetails[] = [];
   const updatedBondsToStore: DbBondDetails[] = [];
 
   for (const bondStats of bondsStats) {
     try {
-      const storedBond = storedBonds[bondId(bondStats)];
-      const bondQuotes = bondsQuotes[bondId(bondStats)];
-
       const currentTime = new Date();
 
-      if (storedBond !== undefined) {
+      const storedBondDetails = storedBonds[bondId(bondStats)];
+      const bondQuote = bondsQuotes[bondId(bondStats)];
+
+      const liquidityStatistics = await computeLiquidityStatistics(bondStats.name, bondStats.market, liquidityStatisticsStartDate, liquidityStatisticsEndDate);
+      console.log(`${bondStats.name} - Avg turnover: ${liquidityStatistics.averageTurnover}, trading days: ${liquidityStatistics.tradingDaysRatio}, avg spread: ${liquidityStatistics.averageSpread}`);
+
+      if (storedBondDetails !== undefined) {
         // update existing bond information
         updatedBondsToStore.push({
-          ...storedBond,
+          ...storedBondDetails,
           updatedTs: currentTime.getTime(),
           currentInterestRate: bondStats.currentInterestRate,
           accuredInterest: bondStats.accuredInterest,
-          referencePrice: bondQuotes.referencePrice,
-          ...(bondQuotes.lastDateTime && { lastDateTime: bondQuotes.lastDateTime }),
-          ...(bondQuotes.lastPrice && { lastPrice: bondQuotes.lastPrice }),
-          ...(bondQuotes.bidCount && { bidCount: bondQuotes.bidCount }),
-          ...(bondQuotes.bidVolume && { bidVolume: bondQuotes.bidVolume }),
-          ...(bondQuotes.bidPrice && { bidPrice: bondQuotes.bidPrice }),
-          ...(bondQuotes.askPrice && { askPrice: bondQuotes.askPrice }),
-          ...(bondQuotes.askVolume && { askVolume: bondQuotes.askVolume }),
-          ...(bondQuotes.askCount && { askCount: bondQuotes.askCount })
+          referencePrice: bondQuote.referencePrice,
+          ...(bondQuote.lastDateTime && { lastDateTime: bondQuote.lastDateTime }),
+          ...(bondQuote.lastPrice && { lastPrice: bondQuote.lastPrice }),
+          ...(bondQuote.bidCount && { bidCount: bondQuote.bidCount }),
+          ...(bondQuote.bidVolume && { bidVolume: bondQuote.bidVolume }),
+          ...(bondQuote.bidPrice && { bidPrice: bondQuote.bidPrice }),
+          ...(bondQuote.askPrice && { askPrice: bondQuote.askPrice }),
+          ...(bondQuote.askVolume && { askVolume: bondQuote.askVolume }),
+          ...(bondQuote.askCount && { askCount: bondQuote.askCount }),
+
+          averageTurnover: liquidityStatistics.averageTurnover,
+          tradingDaysRatio: liquidityStatistics.tradingDaysRatio,
+          averageSpread: liquidityStatistics.averageSpread
         });
       } else {
         // create new bond information record
@@ -82,15 +96,19 @@ export async function handler(): Promise<UpdateBondsResult> {
           updatedTs: currentTime.getTime(),
           currentInterestRate: bondStats.currentInterestRate,
           accuredInterest: bondStats.accuredInterest,
-          referencePrice: bondQuotes.referencePrice,
-          ...(bondQuotes.lastDateTime && { lastDateTime: bondQuotes.lastDateTime }),
-          ...(bondQuotes.lastPrice && { lastPrice: bondQuotes.lastPrice }),
-          ...(bondQuotes.bidCount && { bidCount: bondQuotes.bidCount }),
-          ...(bondQuotes.bidVolume && { bidVolume: bondQuotes.bidVolume }),
-          ...(bondQuotes.bidPrice && { bidPrice: bondQuotes.bidPrice }),
-          ...(bondQuotes.askPrice && { askPrice: bondQuotes.askPrice }),
-          ...(bondQuotes.askVolume && { askVolume: bondQuotes.askVolume }),
-          ...(bondQuotes.askCount && { askCount: bondQuotes.askCount })
+          referencePrice: bondQuote.referencePrice,
+          ...(bondQuote.lastDateTime && { lastDateTime: bondQuote.lastDateTime }),
+          ...(bondQuote.lastPrice && { lastPrice: bondQuote.lastPrice }),
+          ...(bondQuote.bidCount && { bidCount: bondQuote.bidCount }),
+          ...(bondQuote.bidVolume && { bidVolume: bondQuote.bidVolume }),
+          ...(bondQuote.bidPrice && { bidPrice: bondQuote.bidPrice }),
+          ...(bondQuote.askPrice && { askPrice: bondQuote.askPrice }),
+          ...(bondQuote.askVolume && { askVolume: bondQuote.askVolume }),
+          ...(bondQuote.askCount && { askCount: bondQuote.askCount }),
+
+          averageTurnover: liquidityStatistics.averageTurnover,
+          tradingDaysRatio: liquidityStatistics.tradingDaysRatio,
+          averageSpread: liquidityStatistics.averageSpread
         });
       }
     } catch (error: any) {
@@ -112,10 +130,9 @@ export async function handler(): Promise<UpdateBondsResult> {
     .concat(newBondsToStore)
     .concat(deactivatedBondsToStore));
 
-  await storeBondQuotes(bondsQuotesList);
-
   return {
     bondsUpdated: updatedBondsToStore.length,
+    // FixMe:
     newBonds: [], //newBondsToStore,
     bondsDeactivated: deactivatedBondsToStore,
     bondsFailed
@@ -127,7 +144,7 @@ async function storeBondQuotes(bondsQuotesList: CatalystBondQuote[]): Promise<vo
   const bondStatisticsTable = new BondStatisticsTable(dynamoDbClient, Table.BondStatistics.tableName);
 
   const bondStatistics: DbBondStatistics[] = bondsQuotesList
-    .filter(quote => quote.transactions > 0)
+    .filter(quote => quote.turnover > 0 || quote.bidPrice != undefined || quote.askPrice != undefined)
     .map(quote => ({
       name: quote.name,
       market: quote.market,
@@ -137,7 +154,7 @@ async function storeBondQuotes(bondsQuotesList: CatalystBondQuote[]): Promise<vo
         date: now,
         bid: quote.bidPrice,
         ask: quote.askPrice,
-        close: quote.lastPrice,
+        ...(quote.transactions > 0 && { close: quote.lastPrice }),
         transactions: quote.transactions,
         volume: quote.volume,
         turnover: quote.turnover
@@ -152,11 +169,33 @@ async function storeBondQuotes(bondsQuotesList: CatalystBondQuote[]): Promise<vo
     }
   };
 
-  const bondQuotesQuery = new BondQuotesQuery(bondStatisticsTable);
-  for (const bondQuote of bondStatistics) {
-    const quotes = await bondQuotesQuery.get(bondQuote.name, bondQuote.market, new Date('2023-12-04'), new Date('2023-12-15 23:59:59.999'));
-    console.log(quotes.map(quote => quote.date));
-  }
-
   console.log(`Stored ${bondStatistics.length} quotes.`);
+}
+
+type LiquidityStatistics = {
+  averageTurnover?: number;
+  tradingDaysRatio: number;
+  averageSpread?: number;
+}
+
+async function computeLiquidityStatistics(bondName: string, market: string, startDate: Date, endDate: Date): Promise<LiquidityStatistics> {
+  const bondStatisticsTable = new BondStatisticsTable(dynamoDbClient, Table.BondStatistics.tableName);
+  const bondQuotesQuery = new BondQuotesQuery(bondStatisticsTable);
+
+  const quotes = await bondQuotesQuery.get(bondName, market, startDate, endDate);
+  console.log(`Qs: ${JSON.stringify(quotes)}`);
+  const turnoverValues = getTurnover(quotes);
+  console.log(`T: ${turnoverValues}`);
+  const averageTurnover = turnoverValues.length > 0 ? average(turnoverValues) : undefined;
+  console.log(`AT: ${averageTurnover}`);
+  const spreadValues = getSpread(quotes);
+  console.log(`S: ${spreadValues}`);
+  const averageSpread = spreadValues.length > 0 ? average(spreadValues) : undefined;
+  console.log(`AS: ${averageSpread}`);
+
+  return {
+    averageTurnover: averageTurnover !== undefined ? Number(averageTurnover.toFixed(3)) : undefined,
+    tradingDaysRatio: Number((turnoverValues.length / differenceInBusinessDays(endDate, startDate)).toFixed(2)),
+    averageSpread: averageSpread !== undefined ? Number(averageSpread.toFixed(3)) : undefined,
+  }
 }

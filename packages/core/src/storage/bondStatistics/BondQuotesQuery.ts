@@ -17,7 +17,7 @@ export class BondQuotesQuery {
       .filter(quote => start <= quote.date && quote.date <= end)
       .forEach(quote => quotes.push(quote));
 
-    if (start.getFullYear() != end.getFullYear()) {
+    if (start.getFullYear() != end.getFullYear() || start.getMonth() != end.getMonth()) {
       const endDateBondStatistics = await this.bondStatisticsTable.get(bondId, end.getFullYear(), end.getMonth() + 1);
       endDateBondStatistics?.quotes
         .filter(quote => quote.date <= end)
