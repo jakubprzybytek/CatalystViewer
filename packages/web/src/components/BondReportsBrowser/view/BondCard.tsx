@@ -33,8 +33,9 @@ export default function BondCard({ bondReport, statistics }: BondCardParam): JSX
         <BondCardMainInformationSection bondReport={bondReport} statistics={statistics} />
         <Divider>Current interest</Divider>
         <BondCardCurrentInterestSection bondReport={bondReport} />
-        <Divider>Yield to maturity</Divider>
+        <Divider>Liquidity (over 30 days)</Divider>
         <BondCardLiquiditySection bondReport={bondReport} />
+        <Divider>Yield to maturity</Divider>
         {!bondReport.lastPrice && bondReport.referencePrice && <BondCardYTMSection title='Reference price' bondReport={bondReport} price={bondReport.referencePrice} />}
         {bondReport.lastPrice && <BondCardYTMSection title='Last price (date/time)' bondReport={bondReport} price={bondReport.lastPrice} secondary={bondReport.lastDateTime} />}
         {bondReport.bidPrice && <BondCardYTMSection title='Bid price (vol, cnt)' bondReport={bondReport} price={bondReport.bidPrice} secondary={`${bondReport.bidVolume}, ${bondReport.bidCount}`} />}
