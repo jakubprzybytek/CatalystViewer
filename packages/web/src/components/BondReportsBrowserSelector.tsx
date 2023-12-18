@@ -13,12 +13,13 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import DeleteIcon from '@mui/icons-material/Delete';
 import CancelIcon from '@mui/icons-material/Cancel';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
-import { BondReportsBrowserSettings } from './BondReportsBrowser/BondReportsBrowser';
+import { BondReportsBrowserSettings, View } from './BondReportsBrowser/BondReportsBrowser';
 import Condition from '@/common/Condition';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContentText from '@mui/material/DialogContentText';
 import { removeAt } from '@/common/Arrays';
+import { BondReportsSortOrder } from './BondReportsBrowser/sort';
 
 type SelectorItemParams = {
   settings: BondReportsBrowserSettings;
@@ -90,13 +91,15 @@ function EditorItem({ settings, setSettings, onCopy, deleteEnabled, onDelete, ex
 
 const NEW_BOND_REPORTS_SETTINGS: BondReportsBrowserSettings = {
   name: 'New',
+  view: View.Issuers,
   filteringOptions: {
     bondType: 'Corporate bonds',
     maxNominal: 10000,
     markets: ['GPW ASO', 'GPW RR'],
     interestBaseTypes: ['WIBOR 3M', 'WIBOR 6M'],
     issuers: []
-  }
+  },
+  sortOrder: BondReportsSortOrder.Name
 }
 
 type BondReportsBrowserSelectorParams = {
