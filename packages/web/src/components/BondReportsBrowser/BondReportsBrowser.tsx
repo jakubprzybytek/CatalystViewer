@@ -21,14 +21,16 @@ import BondReportsSortMenu, { BondReportsSortOrder, getBondReportsSortingFunctio
 import { BondReport, getBonds } from "@/sdk/Bonds";
 import { computeStatisticsForInterestBaseTypes } from "@/bonds/statistics";
 
-export type BondReportsBrowserSettings = {
-  name: string;
-  filteringOptions: BondReportsFilteringOptions;
-}
-
-enum View {
+export enum View {
   Issuers,
   Bonds
+}
+
+export type BondReportsBrowserSettings = {
+  name: string;
+  view: View;
+  filteringOptions: BondReportsFilteringOptions;
+  sortOrder: BondReportsSortOrder;
 }
 
 type BondReportsBrowserParams = {
@@ -37,23 +39,30 @@ type BondReportsBrowserParams = {
 }
 
 export default function BondReportsBrowser({ settings, setSettings }: BondReportsBrowserParams): JSX.Element {
-  const [view, setView] = useState(View.Issuers);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
 
   const [allBondReports, setAllBondReports] = useState<BondReport[]>([]);
   const [allBondTypes, setAllBondTypes] = useState<string[]>([]);
 
+  // const [view, setView] = useState(View.Issuers);
+  const view = settings.view;
+  const setView = (view: View) => setSettings({ ...settings, view });
+
   // stats
   const [statsShown, setStatsShown] = useState(false);
 
   // filtering
-  const [filteringDrawerOpen, setFilteringDrawerOpen] = useState(false);
   //const [filteringOptions, setFilteringOptions] = useState<BondReportsFilteringOptions>(DEFAULT_FILTERING_OPTIONS);
+  const filteringOptions = settings.filteringOptions;
+  const setFilteringOptions = (filteringOptions: BondReportsFilteringOptions) => setSettings({ ...settings, filteringOptions });
+  const [filteringDrawerOpen, setFilteringDrawerOpen] = useState(false);
 
   // sorting
+  // const [selectedBondReportsSortOrder, setSelectedBondReportsSortOrder] = useState<BondReportsSortOrder>(BondReportsSortOrder.Name);
+  const selectedBondReportsSortOrder = settings.sortOrder;
+  const setSelectedBondReportsSortOrder = (sortOrder: BondReportsSortOrder) => setSettings({ ...settings, sortOrder });
   const [sortMenuTriggerEl, setSortMenuTriggerEl] = useState<null | HTMLElement>(null);
-  const [selectedBondReportsSortOrder, setSelectedBondReportsSortOrder] = useState<BondReportsSortOrder>(BondReportsSortOrder.Name);
 
   function selectBondReportsSortOrder(sortOrder: BondReportsSortOrder) {
     setSelectedBondReportsSortOrder(sortOrder);
@@ -79,9 +88,6 @@ export default function BondReportsBrowser({ settings, setSettings }: BondReport
     }
     setIsLoading(false);
   };
-
-  const filteringOptions = settings.filteringOptions;
-  const setFilteringOptions = (filteringOptions: BondReportsFilteringOptions) => setSettings({ ...settings, filteringOptions });
 
   useEffect(() => {
     setIsLoading(true);
