@@ -33,6 +33,8 @@ export async function handler(): Promise<UpdateBondsResult> {
   const now = new Date();
   const liquidityStatisticsEndDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
   const liquidityStatisticsStartDate = sub(liquidityStatisticsEndDate, { days: 30, hours: 23, minutes: 59, seconds: 59 });
+  console.log(`Time range for liquidity computations: ${liquidityStatisticsStartDate.toISOString()} - ${liquidityStatisticsEndDate.toISOString()}`);
+
   const newBondsToStore: DbBondDetails[] = [];
   const updatedBondsToStore: DbBondDetails[] = [];
 

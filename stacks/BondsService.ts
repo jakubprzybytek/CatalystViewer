@@ -122,8 +122,8 @@ export function BondsService({ stack }: StackContext) {
     timeout: '60 seconds'
   });
 
-  const getBondStatisticsFunction = new Function(stack, "getBondStatistics", {
-    handler: 'packages/functions/src/bonds/getBondStatistics.handler',
+  const getBondQuotesFunction = new Function(stack, "getBondQuotes", {
+    handler: 'packages/functions/src/bonds/getBondQuotes.handler',
     memorySize: "256 MB",
     bind: [bondStatisticsTable],
     timeout: '10 seconds'
@@ -151,7 +151,7 @@ export function BondsService({ stack }: StackContext) {
       'PUT /api/profile': updateProfileFunction,
       'GET /api/bonds': getBondsFunction,
       'GET /api/bonds/{bondType}': getBondsFunction,
-      'GET /api/bondStatistics': getBondStatisticsFunction
+      'GET /api/bondQuotes': getBondQuotesFunction
     }
   });
   //auth.attachPermissionsForAuthUsers(stack, [api]);

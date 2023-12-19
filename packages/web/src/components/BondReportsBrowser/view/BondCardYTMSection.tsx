@@ -43,10 +43,10 @@ export default function BondCardYTMSection({ title, bondReport, price, secondary
     <CardSection>
       {ytmReport && <BondYTMReportDialog ytmReport={ytmReport} onClose={() => setYtmReport(undefined)} />}
       <CardEntry caption={title} width='50%'>{price} ({secondary})</CardEntry>
-      <Button size='small' sx={{ p: 0 }} onClick={() => setYtmReport(ytmNet)}>
+      <Button size='small' sx={{ textTransform: 'none', p: 0 }} onClick={() => setYtmReport(ytmNet)}>
         <CardEntry caption='Net YTM' textAlign='center'>{(ytmNet.ytm * 100).toFixed(2)}%</CardEntry>
       </Button>
-      <Button size='small' sx={{ p: 0 }} onClick={() => setYtmReport(ytmGros)}>
+      <Button size='small' sx={{ textTransform: 'none', p: 0 }} onClick={() => setYtmReport(ytmGros)}>
         <CardEntry caption='Gross YTM' textAlign='end'>{(ytmGros.ytm * 100).toFixed(2)}%</CardEntry>
       </Button>
     </CardSection>

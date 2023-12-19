@@ -18,7 +18,7 @@ import BondsListStats from "./view/BondsListStats";
 import IssuersViewer from "./issuers/IssuersViewer";
 import BondReportsFilterDrawer, { BondReportsFilteringOptions, filterUsing } from "./filter";
 import BondReportsSortMenu, { BondReportsSortOrder, getBondReportsSortingFunction } from "./sort";
-import { BondReport, getBonds } from "@/sdk/Bonds";
+import { BondReport, getBondReports } from "@/sdk/Bonds";
 import { computeStatisticsForInterestBaseTypes } from "@/bonds/statistics";
 
 export enum BondReportsView {
@@ -88,7 +88,7 @@ export default function BondReportsBrowser({ settings, setSettings }: BondReport
   async function fetchData(bondType: string) {
     console.log(`Fetching reports for bond type: ${bondType}`);
     try {
-      const bondsResponse = await getBonds(bondType);
+      const bondsResponse = await getBondReports(bondType);
       setErrorMessage(undefined);
       setAllBondReports(bondsResponse.bondReports);
       setAllBondTypes(bondsResponse.facets.type);
