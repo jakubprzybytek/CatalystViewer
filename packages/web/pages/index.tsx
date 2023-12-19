@@ -3,26 +3,18 @@ import type { NextPage } from 'next';
 import { Authenticator } from '@aws-amplify/ui-react';
 import Head from 'next/head';
 import Box from "@mui/material/Box";
-import BondReportsBrowser, { BondReportsBrowserSettings, View } from '@/components/BondReportsBrowser/BondReportsBrowser';
+import BondReportsBrowser, { BondReportsBrowserSettings, DEFAULT_FILTERIN_OPTIONS_SETTING, DEFAULT_SORT_ORDER_SETTING, DEFAULT_VIEW_SETTING } from '@/components/BondReportsBrowser/BondReportsBrowser';
 import BondReportsBrowserSelector from '@/components/BondReportsBrowserSelector';
 import { getProfile, putProfile } from '@/sdk/Profiles';
-import { BondReportsSortOrder } from '@/components/BondReportsBrowser/sort';
 
 const DEFAULT_BOND_REPORTS_BROWSER_SETTINGS_COLLECTION: BondReportsBrowserSettings[] = [
   {
     name: 'default',
-    view: View.Issuers,
-    filteringOptions: {
-      bondType: 'Corporate bonds',
-      maxNominal: 10000,
-      markets: ['GPW ASO', 'GPW RR'],
-      interestBaseTypes: ['WIBOR 3M', 'WIBOR 6M'],
-      issuers: []
-    },
-    sortOrder: BondReportsSortOrder.Name
+    view: DEFAULT_VIEW_SETTING,
+    filteringOptions: DEFAULT_FILTERIN_OPTIONS_SETTING,
+    sortOrder: DEFAULT_SORT_ORDER_SETTING
   }
 ];
-
 
 const Bonds: NextPage = () => {
   const [settingsCollection, setSettingsCollection] = useState<BondReportsBrowserSettings[] | undefined>(undefined);

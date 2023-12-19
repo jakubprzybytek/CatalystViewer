@@ -33,6 +33,27 @@ export type BondReportsBrowserSettings = {
   sortOrder: BondReportsSortOrder;
 }
 
+function useSettings<FieldType>(
+  settings: BondReportsBrowserSettings,
+  setSettings: (newSettings: BondReportsBrowserSettings) => void,
+  fieldName: keyof BondReportsBrowserSettings,
+  fieldDefaultValue: FieldType
+): [FieldType, (a: FieldType) => void] {
+  const fieldValue: FieldType = settings[fieldName] as FieldType || fieldDefaultValue;
+  const fieldValueSetter = (newValue: FieldType) => setSettings({ ...settings, [fieldName]: newValue });
+  return [fieldValue, fieldValueSetter];
+}
+
+export const DEFAULT_VIEW_SETTING = View.Issuers;
+export const DEFAULT_FILTERIN_OPTIONS_SETTING: BondReportsFilteringOptions = {
+  bondType: 'Corporate bonds',
+  maxNominal: 10000,
+  markets: ['GPW ASO', 'GPW RR'],
+  interestBaseTypes: ['WIBOR 3M', 'WIBOR 6M'],
+  issuers: []
+};
+export const DEFAULT_SORT_ORDER_SETTING = BondReportsSortOrder.Name;
+
 type BondReportsBrowserParams = {
   settings: BondReportsBrowserSettings;
   setSettings: (newSettings: BondReportsBrowserSettings) => void;
@@ -45,27 +66,22 @@ export default function BondReportsBrowser({ settings, setSettings }: BondReport
   const [allBondReports, setAllBondReports] = useState<BondReport[]>([]);
   const [allBondTypes, setAllBondTypes] = useState<string[]>([]);
 
-  // const [view, setView] = useState(View.Issuers);
-  const view = settings.view;
-  const setView = (view: View) => setSettings({ ...settings, view });
+  // view
+  const [view, setView] = useSettings<View>(settings, setSettings, 'view', DEFAULT_VIEW_SETTING);
+
+  // filtering
+  const [filteringOptions, setFilteringOptions] = useSettings<BondReportsFilteringOptions>(settings, setSettings, 'filteringOptions', DEFAULT_FILTERIN_OPTIONS_SETTING);
+  const [filteringDrawerOpen, setFilteringDrawerOpen] = useState(false);
+
+  // sorting
+  const [sortOrder, setSortOrder] = useSettings<BondReportsSortOrder>(settings, setSettings, 'sortOrder', DEFAULT_SORT_ORDER_SETTING);
+  const [sortMenuTriggerEl, setSortMenuTriggerEl] = useState<null | HTMLElement>(null);
 
   // stats
   const [statsShown, setStatsShown] = useState(false);
 
-  // filtering
-  //const [filteringOptions, setFilteringOptions] = useState<BondReportsFilteringOptions>(DEFAULT_FILTERING_OPTIONS);
-  const filteringOptions = settings.filteringOptions;
-  const setFilteringOptions = (filteringOptions: BondReportsFilteringOptions) => setSettings({ ...settings, filteringOptions });
-  const [filteringDrawerOpen, setFilteringDrawerOpen] = useState(false);
-
-  // sorting
-  // const [selectedBondReportsSortOrder, setSelectedBondReportsSortOrder] = useState<BondReportsSortOrder>(BondReportsSortOrder.Name);
-  const selectedBondReportsSortOrder = settings.sortOrder;
-  const setSelectedBondReportsSortOrder = (sortOrder: BondReportsSortOrder) => setSettings({ ...settings, sortOrder });
-  const [sortMenuTriggerEl, setSortMenuTriggerEl] = useState<null | HTMLElement>(null);
-
   function selectBondReportsSortOrder(sortOrder: BondReportsSortOrder) {
-    setSelectedBondReportsSortOrder(sortOrder);
+    setSortOrder(sortOrder);
     setSortMenuTriggerEl(null);
   }
 
@@ -112,7 +128,7 @@ export default function BondReportsBrowser({ settings, setSettings }: BondReport
   }, [allBondReports, filteringOptions.maxNominal, filteringOptions.markets, filteringOptions.interestBaseTypes, filteringOptions.issuers]);
 
   const filteredAndSortedBondsReports = useMemo(() =>
-    getBondReportsSortingFunction(selectedBondReportsSortOrder)(filteredBondReports), [selectedBondReportsSortOrder, filteredBondReports]);
+    getBondReportsSortingFunction(sortOrder)(filteredBondReports), [sortOrder, filteredBondReports]);
 
   const bondReportsStatistics = useMemo(() => computeStatisticsForInterestBaseTypes(allBondReports), [allBondReports]);
 
@@ -134,7 +150,7 @@ export default function BondReportsBrowser({ settings, setSettings }: BondReport
             onClick={(event: React.MouseEvent<HTMLButtonElement>) => setSortMenuTriggerEl(event.currentTarget)}>
             <Sort />
           </IconButton>
-          <BondReportsSortMenu anchorEl={sortMenuTriggerEl} selectedBondReportsSortOrder={selectedBondReportsSortOrder} setBondReportsSortOrder={selectBondReportsSortOrder} />
+          <BondReportsSortMenu anchorEl={sortMenuTriggerEl} selectedBondReportsSortOrder={sortOrder} setBondReportsSortOrder={selectBondReportsSortOrder} />
           <BondReportsFilterDrawer open={filteringDrawerOpen} onClose={() => setFilteringDrawerOpen(false)} allBondReports={allBondReports} allBondTypes={allBondTypes} filteringOptions={filteringOptions} setFilteringOptions={setFilteringOptions} filteredBondReports={filteredBondReports} />
         </>
       </MainNavigation>
