@@ -21,14 +21,14 @@ import BondReportsSortMenu, { BondReportsSortOrder, getBondReportsSortingFunctio
 import { BondReport, getBonds } from "@/sdk/Bonds";
 import { computeStatisticsForInterestBaseTypes } from "@/bonds/statistics";
 
-export enum View {
+export enum BondReportsView {
   Issuers,
   Bonds
 }
 
 export type BondReportsBrowserSettings = {
   name: string;
-  view: View;
+  view: BondReportsView;
   filteringOptions: BondReportsFilteringOptions;
   sortOrder: BondReportsSortOrder;
 }
@@ -44,7 +44,7 @@ function useSettings<FieldType>(
   return [fieldValue, fieldValueSetter];
 }
 
-export const DEFAULT_VIEW_SETTING = View.Issuers;
+export const DEFAULT_VIEW_SETTING = BondReportsView.Issuers;
 export const DEFAULT_FILTERIN_OPTIONS_SETTING: BondReportsFilteringOptions = {
   bondType: 'Corporate bonds',
   maxNominal: 10000,
@@ -67,7 +67,7 @@ export default function BondReportsBrowser({ settings, setSettings }: BondReport
   const [allBondTypes, setAllBondTypes] = useState<string[]>([]);
 
   // view
-  const [view, setView] = useSettings<View>(settings, setSettings, 'view', DEFAULT_VIEW_SETTING);
+  const [view, setView] = useSettings<BondReportsView>(settings, setSettings, 'view', DEFAULT_VIEW_SETTING);
 
   // filtering
   const [filteringOptions, setFilteringOptions] = useSettings<BondReportsFilteringOptions>(settings, setSettings, 'filteringOptions', DEFAULT_FILTERIN_OPTIONS_SETTING);
@@ -162,7 +162,7 @@ export default function BondReportsBrowser({ settings, setSettings }: BondReport
           left: 0,
           height: '100%',
           width: '100%',
-          backgroundColor: 'rgba(0, 0, 0, 0.4)',
+          backgroundColor: 'rgba(0, 0, 0, 0.35)',
           textAlign: 'center',
           zIndex: 1000
         }}>
@@ -176,9 +176,9 @@ export default function BondReportsBrowser({ settings, setSettings }: BondReport
         <Stack direction="row" spacing={1}>
           <ToggleButtonGroup color="secondary" size="small" exclusive
             value={view}
-            onChange={(event: React.MouseEvent<HTMLElement>, newView: View) => setView(newView !== null ? newView : view)}>
-            <ToggleButton value={View.Issuers}>Issuers</ToggleButton>
-            <ToggleButton value={View.Bonds}>Bonds</ToggleButton>
+            onChange={(event: React.MouseEvent<HTMLElement>, newView: BondReportsView) => setView(newView !== null ? newView : view)}>
+            <ToggleButton value={BondReportsView.Issuers}>Issuers</ToggleButton>
+            <ToggleButton value={BondReportsView.Bonds}>Bonds</ToggleButton>
           </ToggleButtonGroup>
           <ToggleButton color="secondary" size="small" value="check" selected={statsShown}
             onChange={() => setStatsShown(!statsShown)}>
@@ -188,10 +188,10 @@ export default function BondReportsBrowser({ settings, setSettings }: BondReport
         <Collapse in={statsShown}>
           <BondsListStats bondReports={filteredBondReports} statistics={bondReportsStatistics} />
         </Collapse>
-        <Condition render={view == View.Bonds}>
+        <Condition render={view == BondReportsView.Bonds}>
           <BondsList bondReports={filteredAndSortedBondsReports} statistics={bondReportsStatistics} />
         </Condition>
-        <Condition render={view == View.Issuers}>
+        <Condition render={view == BondReportsView.Issuers}>
           <IssuersViewer bondReports={filteredBondReportsWithoutIssuers} statistics={bondReportsStatistics} filteringOptions={filteringOptions} setFilteringOptions={setFilteringOptions} />
         </Condition>
         <Condition render={errorMessage !== undefined}>

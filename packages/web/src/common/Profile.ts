@@ -1,4 +1,4 @@
-import { BondReportsBrowserSettings } from "@/components/BondReportsBrowser/BondReportsBrowser"
+import { BondReportsBrowserSettings } from "@/components/BondReportsBrowser"
 
 export type Profile = {
     bondsReportsBrowserSettings: BondReportsBrowserSettings[];
