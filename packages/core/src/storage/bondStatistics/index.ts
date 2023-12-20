@@ -2,7 +2,7 @@ export * from './BondStatisticsTable';
 export * from './BondQuotesQuery';
 
 export type BondQuote = {
-  date: Date;
+  date: number;
   bid?: number;
   ask?: number;
   close?: number;

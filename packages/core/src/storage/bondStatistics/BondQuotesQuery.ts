@@ -14,13 +14,13 @@ export class BondQuotesQuery {
     const quotes: BondQuote[] = [];
     const startDateBondStatistics = await this.bondStatisticsTable.get(bondId, start.getFullYear(), start.getMonth() + 1);
     startDateBondStatistics?.quotes
-      .filter(quote => start <= quote.date && quote.date <= end)
+      .filter(quote => start.getTime() <= quote.date && quote.date <= end.getTime())
       .forEach(quote => quotes.push(quote));
 
     if (start.getFullYear() != end.getFullYear() || start.getMonth() != end.getMonth()) {
       const endDateBondStatistics = await this.bondStatisticsTable.get(bondId, end.getFullYear(), end.getMonth() + 1);
       endDateBondStatistics?.quotes
-        .filter(quote => quote.date <= end)
+        .filter(quote => quote.date <= end.getTime())
         .forEach(quote => quotes.push(quote));
     }
 

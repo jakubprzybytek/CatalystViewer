@@ -15,7 +15,7 @@ export class BondStatisticsTable {
     console.log(`BondStatisticsTable: Storing bond statistics for '${bondStatistics.name}#${bondStatistics.market}'`);
 
     const quote = bondStatistics.quotes[0];
-    const dateKey = quote.date.toISOString().substring(0, 10);
+    const dateKey = new Date(quote.date).toISOString().substring(0, 10);
 
     const putInput: PutItemInput = {
       TableName: this.tableName,
@@ -30,7 +30,7 @@ export class BondStatisticsTable {
           M: {
             [dateKey]: {
               M: {
-                ...(quote.date && { date: { N: quote.date.getTime().toString() } }),
+                ...(quote.date && { date: { N: quote.date.toString() } }),
                 ...(quote.bid && { bid: { N: quote.bid.toString() } }),
                 ...(quote.ask && { ask: { N: quote.ask.toString() } }),
                 ...(quote.close && { close: { N: quote.close.toString() } }),
@@ -51,7 +51,7 @@ export class BondStatisticsTable {
     console.log(`BondStatisticsTable: Updateing quote for '${bondStatistics.name}#${bondStatistics.market}'`);
 
     const quote = bondStatistics.quotes[0];
-    const dateKey = quote.date.toISOString().substring(0, 10);
+    const dateKey = new Date(quote.date).toISOString().substring(0, 10);
 
     const updateInput: UpdateItemCommandInput = {
       TableName: this.tableName,
@@ -62,7 +62,7 @@ export class BondStatisticsTable {
       ExpressionAttributeValues: {
         ":quote": {
           M: {
-            ...(quote.date && { date: { N: quote.date.getTime().toString() } }),
+            ...(quote.date && { date: { N: quote.date.toString() } }),
             ...(quote.bid && { bid: { N: quote.bid.toString() } }),
             ...(quote.ask && { ask: { N: quote.ask.toString() } }),
             ...(quote.close && { close: { N: quote.close.toString() } }),

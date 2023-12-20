@@ -65,7 +65,7 @@ export default function BondLiquidityDialog({ bondDetails, onClose }: BondLiquid
       </DialogTitle>
       <DialogContent sx={{ p: 2, backgroundColor: '#eee' }}>
         {quotes.map(quote => (
-          <p>{formatDate(quote.date as unknown as number)} - {quote.turnover}</p>
+          <p>{formatDate(quote.date)} - {quote.turnover}</p>
         ))}
       </DialogContent>
     </Dialog>

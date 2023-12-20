@@ -164,7 +164,7 @@ async function storeBondQuotes(bondsQuotesList: CatalystBondQuote[]): Promise<vo
       year: now.getFullYear(),
       month: now.getMonth() + 1,
       quotes: [{
-        date: now,
+        date: now.getTime(),
         bid: quote.bidPrice,
         ask: quote.askPrice,
         ...(quote.transactions > 0 && { close: quote.lastPrice }),
