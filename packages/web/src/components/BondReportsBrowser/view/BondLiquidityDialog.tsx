@@ -2,12 +2,14 @@ import { useEffect, useState } from "react";
 import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
+import CircularProgress from "@mui/material/CircularProgress";
 import IconButton from "@mui/material/IconButton";
 import CloseIcon from '@mui/icons-material/Close';
-import { useMediaQuery, useTheme } from "@mui/material";
+import { Stack, useMediaQuery, useTheme } from "@mui/material";
 import { BondDetails, getBondQuotes } from "@/sdk";
 import { BondQuote } from "@catalyst-viewer/core/storage/bondStatistics";
 import { formatDate } from "@/common/Formats";
+import Condition from "@/common/Condition";
 
 type BondLiquidityDialogParam = {
   bondDetails: BondDetails;
@@ -64,9 +66,16 @@ export default function BondLiquidityDialog({ bondDetails, onClose }: BondLiquid
         </IconButton>
       </DialogTitle>
       <DialogContent sx={{ p: 2, backgroundColor: '#eee' }}>
-        {quotes.map(quote => (
-          <p>{formatDate(quote.date)} - {quote.turnover}</p>
-        ))}
+        <Condition render={isLoading}>
+          <Stack alignItems='center' marginTop={2} marginBottom={2}>
+            <CircularProgress />
+          </Stack>
+        </Condition>
+        <Condition render={!isLoading}>
+          {quotes.map(quote => (
+            <p>{formatDate(quote.date)} - {quote.turnover} - {quote.bid} - {quote.ask}</p>
+          ))}
+        </Condition>
       </DialogContent>
     </Dialog>
   );

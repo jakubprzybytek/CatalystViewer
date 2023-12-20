@@ -19,12 +19,12 @@ export default function BondCardLiquiditySection({ bondReport: { currentValues, 
         <CardValue>{!!currentValues.averageTurnover ? formatCompactCurrency(currentValues.averageTurnover * 1000, details.currency) : 'N/A'}</CardValue>
       </CardEntry>
       <CardEntry caption='Trading days ratio' textAlign='center' width='33%'>
-        <CardValue>{currentValues.tradingDaysRatio * 100}%</CardValue>
+        <CardValue>{Math.round(currentValues.tradingDaysRatio * 100)}%</CardValue>
       </CardEntry>
       <CardEntry caption='Avg spread' textAlign='end' width='33%'>
         <CardValue>{!!currentValues.averageSpread ? formatCurrency(currentValues.averageSpread, details.currency) : 'N/A'}</CardValue>
       </CardEntry>
-      <Button size='small' sx={{ textTransform: 'none' }} onClick={() => setLiquidityReport('jeje')}>
+      <Button variant='outlined' size='small' sx={{ textTransform: 'none', ml: 2 }} onClick={() => setLiquidityReport('jeje')}>
         More
       </Button>
     </CardSection>
