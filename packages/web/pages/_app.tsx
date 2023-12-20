@@ -12,8 +12,8 @@ const amplifyConfig = {
     endpoints: [
       {
         name: "api",
-        endpoint: 'https://iwmlz65ro4.execute-api.eu-west-1.amazonaws.com',
-        // endpoint: process.env.NEXT_PUBLIC_API_URL,
+        // endpoint: 'https://iwmlz65ro4.execute-api.eu-west-1.amazonaws.com',
+        endpoint: process.env.NEXT_PUBLIC_API_URL,
         region: process.env.NEXT_PUBLIC_AWS_REGION,
       },
     ],

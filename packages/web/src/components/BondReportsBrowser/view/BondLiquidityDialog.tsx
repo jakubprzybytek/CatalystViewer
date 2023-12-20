@@ -6,10 +6,16 @@ import CircularProgress from "@mui/material/CircularProgress";
 import IconButton from "@mui/material/IconButton";
 import CloseIcon from '@mui/icons-material/Close';
 import { Stack, useMediaQuery, useTheme } from "@mui/material";
+import { format } from "date-fns";
 import { BondDetails, getBondQuotes } from "@/sdk";
 import { BondQuote } from "@catalyst-viewer/core/storage/bondStatistics";
 import { formatDate } from "@/common/Formats";
 import Condition from "@/common/Condition";
+import { Legend, ResponsiveContainer, XAxis, YAxis, Tooltip, Bar, Line, ComposedChart } from "recharts";
+
+const dateFormatter = (date: number) => {
+  return format(new Date(date), "dd-MMM");
+};
 
 type BondLiquidityDialogParam = {
   bondDetails: BondDetails;
@@ -49,6 +55,14 @@ export default function BondLiquidityDialog({ bondDetails, onClose }: BondLiquid
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
 
+  const chartQuotes = quotes.map(quote => ({
+    date: new Date(quote.date),
+    bid: quote.bid,
+    ask: quote.ask,
+    close: quote.close,
+    turnover: quote.turnover
+  }));
+
   return (
     <Dialog fullScreen={fullScreen} maxWidth='md'
       open={true}>
@@ -72,9 +86,24 @@ export default function BondLiquidityDialog({ bondDetails, onClose }: BondLiquid
           </Stack>
         </Condition>
         <Condition render={!isLoading}>
-          {quotes.map(quote => (
-            <p>{formatDate(quote.date)} - {quote.turnover} - {quote.bid} - {quote.ask}</p>
-          ))}
+          <>
+            <ResponsiveContainer width={600} aspect={1.5}>
+              <ComposedChart  maxBarSize={20} data={chartQuotes}>
+                <XAxis type='number' scale='time' tickFormatter={dateFormatter} domain={[new Date().setDate(10), new Date().getTime()]} dataKey='date'></XAxis>
+                <YAxis yAxisId='price' domain={['dataMin - 1', 'dataMax + 1']} />
+                <YAxis yAxisId='currency' orientation='right' />
+                <Tooltip />
+                <Legend />
+                <Bar name='Turnover' yAxisId='currency' dataKey='turnover' fill='grey' />
+                <Line name='Bid price' yAxisId='price' dataKey='bid' strokeDasharray="5 5" stroke="#82ca9d" />
+                <Line name='Ask price' yAxisId='price' dataKey='ask' strokeDasharray="5 5" stroke="red" />
+                <Line name='Close price' yAxisId='price' dataKey='close' />
+              </ComposedChart>
+            </ResponsiveContainer>
+            {quotes.map(quote => (
+              <p>{formatDate(quote.date)} - {quote.turnover} - {quote.bid} - {quote.ask} - {quote.close}</p>
+            ))}
+          </>
         </Condition>
       </DialogContent>
     </Dialog>
