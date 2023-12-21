@@ -1,20 +1,46 @@
 import { useEffect, useState } from "react";
+import Paper from "@mui/material/Paper";
+import Stack from "@mui/material/Stack";
 import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
+import Alert from "@mui/material/Alert";
+import AlertTitle from "@mui/material/AlertTitle";
 import CircularProgress from "@mui/material/CircularProgress";
 import IconButton from "@mui/material/IconButton";
 import CloseIcon from '@mui/icons-material/Close';
-import { Stack, useMediaQuery, useTheme } from "@mui/material";
+import { Typography, useMediaQuery, useTheme } from "@mui/material";
 import { format } from "date-fns";
 import { BondDetails, getBondQuotes } from "@/sdk";
 import { BondQuote } from "@catalyst-viewer/core/storage/bondStatistics";
 import { formatDate } from "@/common/Formats";
 import Condition from "@/common/Condition";
-import { Legend, ResponsiveContainer, XAxis, YAxis, Tooltip, Bar, Line, ComposedChart } from "recharts";
+import { Legend, ResponsiveContainer, XAxis, YAxis, Tooltip, Bar, Line, ComposedChart, CartesianGrid } from "recharts";
 
 const dateFormatter = (date: number) => {
-  return format(new Date(date), "dd-MMM");
+  return format(new Date(date), "dd.MM");
+};
+
+type CustomTooltipParam = {
+  active: any;
+  payload: any;
+  label: any;
+}
+
+const CustomTooltip = ({ active, payload, label }: CustomTooltipParam) => {
+  if (active && payload && payload.length) {
+    return (
+      <Paper sx={{ p: 1 }}>
+          <Typography fontWeight={500}>{format(new Date(label), "dd.MM.yyyy")}</Typography>
+          <Typography variant='body2'>Bid: {payload[1]?.value || 'N/A'}</Typography>
+          <Typography variant='body2'>Ask: {payload[2]?.value || 'N/A'}</Typography>
+          <Typography variant='body2'>Close: {payload[3]?.value || 'N/A'}</Typography>
+          <Typography variant='body2'>Turnover: {payload[0].value}</Typography>
+      </Paper>
+    );
+  }
+
+  return null;
 };
 
 type BondLiquidityDialogParam = {
@@ -64,10 +90,10 @@ export default function BondLiquidityDialog({ bondDetails, onClose }: BondLiquid
   }));
 
   return (
-    <Dialog fullScreen={fullScreen} maxWidth='md'
+    <Dialog fullScreen={fullScreen} maxWidth='md' fullWidth={!fullScreen}
       open={true}>
       <DialogTitle sx={{ backgroundColor: '#eee' }}>
-        Liquidity analysis
+        Liquidity analysis for {bondDetails.name}
         <IconButton
           onClick={onClose}
           sx={{
@@ -79,7 +105,13 @@ export default function BondLiquidityDialog({ bondDetails, onClose }: BondLiquid
           <CloseIcon />
         </IconButton>
       </DialogTitle>
-      <DialogContent sx={{ p: 2, backgroundColor: '#eee' }}>
+      <DialogContent sx={{ width: '100%', p: 2, backgroundColor: '#eee' }}>
+        <Condition render={errorMessage !== undefined}>
+          <Alert severity="error">
+            <AlertTitle>Cannot fetch data!</AlertTitle>
+            <pre>{errorMessage}</pre>
+          </Alert>
+        </Condition>
         <Condition render={isLoading}>
           <Stack alignItems='center' marginTop={2} marginBottom={2}>
             <CircularProgress />
@@ -87,12 +119,13 @@ export default function BondLiquidityDialog({ bondDetails, onClose }: BondLiquid
         </Condition>
         <Condition render={!isLoading}>
           <>
-            <ResponsiveContainer width={600} aspect={1.5}>
-              <ComposedChart  maxBarSize={20} data={chartQuotes}>
-                <XAxis type='number' scale='time' tickFormatter={dateFormatter} domain={[new Date().setDate(10), new Date().getTime()]} dataKey='date'></XAxis>
+            <ResponsiveContainer aspect={1.5}>
+              <ComposedChart maxBarSize={20} data={chartQuotes}>
+                <XAxis type='number' scale='time' tickFormatter={dateFormatter} domain={[new Date().setDate(15), new Date().getTime()]} dataKey='date'></XAxis>
                 <YAxis yAxisId='price' domain={['dataMin - 1', 'dataMax + 1']} />
                 <YAxis yAxisId='currency' orientation='right' />
-                <Tooltip />
+                <CartesianGrid strokeDasharray="3 3" />
+                <Tooltip content={<CustomTooltip />} />
                 <Legend />
                 <Bar name='Turnover' yAxisId='currency' dataKey='turnover' fill='grey' />
                 <Line name='Bid price' yAxisId='price' dataKey='bid' strokeDasharray="5 5" stroke="#82ca9d" />
