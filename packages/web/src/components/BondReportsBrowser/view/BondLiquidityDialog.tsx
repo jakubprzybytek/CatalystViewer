@@ -31,11 +31,11 @@ const CustomTooltip = ({ active, payload, label }: CustomTooltipParam) => {
   if (active && payload && payload.length) {
     return (
       <Paper sx={{ p: 1 }}>
-          <Typography fontWeight={500}>{format(new Date(label), "dd.MM.yyyy")}</Typography>
-          <Typography variant='body2'>Bid: {payload[1]?.value || 'N/A'}</Typography>
-          <Typography variant='body2'>Ask: {payload[2]?.value || 'N/A'}</Typography>
-          <Typography variant='body2'>Close: {payload[3]?.value || 'N/A'}</Typography>
-          <Typography variant='body2'>Turnover: {payload[0].value}</Typography>
+        <Typography fontWeight={500}>{format(new Date(label), "dd.MM.yyyy")}</Typography>
+        <Typography variant='body2'>Bid: {payload[1]?.value || 'N/A'}</Typography>
+        <Typography variant='body2'>Ask: {payload[2]?.value || 'N/A'}</Typography>
+        <Typography variant='body2'>Close: {payload[3]?.value || 'N/A'}</Typography>
+        <Typography variant='body2'>Turnover: {payload[0].value}</Typography>
       </Paper>
     );
   }
@@ -121,11 +121,13 @@ export default function BondLiquidityDialog({ bondDetails, onClose }: BondLiquid
           <>
             <ResponsiveContainer aspect={1.5}>
               <ComposedChart maxBarSize={20} data={chartQuotes}>
-                <XAxis type='number' scale='time' tickFormatter={dateFormatter} domain={[new Date().setDate(15), new Date().getTime()]} dataKey='date'></XAxis>
+                <XAxis type='number' scale='time'
+                  padding={{ left: 20, right: 20 }}
+                  tickFormatter={dateFormatter} domain={[new Date().setDate(15), new Date().getTime()]} dataKey='date'></XAxis>
                 <YAxis yAxisId='price' domain={['dataMin - 1', 'dataMax + 1']} />
                 <YAxis yAxisId='currency' orientation='right' />
                 <CartesianGrid strokeDasharray="3 3" />
-                <Tooltip content={<CustomTooltip />} />
+                <Tooltip content={<CustomTooltip active={undefined} payload={undefined} label={undefined} />} />
                 <Legend />
                 <Bar name='Turnover' yAxisId='currency' dataKey='turnover' fill='grey' />
                 <Line name='Bid price' yAxisId='price' dataKey='bid' strokeDasharray="5 5" stroke="#82ca9d" />
