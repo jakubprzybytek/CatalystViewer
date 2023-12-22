@@ -32,7 +32,5 @@ export const handler = lambdaHandler<BondQuotesQueryResult>(async event => {
 
   const quotes = await bondQuotesQuery.get(bondName, market, startDate, endDate);
 
-  console.log(quotes);
-
   return Success(quotes);
 });

@@ -94,7 +94,7 @@ export class BondStatisticsTable {
   }
 
   async get(bondId: string, year: number, month: number): Promise<DbBondStatistics | undefined> {
-    console.log(`DbBondStatistics: Fetching statistics for: ${bondId}`);
+    console.log(`DbBondStatistics: Fetching statistics for: ${bondId} | ${year}-${month}`);
 
     const getInput: GetItemInput = {
       TableName: this.tableName,

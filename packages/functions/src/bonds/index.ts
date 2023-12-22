@@ -1,7 +1,7 @@
 import { BondDetails, BondCurrentValues } from '@catalyst-viewer/core/bonds';
 import { BondQuote } from '@catalyst-viewer/core/storage/bondStatistics';
 
-export type { BondDetails, BondCurrentValues };
+export type { BondDetails, BondCurrentValues, BondQuote };
 
 export type BondReport = {
     details: BondDetails;
