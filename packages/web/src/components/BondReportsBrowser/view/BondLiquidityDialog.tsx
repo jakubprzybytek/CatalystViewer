@@ -130,7 +130,7 @@ export default function BondLiquidityDialog({ bondDetails, onClose }: BondLiquid
         </Condition>
         <Condition render={!isLoading}>
           <>
-            <ResponsiveContainer aspect={1.7}>
+            <ResponsiveContainer aspect={1.8}>
               <ComposedChart maxBarSize={20} data={chartQuotes}>
                 <XAxis type='number' scale='time'
                   padding={{ left: 20, right: 20 }}

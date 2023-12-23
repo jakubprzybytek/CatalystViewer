@@ -158,21 +158,7 @@ async function storeBondQuotes(bondsQuotesList: CatalystBondQuote[]): Promise<vo
 
   const bondStatistics: DbBondStatistics[] = bondsQuotesList
     .filter(quote => quote.turnover > 0 || quote.bidPrice != undefined || quote.askPrice != undefined)
-    .map(quote => ({
-      name: quote.name,
-      market: quote.market,
-      year: now.getFullYear(),
-      month: now.getMonth() + 1,
-      quotes: [{
-        date: now.getTime(),
-        bid: quote.bidPrice,
-        ask: quote.askPrice,
-        ...(quote.transactions > 0 && { close: quote.lastPrice }),
-        transactions: quote.transactions,
-        volume: quote.volume,
-        turnover: quote.turnover
-      }]
-    }));
+    .map(toBondStatistics);
 
   for (const bondQuote of bondStatistics) {
     const updated = await bondStatisticsTable.updateQuotes(bondQuote);
@@ -183,6 +169,26 @@ async function storeBondQuotes(bondsQuotesList: CatalystBondQuote[]): Promise<vo
   };
 
   console.log(`Stored ${bondStatistics.length} quotes.`);
+}
+
+export function toBondStatistics(quote: CatalystBondQuote): DbBondStatistics {
+  const now = new Date();
+  const isTransactionToday = quote.lastDateTime !== undefined && quote.lastDateTime.indexOf(':') > -1;
+  return {
+    name: quote.name,
+    market: quote.market,
+    year: now.getFullYear(),
+    month: now.getMonth() + 1,
+    quotes: [{
+      date: now.getTime(),
+      bid: quote.bidPrice,
+      ask: quote.askPrice,
+      ...(isTransactionToday && quote.transactions > 0 && { close: quote.lastPrice }),
+      transactions: isTransactionToday ? quote.transactions : 0,
+      volume: isTransactionToday ? quote.volume : 0,
+      turnover: isTransactionToday ? quote.turnover : 0
+    }]
+  }
 }
 
 type LiquidityStatistics = {
