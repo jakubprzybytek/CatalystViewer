@@ -6,16 +6,18 @@ import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
 import Alert from "@mui/material/Alert";
 import AlertTitle from "@mui/material/AlertTitle";
+import Typography from "@mui/material/Typography";
 import CircularProgress from "@mui/material/CircularProgress";
 import IconButton from "@mui/material/IconButton";
 import CloseIcon from '@mui/icons-material/Close';
-import { Typography, useMediaQuery, useTheme } from "@mui/material";
-import { format } from "date-fns";
-import { BondDetails, getBondQuotes } from "@/sdk";
-import { BondQuote } from "@catalyst-viewer/core/storage/bondStatistics";
-import { formatDate } from "@/common/Formats";
 import Condition from "@/common/Condition";
 import { Legend, ResponsiveContainer, XAxis, YAxis, Tooltip, Bar, Line, ComposedChart, CartesianGrid } from "recharts";
+import { useMediaQuery, useTheme } from "@mui/material";
+import { format, sub } from "date-fns";
+import { BondQuote, BondDetails, getBondQuotes } from "@/sdk";
+import { getAsks, getBids, getClosePrices } from "@/bonds/statistics";
+import { formatDate } from "@/common/Formats";
+import { min, max } from "simple-statistics";
 
 const dateFormatter = (date: number) => {
   return format(new Date(date), "dd.MM");
@@ -89,11 +91,20 @@ export default function BondLiquidityDialog({ bondDetails, onClose }: BondLiquid
     turnover: quote.turnover
   }));
 
+  const now = new Date();
+  const xAsisDomain = [sub(now, { days: 30 }).setHours(0, 0, 0, 0), now.setHours(23, 59, 59, 999)];
+
+  const allDataValues = getBids(quotes).concat(getAsks(quotes).concat(getClosePrices(quotes)));
+  const dataMin = allDataValues.length > 0 ? min(allDataValues) : 100;
+  const dataMax = allDataValues.length > 0 ? max(allDataValues) : 100;
+  const minMaxMargin = (dataMax - dataMin) * 0.1;
+  const priceDomain = [Math.floor((dataMin - minMaxMargin) * 10) / 10, Math.ceil((dataMax + minMaxMargin) * 10) / 10];
+
   return (
     <Dialog fullScreen={fullScreen} maxWidth='md' fullWidth={!fullScreen}
       open={true}>
       <DialogTitle sx={{ backgroundColor: '#eee' }}>
-        Liquidity analysis for {bondDetails.name}
+        Data for {bondDetails.name}
         <IconButton
           onClick={onClose}
           sx={{
@@ -105,7 +116,7 @@ export default function BondLiquidityDialog({ bondDetails, onClose }: BondLiquid
           <CloseIcon />
         </IconButton>
       </DialogTitle>
-      <DialogContent sx={{ width: '100%', p: 2, backgroundColor: '#eee' }}>
+      <DialogContent sx={{ width: '100%', maxHeight: '80%', p: 2, backgroundColor: '#eee' }}>
         <Condition render={errorMessage !== undefined}>
           <Alert severity="error">
             <AlertTitle>Cannot fetch data!</AlertTitle>
@@ -119,20 +130,21 @@ export default function BondLiquidityDialog({ bondDetails, onClose }: BondLiquid
         </Condition>
         <Condition render={!isLoading}>
           <>
-            <ResponsiveContainer aspect={1.5}>
+            <ResponsiveContainer aspect={1.8}>
               <ComposedChart maxBarSize={20} data={chartQuotes}>
                 <XAxis type='number' scale='time'
                   padding={{ left: 20, right: 20 }}
-                  tickFormatter={dateFormatter} domain={[new Date().setDate(15), new Date().getTime()]} dataKey='date'></XAxis>
-                <YAxis yAxisId='price' domain={['dataMin - 1', 'dataMax + 1']} />
-                <YAxis yAxisId='currency' orientation='right' />
+                  tickFormatter={dateFormatter} domain={xAsisDomain} dataKey='date'></XAxis>
+                <YAxis yAxisId='price' domain={priceDomain} width={40} stroke="#3399ff"
+                  tickFormatter={(data: number) => data.toFixed(1)} />
+                <YAxis yAxisId='currency' orientation='right' width={40} stroke="#808080" />
                 <CartesianGrid strokeDasharray="3 3" />
                 <Tooltip content={<CustomTooltip active={undefined} payload={undefined} label={undefined} />} />
                 <Legend />
-                <Bar name='Turnover' yAxisId='currency' dataKey='turnover' fill='grey' />
+                <Bar name='Turnover' yAxisId='currency' dataKey='turnover' fill='#909090' />
                 <Line name='Bid price' yAxisId='price' dataKey='bid' strokeDasharray='5 5' strokeWidth={2} stroke='#82ca9d' />
                 <Line name='Ask price' yAxisId='price' dataKey='ask' strokeDasharray='5 5' strokeWidth={2} stroke='red' />
-                <Line name='Close price' yAxisId='price' dataKey='close' strokeWidth={2} />
+                <Line name='Close price' yAxisId='price' dataKey='close' strokeWidth={2} stroke="#3399ff" />
               </ComposedChart>
             </ResponsiveContainer>
             {quotes.map(quote => (

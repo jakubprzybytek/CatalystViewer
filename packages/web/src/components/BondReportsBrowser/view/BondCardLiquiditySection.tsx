@@ -18,7 +18,7 @@ export default function BondCardLiquiditySection({ bondReport: { currentValues, 
       <CardEntry caption='Avg turnover' width='33%'>
         <CardValue>{!!currentValues.averageTurnover ? formatCompactCurrency(currentValues.averageTurnover * 1000, details.currency) : 'N/A'}</CardValue>
       </CardEntry>
-      <CardEntry caption='Trading days ratio' textAlign='center' width='33%'>
+      <CardEntry caption='Trading ratio' textAlign='center' width='33%'>
         <CardValue>{Math.round(currentValues.tradingDaysRatio * 100)}%</CardValue>
       </CardEntry>
       <CardEntry caption='Avg spread' textAlign='end' width='33%'>

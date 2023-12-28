@@ -81,5 +81,24 @@ describe("CorporateBondsQuotesPage", () => {
       turnover: 506.89,
       currency: 'PLN'
     });
+
+    const BPO0626_GPW_ASO = quotes.find(quote => quote.name == 'BPO0626' && quote.market == 'GPW ASO');
+    expect(BPO0626_GPW_ASO).toEqual({
+      name: 'BPO0626',
+      market: 'GPW ASO',
+      referencePrice: 100.74,
+      lastDateTime: '16:05:54',
+      lastPrice: 100.6,
+      bidCount: 1,
+      bidVolume: 17,
+      bidPrice: 100.21,
+      askPrice: 100.6,
+      askVolume: 14,
+      askCount: 1,
+      transactions: 1,
+      volume: 16,
+      turnover: 1.67,
+      currency: 'PLN'
+    });
   });
 });
