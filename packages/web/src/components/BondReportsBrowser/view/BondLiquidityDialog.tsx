@@ -130,9 +130,9 @@ export default function BondLiquidityDialog({ bondDetails, onClose }: BondLiquid
                 <Tooltip content={<CustomTooltip active={undefined} payload={undefined} label={undefined} />} />
                 <Legend />
                 <Bar name='Turnover' yAxisId='currency' dataKey='turnover' fill='grey' />
-                <Line name='Bid price' yAxisId='price' dataKey='bid' strokeDasharray="5 5" stroke="#82ca9d" />
-                <Line name='Ask price' yAxisId='price' dataKey='ask' strokeDasharray="5 5" stroke="red" />
-                <Line name='Close price' yAxisId='price' dataKey='close' />
+                <Line name='Bid price' yAxisId='price' dataKey='bid' strokeDasharray='5 5' strokeWidth={2} stroke='#82ca9d' />
+                <Line name='Ask price' yAxisId='price' dataKey='ask' strokeDasharray='5 5' strokeWidth={2} stroke='red' />
+                <Line name='Close price' yAxisId='price' dataKey='close' strokeWidth={2} />
               </ComposedChart>
             </ResponsiveContainer>
             {quotes.map(quote => (
