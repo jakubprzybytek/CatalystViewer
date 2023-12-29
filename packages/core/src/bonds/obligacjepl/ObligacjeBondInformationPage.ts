@@ -1,5 +1,6 @@
 import * as R from 'ramda';
-import { InterestType, ObligacjeBondInformation } from ".";
+import { InterestPeriod, InterestType, ObligacjeBondInformation } from ".";
+import assert from 'assert';
 
 const BOND_NAME_REGEX = /<h1>(\w+)<\/h1>/;
 const ISSUER_REGEX = /"nazwa-emitenta">(.+)<\/a>/;
@@ -74,6 +75,22 @@ export function parseObligacjeBondInformationPage(markup: string): ObligacjeBond
     const interestType = firstGroup(markup, INTEREST_TYPE_REGEX).replaceAll('  ', ' ');
     const interestTypeParsed = parseInterestType(interestType);
 
+    const interestFirstDays = unique(firstGroups(firstGroup(markup, INTEREST_FIRST_DAYS_REGEX), DAY_REGEX));
+    const interestRightsDays = unique(firstGroups(firstGroup(markup, INTEREST_RIGHTS_DAYS_REGEX), DAY_REGEX));
+    const interestPayoffDays = unique(firstGroups(firstGroup(markup, INTEREST_PAYOFF_DAYS_REGEX), DAY_REGEX));
+
+    assert(interestFirstDays.length === interestRightsDays.length);
+    assert(interestFirstDays.length === interestPayoffDays.length);
+
+    const interestPeriods: InterestPeriod[] = [];
+    for (var index in interestFirstDays) {
+        interestPeriods.push({
+            firstDay: interestFirstDays[index],
+            rightsDay: interestRightsDays[index],
+            payoffDay: interestPayoffDays[index]
+        });
+    }
+
     return {
         name: firstGroup(markup, BOND_NAME_REGEX),
         issuer: firstGroup(markup, ISSUER_REGEX),
@@ -86,6 +103,7 @@ export function parseObligacjeBondInformationPage(markup: string): ObligacjeBond
         currency: firstGroup(markup, CURRENCY_REGEX),
         interestFirstDays: unique(firstGroups(firstGroup(markup, INTEREST_FIRST_DAYS_REGEX), DAY_REGEX)),
         interestRightsDays: unique(firstGroups(firstGroup(markup, INTEREST_RIGHTS_DAYS_REGEX), DAY_REGEX)),
-        interestPayoffDays: unique(firstGroups(firstGroup(markup, INTEREST_PAYOFF_DAYS_REGEX), DAY_REGEX))
+        interestPayoffDays: unique(firstGroups(firstGroup(markup, INTEREST_PAYOFF_DAYS_REGEX), DAY_REGEX)),
+        interestPeriods
     };
 };

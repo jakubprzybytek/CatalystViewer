@@ -5,6 +5,12 @@ export type InterestType = {
     const: number;
 };
 
+export type InterestPeriod = {
+    firstDay: string;
+    rightsDay: string;
+    payoffDay: string;
+}
+
 export type ObligacjeBondInformation = {
     name: string;
     issuer: string;
@@ -18,4 +24,5 @@ export type ObligacjeBondInformation = {
     interestFirstDays: string[];
     interestRightsDays: string[];
     interestPayoffDays: string[];
+    interestPeriods: InterestPeriod[];
 };

@@ -130,7 +130,88 @@ describe("ObligacjeBondInformationPage", () => {
                 '2025-02-12', '2025-05-12', '2025-08-12', '2025-11-12',
                 '2026-02-12', '2026-05-12', '2026-08-12', '2026-11-12',
                 '2027-02-12', '2027-05-12', '2027-08-12'
-            ]
+            ],
+            interestPeriods: [{
+                firstDay: '2022-08-12',
+                rightsDay: '2022-11-03',
+                payoffDay: '2022-11-12'
+            }, {
+                firstDay: '2022-11-12',
+                rightsDay: '2023-02-03',
+                payoffDay: '2023-02-12'
+            }, {
+                firstDay: '2023-02-12',
+                rightsDay: '2023-05-04',
+                payoffDay: '2023-05-12'
+            }, {
+                firstDay: '2023-05-12',
+                rightsDay: '2023-08-04',
+                payoffDay: '2023-08-12'
+            }, {
+                firstDay: '2023-08-12',
+                rightsDay: '2023-11-03',
+                payoffDay: '2023-11-12'
+            }, {
+                firstDay: '2023-11-12',
+                rightsDay: '2024-02-02',
+                payoffDay: '2024-02-12'
+            }, {
+                firstDay: '2024-02-12',
+                rightsDay: '2024-05-02',
+                payoffDay: '2024-05-12'
+            }, {
+                firstDay: '2024-05-12',
+                rightsDay: '2024-08-02',
+                payoffDay: '2024-08-12'
+            }, {
+                firstDay: '2024-08-12',
+                rightsDay: '2024-10-31',
+                payoffDay: '2024-11-12'
+            }, {
+                firstDay: '2024-11-12',
+                rightsDay: '2025-02-04',
+                payoffDay: '2025-02-12'
+            }, {
+                firstDay: '2025-02-12',
+                rightsDay: '2025-05-02',
+                payoffDay: '2025-05-12'
+            }, {
+                firstDay: '2025-05-12',
+                rightsDay: '2025-08-04',
+                payoffDay: '2025-08-12'
+            }, {
+                firstDay: '2025-08-12',
+                rightsDay: '2025-11-03',
+                payoffDay: '2025-11-12'
+            }, {
+                firstDay: '2025-11-12',
+                rightsDay: '2026-02-04',
+                payoffDay: '2026-02-12'
+            }, {
+                firstDay: '2026-02-12',
+                rightsDay: '2026-05-04',
+                payoffDay: '2026-05-12'
+            }, {
+                firstDay: '2026-05-12',
+                rightsDay: '2026-08-04',
+                payoffDay: '2026-08-12'
+            }, {
+                firstDay: '2026-08-12',
+                rightsDay: '2026-11-03',
+                payoffDay: '2026-11-12'
+            }, {
+                firstDay: '2026-11-12',
+                rightsDay: '2027-02-04',
+                payoffDay: '2027-02-12'
+            }, {
+                firstDay: '2027-02-12',
+                rightsDay: '2027-05-04',
+                payoffDay: '2027-05-12'
+            }, {
+                firstDay: '2027-05-12',
+                rightsDay: '2027-08-04',
+                payoffDay: '2027-08-12'
+            }]
         });
     });
 });
