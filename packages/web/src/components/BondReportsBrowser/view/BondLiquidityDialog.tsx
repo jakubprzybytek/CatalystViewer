@@ -81,7 +81,7 @@ export default function BondLiquidityDialog({ bondDetails, onClose }: BondLiquid
   }, []);
 
   const theme = useTheme();
-  const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const chartQuotes = quotes.map(quote => ({
     date: new Date(quote.date),
@@ -101,7 +101,7 @@ export default function BondLiquidityDialog({ bondDetails, onClose }: BondLiquid
   const priceDomain = [Math.floor((dataMin - minMaxMargin) * 10) / 10, Math.ceil((dataMax + minMaxMargin) * 10) / 10];
 
   return (
-    <Dialog fullScreen={fullScreen} maxWidth='md' fullWidth={!fullScreen}
+    <Dialog fullScreen={isMobile} maxWidth='md' fullWidth={!isMobile}
       open={true}>
       <DialogTitle sx={{ backgroundColor: '#eee' }}>
         Data for {bondDetails.name}
@@ -130,7 +130,7 @@ export default function BondLiquidityDialog({ bondDetails, onClose }: BondLiquid
         </Condition>
         <Condition render={!isLoading}>
           <>
-            <ResponsiveContainer aspect={1.8}>
+            <ResponsiveContainer aspect={isMobile ? 0.8 : 1.8}>
               <ComposedChart maxBarSize={20} data={chartQuotes}>
                 <XAxis type='number' scale='time'
                   padding={{ left: 20, right: 20 }}
