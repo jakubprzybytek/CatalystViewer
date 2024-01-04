@@ -132,7 +132,7 @@ export default function BondReportsBrowserSelector({ settingsCollection, setSett
         <Toolbar variant='dense'
           sx={{
             justifyContent: 'center',
-            '& > button.MuiButton-root': { textTransform: 'none', fontSize: '1rem', minWidth: '2rem', height: '2rem', borderWidth: '1px', borderStyle: 'solid', borderColor: 'primary.main', borderRadius: 3, mr: 1 },
+            '& > button.MuiButton-root': { textTransform: 'none', fontSize: '0.9rem', lineHeight: '0.87rem', minWidth: '2rem', height: '2rem', borderWidth: '1px', borderStyle: 'solid', borderColor: 'primary.main', borderRadius: 3, mr: 1 },
             '& .MuiOutlinedInput-root': { mt: 0.5, height: '2rem', borderRadius: 3 },
             '& > button.MuiIconButton-root': { pl: 1 }
           }}>
