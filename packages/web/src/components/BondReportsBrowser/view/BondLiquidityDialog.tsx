@@ -19,6 +19,8 @@ import { getAsks, getBids, getClosePrices } from "@/bonds/statistics";
 import { formatDate } from "@/common/Formats";
 import { min, max } from "simple-statistics";
 
+const TWELVE_HOURS = 12 * 60 * 60 * 1000;
+
 const dateFormatter = (date: number) => {
   return format(new Date(date), "dd.MM");
 };
@@ -144,10 +146,10 @@ export default function BondLiquidityDialog({ bondReport: { details, currentValu
                 <Tooltip content={<CustomTooltip active={undefined} payload={undefined} label={undefined} />} />
                 <Legend />
                 {isAfter(currentValues.interestFirstDay, xAsisDomain[0]) && isBefore(currentValues.interestFirstDay, xAsisDomain[1]) &&
-                  <ReferenceLine xAxisId='time' yAxisId='price' x={currentValues.interestFirstDay} label='Interest first day' stroke="red" />
+                  <ReferenceLine xAxisId='time' yAxisId='price' x={currentValues.interestFirstDay + TWELVE_HOURS} label='Interest first day' stroke="red" />
                 }
                 {isAfter(currentValues.interestRecordDay, xAsisDomain[0]) && isBefore(currentValues.interestRecordDay, xAsisDomain[1]) &&
-                  <ReferenceLine xAxisId='time' yAxisId='price' x={currentValues.interestRecordDay} label='Interest record day' stroke="red" />
+                  <ReferenceLine xAxisId='time' yAxisId='price' x={currentValues.interestRecordDay + TWELVE_HOURS} label='Interest record day' stroke="red" />
                 }
                 <Bar name='Turnover' xAxisId='time' yAxisId='currency' dataKey='turnover' fill='#909090' />
                 <Line name='Bid price' xAxisId='time' yAxisId='price' dataKey='bid' strokeDasharray='5 5' strokeWidth={2} stroke='#82ca9d' />
