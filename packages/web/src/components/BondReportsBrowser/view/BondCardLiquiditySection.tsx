@@ -9,22 +9,23 @@ type BondCardLiquiditySectionParams = {
   bondReport: BondReport;
 }
 
-export default function BondCardLiquiditySection({ bondReport: { currentValues, details } }: BondCardLiquiditySectionParams): JSX.Element {
-  const [liquidityReport, setLiquidityReport] = useState<string | undefined>(undefined);
+export default function BondCardLiquiditySection({ bondReport }: BondCardLiquiditySectionParams): JSX.Element {
+  const { currentValues, details } = bondReport;
+  const [liquidityReport, setLiquidityReport] = useState<BondReport | undefined>(undefined);
 
   return (
     <CardSection>
-      {liquidityReport && <BondLiquidityDialog bondDetails={details} onClose={() => setLiquidityReport(undefined)} />}
-      <CardEntry caption='Avg turnover' width='33%'>
+      {liquidityReport && <BondLiquidityDialog bondReport={liquidityReport} onClose={() => setLiquidityReport(undefined)} />}
+      <CardEntry caption='Avg turnover' width='25%'>
         <CardValue>{!!currentValues.averageTurnover ? formatCompactCurrency(currentValues.averageTurnover * 1000, details.currency) : 'N/A'}</CardValue>
       </CardEntry>
-      <CardEntry caption='Trading ratio' textAlign='center' width='33%'>
+      <CardEntry caption='Trading ratio' textAlign='center' width='25%'>
         <CardValue>{Math.round(currentValues.tradingDaysRatio * 100)}%</CardValue>
       </CardEntry>
-      <CardEntry caption='Avg spread' textAlign='end' width='33%'>
+      <CardEntry caption='Avg spread' textAlign='end' width='25%'>
         <CardValue>{!!currentValues.averageSpread ? formatCurrency(currentValues.averageSpread, details.currency) : 'N/A'}</CardValue>
       </CardEntry>
-      <Button variant='outlined' size='small' sx={{ textTransform: 'none', ml: 2 }} onClick={() => setLiquidityReport('jeje')}>
+      <Button variant='outlined' size='small' sx={{ textTransform: 'none', ml: 2 }} onClick={() => setLiquidityReport(bondReport)}>
         More
       </Button>
     </CardSection>

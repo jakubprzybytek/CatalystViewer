@@ -11,13 +11,15 @@ import CircularProgress from "@mui/material/CircularProgress";
 import IconButton from "@mui/material/IconButton";
 import CloseIcon from '@mui/icons-material/Close';
 import Condition from "@/common/Condition";
-import { Legend, ResponsiveContainer, XAxis, YAxis, Tooltip, Bar, Line, ComposedChart, CartesianGrid } from "recharts";
+import { Legend, ResponsiveContainer, XAxis, YAxis, Tooltip, Bar, Line, ComposedChart, CartesianGrid, ReferenceLine, AreaChart, Area } from "recharts";
 import { useMediaQuery, useTheme } from "@mui/material";
-import { format, sub } from "date-fns";
-import { BondQuote, BondDetails, getBondQuotes } from "@/sdk";
+import { format, isAfter, isBefore, sub } from "date-fns";
+import { BondQuote, getBondQuotes, BondReport } from "@/sdk";
 import { getAsks, getBids, getClosePrices } from "@/bonds/statistics";
 import { formatDate } from "@/common/Formats";
 import { min, max } from "simple-statistics";
+
+const TWELVE_HOURS = 12 * 60 * 60 * 1000;
 
 const dateFormatter = (date: number) => {
   return format(new Date(date), "dd.MM");
@@ -46,11 +48,11 @@ const CustomTooltip = ({ active, payload, label }: CustomTooltipParam) => {
 };
 
 type BondLiquidityDialogParam = {
-  bondDetails: BondDetails;
+  bondReport: BondReport;
   onClose: () => void;
 }
 
-export default function BondLiquidityDialog({ bondDetails, onClose }: BondLiquidityDialogParam): JSX.Element {
+export default function BondLiquidityDialog({ bondReport: { details, currentValues }, onClose }: BondLiquidityDialogParam): JSX.Element {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
 
@@ -77,7 +79,7 @@ export default function BondLiquidityDialog({ bondDetails, onClose }: BondLiquid
 
   useEffect(() => {
     setIsLoading(true);
-    fetchData(bondDetails.name, bondDetails.market);
+    fetchData(details.name, details.market);
   }, []);
 
   const theme = useTheme();
@@ -104,7 +106,7 @@ export default function BondLiquidityDialog({ bondDetails, onClose }: BondLiquid
     <Dialog fullScreen={isMobile} maxWidth='md' fullWidth={!isMobile}
       open={true}>
       <DialogTitle sx={{ backgroundColor: '#eee' }}>
-        Data for {bondDetails.name}
+        Data for {details.name}
         <IconButton
           onClick={onClose}
           sx={{
@@ -132,19 +134,27 @@ export default function BondLiquidityDialog({ bondDetails, onClose }: BondLiquid
           <>
             <ResponsiveContainer aspect={isMobile ? 0.8 : 1.8}>
               <ComposedChart maxBarSize={20} data={chartQuotes}>
-                <XAxis type='number' scale='time'
+                <XAxis xAxisId='time' type='number' scale='time'
                   padding={{ left: 20, right: 20 }}
                   tickFormatter={dateFormatter} domain={xAsisDomain} dataKey='date'></XAxis>
-                <YAxis yAxisId='price' domain={priceDomain} width={40} stroke="#3399ff"
+                <YAxis yAxisId='price' scale='linear' domain={priceDomain}
+                  width={40} stroke="#3399ff"
                   tickFormatter={(data: number) => data.toFixed(1)} />
-                <YAxis yAxisId='currency' orientation='right' width={40} stroke="#808080" />
+                <YAxis yAxisId='currency' scale='linear'
+                  orientation='right' width={40} stroke="#808080" />
                 <CartesianGrid strokeDasharray="3 3" />
                 <Tooltip content={<CustomTooltip active={undefined} payload={undefined} label={undefined} />} />
                 <Legend />
-                <Bar name='Turnover' yAxisId='currency' dataKey='turnover' fill='#909090' />
-                <Line name='Bid price' yAxisId='price' dataKey='bid' strokeDasharray='5 5' strokeWidth={2} stroke='#82ca9d' />
-                <Line name='Ask price' yAxisId='price' dataKey='ask' strokeDasharray='5 5' strokeWidth={2} stroke='red' />
-                <Line name='Close price' yAxisId='price' dataKey='close' strokeWidth={2} stroke="#3399ff" />
+                {isAfter(currentValues.interestFirstDay, xAsisDomain[0]) && isBefore(currentValues.interestFirstDay, xAsisDomain[1]) &&
+                  <ReferenceLine xAxisId='time' yAxisId='price' x={currentValues.interestFirstDay + TWELVE_HOURS} label='Interest first day' stroke="red" />
+                }
+                {isAfter(currentValues.interestRecordDay, xAsisDomain[0]) && isBefore(currentValues.interestRecordDay, xAsisDomain[1]) &&
+                  <ReferenceLine xAxisId='time' yAxisId='price' x={currentValues.interestRecordDay + TWELVE_HOURS} label='Interest record day' stroke="red" />
+                }
+                <Bar name='Turnover' xAxisId='time' yAxisId='currency' dataKey='turnover' fill='#909090' />
+                <Line name='Bid price' xAxisId='time' yAxisId='price' dataKey='bid' strokeDasharray='5 5' strokeWidth={2} stroke='#82ca9d' />
+                <Line name='Ask price' xAxisId='time' yAxisId='price' dataKey='ask' strokeDasharray='5 5' strokeWidth={2} stroke='red' />
+                <Line name='Close price' xAxisId='time' yAxisId='price' dataKey='close' strokeWidth={2} stroke="#3399ff" />
               </ComposedChart>
             </ResponsiveContainer>
             {quotes.map(quote => (
