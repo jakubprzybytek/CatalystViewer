@@ -79,8 +79,8 @@ export function parseObligacjeBondInformationPage(markup: string): ObligacjeBond
     const interestRightsDays = unique(firstGroups(firstGroup(markup, INTEREST_RIGHTS_DAYS_REGEX), DAY_REGEX));
     const interestPayoffDays = unique(firstGroups(firstGroup(markup, INTEREST_PAYOFF_DAYS_REGEX), DAY_REGEX));
 
-    assert(interestFirstDays.length === interestRightsDays.length);
-    assert(interestFirstDays.length === interestPayoffDays.length);
+    assert(interestFirstDays.length === interestRightsDays.length, `Number of first days: ${interestFirstDays.length} vs number of rights days: ${interestRightsDays.length}`);
+    assert(interestFirstDays.length === interestPayoffDays.length, `Number of first days: ${interestFirstDays.length} vs number of payoff days: ${interestPayoffDays.length}`);
 
     const interestPeriods: InterestPeriod[] = [];
     for (var index in interestFirstDays) {
