@@ -35,48 +35,46 @@ html
     main 
       div(class="header")
         h1 Catalyst database update report
-        p Date: #{dateTime}
-      div(class="section")
-        h2 New Bonds
-        each bond in newBonds
-          div(class="bond")
-            h3 #{bond.name}
-            div
-              span(class="key") Issuer: 
-              span #{bond.issuer}
-            div
-              span(class="key") Type: 
-              span #{bond.type}
-            div
-              span(class="key") Interest: 
-              span #{bond.interestVariable} + #{bond.interestConst}%
-            div
-              span(class="key") Nominal: 
-              span #{bond.nominalValue} #{bond.currency}
-            div
-              span(class="key") Issue value:
-              span  #{bond.issueValue} #{bond.currency}
-        else
-          span None
-      div(class="section")
-        h2 Decomissioned Bonds
-        each bond in bondsDeactivated
-          div(class="bond")
-            h3 #{bond.name}
-            div
-              span(class="key") Issuer: 
-              span #{bond.issuer}
-            div
-              span(class="key") Type: 
-              span #{bond.type}
-            div
-              span(class="key") Interest: 
-              span #{bond.interestVariable} + #{bond.interestConst}%
-            div
-              span(class="key") Nominal: 
-              span #{bond.nominalValue} #{bond.currency}
-            div
-              span(class="key") Issue value:
-              span  #{bond.issueValue} #{bond.currency}
-        else
-          span None
+        p Date: #{dateTime.toLocaleString("pl-PL")}
+      if newBonds.length > 0
+        div(class="section")
+          h2 New Bonds
+          each bond in newBonds
+            div(class="bond")
+              h3 #{bond.name}
+              div
+                span(class="key") Issuer: 
+                span #{bond.issuer}
+              div
+                span(class="key") Type: 
+                span #{bond.type}
+              div
+                span(class="key") Interest: 
+                span #{bond.interestVariable} + #{bond.interestConst}%
+              div
+                span(class="key") Nominal: 
+                span #{bond.nominalValue} #{bond.currency}
+              div
+                span(class="key") Issue value:
+                span  #{bond.issueValue} #{bond.currency}
+      if bondsDeactivated.length > 0
+        div(class="section")
+          h2 Decomissioned Bonds
+          each bond in bondsDeactivated
+            div.bond
+              h3 #{bond.name}
+              div
+                span.key Issuer: 
+                span #{bond.issuer}
+              div
+                span.key Type: 
+                span #{bond.type}
+              div
+                span.key Interest: 
+                span #{bond.interestVariable} + #{bond.interestConst}%
+              div
+                span(class="key") Nominal: 
+                span #{bond.nominalValue} #{bond.currency}
+              div
+                span(class="key") Issue value:
+                span  #{bond.issueValue} #{bond.currency}
