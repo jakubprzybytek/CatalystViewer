@@ -148,7 +148,8 @@ function toUpdatedBond(dbBond: DbBondDetails): UpdatedBond {
     interestVariable: dbBond.interestVariable,
     interestConst: dbBond.interestConst,
     nominalValue: dbBond.nominalValue,
-    currency: dbBond.currency
+    currency: dbBond.currency,
+    issueValue: dbBond.issueValue
   }
 }
 

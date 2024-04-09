@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { NextPage } from 'next';
 import { Authenticator } from '@aws-amplify/ui-react';
+import '@aws-amplify/ui-react/styles.css';
 import Head from 'next/head';
 import Box from "@mui/material/Box";
 import BondReportsBrowser, { BondReportsBrowserSettings, DEFAULT_FILTERIN_OPTIONS_SETTING, DEFAULT_SORT_ORDER_SETTING, DEFAULT_VIEW_SETTING } from '@/components/BondReportsBrowser';

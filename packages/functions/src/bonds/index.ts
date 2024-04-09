@@ -35,6 +35,7 @@ export type UpdatedBond = {
     interestConst: number;
     nominalValue: number;
     currency: string;
+    issueValue: number;
 }
 
 export type UpdateBondsResult = {
