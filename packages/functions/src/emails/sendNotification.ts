@@ -27,23 +27,24 @@ async function getNotificationRecipientEmails(): Promise<string[]> {
   return recipientsValue.split(',');
 }
 
+export function buildEmail(updateBondsResult: UpdateBondsResult) {
+  const bondsUpdateReportNotificationTemplate = compileFile('packages/functions/src/emails/bondsUpdateReportNotification.pug');
+  return bondsUpdateReportNotificationTemplate({
+    dateTime: new Date(),
+    newBonds: updateBondsResult.newBonds,
+    bondsDeactivated: updateBondsResult.bondsDeactivated
+  });
+}
+
 export async function handler(updateBondsReport: UpdateBondsResult): Promise<SendNotificationResult> {
   console.log('Sending notification with bonds update results');
   console.log(`Bonds updated: ${updateBondsReport.bondsUpdated}`);
   console.log(`New bonds: ${updateBondsReport.newBonds.map(b => b.name).join(', ')}`);
   console.log(`Decomissioned bonds: ${updateBondsReport.bondsDeactivated.map(b => b.name).join(', ')}`);
 
-  const bondsUpdateReportNotificationTemplate = compileFile('packages/functions/src/emails/bondsUpdateReportNotification.pug');
-  const emailBody = bondsUpdateReportNotificationTemplate({
-    dateTime: new Date(),
-    newBonds: updateBondsReport.newBonds,
-    bondsDeactivated: updateBondsReport.bondsDeactivated
-  })
+  const emailBody = buildEmail(updateBondsReport);
+
 console.log(emailBody);
-  // const emailBody = 
-  //   `Bonds updated: ${updateBondsReport.bondsUpdated}<br \>
-  //   New bonds: ${updateBondsReport.newBonds.join(', ')}<br \>
-  //   Decomissioned bonds: ${updateBondsReport.bondsDeactivated.join(', ')}`;
 
   const params: SendEmailParams = {
     to: await getNotificationRecipientEmails(),
