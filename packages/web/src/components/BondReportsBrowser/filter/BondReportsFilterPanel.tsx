@@ -1,9 +1,9 @@
 import { useMemo } from "react";
 import Grid from "@mui/material/Grid";
 import Typography from "@mui/material/Typography";
-import { getUniqueInterestBaseTypes, getUniqueIssuers, getUniqueMarkets, sortStrings } from "@/bonds/statistics";
+import { getUniqueInterestBaseTypes, getUniqueIssuers, getUniqueMarkets, getUniqueCurrencies, sortStrings } from "@/bonds/statistics";
 import { BondReport } from "@/sdk/Bonds";
-import { BondReportsFilteringOptions, marketsModifiers, interestBaseTypesModifiers, issuersModifiers, bondTypeModifier, maxNominalValueModifier } from ".";
+import { BondReportsFilteringOptions, marketsModifiers, interestBaseTypesModifiers, issuersModifiers, bondTypeModifier, maxNominalValueModifier, currenciesModifiers } from ".";
 import { NominalValueFilter, StringFilter, MultiStringFilter } from "./fields";
 import IssuersSelector from "./IssuersSelector";
 
@@ -15,14 +15,16 @@ type BondReportsFilterPanelParams = {
 };
 
 export function BondReportsFilterPanel({ allBondReports, allBondTypes, filteringOptions, setFilteringOptions }: BondReportsFilterPanelParams): JSX.Element {
-  const allInterestBaseTypes = useMemo(() => sortStrings(getUniqueInterestBaseTypes(allBondReports)), [allBondReports]);
   const allMarkets = useMemo(() => sortStrings(getUniqueMarkets(allBondReports)), [allBondReports]);
+  const allInterestBaseTypes = useMemo(() => sortStrings(getUniqueInterestBaseTypes(allBondReports)), [allBondReports]);
+  const allCurrencies = useMemo(() => getUniqueCurrencies(allBondReports), [allBondReports]);
   const allIssuers = useMemo(() => getUniqueIssuers(allBondReports), [allBondReports]);
 
   const setBondType = bondTypeModifier(filteringOptions, setFilteringOptions);
   const setMaxNominal = maxNominalValueModifier(filteringOptions, setFilteringOptions);
   const { addMarket, removeMarket } = marketsModifiers(filteringOptions, setFilteringOptions);
   const { addInterestBaseTyp, removeInterestBasetType } = interestBaseTypesModifiers(filteringOptions, setFilteringOptions);
+  const { addCurrency, removeCurrency } = currenciesModifiers(filteringOptions, setFilteringOptions);
   const { addIssuer, removeIssuer, removeAllIssuers } = issuersModifiers(filteringOptions, setFilteringOptions);
 
   return (
@@ -45,6 +47,10 @@ export function BondReportsFilterPanel({ allBondReports, allBondTypes, filtering
           <Grid item xs={12} sm={12} md={4}>
             <MultiStringFilter label='Interest base type'
               all={allInterestBaseTypes} selected={filteringOptions.interestBaseTypes} add={addInterestBaseTyp} remove={removeInterestBasetType} />
+          </Grid>
+          <Grid item xs={12} sm={12} md={4}>
+            <MultiStringFilter label='Currency'
+              all={allCurrencies} selected={filteringOptions.currencies} add={addCurrency} remove={removeCurrency} />
           </Grid>
         </Grid>
       </Grid>

@@ -40,6 +40,7 @@ function useSettings<FieldType>(
   fieldDefaultValue: FieldType
 ): [FieldType, (a: FieldType) => void] {
   const fieldValue: FieldType = settings[fieldName] as FieldType || fieldDefaultValue;
+//  const fieldValue: FieldType = {...fieldDefaultValue, ...(settings[fieldName] as FieldType)};
   const fieldValueSetter = (newValue: FieldType) => setSettings({ ...settings, [fieldName]: newValue });
   return [fieldValue, fieldValueSetter];
 }
@@ -48,6 +49,7 @@ export const DEFAULT_VIEW_SETTING = BondReportsView.Issuers;
 export const DEFAULT_FILTERIN_OPTIONS_SETTING: BondReportsFilteringOptions = {
   bondType: 'Corporate bonds',
   maxNominal: 10000,
+  currencies: ['PLN', 'EUR'],
   markets: ['GPW ASO', 'GPW RR'],
   interestBaseTypes: ['WIBOR 3M', 'WIBOR 6M'],
   issuers: []
@@ -125,7 +127,7 @@ export default function BondReportsBrowser({ settings, setSettings }: BondReport
     //console.log(`Filtering result: ${filteredBondReports.length} bond reports`);
 
     return filteredBondReports;
-  }, [allBondReports, filteringOptions.maxNominal, filteringOptions.markets, filteringOptions.interestBaseTypes, filteringOptions.issuers]);
+  }, [allBondReports, filteringOptions.maxNominal, filteringOptions.currencies, filteringOptions.markets, filteringOptions.interestBaseTypes, filteringOptions.issuers]);
 
   const filteredAndSortedBondsReports = useMemo(() =>
     getBondReportsSortingFunction(sortOrder)(filteredBondReports), [sortOrder, filteredBondReports]);

@@ -1,6 +1,6 @@
 import { removeElement } from '@/common/Arrays';
 import BondReportsFilterDrawer from './BondReportsFilterDrawer';
-import { filterBy, isBondType, isInterestBaseType, isIssuedBy, isOnMarkets, nominalValueLessThan } from "@/bonds/statistics";
+import { filterBy, isBondType, isInterestBaseType, isIssuedBy, isOnMarkets, nominalValueLessThan, isCurrency } from "@/bonds/statistics";
 
 export default BondReportsFilterDrawer;
 
@@ -9,6 +9,7 @@ export * from './BondReportsFilterPanel';
 export type BondReportsFilteringOptions = {
   bondType: string;
   maxNominal: number;
+  currencies: string[];
   markets: string[];
   interestBaseTypes: string[];
   issuers: string[];
@@ -18,6 +19,7 @@ export function filterUsing(filteringOptions: BondReportsFilteringOptions) {
   return filterBy([
     // isBondType(filteringOptions.bondType),
     nominalValueLessThan(filteringOptions.maxNominal),
+    isCurrency(filteringOptions.currencies),
     isOnMarkets(filteringOptions.markets),
     isInterestBaseType(filteringOptions.interestBaseTypes),
     isIssuedBy(filteringOptions.issuers)
@@ -36,6 +38,13 @@ export function marketsModifiers(filteringOptions: BondReportsFilteringOptions, 
   return {
     addMarket: (newMarket: string) => setFilteringOptions({ ...filteringOptions, markets: [...filteringOptions.markets, newMarket] }),
     removeMarket: (marketToRemove: string) => setFilteringOptions({ ...filteringOptions, markets: removeElement(filteringOptions.markets, marketToRemove) })
+  }
+}
+
+export function currenciesModifiers(filteringOptions: BondReportsFilteringOptions, setFilteringOptions: (newFilteringOptions: BondReportsFilteringOptions) => void) {
+  return {
+    addCurrency: (newCurrency: string) => setFilteringOptions({ ...filteringOptions, currencies: [...filteringOptions.currencies, newCurrency] }),
+    removeCurrency: (currencyToRemove: string) => setFilteringOptions({ ...filteringOptions, currencies: removeElement(filteringOptions.currencies, currencyToRemove) })
   }
 }
 
