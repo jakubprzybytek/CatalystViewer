@@ -1,6 +1,7 @@
 html
   head 
     title Catalyst Database Update Report
+    meta(charset="utf-8")
     style(type="text/css").
       body {
         background-color: #fff8f0;
@@ -53,10 +54,10 @@ html
                 span #{bond.interestVariable} + #{bond.interestConst}%
               div
                 span(class="key") Nominal: 
-                span #{bond.nominalValue} #{bond.currency}
+                span #{bond.nominalValue}
               div
                 span(class="key") Issue value:
-                span  #{bond.issueValue} #{bond.currency}
+                span  #{bond.issueValue}
       if bondsDeactivated.length > 0
         div(class="section")
           h2 Decomissioned Bonds
@@ -74,7 +75,7 @@ html
                 span #{bond.interestVariable} + #{bond.interestConst}%
               div
                 span(class="key") Nominal: 
-                span #{bond.nominalValue} #{bond.currency}
+                span #{bond.nominalValue}
               div
                 span(class="key") Issue value:
-                span  #{bond.issueValue} #{bond.currency}
+                span  #{bond.issueValue}

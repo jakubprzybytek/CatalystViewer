@@ -1,7 +1,7 @@
 import { SSMClient, GetParameterCommand, GetParameterCommandInput } from "@aws-sdk/client-ssm";
 import { UpdateBondsResult } from "../bonds";
 import { sendEmail, SendEmailParams } from "./EmailClient";
-import { compileFile } from "pug";
+import { buildEmail } from "./EmailMarkupBuilder";
 
 const RECIPIENTS_PARAM_NAME = '/catalyst-viewer/notifications/recipients';
 
@@ -15,7 +15,7 @@ async function getNotificationRecipientEmails(): Promise<string[]> {
   const getRecipientInput: GetParameterCommandInput = {
     Name: RECIPIENTS_PARAM_NAME
   };
-  
+
   const getRecipientCommand = new GetParameterCommand(getRecipientInput);
   const getRecipientResult = await ssmCient.send(getRecipientCommand);
   const recipientsValue = getRecipientResult.Parameter?.Value;
@@ -27,15 +27,6 @@ async function getNotificationRecipientEmails(): Promise<string[]> {
   return recipientsValue.split(',');
 }
 
-export function buildEmail(updateBondsResult: UpdateBondsResult) {
-  const bondsUpdateReportNotificationTemplate = compileFile('packages/functions/src/emails/bondsUpdateReportNotification.pug');
-  return bondsUpdateReportNotificationTemplate({
-    dateTime: new Date(),
-    newBonds: updateBondsResult.newBonds,
-    bondsDeactivated: updateBondsResult.bondsDeactivated
-  });
-}
-
 export async function handler(updateBondsReport: UpdateBondsResult): Promise<SendNotificationResult> {
   console.log('Sending notification with bonds update results');
   console.log(`Bonds updated: ${updateBondsReport.bondsUpdated}`);
@@ -43,8 +34,6 @@ export async function handler(updateBondsReport: UpdateBondsResult): Promise<Sen
   console.log(`Decomissioned bonds: ${updateBondsReport.bondsDeactivated.map(b => b.name).join(', ')}`);
 
   const emailBody = buildEmail(updateBondsReport);
-
-console.log(emailBody);
 
   const params: SendEmailParams = {
     to: await getNotificationRecipientEmails(),

@@ -1,11 +1,11 @@
 import { UpdateBondsResult } from "../bonds";
-import { buildEmail } from './sendNotification';
+import { buildEmail } from './EmailMarkupBuilder';
 
 const updateBondsResult: UpdateBondsResult = {
   bondsUpdated: 2,
   newBonds: [{
     name: "ABC1234",
-    issuer: "Bond IIssuer",
+    issuer: "Bond Issuer",
     type: "Corporate bond",
     interestVariable: "WIBOR3M",
     interestConst: 2,
@@ -14,9 +14,9 @@ const updateBondsResult: UpdateBondsResult = {
     issueValue: 1000000
   }],
   bondsDeactivated: [],
-  bondsFailed: [ "Bndnd1" ]
+  bondsFailed: ["Bndnd1"]
 };
 
-const emailBody = buildEmail(updateBondsResult); 
+const emailBody = buildEmail(updateBondsResult);
 
 console.log(emailBody);
