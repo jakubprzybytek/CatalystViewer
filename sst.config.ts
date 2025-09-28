@@ -1,5 +1,4 @@
 import { SSTConfig } from "sst";
-import { Default } from "./stacks/Default";
 import { BondsService } from "./stacks/BondsService";
 import { Frontend } from "./stacks/Frontend";
 import { BondsUpdater } from "./stacks/BondsUpdater";
@@ -13,7 +12,7 @@ export default {
   },
   stacks(app) {
     app.setDefaultFunctionProps({
-      runtime: "nodejs18.x",
+      runtime: "nodejs20.x",
     });
 
     //app.stack(Default).stack(BondsService);

@@ -15,16 +15,16 @@
     "email": "esrun packages/functions/src/emails/testEmail.ts"
   },
   "devDependencies": {
-    "@tsconfig/node18": "^18.2.2",
-    "aws-cdk-lib": "2.95.1",
-    "constructs": "^10.3.0",
-    "sst": "^2.41.4",
-    "typescript": "^5.2.2"
+    "@tsconfig/node20": "^20.1.5",
+    "aws-cdk-lib": "2.192.0",
+    "constructs": "10.4.2",
+    "sst": "2.48.5",
+    "typescript": "5.8.3"
   },
   "workspaces": [
     "packages/*"
   ],
   "dependencies": {
-    "@aws-sdk/util-dynamodb": "^3.474.0"
+    "@aws-sdk/util-dynamodb": "3.474.0"
   }
 }
