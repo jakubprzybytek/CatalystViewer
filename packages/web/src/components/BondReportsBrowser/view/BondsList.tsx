@@ -22,12 +22,12 @@ export default function BondsList({ bondReports, statistics }: BondsListParam): 
     <Box>
       <Grid container spacing={1}>
         {bondReports.slice(0, displayedItemsCount).map(bondReport => (
-          <Grid key={`${bondReport.details.name}#${bondReport.details.market}`} item xs={12} sm={6} lg={4} xl={3}>
+          <Grid key={`${bondReport.details.name}#${bondReport.details.market}`} size={{ xs: 12, sm: 6, lg: 4, xl: 3 }}>
             <BondCard bondReport={bondReport} statistics={statistics} />
           </Grid>
         ))}
         {displayedItemsCount < bondReports.length &&
-          <Grid item container xs={12} justifyContent='center'>
+          <Grid container size={12} justifyContent='center'>
             <Button variant='outlined'
               onClick={() => setDisplayedItemsCount(displayedItemsCount + BATCH_SIZE)}>
               Load more

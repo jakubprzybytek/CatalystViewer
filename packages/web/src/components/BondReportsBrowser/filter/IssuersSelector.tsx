@@ -25,7 +25,7 @@ export default function IssuersSelector({ allIssuers, selectedIssuers, addIssuer
 
   return (
     <Grid container spacing={1}>
-      <Grid item xs={12}>
+      <Grid size={12}>
         <Button startIcon={(<AddCircle />)}
           onClick={(event: React.MouseEvent<HTMLButtonElement>) => setAnchorEl(event.currentTarget)}>
           Select Issuers

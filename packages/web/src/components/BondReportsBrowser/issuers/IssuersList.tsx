@@ -18,7 +18,7 @@ export default function IssuersList({ issuers, statistics, filteringOptions, set
     <Box>
       <Grid container spacing={1}>
         {issuers.map(issuerReport => (
-          <Grid key={`${issuerReport.name}#${issuerReport.interestBaseType}`} item xs={12} sm={6} lg={4} xl={3}>
+          <Grid key={`${issuerReport.name}#${issuerReport.interestBaseType}`} size={{ xs: 12, sm: 6, lg: 4, xl: 3 }}>
             <IssuerCard issuerReport={issuerReport} statistics={statistics} selectedIssuers={filteringOptions.issuers} addIssuer={addIssuer} removeIssuer={removeIssuer} />
           </Grid>
         ))}

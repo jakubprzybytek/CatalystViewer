@@ -100,7 +100,7 @@ export default function BondsListStats({ bondReports, statistics }: BondsListPar
     <Box>
       <Grid container spacing={1}>
         {sort(Object.keys(bondsByInterestBaseTypes)).map(interestBaseType => (
-          <Grid key={interestBaseType} item xs={6} sm={4} md={3}>
+          <Grid key={interestBaseType} size={{ xs: 6, sm: 4, md: 3 }}>
             <BondInterestBaseTypeStat
               interestBaseType={interestBaseType}
               interestConstPercentiles={statistics[interestBaseType]}
