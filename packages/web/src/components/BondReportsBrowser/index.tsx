@@ -52,7 +52,8 @@ export const DEFAULT_FILTERIN_OPTIONS_SETTING: BondReportsFilteringOptions = {
   currencies: ['PLN', 'EUR'],
   markets: ['GPW ASO', 'GPW RR'],
   interestBaseTypes: ['WIBOR 3M', 'WIBOR 6M'],
-  issuers: []
+  issuers: [],
+  treasuryBondTypes: []
 };
 export const DEFAULT_SORT_ORDER_SETTING = BondReportsSortOrder.Name;
 
@@ -115,11 +116,11 @@ export default function BondReportsBrowser({ settings, setSettings }: BondReport
   // first, filter without issuers - it will be used to display all issuers
   const filteredBondReportsWithoutIssuers = useMemo(() =>
     filterUsing({ ...filteringOptions, issuers: [] })(allBondReports)
-    , [allBondReports, filteringOptions.maxNominal, filteringOptions.markets, filteringOptions.interestBaseTypes]);
+    , [allBondReports, filteringOptions.maxNominal, filteringOptions.markets, filteringOptions.interestBaseTypes, filteringOptions.treasuryBondTypes]);
 
   // Perform bonds filtering
   const filteredBondReports = useMemo(() => {
-    //console.log(`Applying filters: ${JSON.stringify(filteringOptions)} to ${allBondReports.length} bond reports`);
+    // console.log(`Applying filters: ${JSON.stringify(filteringOptions)} to ${allBondReports.length} bond reports`);
 
     const filterBondReports = filterUsing(filteringOptions);
     const filteredBondReports = filterBondReports(allBondReports);
@@ -127,7 +128,7 @@ export default function BondReportsBrowser({ settings, setSettings }: BondReport
     //console.log(`Filtering result: ${filteredBondReports.length} bond reports`);
 
     return filteredBondReports;
-  }, [allBondReports, filteringOptions.maxNominal, filteringOptions.currencies, filteringOptions.markets, filteringOptions.interestBaseTypes, filteringOptions.issuers]);
+  }, [allBondReports, filteringOptions.maxNominal, filteringOptions.currencies, filteringOptions.markets, filteringOptions.interestBaseTypes, filteringOptions.issuers, filteringOptions.treasuryBondTypes]);
 
   const filteredAndSortedBondsReports = useMemo(() =>
     getBondReportsSortingFunction(sortOrder)(filteredBondReports), [sortOrder, filteredBondReports]);

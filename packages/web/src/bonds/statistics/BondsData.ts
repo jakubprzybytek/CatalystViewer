@@ -23,6 +23,12 @@ export const isInterestBaseType = (interestbaseTypes: string[]) => interestbaseT
 export const nominalValueLessThan = (maxNominalValue: number) => (bondReport: BondReport) => bondReport.details.nominalValue <= maxNominalValue;
 export const isOnMarkets = (markets: string[]) => (bondReport: BondReport) => markets.includes(bondReport.details.market);
 export const isCurrency = (currencies: string[]) => (bondReport: BondReport) => currencies.includes(bondReport.details.currency);
+export const isTreasuryBondType = (treasuryBondTypes: string[]) => treasuryBondTypes.length > 0 ?
+    (bondReport: BondReport) =>
+        treasuryBondTypes.some(
+            treasuryBondType => new RegExp(`^${treasuryBondType}`).test(bondReport.details.name)
+        )
+    : R.always(true);
 
 // Getters
 export const getBondTypes = R.map(bondType);

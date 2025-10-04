@@ -1,6 +1,6 @@
 import { removeElement } from '@/common/Arrays';
 import BondReportsFilterDrawer from './BondReportsFilterDrawer';
-import { filterBy, isBondType, isInterestBaseType, isIssuedBy, isOnMarkets, nominalValueLessThan, isCurrency } from "@/bonds/statistics";
+import { filterBy, isBondType, isInterestBaseType, isIssuedBy, isOnMarkets, nominalValueLessThan, isCurrency, isTreasuryBondType } from "@/bonds/statistics";
 
 export default BondReportsFilterDrawer;
 
@@ -13,6 +13,7 @@ export type BondReportsFilteringOptions = {
   markets: string[];
   interestBaseTypes: string[];
   issuers: string[];
+  treasuryBondTypes: string[];
 }
 
 export function filterUsing(filteringOptions: BondReportsFilteringOptions) {
@@ -22,7 +23,8 @@ export function filterUsing(filteringOptions: BondReportsFilteringOptions) {
     isCurrency(filteringOptions.currencies),
     isOnMarkets(filteringOptions.markets),
     isInterestBaseType(filteringOptions.interestBaseTypes),
-    isIssuedBy(filteringOptions.issuers)
+    isIssuedBy(filteringOptions.issuers),
+    isTreasuryBondType(filteringOptions.treasuryBondTypes)
   ])
 };
 
@@ -60,5 +62,12 @@ export function issuersModifiers(filteringOptions: BondReportsFilteringOptions, 
     addIssuer: (newIssuer: string) => setFilteringOptions({ ...filteringOptions, issuers: [...filteringOptions.issuers, newIssuer] }),
     removeIssuer: (issuerToRemove: string) => setFilteringOptions({ ...filteringOptions, issuers: removeElement(filteringOptions.issuers, issuerToRemove) }),
     removeAllIssuers: () => setFilteringOptions({ ...filteringOptions, issuers: [] })
+  }
+}
+
+export function treasuryBondTypesModifiers(filteringOptions: BondReportsFilteringOptions, setFilteringOptions: (newFilteringOptions: BondReportsFilteringOptions) => void) {
+  return {
+    addtreasuryBondType: (newtreasuryBondType: string) => setFilteringOptions({ ...filteringOptions, treasuryBondTypes: [...filteringOptions.treasuryBondTypes, newtreasuryBondType] }),
+    removetreasuryBondType: (treasuryBondTypeToRemove: string) => setFilteringOptions({ ...filteringOptions, treasuryBondTypes: removeElement(filteringOptions.treasuryBondTypes, treasuryBondTypeToRemove) }),
   }
 }

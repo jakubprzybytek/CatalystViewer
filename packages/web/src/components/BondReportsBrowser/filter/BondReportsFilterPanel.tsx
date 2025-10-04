@@ -5,7 +5,7 @@ import Box from "@mui/material/Box";
 import Divider from "@mui/material/Divider";
 import { getUniqueInterestBaseTypes, getUniqueIssuers, getUniqueMarkets, getUniqueCurrencies, sortStrings } from "@/bonds/statistics";
 import { BondReport } from "@/sdk/Bonds";
-import { BondReportsFilteringOptions, marketsModifiers, interestBaseTypesModifiers, issuersModifiers, bondTypeModifier, maxNominalValueModifier, currenciesModifiers } from ".";
+import { BondReportsFilteringOptions, marketsModifiers, interestBaseTypesModifiers, issuersModifiers, bondTypeModifier, maxNominalValueModifier, currenciesModifiers, treasuryBondTypesModifiers } from ".";
 import { NominalValueFilter, StringFilter, MultiStringFilter } from "./fields";
 import IssuersSelector from "./IssuersSelector";
 
@@ -28,6 +28,9 @@ export function BondReportsFilterPanel({ allBondReports, allBondTypes, filtering
   const { addInterestBaseTyp, removeInterestBasetType } = interestBaseTypesModifiers(filteringOptions, setFilteringOptions);
   const { addCurrency, removeCurrency } = currenciesModifiers(filteringOptions, setFilteringOptions);
   const { addIssuer, removeIssuer, removeAllIssuers } = issuersModifiers(filteringOptions, setFilteringOptions);
+  const { addtreasuryBondType, removetreasuryBondType } = treasuryBondTypesModifiers(filteringOptions, setFilteringOptions);
+
+  const isTreasuryBondsSelected = filteringOptions.issuers.includes('Skarb Państwa');
 
   return (
     <Stack>
@@ -57,6 +60,13 @@ export function BondReportsFilterPanel({ allBondReports, allBondTypes, filtering
       <Box sx={{ padding: 1, paddingTop: 0 }}>
         <IssuersSelector allIssuers={allIssuers} selectedIssuers={filteringOptions.issuers} addIssuer={addIssuer} removeIssuer={removeIssuer} removeAllIssuers={removeAllIssuers} />
       </Box>
+      {isTreasuryBondsSelected && <>
+        <Divider>Skarb Państwa</Divider>
+        <Box sx={{ padding: 1, paddingTop: 0 }}>
+          <MultiStringFilter label='Treasury Bond Type'
+            all={['PS', 'DS', 'WS', 'WZ', 'IZ', 'OK', 'EUR']} selected={filteringOptions.treasuryBondTypes} add={addtreasuryBondType} remove={removetreasuryBondType} />
+        </Box>
+      </>}
     </Stack>
   );
 }
