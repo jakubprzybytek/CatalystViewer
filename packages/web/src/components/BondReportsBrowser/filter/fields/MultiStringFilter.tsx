@@ -19,7 +19,7 @@ export function MultiStringFilter({ label, all, selected, add, remove }: MultiSt
       <FormGroup row>
         {all.map(item => (
           <FormControlLabel key={item} control={
-            <Checkbox
+            <Checkbox size="small" sx={{ paddingTop: 0.5, paddingBottom: 0.5 }}
               checked={selected.includes(item)}
               onChange={(event: React.ChangeEvent<HTMLInputElement>) => event.target.checked ? add(item) : remove(item)} />
           } label={item} />

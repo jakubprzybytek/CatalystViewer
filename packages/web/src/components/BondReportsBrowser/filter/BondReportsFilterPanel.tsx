@@ -1,6 +1,8 @@
 import { useMemo } from "react";
 import Grid from "@mui/material/Grid";
-import Typography from "@mui/material/Typography";
+import Stack from "@mui/material/Stack";
+import Box from "@mui/material/Box";
+import Divider from "@mui/material/Divider";
 import { getUniqueInterestBaseTypes, getUniqueIssuers, getUniqueMarkets, getUniqueCurrencies, sortStrings } from "@/bonds/statistics";
 import { BondReport } from "@/sdk/Bonds";
 import { BondReportsFilteringOptions, marketsModifiers, interestBaseTypesModifiers, issuersModifiers, bondTypeModifier, maxNominalValueModifier, currenciesModifiers } from ".";
@@ -28,36 +30,33 @@ export function BondReportsFilterPanel({ allBondReports, allBondTypes, filtering
   const { addIssuer, removeIssuer, removeAllIssuers } = issuersModifiers(filteringOptions, setFilteringOptions);
 
   return (
-    <>
-      <Grid container item xs={12} sm={6} md={4} direction='column'>
-        <Typography paddingBottom={1}>Select bond type:</Typography>
+    <Stack>
+      <Box sx={{ marginTop: 1, padding: 1 }}>
         <StringFilter label='Bond Type'
           all={allBondTypes} selected={filteringOptions.bondType} setSelected={setBondType} />
-      </Grid>
-      <Grid container item marginTop={1}>
-        <Typography paddingBottom={1}>Apply more filters:</Typography>
-        <Grid container item spacing={1}>
-          <Grid item xs={12} sm={6} md={4}>
-            <NominalValueFilter selectedNominalValue={filteringOptions.maxNominal} setSelectedNominalValue={setMaxNominal} />
-          </Grid>
-          <Grid item xs={12} sm={6} md={4}>
-            <MultiStringFilter label='Market'
-              all={allMarkets} selected={filteringOptions.markets} add={addMarket} remove={removeMarket} />
-          </Grid>
-          <Grid item xs={12} sm={12} md={4}>
-            <MultiStringFilter label='Interest base type'
-              all={allInterestBaseTypes} selected={filteringOptions.interestBaseTypes} add={addInterestBaseTyp} remove={removeInterestBasetType} />
-          </Grid>
-          <Grid item xs={12} sm={12} md={4}>
-            <MultiStringFilter label='Currency'
-              all={allCurrencies} selected={filteringOptions.currencies} add={addCurrency} remove={removeCurrency} />
-          </Grid>
+      </Box>
+      <Divider>Filters</Divider>
+      <Grid container padding={1} spacing={2}>
+        <Grid size={12}>
+          <NominalValueFilter selectedNominalValue={filteringOptions.maxNominal} setSelectedNominalValue={setMaxNominal} />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+          <MultiStringFilter label='Market'
+            all={allMarkets} selected={filteringOptions.markets} add={addMarket} remove={removeMarket} />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 12, md: 4 }}>
+          <MultiStringFilter label='Interest base type'
+            all={allInterestBaseTypes} selected={filteringOptions.interestBaseTypes} add={addInterestBaseTyp} remove={removeInterestBasetType} />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 12, md: 4 }}>
+          <MultiStringFilter label='Currency'
+            all={allCurrencies} selected={filteringOptions.currencies} add={addCurrency} remove={removeCurrency} />
         </Grid>
       </Grid>
-      <Grid container item marginTop={1} direction='column'>
-        <Typography paddingBottom={1}>Select issuers:</Typography>
+      <Divider>Issuers</Divider>
+      <Box sx={{ padding: 1, paddingTop: 0 }}>
         <IssuersSelector allIssuers={allIssuers} selectedIssuers={filteringOptions.issuers} addIssuer={addIssuer} removeIssuer={removeIssuer} removeAllIssuers={removeAllIssuers} />
-      </Grid>
-    </>
+      </Box>
+    </Stack>
   );
 }

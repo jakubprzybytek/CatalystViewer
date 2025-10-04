@@ -1,4 +1,4 @@
-import Grid from "@mui/material/Unstable_Grid2";
+import Grid from "@mui/material/Grid";
 import Stack from "@mui/material/Stack";
 import Box from "@mui/material/Box";
 import Dialog from "@mui/material/Dialog";
@@ -75,7 +75,7 @@ export default function BondYTMReportDialog({ ytmReport, onClose }: BondYTMRepor
       </DialogTitle>
       <DialogContent sx={{ p: 2, backgroundColor: '#eee' }}>
         <Grid container direction='row' spacing={1}>
-          <Grid xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <Box sx={{ pr: 1, pl: 1 }}>
               <ReportSectionTitle>Parameters</ReportSectionTitle>
               <ReportEntry caption='Price'>{ytmReport.price}</ReportEntry>
@@ -83,7 +83,7 @@ export default function BondYTMReportDialog({ ytmReport, onClose }: BondYTMRepor
               <ReportEntry caption='Commision rate'>{ytmReport.commissionRate * 100}%</ReportEntry>
             </Box>
           </Grid>
-          <Grid xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <Box sx={{ pr: 1, pl: 1 }}>
               <ReportSectionTitle>Bond details</ReportSectionTitle>
               <ReportEntry caption='Nominal value'>{formatCurrency(bondDetails.nominalValue, bondDetails.currency)}</ReportEntry>
@@ -92,7 +92,7 @@ export default function BondYTMReportDialog({ ytmReport, onClose }: BondYTMRepor
               <ReportEntry caption='Time to mature'>{ytmReport.timeToMature.toFixed(2)} yrs ({formatDate(bondDetails.maturityDayTs)})</ReportEntry>
             </Box>
           </Grid>
-          <Grid xs={12} sm={4}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <Box sx={{ p: 1, backgroundColor: 'lightpink', borderRadius: '8px' }}>
               <ReportSectionTitle>Buy</ReportSectionTitle>
               <ReportEntry caption='Nominal price'>{formatCurrency(ytmReport.nominalPrice, bondDetails.currency)}</ReportEntry>
@@ -102,7 +102,7 @@ export default function BondYTMReportDialog({ ytmReport, onClose }: BondYTMRepor
               <ReportEntry caption='Total buying price' style='strong'>{formatCurrency(ytmReport.totalBuyingPrice, bondDetails.currency)}</ReportEntry>
             </Box>
           </Grid>
-          <Grid xs={12} sm={4}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <Box sx={{ p: 1, mb: 1, backgroundColor: 'lightgreen', borderRadius: '8px' }}>
               <ReportSectionTitle>Interest</ReportSectionTitle>
               <ReportEntry caption='Payable interest'>{formatCurrency(ytmReport.totalPayableInterest, bondDetails.currency)}</ReportEntry>
@@ -119,7 +119,7 @@ export default function BondYTMReportDialog({ ytmReport, onClose }: BondYTMRepor
               <ReportEntry caption='Sale income' style='strong'>{formatCurrency(ytmReport.saleIncome, bondDetails.currency)}</ReportEntry>
             </Box>
           </Grid>
-          <Grid xs={12} sm={4}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <Box sx={{ p: 1, backgroundColor: 'lightgrey', borderRadius: '8px' }}>
               <ReportSectionTitle>Profit</ReportSectionTitle>
               <ReportEntry caption='Payoff price'>{formatCurrency(ytmReport.saleIncome, bondDetails.currency)}</ReportEntry>
