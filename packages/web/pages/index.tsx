@@ -29,9 +29,9 @@ const Bonds: NextPage = () => {
   }
 
   async function fetchProfileAndApplySettings(): Promise<void> {
-    console.log('Loading profile');
+    console.debug('Loading profile');
     const profile = await getProfile();
-    console.log(`Profile: ${JSON.stringify(profile)}`);
+    console.debug(`Profile: ${JSON.stringify(profile)}`);
     if (profile !== undefined) {
       setSettingsCollection(profile.bondsReportsBrowserSettings);
     } else {
@@ -56,7 +56,11 @@ const Bonds: NextPage = () => {
               settings={settingsCollection[currentSettingsIndex]}
               setSettings={(settings: BondReportsBrowserSettings) => setSettingsCollectionWrapper(settingsCollection.with(currentSettingsIndex, settings))} />
           </Box>
-          <BondReportsBrowserSelector settingsCollection={settingsCollection} setSettingsCollection={setSettingsCollectionWrapper} currentSettingsIndex={currentSettingsIndex} setCurrentSettingsIndex={setCurrentSettingsIndex} />
+          <BondReportsBrowserSelector
+            settingsCollection={settingsCollection}
+            setSettingsCollection={setSettingsCollectionWrapper}
+            currentSettingsIndex={currentSettingsIndex}
+            setCurrentSettingsIndex={setCurrentSettingsIndex} />
         </>
       )
       }

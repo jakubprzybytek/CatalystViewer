@@ -20,10 +20,12 @@ import BondReportsFilterDrawer, { BondReportsFilteringOptions, filterUsing } fro
 import BondReportsSortMenu, { BondReportsSortOrder, getBondReportsSortingFunction } from "./sort";
 import { BondReport, getBondReports } from "@/sdk/Bonds";
 import { computeStatisticsForInterestBaseTypes } from "@/bonds/statistics";
+import NewBondsList from "./view/NewBondsList";
 
 export enum BondReportsView {
   Issuers,
-  Bonds
+  Bonds,
+  NewBonds
 }
 
 export type BondReportsBrowserSettings = {
@@ -184,6 +186,7 @@ export default function BondReportsBrowser({ settings, setSettings }: BondReport
             onChange={(event: React.MouseEvent<HTMLElement>, newView: BondReportsView) => setView(newView !== null ? newView : view)}>
             <ToggleButton value={BondReportsView.Issuers}>Issuers</ToggleButton>
             <ToggleButton value={BondReportsView.Bonds}>Bonds</ToggleButton>
+            <ToggleButton value={BondReportsView.NewBonds}>New Bonds</ToggleButton>
           </ToggleButtonGroup>
           <ToggleButton color="secondary" size="small" value="check" selected={statsShown}
             onChange={() => setStatsShown(!statsShown)}>
@@ -195,6 +198,9 @@ export default function BondReportsBrowser({ settings, setSettings }: BondReport
         </Collapse>
         <Condition render={view == BondReportsView.Bonds}>
           <BondsList bondReports={filteredAndSortedBondsReports} statistics={bondReportsStatistics} />
+        </Condition>
+        <Condition render={view == BondReportsView.NewBonds}>
+          <NewBondsList bondReports={filteredAndSortedBondsReports} statistics={bondReportsStatistics} />
         </Condition>
         <Condition render={view == BondReportsView.Issuers}>
           <IssuersViewer bondReports={filteredBondReportsWithoutIssuers} statistics={bondReportsStatistics} filteringOptions={filteringOptions} setFilteringOptions={setFilteringOptions} />

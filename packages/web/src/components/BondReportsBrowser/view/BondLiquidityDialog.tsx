@@ -131,36 +131,31 @@ export default function BondLiquidityDialog({ bondReport: { details, currentValu
           </Stack>
         </Condition>
         <Condition render={!isLoading}>
-          <>
-            <ResponsiveContainer aspect={isMobile ? 0.8 : 1.8}>
-              <ComposedChart maxBarSize={20} data={chartQuotes}>
-                <XAxis xAxisId='time' type='number' scale='time'
-                  padding={{ left: 20, right: 20 }}
-                  tickFormatter={dateFormatter} domain={xAsisDomain} dataKey='date'></XAxis>
-                <YAxis yAxisId='price' scale='linear' domain={priceDomain}
-                  width={40} stroke="#3399ff"
-                  tickFormatter={(data: number) => data.toFixed(1)} />
-                <YAxis yAxisId='currency' scale='linear'
-                  orientation='right' width={40} stroke="#808080" />
-                <CartesianGrid strokeDasharray="3 3" />
-                <Tooltip content={<CustomTooltip active={undefined} payload={undefined} label={undefined} />} />
-                <Legend />
-                {isAfter(currentValues.interestFirstDay, xAsisDomain[0]) && isBefore(currentValues.interestFirstDay, xAsisDomain[1]) &&
-                  <ReferenceLine xAxisId='time' yAxisId='price' x={currentValues.interestFirstDay + TWELVE_HOURS} label='Interest first day' stroke="red" />
-                }
-                {isAfter(currentValues.interestRecordDay, xAsisDomain[0]) && isBefore(currentValues.interestRecordDay, xAsisDomain[1]) &&
-                  <ReferenceLine xAxisId='time' yAxisId='price' x={currentValues.interestRecordDay + TWELVE_HOURS} label='Interest record day' stroke="red" />
-                }
-                <Bar name='Turnover' xAxisId='time' yAxisId='currency' dataKey='turnover' fill='#909090' />
-                <Line name='Bid price' xAxisId='time' yAxisId='price' dataKey='bid' strokeDasharray='5 5' strokeWidth={2} stroke='#82ca9d' />
-                <Line name='Ask price' xAxisId='time' yAxisId='price' dataKey='ask' strokeDasharray='5 5' strokeWidth={2} stroke='red' />
-                <Line name='Close price' xAxisId='time' yAxisId='price' dataKey='close' strokeWidth={2} stroke="#3399ff" />
-              </ComposedChart>
-            </ResponsiveContainer>
-            {quotes.map(quote => (
-              <p>{formatDate(quote.date)} - {quote.turnover} - {quote.bid} - {quote.ask} - {quote.close}</p>
-            ))}
-          </>
+          <ResponsiveContainer aspect={isMobile ? 0.8 : 1.8}>
+            <ComposedChart maxBarSize={20} data={chartQuotes}>
+              <XAxis xAxisId='time' type='number' scale='time'
+                padding={{ left: 20, right: 20 }}
+                tickFormatter={dateFormatter} domain={xAsisDomain} dataKey='date'></XAxis>
+              <YAxis yAxisId='price' scale='linear' domain={priceDomain}
+                width={40} stroke="#3399ff"
+                tickFormatter={(data: number) => data.toFixed(1)} />
+              <YAxis yAxisId='currency' scale='linear'
+                orientation='right' width={40} stroke="#808080" />
+              <CartesianGrid strokeDasharray="3 3" />
+              <Tooltip content={<CustomTooltip active={undefined} payload={undefined} label={undefined} />} />
+              <Legend />
+              {isAfter(currentValues.interestFirstDay, xAsisDomain[0]) && isBefore(currentValues.interestFirstDay, xAsisDomain[1]) &&
+                <ReferenceLine xAxisId='time' yAxisId='price' x={currentValues.interestFirstDay + TWELVE_HOURS} label='Interest first day' stroke="red" />
+              }
+              {isAfter(currentValues.interestRecordDay, xAsisDomain[0]) && isBefore(currentValues.interestRecordDay, xAsisDomain[1]) &&
+                <ReferenceLine xAxisId='time' yAxisId='price' x={currentValues.interestRecordDay + TWELVE_HOURS} label='Interest record day' stroke="red" />
+              }
+              <Bar name='Turnover' xAxisId='time' yAxisId='currency' dataKey='turnover' fill='#909090' />
+              <Line name='Bid price' xAxisId='time' yAxisId='price' dataKey='bid' strokeDasharray='5 5' strokeWidth={2} stroke='#82ca9d' />
+              <Line name='Ask price' xAxisId='time' yAxisId='price' dataKey='ask' strokeDasharray='5 5' strokeWidth={2} stroke='red' />
+              <Line name='Close price' xAxisId='time' yAxisId='price' dataKey='close' strokeWidth={2} stroke="#3399ff" />
+            </ComposedChart>
+          </ResponsiveContainer>
         </Condition>
       </DialogContent>
     </Dialog>

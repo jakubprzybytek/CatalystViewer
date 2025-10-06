@@ -19,6 +19,8 @@
     "incremental": true,
     "paths": {
       "@/*": [ "./src/*" ],
+      "@bonds/*": [ "./src/bonds/*" ],
+      "@sdk/*": [ "./src/sdk/*" ],
       "@catalyst-viewer/core/*": [ "../core/src/*" ],
       "@catalyst-viewer/functions/*": [ "../functions/src/*" ]
     }
