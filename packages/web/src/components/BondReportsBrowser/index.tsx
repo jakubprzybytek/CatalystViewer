@@ -39,8 +39,10 @@ function useSettings<FieldType>(
   fieldName: keyof BondReportsBrowserSettings,
   fieldDefaultValue: FieldType
 ): [FieldType, (a: FieldType) => void] {
-  const fieldValue: FieldType = settings[fieldName] as FieldType || fieldDefaultValue;
-//  const fieldValue: FieldType = {...fieldDefaultValue, ...(settings[fieldName] as FieldType)};
+  const fieldValue: FieldType = fieldDefaultValue instanceof Object ?
+    { ...fieldDefaultValue, ...(settings[fieldName] as FieldType) }
+    : settings[fieldName] as FieldType || fieldDefaultValue;
+
   const fieldValueSetter = (newValue: FieldType) => setSettings({ ...settings, [fieldName]: newValue });
   return [fieldValue, fieldValueSetter];
 }
