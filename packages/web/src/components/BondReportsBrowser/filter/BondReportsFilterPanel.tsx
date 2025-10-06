@@ -5,7 +5,7 @@ import Box from "@mui/material/Box";
 import Divider from "@mui/material/Divider";
 import { getUniqueInterestBaseTypes, getUniqueIssuers, getUniqueMarkets, getUniqueCurrencies, sortStrings } from "@/bonds/statistics";
 import { BondReport } from "@/sdk/Bonds";
-import { BondReportsFilteringOptions, marketsModifiers, interestBaseTypesModifiers, issuersModifiers, bondTypeModifier, maxNominalValueModifier, currenciesModifiers, treasuryBondTypesModifiers } from ".";
+import { BondReportsFilteringOptions, marketsModifiers, interestBaseTypesModifiers, issuersModifiers, bondTypeModifier, maxNominalValueModifier, currenciesModifiers, treasuryBondTypesModifiers, POLISH_TREASURY_ISSUER } from ".";
 import { NominalValueFilter, StringFilter, MultiStringFilter } from "./fields";
 import IssuersSelector from "./IssuersSelector";
 
@@ -30,7 +30,7 @@ export function BondReportsFilterPanel({ allBondReports, allBondTypes, filtering
   const { addIssuer, removeIssuer, removeAllIssuers } = issuersModifiers(filteringOptions, setFilteringOptions);
   const { addtreasuryBondType, removetreasuryBondType } = treasuryBondTypesModifiers(filteringOptions, setFilteringOptions);
 
-  const isTreasuryBondsSelected = filteringOptions.issuers.includes('Skarb Państwa');
+  const isTreasuryBondsSelected = filteringOptions.issuers.includes(POLISH_TREASURY_ISSUER);
 
   return (
     <Stack>

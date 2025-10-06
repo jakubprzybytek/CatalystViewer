@@ -16,6 +16,8 @@ export type BondReportsFilteringOptions = {
   treasuryBondTypes: string[];
 }
 
+export const POLISH_TREASURY_ISSUER = 'Skarb Państwa';
+
 export function filterUsing(filteringOptions: BondReportsFilteringOptions) {
   return filterBy([
     // isBondType(filteringOptions.bondType),
@@ -24,7 +26,7 @@ export function filterUsing(filteringOptions: BondReportsFilteringOptions) {
     isOnMarkets(filteringOptions.markets),
     isInterestBaseType(filteringOptions.interestBaseTypes),
     isIssuedBy(filteringOptions.issuers),
-    isTreasuryBondType(filteringOptions.treasuryBondTypes)
+    ...(filteringOptions.issuers.includes(POLISH_TREASURY_ISSUER) ? [isTreasuryBondType(filteringOptions.treasuryBondTypes)] : [])
   ])
 };
 
