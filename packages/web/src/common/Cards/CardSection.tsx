@@ -6,7 +6,7 @@ type CardSectionParam = {
 
 export function CardSection({ children }: CardSectionParam): JSX.Element {
   return (
-    <Stack direction='row' sx={{
+    <Stack className="card-section-row" direction='row' sx={{
       p: 1,
       pb: 0,
       justifyContent: 'space-between'

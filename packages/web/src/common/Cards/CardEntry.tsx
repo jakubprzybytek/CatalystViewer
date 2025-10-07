@@ -9,15 +9,17 @@ type BondCardEntryParam = {
   width?: string;
   variant?: Variant;
   textAlign?: 'left' | 'center' | 'end';
+  flexGrow?: number,
   colorCode?: ColorCode;
   children: React.ReactNode;
   secondary?: string;
 }
 
-export function CardEntry({ caption, width, textAlign = 'left', children }: BondCardEntryParam): JSX.Element {
+export function CardEntry({ caption, width, textAlign = 'left', flexGrow, children }: BondCardEntryParam): JSX.Element {
   return (
-    <Stack sx={{
+    <Stack className="card-entry" sx={{
       '& > span': { textAlign },
+      ...(flexGrow && { flexGrow }),
       ...(width && { width })
     }}>
       <Typography component='span' variant='caption'>{caption}</Typography>
