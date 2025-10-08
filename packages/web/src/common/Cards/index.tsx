@@ -1,2 +1,2 @@
-export * from './CardSection';
+export * from './CardSectionRow';
 export * from './CardEntry';

@@ -4,7 +4,7 @@ type CardSectionParam = {
   children: React.ReactNode;
 }
 
-export function CardSection({ children }: CardSectionParam): JSX.Element {
+export function CardSectionRow({ children }: CardSectionParam): JSX.Element {
   return (
     <Stack className="card-section-row" direction='row' sx={{
       p: 1,

@@ -2,7 +2,7 @@ import { styled } from '@mui/material/styles';
 import LinearProgress, { linearProgressClasses } from '@mui/material/LinearProgress';
 import { BondReport } from '@/sdk/Bonds';
 import { formatCurrency, formatDate } from '@/common/Formats';
-import { CardSection, CardEntry, CardValue } from '@/common/Cards';
+import { CardSectionRow, CardEntry, CardValue } from '@/common/Cards';
 import { ColorCode } from '@/common/ColorCodes';
 import { Box } from '@mui/material';
 
@@ -30,12 +30,12 @@ export default function BondCardCurrentInterestSection({ bondReport: { currentVa
 
   return (
     <>
-      <CardSection>
+      <CardSectionRow>
         <Box flexGrow={1}>
           <BorderLinearProgress variant='determinate' color={interestBarColor} value={currentValues.interestProgress} />
         </Box>
-      </CardSection>
-      <CardSection>
+      </CardSectionRow>
+      <CardSectionRow>
         <CardEntry caption='First day' width='33%'>
           <CardValue>{formatDate(currentValues.interestFirstDay)}</CardValue>
         </CardEntry>
@@ -45,8 +45,8 @@ export default function BondCardCurrentInterestSection({ bondReport: { currentVa
         <CardEntry caption='Payable' textAlign='end' width='33%'>
           <CardValue>{formatDate(currentValues.interestPayableDay)}</CardValue>
         </CardEntry>
-      </CardSection>
-      <CardSection>
+      </CardSectionRow>
+      <CardSectionRow>
         <CardEntry caption='Current interest' width='33%'>
           <CardValue bold>{currentValues.interestRate.toFixed(2)}%</CardValue>
         </CardEntry>
@@ -56,7 +56,7 @@ export default function BondCardCurrentInterestSection({ bondReport: { currentVa
         <CardEntry caption='Full interest' textAlign='end' width='33%'>
           <CardValue>{formatCurrency(currentValues.periodInterest, currency)}</CardValue>
         </CardEntry>
-      </CardSection>
+      </CardSectionRow>
     </>
   );
 }

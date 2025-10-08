@@ -2,7 +2,7 @@ import Link from "@mui/material/Link";
 import Typography from "@mui/material/Typography";
 import { BondReport } from "@/sdk/Bonds";
 import { formatCompactCurrency, formatCurrency, formatDate } from '@/common/Formats';
-import { CardSection, CardEntry, CardValue } from "@/common/Cards";
+import { CardSectionRow, CardEntry, CardValue } from "@/common/Cards";
 import { InterestPercentilesByInterestBaseType, interestBaseType } from "@/bonds/statistics";
 import { getNominalValueColorCode, getInterestConstColorCode } from '@/bonds/BondIndicators';
 
@@ -20,19 +20,19 @@ export default function BondCardMainInformationSection({ bondReport, statistics 
 
   return (
     <>
-      <CardSection>
+      <CardSectionRow>
         <Typography variant='h4'><Link href={`https://obligacje.pl/pl/obligacja/${details.name}`} target='_blank'>{details.name}</Link></Typography>
         <CardEntry caption='Market' textAlign='end'>{details.market}</CardEntry>
-      </CardSection>
-      <CardSection>
+      </CardSectionRow>
+      <CardSectionRow>
         <CardEntry caption='Issuer'>
           <CardValue bold>{details.issuer}</CardValue>
         </CardEntry>
         <CardEntry caption='Type' textAlign='end'>
           <CardValue>{details.type}</CardValue>
         </CardEntry>
-      </CardSection>
-      <CardSection>
+      </CardSectionRow>
+      <CardSectionRow>
         <CardEntry caption='Issue Value'>
           <CardValue colorCode={issueValueColorCode}>{details.issueValue > 0 ? formatCompactCurrency(details.issueValue, details.currency) : 'n/a'}</CardValue>
         </CardEntry>
@@ -46,8 +46,8 @@ export default function BondCardMainInformationSection({ bondReport, statistics 
             {details.interestVariable && `${details.interestVariable} + `}{details.interestConst}%
           </CardValue>
         </CardEntry>
-      </CardSection>
-      <CardSection>
+      </CardSectionRow>
+      <CardSectionRow>
         <CardEntry caption='First day'>
           <CardValue>{formatDate(details.firstDayTs)}</CardValue>
         </CardEntry>
@@ -57,7 +57,7 @@ export default function BondCardMainInformationSection({ bondReport, statistics 
         <CardEntry caption='To maturity' textAlign='end'>
           <CardValue>{currentValues.yearsToMaturity.toFixed(2)} yrs</CardValue>
         </CardEntry>
-      </CardSection>
+      </CardSectionRow>
     </>
   );
 }

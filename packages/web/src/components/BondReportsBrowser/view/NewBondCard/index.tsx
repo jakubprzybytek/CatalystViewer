@@ -8,8 +8,9 @@ import { interestBaseType, InterestPercentilesByInterestBaseType } from "@bonds/
 import { BondReport } from "@sdk/Bonds";
 import { formatDate } from '@/common/Formats';
 import { CardEntry, CardValue } from '@/common/Cards/CardEntry';
-import { CardSection } from '@/common/Cards/CardSection';
+import { CardSectionRow } from '@/common/Cards/CardSectionRow';
 import { getInterestConstColorCode } from '@/bonds/BondIndicators';
+import BondCardYTMSection from './BondCardYTMSection';
 
 const BorderLinearProgress = styled(LinearProgress)(({ theme }) => ({
 	height: 10,
@@ -47,45 +48,41 @@ export default function NewBondCard({ bondReport, statistics }: BondCardParam): 
 			}
 		}}>
 			<Grid container width='100%'>
-				<Grid size={{ xs: 12, sm: 4 }}>
-					<CardSection>
+				<Grid className='card-section' size={{ xs: 12, sm: 4 }}>
+					<CardSectionRow>
 						<Typography variant='h6'><Link href={`https://obligacje.pl/pl/obligacja/${details.name}`} target='_blank'>{details.name}</Link></Typography>
 						<CardEntry caption='Interest Type' textAlign='end'>
 							<CardValue colorCode={interestConstColorCode}>
 								{details.interestVariable && `${details.interestVariable} + `}{details.interestConst}%
 							</CardValue>
 						</CardEntry>
-					</CardSection>
-					<CardSection>
+					</CardSectionRow>
+					<CardSectionRow>
 						<CardEntry caption='Issuer'>
 							<CardValue bold>{details.issuer}</CardValue>
 						</CardEntry>
 						<CardEntry caption='Market' textAlign='end'>{details.market}</CardEntry>
-					</CardSection>
+					</CardSectionRow>
 				</Grid>
-				<Grid size={{ xs: 12, sm: 4 }}>
-					<CardSection>
+				<Grid className='card-section' size={{ xs: 12, sm: 4 }}>
+					<CardSectionRow>
 						<CardEntry caption='Interest progress' flexGrow={1}>
 							<CardValue>
 								<BorderLinearProgress variant='determinate' color={interestBarColor} value={currentValues.interestProgress} />
 							</CardValue>
 						</CardEntry>
-					</CardSection>
-					<CardSection>
+					</CardSectionRow>
+					<CardSectionRow>
 						<CardEntry caption='Record day'>
 							<CardValue bold>{formatDate(currentValues.interestRecordDay)}</CardValue>
 						</CardEntry>
 						<CardEntry caption='Payable'>
 							<CardValue>{formatDate(currentValues.interestPayableDay)}</CardValue>
 						</CardEntry>
-					</CardSection>
+					</CardSectionRow>
 				</Grid>
 				<Grid size={{ xs: 12, sm: 4 }}>
-					<CardSection>
-						<CardEntry caption='Price'>
-							<CardValue bold>Price</CardValue>
-						</CardEntry>
-					</CardSection>
+					{bondReport.lastPrice && <BondCardYTMSection title='Last price (date/time)' bondReport={bondReport} price={bondReport.lastPrice} secondary={bondReport.lastDateTime} />}
 				</Grid>
 			</Grid>
 		</Paper>

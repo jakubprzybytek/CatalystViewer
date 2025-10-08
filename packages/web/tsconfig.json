@@ -20,6 +20,7 @@
     "paths": {
       "@/*": [ "./src/*" ],
       "@bonds/*": [ "./src/bonds/*" ],
+      "@common/*": [ "./src/common/*" ],
       "@sdk/*": [ "./src/sdk/*" ],
       "@catalyst-viewer/core/*": [ "../core/src/*" ],
       "@catalyst-viewer/functions/*": [ "../functions/src/*" ]

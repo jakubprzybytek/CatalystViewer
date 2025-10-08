@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import CircularProgress from "@mui/material/CircularProgress";
-import { BondReport, BondDetails, BondCurrentValues } from "../../../sdk/Bonds";
-import { YieldToMaturityCalculator, YieldToMaturityReport } from "../../../bonds/YieldToMaturity";
-import { CardSectionRow, CardEntry } from "../../../common/Cards";
+import { BondReport, BondDetails, BondCurrentValues } from "@sdk/Bonds";
+import { YieldToMaturityCalculator, YieldToMaturityReport } from "@bonds/YieldToMaturity";
+import { CardSectionRow, CardEntry } from "@common/Cards";
 import Button from "@mui/material/Button";
 import BondYTMReportDialog from "./BondYTMDialog";
 

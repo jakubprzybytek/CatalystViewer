@@ -2,7 +2,7 @@ import Stack from "@mui/material/Stack";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
 import Checkbox from "@mui/material/Checkbox";
-import { CardSection, CardEntry, CardValue } from "@/common/Cards";
+import { CardSectionRow, CardEntry, CardValue } from "@/common/Cards";
 import { ColorCode } from "@/common/ColorCodes";
 import { getInterestConstColorCode, getNominalValueColorCode } from "@/bonds/BondIndicators";
 import { IssuerReport } from '.';
@@ -41,15 +41,15 @@ export default function IssuerCard({ issuerReport, statistics, selectedIssuers, 
           paddingTop: 1
         }
       }}>
-        <CardSection>
+        <CardSectionRow>
           <Stack direction='row' flexGrow={1} justifyContent='space-between'>
             <Typography variant='h6'>{issuerReport.name}</Typography>
             <Checkbox
               checked={isChecked}
               onChange={(event: React.ChangeEvent<HTMLInputElement>) => event.target.checked ? addIssuer(issuerReport.name) : removeIssuer(issuerReport.name)} />
           </Stack>
-        </CardSection>
-        <CardSection>
+        </CardSectionRow>
+        <CardSectionRow>
           <CardEntry caption='Bonds'>
             <CardValue bold>{issuerReport.count}</CardValue>
           </CardEntry>
@@ -66,15 +66,15 @@ export default function IssuerCard({ issuerReport, statistics, selectedIssuers, 
           <CardEntry caption='Avg interest Type' textAlign='end'>
             <CardValue colorCode={interestConstColorCode}>{issuerReport.interestBaseType} + {issuerReport.interestConstAverage.toPrecision(2)}%</CardValue>
           </CardEntry>
-        </CardSection>
-        <CardSection>
+        </CardSectionRow>
+        <CardSectionRow>
           <CardEntry caption='Avg issue value'>
             {issuerReport.count > 1 && <CardValue colorCode='white'>{formatCurrency(issuerReport.avgIssueValue, issuerReport.currency)}</CardValue>}
           </CardEntry>
           <CardEntry caption='Total issue value' textAlign='end'>
             <CardValue colorCode='white'>{formatCurrency(issuerReport.totalIssueValue, issuerReport.currency)}</CardValue>
           </CardEntry>
-        </CardSection>
+        </CardSectionRow>
       </Paper>
     </>
   );
