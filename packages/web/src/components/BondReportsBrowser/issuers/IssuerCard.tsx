@@ -27,7 +27,7 @@ export default function IssuerCard({ issuerReport, statistics, selectedIssuers, 
 
   return (
     <>
-      <Paper sx={{
+      <Paper variant="outlined" sx={{
         pb: 1,
          ...(isChecked && { backgroundColor: 'oldlace' }),
         '& .MuiTypography-caption': {
