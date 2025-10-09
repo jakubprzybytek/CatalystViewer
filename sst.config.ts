@@ -15,7 +15,6 @@ export default {
       runtime: "nodejs20.x",
     });
 
-    //app.stack(Default).stack(BondsService);
     app.stack(BondsService).stack(Frontend).stack(BondsUpdater);
   }
 } satisfies SSTConfig;

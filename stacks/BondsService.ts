@@ -1,7 +1,6 @@
 import { StackContext, Function, Cognito, Api, Table } from 'sst/constructs';
 import { RemovalPolicy } from 'aws-cdk-lib';
 import { UserPool, UserPoolClient } from 'aws-cdk-lib/aws-cognito';
-import * as iam from 'aws-cdk-lib/aws-iam';
 
 export function BondsService({ stack }: StackContext) {
   const auth = new Cognito(stack, "Auth", {

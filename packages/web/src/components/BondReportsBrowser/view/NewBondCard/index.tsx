@@ -33,7 +33,7 @@ export default function NewBondCard({ bondReport, statistics }: BondCardParam): 
 	const interestBarColor = new Date().getTime() >= currentValues.interestRecordDay ? 'success' : 'error';
 
 	return (
-		<Paper elevation={0} sx={{
+		<Paper variant="outlined" sx={{
 			'& .MuiTypography-caption': {
 				color: 'gray',
 				lineHeight: 1.3
@@ -48,7 +48,7 @@ export default function NewBondCard({ bondReport, statistics }: BondCardParam): 
 			}
 		}}>
 			<Grid container width='100%'>
-				<Grid className='card-section' size={{ xs: 12, sm: 4 }}>
+				<Grid className='card-section' size={{ xs: 12, md: 4 }}>
 					<CardSectionRow>
 						<Typography variant='h6'><Link href={`https://obligacje.pl/pl/obligacja/${details.name}`} target='_blank'>{details.name}</Link></Typography>
 						<CardEntry caption='Interest Type' textAlign='end'>
@@ -64,7 +64,7 @@ export default function NewBondCard({ bondReport, statistics }: BondCardParam): 
 						<CardEntry caption='Market' textAlign='end'>{details.market}</CardEntry>
 					</CardSectionRow>
 				</Grid>
-				<Grid className='card-section' size={{ xs: 12, sm: 4 }}>
+				<Grid className='card-section' size={{ xs: 12, md: 4 }}>
 					<CardSectionRow>
 						<CardEntry caption='Interest progress' flexGrow={1}>
 							<CardValue>
@@ -81,7 +81,7 @@ export default function NewBondCard({ bondReport, statistics }: BondCardParam): 
 						</CardEntry>
 					</CardSectionRow>
 				</Grid>
-				<Grid size={{ xs: 12, sm: 4 }}>
+				<Grid size={{ xs: 12, md: 4 }}>
 					{bondReport.lastPrice && <BondCardYTMSection title='Last price (date/time)' bondReport={bondReport} price={bondReport.lastPrice} secondary={bondReport.lastDateTime} />}
 				</Grid>
 			</Grid>
