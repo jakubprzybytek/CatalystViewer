@@ -2,6 +2,6 @@ export * from './ProfilesTable';
 
 export type DbProfile = {
   userName: string;
-  bondReportsBrowserSettings: string;
+  bondReportsBrowserSettings: any;
   bondReportsCurrentSettingsIndex: number;
 }

@@ -1,4 +1,4 @@
-export type TransportProfile = {
-    bondReportsBrowserSettings: string;
+export type ProfilePayload = {
+    bondReportsBrowserSettings: any;
     bondReportsCurrentSettingsIndex: number;
 }
