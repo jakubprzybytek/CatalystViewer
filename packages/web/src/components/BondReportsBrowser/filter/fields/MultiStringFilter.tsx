@@ -22,7 +22,7 @@ type OptionCheckboxParam = {
 
 function OptionCheckbox({ option, checked, add, remove }: OptionCheckboxParam) {
   return (
-    <FormControlLabel key={option.value} control={
+    <FormControlLabel control={
       <Checkbox size="small" sx={{ paddingTop: 0.5, paddingBottom: 0.5 }}
         checked={checked}
         onChange={(event: React.ChangeEvent<HTMLInputElement>) => event.target.checked ? add(option.value) : remove(option.value)} />
@@ -45,8 +45,8 @@ export function MultiStringFilter({ label, all, selected, add, remove }: MultiSt
       <FormGroup row>
         {all.map(item => (
           isOption(item)
-            ? <OptionCheckbox option={item} checked={selected.includes(item.value)} add={add} remove={remove} />
-            : <OptionCheckbox option={{ label: item, value: item }} checked={selected.includes(item)} add={add} remove={remove} />))}
+            ? <OptionCheckbox key={item.value} option={item} checked={selected.includes(item.value)} add={add} remove={remove} />
+            : <OptionCheckbox key={item} option={{ label: item, value: item }} checked={selected.includes(item)} add={add} remove={remove} />))}
       </FormGroup>
     </FormControl>
   );

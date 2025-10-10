@@ -17,7 +17,8 @@ export async function getProfile(): Promise<Profile | undefined> {
     });
 
     return {
-      bondsReportsBrowserSettings: JSON.parse(response.bondReportsBrowserSettings)
+      bondsReportsBrowserSettings: JSON.parse(response.bondReportsBrowserSettings),
+      bondsReportsCurrentSettingsIndex: response.bondReportsCurrentSettingsIndex
     }
   } catch (error) {
     console.log(error);
@@ -28,7 +29,8 @@ export async function getProfile(): Promise<Profile | undefined> {
 export async function putProfile(profile: Profile): Promise<any> {
   const path = '/api/profile';
   const transportProfile: TransportProfile = {
-    bondReportsBrowserSettings: JSON.stringify(profile.bondsReportsBrowserSettings)
+    bondReportsBrowserSettings: JSON.stringify(profile.bondsReportsBrowserSettings),
+    bondReportsCurrentSettingsIndex: profile.bondsReportsCurrentSettingsIndex
   }
   return await API.put('api', path, {
     headers: {

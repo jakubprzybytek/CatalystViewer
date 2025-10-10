@@ -18,7 +18,8 @@ export class ProfilesTable {
       TableName: this.tableName,
       Item: {
         userName: { S: profile.userName },
-        bondReportsBrowserSettings: { S: profile.bondReportsBrowserSettings }
+        bondReportsBrowserSettings: { S: profile.bondReportsBrowserSettings },
+        bondReportsCurrentSettingsIndex: { N: profile.bondReportsCurrentSettingsIndex.toString() }
       }
     }
 
@@ -41,7 +42,8 @@ export class ProfilesTable {
 
     return item !== undefined ? {
       userName: item['userName']['S'] || '',
-      bondReportsBrowserSettings: item['bondReportsBrowserSettings']['S'] || ''
+      bondReportsBrowserSettings: item['bondReportsBrowserSettings']['S'] || '',
+      bondReportsCurrentSettingsIndex: parseInt(item['bondReportsCurrentSettingsIndex']['N'] || '0')
     } : undefined;
   }
 }

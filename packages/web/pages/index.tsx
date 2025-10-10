@@ -21,22 +21,33 @@ const Bonds: NextPage = () => {
   const [settingsCollection, setSettingsCollection] = useState<BondReportsBrowserSettings[] | undefined>(undefined);
   const [currentSettingsIndex, setCurrentSettingsIndex] = useState(0);
 
-  function setSettingsCollectionWrapper(settingsCollection: BondReportsBrowserSettings[]) {
-    setSettingsCollection(settingsCollection);
-    putProfile({
-      bondsReportsBrowserSettings: settingsCollection
-    });
-  }
-
   async function fetchProfileAndApplySettings(): Promise<void> {
     console.debug('Loading profile');
     const profile = await getProfile();
     console.debug(`Profile: ${JSON.stringify(profile)}`);
     if (profile !== undefined) {
       setSettingsCollection(profile.bondsReportsBrowserSettings);
+      setCurrentSettingsIndex(profile.bondsReportsCurrentSettingsIndex);
     } else {
       setSettingsCollection(DEFAULT_BOND_REPORTS_BROWSER_SETTINGS_COLLECTION);
+      setCurrentSettingsIndex(0);
     }
+  }
+
+  function setSettingsCollectionWrapper(settingsCollection: BondReportsBrowserSettings[]) {
+    setSettingsCollection(settingsCollection);
+    putProfile({
+      bondsReportsBrowserSettings: settingsCollection,
+      bondsReportsCurrentSettingsIndex: currentSettingsIndex
+    });
+  }
+
+  function setCurrentSettingsIndexWrapper(currentSettingsIndex: number) {
+    setCurrentSettingsIndex(currentSettingsIndex);
+    putProfile({
+      bondsReportsBrowserSettings: settingsCollection || [],
+      bondsReportsCurrentSettingsIndex: currentSettingsIndex
+    });
   }
 
   useEffect(() => {
@@ -60,7 +71,7 @@ const Bonds: NextPage = () => {
             settingsCollection={settingsCollection}
             setSettingsCollection={setSettingsCollectionWrapper}
             currentSettingsIndex={currentSettingsIndex}
-            setCurrentSettingsIndex={setCurrentSettingsIndex} />
+            setCurrentSettingsIndex={setCurrentSettingsIndexWrapper} />
         </>
       )
       }
