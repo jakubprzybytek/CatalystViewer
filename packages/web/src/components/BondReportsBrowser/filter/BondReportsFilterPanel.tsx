@@ -9,6 +9,16 @@ import { BondReportsFilteringOptions, marketsModifiers, interestBaseTypesModifie
 import { NominalValueFilter, StringFilter, MultiStringFilter } from "./fields";
 import IssuersSelector from "./IssuersSelector";
 
+const TREASURY_BOND_TYPES = [
+  { label: '5 year const (PS)', value: 'PS' },
+  { label: '10 year const (DS)', value: 'DS' },
+  { label: '30 year const (WS)', value: 'WS' },
+  { label: '6-11 year var (WZ)', value: 'WZ' },
+  { label: '6-12 year anti infl (IZ)', value: 'IZ' },
+  { label: '2 year zero coupon (OK)', value: 'OK' },
+  { label: 'const (EUR)', value: 'EUR' }
+];
+
 type BondReportsFilterPanelParams = {
   allBondReports: BondReport[];
   allBondTypes: string[];
@@ -64,7 +74,7 @@ export function BondReportsFilterPanel({ allBondReports, allBondTypes, filtering
         <Divider>Skarb Państwa</Divider>
         <Box sx={{ padding: 1, paddingTop: 0 }}>
           <MultiStringFilter label='Treasury Bond Type'
-            all={['PS', 'DS', 'WS', 'WZ', 'IZ', 'OK', 'EUR']} selected={filteringOptions.treasuryBondTypes} add={addtreasuryBondType} remove={removetreasuryBondType} />
+            all={TREASURY_BOND_TYPES} selected={filteringOptions.treasuryBondTypes} add={addtreasuryBondType} remove={removetreasuryBondType} />
         </Box>
       </>}
     </Stack>
