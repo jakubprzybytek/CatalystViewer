@@ -1,25 +1,18 @@
 import { API, Auth } from "aws-amplify";
-import { TransportProfile } from '@catalyst-viewer/functions/profile';
 import { Profile } from "@/common/Profile";
 
-export type { TransportProfile };
+const PROFILE_PATH = '/api/profile';
 
 export async function getProfile(): Promise<Profile | undefined> {
-  const path = '/api/profile';
   try {
-
-    const response = await API.get('api', path, {
+    const response = await API.get('api', PROFILE_PATH, {
       headers: {
         Authorization: `Bearer ${(await Auth.currentSession())
           .getAccessToken()
           .getJwtToken()}`,
       },
     });
-
-    return {
-      bondsReportsBrowserSettings: JSON.parse(response.bondReportsBrowserSettings),
-      bondsReportsCurrentSettingsIndex: response.bondReportsCurrentSettingsIndex
-    }
+    return response as Profile;
   } catch (error) {
     console.log(error);
     return undefined;
@@ -27,17 +20,12 @@ export async function getProfile(): Promise<Profile | undefined> {
 }
 
 export async function putProfile(profile: Profile): Promise<any> {
-  const path = '/api/profile';
-  const transportProfile: TransportProfile = {
-    bondReportsBrowserSettings: JSON.stringify(profile.bondsReportsBrowserSettings),
-    bondReportsCurrentSettingsIndex: profile.bondsReportsCurrentSettingsIndex
-  }
-  return await API.put('api', path, {
+  return await API.put('api', PROFILE_PATH, {
     headers: {
       Authorization: `Bearer ${(await Auth.currentSession())
         .getAccessToken()
         .getJwtToken()}`,
     },
-    body: transportProfile
+    body: profile
   });
 }

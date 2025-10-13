@@ -5,7 +5,7 @@ import { DbProfile, ProfilesTable } from '@catalyst-viewer/core/storage/profiles
 
 const dynamoDBClient = new DynamoDBClient({});
 
-export const handler = lambdaHandler<any>(async event => {
+export const handler = lambdaHandler<{ message: string }>(async event => {
     const userName = event.requestContext.authorizer.jwt.claims.username;
     const profile = event.body !== undefined ? JSON.parse(event.body) : undefined;
 
