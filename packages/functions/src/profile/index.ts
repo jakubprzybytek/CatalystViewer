@@ -1,4 +1,4 @@
 export type ProfilePayload = {
-    bondReportsBrowserSettings: any;
-    bondReportsCurrentSettingsIndex: number;
+    bondsReportsBrowserSettings: any;
+    bondsReportsCurrentSettingsIndex: number;
 }
