@@ -1,5 +1,4 @@
 import Stack from "@mui/material/Stack";
-import { Variant } from "@mui/material/styles/createTypography";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import { ColorCode, colorMarkers } from "../ColorCodes";
@@ -7,7 +6,6 @@ import { ColorCode, colorMarkers } from "../ColorCodes";
 type BondCardEntryParam = {
   caption: string;
   width?: string;
-  variant?: Variant;
   textAlign?: 'left' | 'center' | 'end';
   flexGrow?: number,
   colorCode?: ColorCode;
