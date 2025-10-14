@@ -14,7 +14,7 @@ export function Frontend({ stack }: StackContext) {
         },
         environment: {
             NEXT_PUBLIC_AWS_REGION: stack.region,
-            NEXT_PUBLIC_API_URL: 'https://670byq6ieh.execute-api.eu-west-1.amazonaws.com',
+            NEXT_PUBLIC_API_URL: api.customDomainUrl || api.url,
             NEXT_PUBLIC_USER_POOL_ID: auth.userPoolId,
             NEXT_PUBLIC_USER_POOL_CLIENT_ID: auth.userPoolClientId,
         },
