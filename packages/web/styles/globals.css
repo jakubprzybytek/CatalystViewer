@@ -3,8 +3,9 @@
 @tailwind utilities;
 
 :root {
+
   --foreground-rgb: 0, 0, 0;
-  --background-rgb: 240, 240, 240;
+  --background-rgb: 220, 220, 220;
 }
 
 body {
@@ -22,8 +23,14 @@ body {
 
   .card-section:not(:last-child) {
     padding-bottom: 4px;
-    border-bottom: 1px solid rgb(var(--background-rgb));
-    border-right: 1px solid rgb(var(--background-rgb));
+
+    @media screen and (max-width: 899px) {
+      border-bottom: 2px solid rgb(var(--background-rgb));
+    }
+
+    @media screen and (min-width: 900px) {
+      border-right: 2px solid rgb(var(--background-rgb));
+    }
   }
 
   .card-entry {
