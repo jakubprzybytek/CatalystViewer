@@ -22,9 +22,9 @@ jobs:
     name: Deploy Int
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: bahmutov/npm-install@v1.11.1
+      - uses: bahmutov/npm-install@v1.12.1
 
       - name: Run unit tests
         run: npm test
