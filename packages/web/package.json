@@ -16,7 +16,7 @@
     "@mui/material": "^7.3.4",
     "aws-amplify": "^5.3.11",
     "date-fns": "^2.30.0",
-    "next": "^15.5.4",
+    "next": "15.5.4",
     "ramda": "^0.29.1",
     "react": "^18",
     "react-dom": "^18",
