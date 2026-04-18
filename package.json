@@ -16,7 +16,7 @@
   },
   "devDependencies": {
     "@tsconfig/node20": "^20.1.5",
-    "aws-cdk-lib": "2.192.0",
+    "aws-cdk-lib": "2.224.0",
     "baseline-browser-mapping": "2.10.19",
     "constructs": "10.4.2",
     "sst": "2.49.8",
