@@ -1,18 +1,22 @@
-import { API, Auth } from "aws-amplify";
+import { get, put } from "aws-amplify/api";
+import { fetchAuthSession } from "aws-amplify/auth";
 import { Profile } from "@/common/Profile";
 
 const PROFILE_PATH = '/api/profile';
 
 export async function getProfile(): Promise<Profile | undefined> {
   try {
-    const response = await API.get('api', PROFILE_PATH, {
-      headers: {
-        Authorization: `Bearer ${(await Auth.currentSession())
-          .getAccessToken()
-          .getJwtToken()}`,
+    const session = await fetchAuthSession();
+    const response = await get({
+      apiName: 'api',
+      path: PROFILE_PATH,
+      options: {
+        headers: {
+          Authorization: `Bearer ${session.tokens?.accessToken?.toString()}`,
+        },
       },
-    });
-    return response as Profile;
+    }).response;
+    return (await response.body.json()) as unknown as Profile;
   } catch (error) {
     console.log(error);
     return undefined;
@@ -20,12 +24,16 @@ export async function getProfile(): Promise<Profile | undefined> {
 }
 
 export async function putProfile(profile: Profile): Promise<any> {
-  return await API.put('api', PROFILE_PATH, {
-    headers: {
-      Authorization: `Bearer ${(await Auth.currentSession())
-        .getAccessToken()
-        .getJwtToken()}`,
+  const session = await fetchAuthSession();
+  const response = await put({
+    apiName: 'api',
+    path: PROFILE_PATH,
+    options: {
+      headers: {
+        Authorization: `Bearer ${session.tokens?.accessToken?.toString()}`,
+      },
+      body: profile as any,
     },
-    body: profile
-  });
+  }).response;
+  return response;
 }

@@ -47,7 +47,7 @@ type EditorItemParams = {
 
 function EditorItem({ settings, setSettings, onCopy, deleteEnabled, onDelete, exitEdit }: EditorItemParams): JSX.Element {
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
-  const nameRef = useRef<TextFieldProps>();
+  const nameRef = useRef<TextFieldProps>(null);
 
   return (
     <Stack direction="row">

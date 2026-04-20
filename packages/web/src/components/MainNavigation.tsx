@@ -1,4 +1,4 @@
-import { Auth } from 'aws-amplify';
+import { signOut } from 'aws-amplify/auth';
 import Stack from "@mui/material/Stack";
 import AppBar from '@mui/material/AppBar';
 import Slide from '@mui/material/Slide';
@@ -39,7 +39,7 @@ export default function MainNavigation({ title, children }: MainNavigationParams
             <Stack direction='row' justifyContent={'flex-end'}>
               {children}
               <IconButton color='inherit'
-                onClick={() => Auth.signOut()}>
+                onClick={() => signOut()}>
                 <Logout />
               </IconButton>
             </Stack>

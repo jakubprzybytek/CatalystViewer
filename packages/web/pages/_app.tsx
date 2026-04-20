@@ -4,19 +4,18 @@ import { Amplify } from "aws-amplify";
 
 const amplifyConfig = {
   Auth: {
-    region: process.env.NEXT_PUBLIC_AWS_REGION,
-    userPoolId: process.env.NEXT_PUBLIC_USER_POOL_ID,
-    userPoolWebClientId: process.env.NEXT_PUBLIC_USER_POOL_CLIENT_ID,
+    Cognito: {
+      userPoolId: process.env.NEXT_PUBLIC_USER_POOL_ID!,
+      userPoolClientId: process.env.NEXT_PUBLIC_USER_POOL_CLIENT_ID!,
+    },
   },
   API: {
-    endpoints: [
-      {
-        name: "api",
-        // endpoint: 'https://670byq6ieh.execute-api.eu-west-1.amazonaws.com',
-        endpoint: process.env.NEXT_PUBLIC_API_URL,
+    REST: {
+      api: {
+        endpoint: process.env.NEXT_PUBLIC_API_URL!,
         region: process.env.NEXT_PUBLIC_AWS_REGION,
       },
-    ],
+    },
   },
 };
 
