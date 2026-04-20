@@ -9,6 +9,7 @@
     "deploy": "sst deploy",
     "remove": "sst remove",
     "console": "sst console",
+    "migrate": "tsx scripts/migrate-dynamo.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "quote": "esrun packages/core/src/bonds/catalyst/catalyst.ts quote",
@@ -20,6 +21,7 @@
     "baseline-browser-mapping": "2.10.19",
     "constructs": "10.4.2",
     "sst": "2.49.8",
+    "tsx": "^4.20.6",
     "typescript": "5.8.3"
   },
   "workspaces": [
