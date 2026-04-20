@@ -1,5 +1,5 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { Table } from 'sst/node/table';
+import { Resource } from 'sst';
 import { differenceInDays } from 'date-fns';
 import { lambdaHandler, Success } from "../HandlerProxy";
 import { BondDetails, BondCurrentValues } from '@catalyst-viewer/core/bonds';
@@ -14,7 +14,7 @@ export const handler = lambdaHandler<BondReportsQueryResult>(async event => {
   const bondTypeFilter = event.pathParameters?.['bondType'];
   console.log(`Requested active bond reports, type=${bondTypeFilter}`);
 
-  const bondDetailsTable = new BondDetailsTable(dynamoDBClient, Table.BondDetails.tableName);
+  const bondDetailsTable = new BondDetailsTable(dynamoDBClient, Resource.BondDetails.name);
 
   const dbBonds = bondTypeFilter ? await bondDetailsTable.getActive(bondTypeFilter) : await bondDetailsTable.getAllActive();
 

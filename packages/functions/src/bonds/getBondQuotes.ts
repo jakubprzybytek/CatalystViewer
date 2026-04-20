@@ -1,5 +1,5 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { Table } from 'sst/node/table';
+import { Resource } from 'sst';
 import { sub } from 'date-fns';
 import { Failure, lambdaHandler, Success } from "../HandlerProxy";
 import { BondQuotesQueryResult } from ".";
@@ -22,7 +22,7 @@ export const handler = lambdaHandler<BondQuotesQueryResult>(async event => {
 
   console.log(`Received request for statistics for: ${bondId}`);
 
-  const bondStatisticsTable = new BondStatisticsTable(dynamoDBClient, Table.BondStatistics.tableName);
+  const bondStatisticsTable = new BondStatisticsTable(dynamoDBClient, Resource.BondStatistics.name);
   const bondQuotesQuery = new BondQuotesQuery(bondStatisticsTable);
 
   const endDate = new Date(new Date().setHours(23, 59, 59, 999));

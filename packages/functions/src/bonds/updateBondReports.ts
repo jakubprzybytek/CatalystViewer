@@ -1,6 +1,6 @@
 import * as R from 'ramda';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { Table } from 'sst/node/table';
+import { Resource } from 'sst';
 import { differenceInBusinessDays, getTime, sub } from 'date-fns';
 import { average } from 'simple-statistics'
 import { parseUTCDate } from '@catalyst-viewer/core';
@@ -17,7 +17,7 @@ const bondId = (bond: DbBondDetails | CatalystBondQuote | CatalystDailyStatistic
 const mapByBondId = R.reduce((map: Record<string, DbBondDetails | CatalystBondQuote>, curr: DbBondDetails | CatalystBondQuote) => R.assoc(bondId(curr), curr, map), {});
 
 export async function handler(): Promise<UpdateBondsResult> {
-  const bondDetailsTable = new BondDetailsTable(dynamoDbClient, Table.BondDetails.tableName);
+  const bondDetailsTable = new BondDetailsTable(dynamoDbClient, Resource.BondDetails.name);
 
   const bondsQuotesList: CatalystBondQuote[] = await getCurrentCatalystBondsQuotes();
   await storeBondQuotes(bondsQuotesList);
@@ -155,7 +155,7 @@ function toUpdatedBond(dbBond: DbBondDetails): UpdatedBond {
 
 async function storeBondQuotes(bondsQuotesList: CatalystBondQuote[]): Promise<void> {
   const now = new Date();
-  const bondStatisticsTable = new BondStatisticsTable(dynamoDbClient, Table.BondStatistics.tableName);
+  const bondStatisticsTable = new BondStatisticsTable(dynamoDbClient, Resource.BondStatistics.name);
 
   const bondStatistics: DbBondStatistics[] = bondsQuotesList
     .filter(quote => quote.turnover > 0 || quote.bidPrice != undefined || quote.askPrice != undefined)
@@ -199,7 +199,7 @@ type LiquidityStatistics = {
 }
 
 async function computeLiquidityStatistics(bondName: string, market: string, startDate: Date, endDate: Date): Promise<LiquidityStatistics> {
-  const bondStatisticsTable = new BondStatisticsTable(dynamoDbClient, Table.BondStatistics.tableName);
+  const bondStatisticsTable = new BondStatisticsTable(dynamoDbClient, Resource.BondStatistics.name);
   const bondQuotesQuery = new BondQuotesQuery(bondStatisticsTable);
 
   const quotes = await bondQuotesQuery.get(bondName, market, startDate, endDate);
