@@ -13,15 +13,15 @@ const REGION = "eu-west-1";
 const TABLES: { source: string; target: string }[] = [
   {
     source: "int-catalyst-viewer-Profiles",
-    target: "CatalystViewer-dev-Profiles",
+    target: "catalyst-viewer-int-ProfilesTable-zazfbood",
   },
   {
     source: "int-catalyst-viewer-BondDetails",
-    target: "CatalystViewer-dev-BondDetails",
+    target: "catalyst-viewer-int-BondDetailsTable-naxwuwws",
   },
   {
     source: "int-catalyst-viewer-BondStatistics",
-    target: "CatalystViewer-dev-BondStatistics",
+    target: "catalyst-viewer-int-BondStatisticsTable-rzunkuck",
   },
 ];
 
