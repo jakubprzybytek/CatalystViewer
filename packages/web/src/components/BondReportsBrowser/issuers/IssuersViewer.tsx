@@ -15,7 +15,7 @@ type IssuersViewerParams = {
   setFilteringOptions: (param: BondReportsFilteringOptions) => void;
 }
 
-export default function IssuersViewer({ bondReports, statistics, filteringOptions, setFilteringOptions }: IssuersViewerParams): JSX.Element {
+export default function IssuersViewer({ bondReports, statistics, filteringOptions, setFilteringOptions }: IssuersViewerParams): React.JSX.Element {
   const issuerReports = useMemo(() => {
     const bondsByIssuer = groupByIssuer(bondReports);
     const issuerReports: IssuerReport[] = [];

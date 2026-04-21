@@ -52,7 +52,7 @@ type BondLiquidityDialogParam = {
   onClose: () => void;
 }
 
-export default function BondLiquidityDialog({ bondReport: { details, currentValues }, onClose }: BondLiquidityDialogParam): JSX.Element {
+export default function BondLiquidityDialog({ bondReport: { details, currentValues }, onClose }: BondLiquidityDialogParam): React.JSX.Element {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
 

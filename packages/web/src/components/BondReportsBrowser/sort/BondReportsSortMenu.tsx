@@ -11,7 +11,7 @@ type SortOrderMenuItemParams = {
   children: React.ReactNode,
 };
 
-function SortOrderMenuItem({ selected, onSelect, children }: SortOrderMenuItemParams): JSX.Element {
+function SortOrderMenuItem({ selected, onSelect, children }: SortOrderMenuItemParams): React.JSX.Element {
   return (<MenuItem onClick={onSelect}>
     {selected && <ListItemIcon><Check /></ListItemIcon>}
     <ListItemText inset={!selected}>{children}</ListItemText>
@@ -24,7 +24,7 @@ type BondReportsSortMenuParams = {
   setBondReportsSortOrder: (selectedBondReportsSortOrder: BondReportsSortOrder) => void;
 };
 
-export default function BondReportsSortMenu({ anchorEl, selectedBondReportsSortOrder, setBondReportsSortOrder }: BondReportsSortMenuParams): JSX.Element {
+export default function BondReportsSortMenu({ anchorEl, selectedBondReportsSortOrder, setBondReportsSortOrder }: BondReportsSortMenuParams): React.JSX.Element {
   const open = Boolean(anchorEl);
 
   return (

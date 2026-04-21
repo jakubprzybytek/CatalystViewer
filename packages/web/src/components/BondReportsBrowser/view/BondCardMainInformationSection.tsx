@@ -11,7 +11,7 @@ type BondCardMainInformationSectionParam = {
   statistics: InterestPercentilesByInterestBaseType;
 }
 
-export default function BondCardMainInformationSection({ bondReport, statistics }: BondCardMainInformationSectionParam): JSX.Element {
+export default function BondCardMainInformationSection({ bondReport, statistics }: BondCardMainInformationSectionParam): React.JSX.Element {
   const { details, currentValues } = bondReport;
 
   const issueValueColorCode = 'white';

@@ -1,6 +1,7 @@
 import { api, userPoolId, userPoolClientId } from "./api";
 
-const customDomainPrefix = $app.stage === "int" ? "" : $app.stage + ".";
+// const customDomainPrefix = $app.stage === "int" ? "" : $app.stage + ".";
+const customDomainPrefix = $app.stage + ".";
 
 const site = new sst.aws.Nextjs("Site", {
   path: "packages/web",

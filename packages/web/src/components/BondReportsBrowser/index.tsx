@@ -66,7 +66,7 @@ type BondReportsBrowserParams = {
   setSettings: (newSettings: BondReportsBrowserSettings) => void;
 }
 
-export default function BondReportsBrowser({ settings, setSettings }: BondReportsBrowserParams): JSX.Element {
+export default function BondReportsBrowser({ settings, setSettings }: BondReportsBrowserParams): React.JSX.Element {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
 

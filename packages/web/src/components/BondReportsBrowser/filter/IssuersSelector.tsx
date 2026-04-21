@@ -19,7 +19,7 @@ type IssuersSelectorParams = {
   removeAllIssuers: () => void;
 };
 
-export default function IssuersSelector({ allIssuers, selectedIssuers, addIssuer, removeIssuer, removeAllIssuers }: IssuersSelectorParams): JSX.Element {
+export default function IssuersSelector({ allIssuers, selectedIssuers, addIssuer, removeIssuer, removeAllIssuers }: IssuersSelectorParams): React.JSX.Element {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
 

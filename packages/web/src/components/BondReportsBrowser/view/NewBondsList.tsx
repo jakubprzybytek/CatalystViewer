@@ -12,7 +12,7 @@ type BondsListParam = {
   statistics: InterestPercentilesByInterestBaseType;
 }
 
-export default function BondsList({ bondReports, statistics }: BondsListParam): JSX.Element {
+export default function BondsList({ bondReports, statistics }: BondsListParam): React.JSX.Element {
   const [displayedItemsCount, setDisplayedItemsCount] = useState(BATCH_SIZE);
 
   useEffect(() => setDisplayedItemsCount(BATCH_SIZE), [bondReports]);

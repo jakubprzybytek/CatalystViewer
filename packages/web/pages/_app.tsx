@@ -1,4 +1,5 @@
 import '../styles/globals.css';
+import React from 'react';
 import type { AppProps } from 'next/app';
 import { Amplify } from "aws-amplify";
 
@@ -26,5 +27,6 @@ console.log(`pool id: ${process.env.NEXT_PUBLIC_USER_POOL_ID}`)
 Amplify.configure(amplifyConfig);
 
 export default function App({ Component, pageProps }: AppProps) {
-  return <Component {...pageProps} />
+  const Page = Component as React.ComponentType<typeof pageProps>;
+  return <Page {...pageProps} />
 }

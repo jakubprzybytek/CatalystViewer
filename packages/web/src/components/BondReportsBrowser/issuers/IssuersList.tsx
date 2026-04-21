@@ -12,7 +12,7 @@ type IssuersListParam = {
   setFilteringOptions: (param: BondReportsFilteringOptions) => void;
 }
 
-export default function IssuersList({ issuers, statistics, filteringOptions, setFilteringOptions }: IssuersListParam): JSX.Element {
+export default function IssuersList({ issuers, statistics, filteringOptions, setFilteringOptions }: IssuersListParam): React.JSX.Element {
   const { addIssuer, removeIssuer } = issuersModifiers(filteringOptions, setFilteringOptions);
   return (
     <Box>
