@@ -9,7 +9,6 @@
     "deploy": "sst deploy",
     "remove": "sst remove",
     "console": "sst console",
-    "migrate": "tsx scripts/migrate-dynamo.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "quote": "esrun packages/core/src/bonds/catalyst/catalyst.ts quote",
