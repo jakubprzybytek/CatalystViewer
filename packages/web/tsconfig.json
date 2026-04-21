@@ -15,15 +15,27 @@
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "jsx": "preserve",
+    "jsx": "react-jsx",
     "incremental": true,
     "paths": {
-      "@/*": [ "./src/*" ],
-      "@bonds/*": [ "./src/bonds/*" ],
-      "@common/*": [ "./src/common/*" ],
-      "@sdk/*": [ "./src/sdk/*" ],
-      "@catalyst-viewer/core/*": [ "../core/src/*" ],
-      "@catalyst-viewer/functions/*": [ "../functions/src/*" ]
+      "@/*": [
+        "./src/*"
+      ],
+      "@bonds/*": [
+        "./src/bonds/*"
+      ],
+      "@common/*": [
+        "./src/common/*"
+      ],
+      "@sdk/*": [
+        "./src/sdk/*"
+      ],
+      "@catalyst-viewer/core/*": [
+        "../core/src/*"
+      ],
+      "@catalyst-viewer/functions/*": [
+        "../functions/src/*"
+      ]
     }
   },
   "include": [
@@ -32,6 +44,7 @@
     "**/*.tsx"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "pages/_document.tsx"
   ]
 }

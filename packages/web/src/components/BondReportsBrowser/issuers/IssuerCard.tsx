@@ -19,7 +19,7 @@ type IssuerCardParam = {
   removeIssuer: (issuerToRemove: string) => void;
 }
 
-export default function IssuerCard({ issuerReport, statistics, selectedIssuers, addIssuer, removeIssuer }: IssuerCardParam): JSX.Element {
+export default function IssuerCard({ issuerReport, statistics, selectedIssuers, addIssuer, removeIssuer }: IssuerCardParam): React.JSX.Element {
   const isChecked = selectedIssuers.includes(issuerReport.name);
 
   const minNominalValueColorCode = getNominalValueColorCode(issuerReport.minNominalValue);

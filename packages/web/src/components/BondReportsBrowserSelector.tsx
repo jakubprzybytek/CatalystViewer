@@ -27,7 +27,7 @@ type SelectorItemParams = {
   setInEdit: () => void;
 }
 
-function SelectorItem({ settings, active, setActive, setInEdit }: SelectorItemParams): JSX.Element {
+function SelectorItem({ settings, active, setActive, setInEdit }: SelectorItemParams): React.JSX.Element {
   return (
     <Button color="primary" variant={active ? 'contained' : 'outlined'}
       onClick={active ? setInEdit : setActive}>
@@ -45,9 +45,9 @@ type EditorItemParams = {
   exitEdit: () => void;
 }
 
-function EditorItem({ settings, setSettings, onCopy, deleteEnabled, onDelete, exitEdit }: EditorItemParams): JSX.Element {
+function EditorItem({ settings, setSettings, onCopy, deleteEnabled, onDelete, exitEdit }: EditorItemParams): React.JSX.Element {
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
-  const nameRef = useRef<TextFieldProps>();
+  const nameRef = useRef<TextFieldProps>(null);
 
   return (
     <Stack direction="row">
@@ -102,7 +102,7 @@ type BondReportsBrowserSelectorParams = {
   setCurrentSettingsIndex: (index: number) => void;
 }
 
-export default function BondReportsBrowserSelector({ settingsCollection, setSettingsCollection, currentSettingsIndex, setCurrentSettingsIndex }: BondReportsBrowserSelectorParams): JSX.Element {
+export default function BondReportsBrowserSelector({ settingsCollection, setSettingsCollection, currentSettingsIndex, setCurrentSettingsIndex }: BondReportsBrowserSelectorParams): React.JSX.Element {
   const [settingsInEditIndex, setSettingsInEditIndex] = useState<number | undefined>(undefined);
 
   function getSetSettings(index: number) {

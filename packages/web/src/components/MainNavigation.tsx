@@ -1,4 +1,4 @@
-import { Auth } from 'aws-amplify';
+import { signOut } from 'aws-amplify/auth';
 import Stack from "@mui/material/Stack";
 import AppBar from '@mui/material/AppBar';
 import Slide from '@mui/material/Slide';
@@ -12,7 +12,7 @@ type HideOnScrollParams = {
   children: React.ReactElement;
 }
 
-function HideOnScroll({ children }: HideOnScrollParams): JSX.Element {
+function HideOnScroll({ children }: HideOnScrollParams): React.JSX.Element {
   return (
     <Slide appear={false} direction="down" in={!useScrollTrigger()}>
       {children}
@@ -25,7 +25,7 @@ type MainNavigationParams = {
   children: React.ReactElement;
 }
 
-export default function MainNavigation({ title, children }: MainNavigationParams): JSX.Element {
+export default function MainNavigation({ title, children }: MainNavigationParams): React.JSX.Element {
   return (
     <HideOnScroll>
       <AppBar component="nav">
@@ -39,7 +39,7 @@ export default function MainNavigation({ title, children }: MainNavigationParams
             <Stack direction='row' justifyContent={'flex-end'}>
               {children}
               <IconButton color='inherit'
-                onClick={() => Auth.signOut()}>
+                onClick={() => signOut()}>
                 <Logout />
               </IconButton>
             </Stack>

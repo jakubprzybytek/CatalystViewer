@@ -26,7 +26,7 @@ type BondReportsFilterPanelParams = {
   setFilteringOptions: (param: BondReportsFilteringOptions) => void;
 };
 
-export function BondReportsFilterPanel({ allBondReports, allBondTypes, filteringOptions, setFilteringOptions }: BondReportsFilterPanelParams): JSX.Element {
+export function BondReportsFilterPanel({ allBondReports, allBondTypes, filteringOptions, setFilteringOptions }: BondReportsFilterPanelParams): React.JSX.Element {
   const allMarkets = useMemo(() => sortStrings(getUniqueMarkets(allBondReports)), [allBondReports]);
   const allInterestBaseTypes = useMemo(() => sortStrings(getUniqueInterestBaseTypes(allBondReports)), [allBondReports]);
   const allCurrencies = useMemo(() => getUniqueCurrencies(allBondReports), [allBondReports]);

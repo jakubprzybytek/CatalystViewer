@@ -15,17 +15,25 @@
     "email": "esrun packages/functions/src/emails/testEmail.ts"
   },
   "devDependencies": {
-    "@tsconfig/node20": "^20.1.5",
-    "aws-cdk-lib": "2.224.0",
-    "baseline-browser-mapping": "2.10.19",
-    "constructs": "10.4.2",
-    "sst": "2.49.8",
-    "typescript": "5.8.3"
+    "@tsconfig/node22": "^22.0.0",
+    "@types/node": "^22",
+    "@types/ramda": "^0.30.2",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "sst": "4.9.0",
+    "typescript": "5.8.3",
+    "vitest": "^3.1.1"
   },
   "workspaces": [
     "packages/*"
   ],
   "dependencies": {
     "esrun": "3.2.30"
+  },
+  "overrides": {
+    "react": "^19",
+    "react-dom": "^19",
+    "@types/react": "^19",
+    "@types/react-dom": "^19"
   }
 }

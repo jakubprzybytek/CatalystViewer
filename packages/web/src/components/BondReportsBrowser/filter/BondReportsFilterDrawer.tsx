@@ -16,7 +16,7 @@ type BondReportsFilterDrawerParams = {
   filteredBondReports: BondReport[];
 };
 
-export default function BondReportsFilterDrawer({ open, onClose, allBondReports, allBondTypes, filteringOptions, setFilteringOptions, filteredBondReports }: BondReportsFilterDrawerParams): JSX.Element {
+export default function BondReportsFilterDrawer({ open, onClose, allBondReports, allBondTypes, filteringOptions, setFilteringOptions, filteredBondReports }: BondReportsFilterDrawerParams): React.JSX.Element {
   return (
     <Box component="nav">
       <Drawer anchor='top' open={open}

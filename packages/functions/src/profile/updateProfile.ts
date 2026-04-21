@@ -1,5 +1,5 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { Table } from 'sst/node/table';
+import { Resource } from 'sst';
 import { Failure, lambdaHandler, Success } from "../HandlerProxy";
 import { DbProfile, ProfilesTable } from '@catalyst-viewer/core/storage/profiles';
 
@@ -13,7 +13,7 @@ export const handler = lambdaHandler<{ message: string }>(async event => {
         return Failure('Profile payload missing');
     }
 
-    const profilesTable = new ProfilesTable(dynamoDBClient, Table.Profiles.tableName);
+    const profilesTable = new ProfilesTable(dynamoDBClient, Resource.Profiles.name);
 
     const dbProfile: DbProfile = {
         userName,

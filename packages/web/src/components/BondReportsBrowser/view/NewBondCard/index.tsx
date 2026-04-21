@@ -35,7 +35,7 @@ type BondCardParam = {
   statistics: InterestPercentilesByInterestBaseType;
 }
 
-export default function NewBondCard({ bondReport, statistics }: BondCardParam): JSX.Element {
+export default function NewBondCard({ bondReport, statistics }: BondCardParam): React.JSX.Element {
   const { details, currentValues } = bondReport;
 
   const [expanded, setExpanded] = useState(false);

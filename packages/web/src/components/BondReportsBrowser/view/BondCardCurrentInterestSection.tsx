@@ -22,7 +22,7 @@ type BondCardCurrentInterestSectionParams = {
   bondReport: BondReport;
 }
 
-export default function BondCardCurrentInterestSection({ bondReport: { currentValues, details: { currency } } }: BondCardCurrentInterestSectionParams): JSX.Element {
+export default function BondCardCurrentInterestSection({ bondReport: { currentValues, details: { currency } } }: BondCardCurrentInterestSectionParams): React.JSX.Element {
   const today = new Date();
   const interestBarColor = today.getTime() >= currentValues.interestRecordDay ? 'success' : 'error';
 
