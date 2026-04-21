@@ -50,19 +50,26 @@ async function validateTables(
   const errors: string[] = [];
 
   for (const { source, target } of tables) {
-    for (const tableName of [source, target]) {
+    let sourceExists = true;
+    let targetExists = true;
+
+    for (const [tableName, exists] of [[source, sourceExists], [target, targetExists]] as [string, boolean][]) {
       try {
         await dynamoClient.send(new DescribeTableCommand({ TableName: tableName }));
       } catch {
         errors.push(`Table does not exist: '${tableName}'`);
+        if (tableName === source) sourceExists = false;
+        if (tableName === target) targetExists = false;
       }
     }
 
-    const response = await client.send(
-      new ScanCommand({ TableName: target, Select: "COUNT", Limit: 1 }),
-    );
-    if ((response.Count ?? 0) > 0) {
-      errors.push(`Target table is not empty: '${target}'`);
+    if (targetExists) {
+      const response = await client.send(
+        new ScanCommand({ TableName: target, Select: "COUNT", Limit: 1 }),
+      );
+      if ((response.Count ?? 0) > 0) {
+        errors.push(`Target table is not empty: '${target}'`);
+      }
     }
   }
 

@@ -15,7 +15,7 @@ npm install
 ## Run
 
 ```bash
-node --import tsx/esm migrate.ts
+npm run migrate
 ```
 
 ## Notes
