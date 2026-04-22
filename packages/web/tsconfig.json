@@ -30,7 +30,7 @@
       "@sdk/*": [
         "./src/sdk/*"
       ],
-      "@catalyst-viewer/core/*": [
+      "@core/*": [
         "../core/src/*"
       ],
       "@catalyst-viewer/functions/*": [

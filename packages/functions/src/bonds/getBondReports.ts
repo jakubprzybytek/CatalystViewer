@@ -2,8 +2,8 @@ import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { Resource } from 'sst';
 import { differenceInDays } from 'date-fns';
 import { lambdaHandler, Success } from "../HandlerProxy";
-import { BondDetails, BondCurrentValues } from '@catalyst-viewer/core/bonds';
-import { BondDetailsTable } from '@catalyst-viewer/core/storage/bondDetails';
+import { BondDetails, BondCurrentValues } from '@core/bonds';
+import { BondDetailsTable } from '@core/storage/bondDetails';
 import { BondReportsQueryResult } from ".";
 
 const dynamoDBClient = new DynamoDBClient({});

@@ -3,7 +3,7 @@ import { Resource } from 'sst';
 import { sub } from 'date-fns';
 import { Failure, lambdaHandler, Success } from "../HandlerProxy";
 import { BondQuotesQueryResult } from ".";
-import { BondStatisticsTable, BondQuotesQuery } from '@catalyst-viewer/core/storage/bondStatistics';
+import { BondStatisticsTable, BondQuotesQuery } from '@core/storage/bondStatistics';
 
 const dynamoDBClient = new DynamoDBClient({});
 

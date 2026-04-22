@@ -1,12 +1,12 @@
 {
   "extends": "@tsconfig/node22/tsconfig.json",
   "compilerOptions": {
-    "module": "nodenext",
-    "moduleResolution": "nodenext",
-    "baseUrl": ".",
+    "module": "esnext",
+    "moduleResolution": "bundler",
     "paths": {
-      "@catalyst-viewer/core": ["../core/src"],
-      "@catalyst-viewer/core/*": ["../core/src/*"]
+      "@core": ["../core/src"],
+      "@core/*": ["../core/src/*"],
+      "@storage/*": ["../core/src/storage/*"]
     }
   }
 }

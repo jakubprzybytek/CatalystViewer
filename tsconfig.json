@@ -2,7 +2,7 @@
   "extends": "@tsconfig/node22/tsconfig.json",
   "exclude": ["packages"],
   "compilerOptions": {
-    "module": "nodenext",
-    "moduleResolution": "nodenext"
+    "module": "esnext",
+    "moduleResolution": "bundler"
   }
 }

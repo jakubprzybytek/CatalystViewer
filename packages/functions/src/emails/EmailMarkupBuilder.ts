@@ -1,6 +1,6 @@
 import { compileFile } from "pug";
-import { formatCurrency, formatCompactCurrency } from '@catalyst-viewer/core/common/Formats';
-import { UpdateBondsResult, UpdatedBond } from "src/bonds";
+import { formatCurrency, formatCompactCurrency } from '@core/common/Formats';
+import { UpdateBondsResult, UpdatedBond } from "../bonds";
 
 type ModifiedUpdatedBond = Omit<UpdatedBond, 'nominalValue' | 'issueValue'> & {
     nominalValue: string;

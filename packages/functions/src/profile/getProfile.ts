@@ -1,12 +1,12 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { Resource } from 'sst';
 import { Failure, lambdaHandler, Success } from "../HandlerProxy";
-import { ProfilesTable } from '@catalyst-viewer/core/storage/profiles';
+import { ProfilesTable } from '@core/storage/profiles';
 
 const dynamoDBClient = new DynamoDBClient({});
 
 export const handler = lambdaHandler<any>(async event => {
-  const userName = event.requestContext.authorizer.jwt.claims.username;
+  const userName = (event as any).requestContext.authorizer.jwt.claims.username;
 
   const profilesTable = new ProfilesTable(dynamoDBClient, Resource.Profiles.name);
 

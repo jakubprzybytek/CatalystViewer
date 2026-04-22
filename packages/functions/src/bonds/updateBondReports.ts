@@ -3,12 +3,12 @@ import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { Resource } from 'sst';
 import { differenceInBusinessDays, getTime, sub } from 'date-fns';
 import { average } from 'simple-statistics'
-import { parseUTCDate } from '@catalyst-viewer/core';
-import { getSpread, getTurnover } from '@catalyst-viewer/core/bonds/statistics';
-import { CatalystBondQuote, CatalystDailyStatisticsBondDetails, getCurrentCatalystBondsQuotes, getLatestCatalystDailyStatistics } from '@catalyst-viewer/core/bonds/catalyst';
-import { getBondInformation } from '@catalyst-viewer/core/bonds/obligacjepl';
-import { BondDetailsTable, DbBondDetails } from '@catalyst-viewer/core/storage/bondDetails';
-import { BondQuotesQuery, BondStatisticsTable, DbBondStatistics } from '@catalyst-viewer/core/storage/bondStatistics';
+import { parseUTCDate } from '@core';
+import { getSpread, getTurnover } from '@core/bonds/statistics';
+import { CatalystBondQuote, CatalystDailyStatisticsBondDetails, getCurrentCatalystBondsQuotes, getLatestCatalystDailyStatistics } from '@core/bonds/catalyst';
+import { getBondInformation } from '@core/bonds/obligacjepl';
+import { BondDetailsTable, DbBondDetails } from '@core/storage/bondDetails';
+import { BondQuotesQuery, BondStatisticsTable, DbBondStatistics } from '@core/storage/bondStatistics';
 import { UpdateBondsResult, UpdatedBond } from '.';
 
 const dynamoDbClient = new DynamoDBClient({});

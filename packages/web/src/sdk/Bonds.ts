@@ -1,6 +1,6 @@
 import { get } from "aws-amplify/api";
 import { fetchAuthSession } from "aws-amplify/auth";
-import { BondDetails, BondCurrentValues } from '@catalyst-viewer/core/bonds';
+import { BondDetails, BondCurrentValues } from '@core/bonds';
 import { BondReportsQueryResult, BondReport, BondQuotesQueryResult, BondQuote } from '@catalyst-viewer/functions/bonds';
 
 export type { BondReport, BondDetails, BondCurrentValues, BondReportsQueryResult };
