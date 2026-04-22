@@ -10,7 +10,7 @@ type BondCardLiquiditySectionParams = {
   bondReport: BondReport;
 }
 
-export default function BondCardLiquiditySection({ bondReport }: BondCardLiquiditySectionParams): JSX.Element {
+export default function BondCardLiquiditySection({ bondReport }: BondCardLiquiditySectionParams): React.JSX.Element {
   const { currentValues, details } = bondReport;
   const [liquidityReport, setLiquidityReport] = useState<BondReport | undefined>(undefined);
 

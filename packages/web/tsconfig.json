@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "es5",
+    "target": "es6",
     "lib": [
       "dom",
       "dom.iterable",
@@ -30,7 +30,7 @@
       "@sdk/*": [
         "./src/sdk/*"
       ],
-      "@catalyst-viewer/core/*": [
+      "@core/*": [
         "../core/src/*"
       ],
       "@catalyst-viewer/functions/*": [
@@ -44,6 +44,7 @@
     "**/*.tsx"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "pages/_document.tsx"
   ]
 }

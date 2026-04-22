@@ -1,7 +1,6 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
 import { DbProfile } from ".";
-import { Table } from "sst/node/table";
 
 export class ProfilesTable {
   readonly dynamoDBClient: DynamoDBClient;
@@ -30,7 +29,7 @@ export class ProfilesTable {
     console.log(`ProfilesTable: Fetching profile for: ${userName}`);
 
     const getCommand = new GetCommand({
-      TableName: Table.Profiles.tableName,
+      TableName: this.tableName,
       Key: {
         userName
       }

@@ -21,7 +21,7 @@ type BondCardYTMSectionParam = {
   secondary?: string;
 }
 
-export default function BondCardYTMSection({ title, bondReport, price, secondary }: BondCardYTMSectionParam): JSX.Element {
+export default function BondCardYTMSection({ title, bondReport, price, secondary }: BondCardYTMSectionParam): React.JSX.Element {
   const [ytmReport, setYtmReport] = useState<YieldToMaturityReport | undefined>(undefined);
 
   const [ytmNet, setYtmNet] = useState<YieldToMaturityReport>();

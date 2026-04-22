@@ -1,20 +1,22 @@
-import { SSTConfig } from "sst";
-import { BondsService } from "./stacks/BondsService";
-import { Frontend } from "./stacks/Frontend";
-import { BondsUpdater } from "./stacks/BondsUpdater";
+/// <reference path="./.sst/platform/config.d.ts" />
 
-export default {
-  config(_input) {
+export default $config({
+  app(input) {
     return {
       name: "catalyst-viewer",
-      region: "eu-west-1",
+      removal: input?.stage === "production" ? "retain" : "remove",
+      home: "aws",
+      providers: {
+        aws: {
+          region: "eu-west-1",
+        },
+      },
     };
   },
-  stacks(app) {
-    app.setDefaultFunctionProps({
-      runtime: "nodejs20.x",
-    });
-
-    app.stack(BondsService).stack(Frontend).stack(BondsUpdater);
-  }
-} satisfies SSTConfig;
+  async run() {
+    await import("./infra/storage");
+    await import("./infra/api");
+    await import("./infra/updater");
+    await import("./infra/web");
+  },
+});

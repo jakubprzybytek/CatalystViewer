@@ -1,5 +1,5 @@
-import { BondDetails, BondCurrentValues } from '@catalyst-viewer/core/bonds';
-import { BondQuote } from '@catalyst-viewer/core/storage/bondStatistics';
+import { BondDetails, BondCurrentValues } from '@core/bonds';
+import { BondQuote } from '@core/storage/bondStatistics';
 
 export type { BondDetails, BondCurrentValues, BondQuote };
 

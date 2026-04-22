@@ -13,7 +13,7 @@ type BondCardEntryParam = {
   secondary?: string;
 }
 
-export function CardEntry({ caption, width, textAlign = 'left', flexGrow, children }: BondCardEntryParam): JSX.Element {
+export function CardEntry({ caption, width, textAlign = 'left', flexGrow, children }: BondCardEntryParam): React.JSX.Element {
   return (
     <Stack className="card-entry" sx={{
       '& > span': { textAlign },
@@ -32,7 +32,7 @@ type CardValueParam = {
   children: React.ReactNode;
 }
 
-export function CardValue({ colorCode = 'none', bold = false, children }: CardValueParam): JSX.Element {
+export function CardValue({ colorCode = 'none', bold = false, children }: CardValueParam): React.JSX.Element {
   const colorMarker = colorMarkers[colorCode];
   const fontWeight = bold ? 500 : 400;
 

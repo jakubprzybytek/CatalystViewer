@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import type { NextPage } from 'next';
 import { Authenticator } from '@aws-amplify/ui-react';
 import '@aws-amplify/ui-react/styles.css';
 import Head from 'next/head';
@@ -17,7 +16,7 @@ const DEFAULT_BOND_REPORTS_BROWSER_SETTINGS_COLLECTION: BondReportsBrowserSettin
   }
 ];
 
-const Bonds: NextPage = () => {
+const Bonds = () => {
   const [settingsCollection, setSettingsCollection] = useState<BondReportsBrowserSettings[] | undefined>(undefined);
   const [currentSettingsIndex, setCurrentSettingsIndex] = useState(0);
 
@@ -79,10 +78,10 @@ const Bonds: NextPage = () => {
   )
 }
 
-const BondsWrapper: NextPage = () => {
+const BondsWrapper = () => {
   return (
     <Authenticator>
-      <Bonds />
+      {() => <Bonds />}
     </Authenticator>
   )
 }

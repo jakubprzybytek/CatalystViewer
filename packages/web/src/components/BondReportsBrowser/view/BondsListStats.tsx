@@ -57,7 +57,7 @@ type BondInterestBaseTypeStatParam = {
   bondReports: BondReport[];
 }
 
-function BondInterestBaseTypeStat({ interestBaseType: interestVariableType, interestConstPercentiles, bondReports }: BondInterestBaseTypeStatParam): JSX.Element {
+function BondInterestBaseTypeStat({ interestBaseType: interestVariableType, interestConstPercentiles, bondReports }: BondInterestBaseTypeStatParam): React.JSX.Element {
   return (
     <Paper sx={{
       pt: 0.5,
@@ -93,7 +93,7 @@ type BondsListParam = {
   statistics: InterestPercentilesByInterestBaseType;
 }
 
-export default function BondsListStats({ bondReports, statistics }: BondsListParam): JSX.Element {
+export default function BondsListStats({ bondReports, statistics }: BondsListParam): React.JSX.Element {
   const bondsByInterestBaseTypes = groupByInterestBaseType(bondReports);
 
   return (

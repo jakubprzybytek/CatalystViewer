@@ -1,4 +1,4 @@
-import { parseUTCDate } from "bonds";
+import { parseUTCDate } from "../../";
 import { getTime } from "date-fns";
 import { getBondInformation } from "./ObligacjeWebsite";
 

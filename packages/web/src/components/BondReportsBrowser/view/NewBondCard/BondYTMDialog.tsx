@@ -17,7 +17,7 @@ type ReportSectionTitleParam = {
   children: React.ReactNode;
 }
 
-function ReportSectionTitle({ children }: ReportSectionTitleParam): JSX.Element {
+function ReportSectionTitle({ children }: ReportSectionTitleParam): React.JSX.Element {
   return (
     <Typography variant='subtitle2' pb={1}>{children}</Typography>
   );
@@ -29,7 +29,7 @@ type ReportEntryParam = {
   children: React.ReactNode;
 }
 
-function ReportEntry({ caption, style = undefined, children }: ReportEntryParam): JSX.Element {
+function ReportEntry({ caption, style = undefined, children }: ReportEntryParam): React.JSX.Element {
   const fontWeight = style == 'strong' ? 500 : 400;
   const color = style == 'weak' ? 'gray' : 'inherit';
   return (
@@ -51,7 +51,7 @@ type BondYTMReportDialogParam = {
   onClose: () => void;
 }
 
-export default function BondYTMReportDialog({ ytmReport, onClose }: BondYTMReportDialogParam): JSX.Element {
+export default function BondYTMReportDialog({ ytmReport, onClose }: BondYTMReportDialogParam): React.JSX.Element {
   const { bondDetails, bondCurrentValues } = ytmReport;
   const noTax = ytmReport.taxRate == 0;
 

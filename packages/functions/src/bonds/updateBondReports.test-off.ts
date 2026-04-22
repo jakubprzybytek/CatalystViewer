@@ -1,4 +1,4 @@
-import { CatalystBondQuote } from "@catalyst-viewer/core/bonds/catalyst";
+import { CatalystBondQuote } from "@core/bonds/catalyst";
 import { describe, it, expect } from "vitest";
 import { toBondStatistics } from "./updateBondReports";
 

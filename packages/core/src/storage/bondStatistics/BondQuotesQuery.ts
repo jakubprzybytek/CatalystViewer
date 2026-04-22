@@ -24,7 +24,7 @@ export class BondQuotesQuery {
         .forEach(quote => quotes.push(quote));
     }
 
-    return quotes;
+    return quotes.sort((a, b) => a.date - b.date);
   }
 
 }
