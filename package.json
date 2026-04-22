@@ -11,10 +11,13 @@
     "console": "sst console",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:smoke": "node --env-file=.env.local node_modules/@playwright/test/cli.js test",
+    "test:smoke:int": "STAGE=int node_modules/@playwright/test/cli.js test",
     "quote": "esrun packages/core/src/bonds/catalyst/catalyst.ts quote",
     "email": "esrun packages/functions/src/emails/testEmail.ts"
   },
   "devDependencies": {
+    "@playwright/test": "^1.59.1",
     "@tsconfig/node22": "^22.0.0",
     "@types/node": "^22",
     "@types/ramda": "^0.30.2",

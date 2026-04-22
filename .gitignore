@@ -11,6 +11,11 @@ node_modules
 # misc
 .DS_Store
 
+# playwright
+test-results/
+playwright-report/
+playwright/.cache/
+
 # local env files
 .env*.local
 

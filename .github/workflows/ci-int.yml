@@ -42,3 +42,12 @@ jobs:
 
       - name: Run Serverless Stack deploy
         run: npm run deploy -- --stage ${STAGE}
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run smoke tests
+        run: npm run test:smoke:int
+        env:
+          TEST_USERNAME: ${{ vars.TEST_USERNAME }}
+          TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
