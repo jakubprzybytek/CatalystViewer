@@ -20,7 +20,6 @@
     "baseline-browser-mapping": "2.10.19",
     "constructs": "10.4.2",
     "sst": "2.49.8",
-    "tsx": "^4.20.6",
     "typescript": "5.8.3"
   },
   "workspaces": [
