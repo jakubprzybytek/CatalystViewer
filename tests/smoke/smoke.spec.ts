@@ -53,13 +53,22 @@ test.describe.serial('Smoke Tests', () => {
 
     // We are already logged in here because of describe.serial and shared `page`.
 
-    // Wait for the login to complete and data fetching to happen
-    // Based on the workspace schema, you have BondCard and IssuersList components.
-    // The exact class or text might be different, adjust slightly if needed.
+    // Check if Issuers are visible - assuming the default view is Issuers tab
+    const issuersToggleButton = page.getByRole('button', { name: 'Issuers' });
+    await expect(issuersToggleButton).toBeVisible({ timeout: 15000 });
     
-    // Example: Wait for at least one issuer or bond card to be visible
-    const bondDataContainer = page.getByText('Bonds', { exact: false }).first();
-    await expect(bondDataContainer).toBeVisible({ timeout: 15000 });
+    // There should be issuer cards available on the page below the header/filters
+    const anyIssuerCard = page.locator('.issuer-card').first();
+    await expect(anyIssuerCard).toBeVisible({ timeout: 15000 });
+
+    // Switch to 'New Bonds' tab to check bonds
+    const newBondsToggleButton = page.getByRole('button', { name: 'New Bonds' });
+    await expect(newBondsToggleButton).toBeVisible();
+    await newBondsToggleButton.click();
+
+    // Check if individual bonds are visible
+    const bondCard = page.locator('.bond-card').first();
+    await expect(bondCard).toBeVisible({ timeout: 15000 });
   });
 
 });
