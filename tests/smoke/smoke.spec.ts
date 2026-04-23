@@ -34,14 +34,13 @@ test.describe.serial('Smoke Tests', () => {
 
     // We are already at '/' from the previous test.
 
-    // Assuming AWS Amplify standard UI components:
-    await page.locator('input[name="username"]').fill(username);
-    await page.locator('input[name="password"]').fill(password);
-    await page.locator('button[type="submit"]:has-text("Sign in")').click();
+    // Custom AuthWrapper renders email + password fields
+    await page.locator('input[type="email"]').fill(username);
+    await page.locator('input[type="password"]').fill(password);
+    await page.locator('button[type="submit"]:has-text("Sign In")').click();
 
-    // Verify successful login (e.g., login form disappears or main nav appears)
-    // Customize this selector based on your actual authenticated state UI
-    await expect(page.locator('input[name="username"]')).not.toBeVisible();
+    // Verify successful login — sign-in form disappears
+    await expect(page.locator('input[type="email"]')).not.toBeVisible();
   });
 
   test('Data is displayed', async () => {
