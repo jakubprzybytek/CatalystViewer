@@ -52,10 +52,11 @@ test.describe.serial('Smoke Tests', () => {
 
     // We are already logged in here because of describe.serial and shared `page`.
 
-    // Check if Issuers are visible - assuming the default view is Issuers tab
+    // Click on 'Issuers' tab
     const issuersToggleButton = page.getByRole('button', { name: 'Issuers' });
     await expect(issuersToggleButton).toBeVisible({ timeout: 15000 });
-    
+    await issuersToggleButton.click();
+
     // There should be issuer cards available on the page below the header/filters
     const anyIssuerCard = page.locator('.issuer-card').first();
     await expect(anyIssuerCard).toBeVisible({ timeout: 15000 });
