@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Authenticator } from '@aws-amplify/ui-react';
-import '@aws-amplify/ui-react/styles.css';
 import Head from 'next/head';
+import AuthWrapper from '@/components/AuthWrapper';
 import Box from "@mui/material/Box";
 import BondReportsBrowser, { BondReportsBrowserSettings, DEFAULT_FILTERIN_OPTIONS_SETTING, DEFAULT_SORT_ORDER_SETTING, DEFAULT_VIEW_SETTING } from '@/components/BondReportsBrowser';
 import BondReportsBrowserSelector from '@/components/BondReportsBrowserSelector';
@@ -80,9 +79,9 @@ const Bonds = () => {
 
 const BondsWrapper = () => {
   return (
-    <Authenticator>
-      {() => <Bonds />}
-    </Authenticator>
+    <AuthWrapper>
+      <Bonds />
+    </AuthWrapper>
   )
 }
 
