@@ -8,6 +8,7 @@ const issuer = R.compose<BondReport[], BondDetails, string>(R.prop('issuer'), R.
 const market = R.compose<BondReport[], BondDetails, string>(R.prop('market'), R.prop('details'));
 export const interestBaseType = R.compose<BondReport[], BondDetails, string | undefined, string>(R.defaultTo('Const'), R.prop('interestVariable'), R.prop('details'));
 export const interestConstPart = R.compose<BondReport[], BondDetails, number>(R.prop('interestConst'), R.prop('details'));
+export const firstDay = R.compose<BondReport[], BondDetails, number>(R.prop('firstDayTs'), R.prop('details'));
 const nominalValue = R.compose<BondReport[], BondDetails, number>(R.prop('nominalValue'), R.prop('details'));
 const currency = R.compose<BondReport[], BondDetails, string>(R.prop('currency'), R.prop('details'));
 const issueValue = R.compose<BondReport[], BondDetails, number>(R.prop('issueValue'), R.prop('details'));

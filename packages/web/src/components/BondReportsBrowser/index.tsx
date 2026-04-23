@@ -15,6 +15,7 @@ import Sort from "@mui/icons-material/Sort";
 import Condition from "@/common/Condition";
 import MainNavigation from "../MainNavigation";
 import BondsListStats from "./view/BondsListStats";
+import BondsNew2dStats from "./view/BondsNew2dStats";
 import IssuersViewer from "./issuers/IssuersViewer";
 import BondReportsFilterDrawer, { BondReportsFilteringOptions, filterUsing } from "./filter";
 import BondReportsSortMenu, { BondReportsSortOrder, getBondReportsSortingFunction } from "./sort";
@@ -86,6 +87,7 @@ export default function BondReportsBrowser({ settings, setSettings }: BondReport
 
   // stats
   const [statsShown, setStatsShown] = useState(false);
+  const [newStatsShown, setNewStatsShown] = useState(false);
 
   function selectBondReportsSortOrder(sortOrder: BondReportsSortOrder) {
     setSortOrder(sortOrder);
@@ -192,9 +194,16 @@ export default function BondReportsBrowser({ settings, setSettings }: BondReport
             onChange={() => setStatsShown(!statsShown)}>
             Show stats
           </ToggleButton>
+          <ToggleButton color="secondary" size="small" value="check2" selected={newStatsShown}
+            onChange={() => setNewStatsShown(!newStatsShown)}>
+            Show new stats
+          </ToggleButton>
         </Stack>
         <Collapse in={statsShown}>
           <BondsListStats bondReports={filteredBondReports} statistics={bondReportsStatistics} />
+        </Collapse>
+        <Collapse in={newStatsShown}>
+          <BondsNew2dStats bondReports={filteredBondReports} statistics={bondReportsStatistics} />
         </Collapse>
         <Condition render={view == BondReportsView.Bonds}>
           <BondsList bondReports={filteredAndSortedBondsReports} statistics={bondReportsStatistics} />
