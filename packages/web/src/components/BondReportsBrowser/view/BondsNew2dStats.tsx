@@ -1,4 +1,3 @@
-import * as R from 'ramda';
 import { useMemo } from 'react';
 import { format } from 'date-fns';
 import Typography from '@mui/material/Typography';
@@ -10,7 +9,7 @@ import { BondReport } from '@/sdk/Bonds';
 import { InterestPercentilesByInterestBaseType, groupByInterestBaseType } from '@/bonds/statistics';
 import { get2dStatsForInterestBaseTypes, Bond2dPoint } from '@/bonds/statistics/Bonds2dStats';
 
-const sort = R.sortBy<string>(R.identity);
+const sort = (arr: string[]) => [...arr].sort();
 
 const X_TICK_COUNT = 8;
 
@@ -69,7 +68,7 @@ function InterestBaseTypeChart({ interestBaseType, points }: InterestBaseTypeCha
             <Typography variant="h6">{interestBaseType}</Typography>
             <Typography variant="caption" sx={{ color: 'gray' }}>{points.length} bonds</Typography>
             <ResponsiveContainer width="100%" height={160}>
-                <ScatterChart margin={{ top: 8, right: 12, bottom: 0, left: 8 }}>
+                <ScatterChart margin={{ top: 8, right: 20, bottom: 0, left: 0 }}>
                     <XAxis
                         dataKey="x"
                         type="number"
@@ -78,12 +77,13 @@ function InterestBaseTypeChart({ interestBaseType, points }: InterestBaseTypeCha
                         ticks={ticks}
                         tickFormatter={ts => format(new Date(ts), 'MMM yy')}
                         tick={{ fontSize: 10 }}
+                        height={18}
                     />
                     <YAxis
                         dataKey="y"
                         tick={{ fontSize: 10 }}
                         tickFormatter={(v: number) => `${v.toFixed(1)}%`}
-                        width={40}
+                        width={36}
                     />
                     <Tooltip content={<CustomTooltip />} cursor={false} />
                     <Scatter data={points} shape={<ColoredDot />} />

@@ -1,4 +1,3 @@
-import * as R from 'ramda';
 import { Fragment } from 'react';
 import { average } from 'simple-statistics';
 import Typography from "@mui/material/Typography";
@@ -13,7 +12,7 @@ import { InterestPercentilesByInterestBaseType } from '@/bonds/statistics';
 import { colorMarkers } from "@/common/ColorCodes";
 import { getInterestConstColorCode } from '@/bonds/BondIndicators';
 
-const sort = R.sortBy<string>(R.identity);
+const sort = (arr: string[]) => [...arr].sort();
 
 type InterestChartParam = {
   quartiles: number[];

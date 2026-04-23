@@ -1,66 +1,56 @@
-import * as R from 'ramda';
 import { BondReport, BondDetails, BondCurrentValues } from '@/sdk/Bonds';
 
 // Properties extractors - BondDetails
-const name = R.compose<BondReport[], BondDetails, string>(R.prop('name'), R.prop('details'));
-const bondType = R.compose<BondReport[], BondDetails, string>(R.prop('type'), R.prop('details'));
-const issuer = R.compose<BondReport[], BondDetails, string>(R.prop('issuer'), R.prop('details'));
-const market = R.compose<BondReport[], BondDetails, string>(R.prop('market'), R.prop('details'));
-export const interestBaseType = R.compose<BondReport[], BondDetails, string | undefined, string>(R.defaultTo('Const'), R.prop('interestVariable'), R.prop('details'));
-export const interestConstPart = R.compose<BondReport[], BondDetails, number>(R.prop('interestConst'), R.prop('details'));
-export const firstDay = R.compose<BondReport[], BondDetails, number>(R.prop('firstDayTs'), R.prop('details'));
-const nominalValue = R.compose<BondReport[], BondDetails, number>(R.prop('nominalValue'), R.prop('details'));
-const currency = R.compose<BondReport[], BondDetails, string>(R.prop('currency'), R.prop('details'));
-const issueValue = R.compose<BondReport[], BondDetails, number>(R.prop('issueValue'), R.prop('details'));
+const name = (b: BondReport) => b.details.name;
+const bondType = (b: BondReport) => b.details.type;
+const issuer = (b: BondReport) => b.details.issuer;
+const market = (b: BondReport) => b.details.market;
+export const interestBaseType = (b: BondReport) => b.details.interestVariable ?? 'Const';
+export const interestConstPart = (b: BondReport) => b.details.interestConst;
+export const firstDay = (b: BondReport) => b.details.firstDayTs;
+const nominalValue = (b: BondReport) => b.details.nominalValue;
+const currency = (b: BondReport) => b.details.currency;
+const issueValue = (b: BondReport) => b.details.issueValue;
 
 // Properties extractors - CurrentValues
-const timeToMaturity = R.compose<BondReport[], BondCurrentValues, number>(R.prop('yearsToMaturity'), R.prop('currentValues'));
-const interestProgress = R.compose<BondReport[], BondCurrentValues, number>(R.prop('interestProgress'), R.prop('currentValues'));
+const timeToMaturity = (b: BondReport) => b.currentValues.yearsToMaturity;
+const interestProgress = (b: BondReport) => b.currentValues.interestProgress;
 
 // Predicates
-export const isBondType = (type: string) => type !== 'all' ? (bondReport: BondReport) => bondReport.details.type === type : R.always(true);
-export const isIssuedBy = (issuers: string[]) => issuers.length > 0 ? (bondReport: BondReport) => issuers.includes(bondReport.details.issuer) : R.always(true);
-export const isInterestBaseType = (interestbaseTypes: string[]) => interestbaseTypes.length > 0 ? (bondReport: BondReport) => interestbaseTypes.includes(bondReport.details.interestVariable || 'Const') : R.always(true);
-export const nominalValueLessThan = (maxNominalValue: number) => (bondReport: BondReport) => bondReport.details.nominalValue <= maxNominalValue;
-export const isOnMarkets = (markets: string[]) => (bondReport: BondReport) => markets.includes(bondReport.details.market);
-export const isCurrency = (currencies: string[]) => (bondReport: BondReport) => currencies.includes(bondReport.details.currency);
+export const isBondType = (type: string) => type !== 'all' ? (b: BondReport) => b.details.type === type : () => true;
+export const isIssuedBy = (issuers: string[]) => issuers.length > 0 ? (b: BondReport) => issuers.includes(b.details.issuer) : () => true;
+export const isInterestBaseType = (interestBaseTypes: string[]) => interestBaseTypes.length > 0 ? (b: BondReport) => interestBaseTypes.includes(b.details.interestVariable ?? 'Const') : () => true;
+export const nominalValueLessThan = (maxNominalValue: number) => (b: BondReport) => b.details.nominalValue <= maxNominalValue;
+export const isOnMarkets = (markets: string[]) => (b: BondReport) => markets.includes(b.details.market);
+export const isCurrency = (currencies: string[]) => (b: BondReport) => currencies.includes(b.details.currency);
 export const isTreasuryBondType = (treasuryBondTypes: string[]) =>
     treasuryBondTypes.length > 0
-        ? (bondReport: BondReport) =>
-            treasuryBondTypes.some(treasuryBondType => new RegExp(`^${treasuryBondType}`).test(bondReport.details.name))
-        : R.always(true);
+        ? (b: BondReport) => treasuryBondTypes.some(t => new RegExp(`^${t}`).test(b.details.name))
+        : () => true;
 
 // Getters
-export const getBondTypes = R.map(bondType);
-export const getIssuers = R.map(issuer);
-export const getMarkets = R.map(market);
-export const getInterestBaseTypes = R.map(interestBaseType);
-export const getInterestConstParts = R.map(interestConstPart);
-export const getNominalValues = R.map(nominalValue);
-export const getCurrencies = R.map(currency);
-export const getIssueValues = R.map(issueValue);
+export const getInterestConstParts = (bonds: BondReport[]) => bonds.map(interestConstPart);
+export const getNominalValues = (bonds: BondReport[]) => bonds.map(nominalValue);
+export const getIssueValues = (bonds: BondReport[]) => bonds.map(issueValue);
 
 // Getters with unique values
-export const getUniqueBondTypes = (bondReports: BondReport[]): string[] => R.uniq(getBondTypes(bondReports));
-export const getUniqueInterestBaseTypes = (bondReports: BondReport[]): string[] => R.uniq(getInterestBaseTypes(bondReports));
-export const getUniqueIssuers = (bondReports: BondReport[]): string[] => R.uniq(getIssuers(bondReports));
-export const getUniqueMarkets = (bondReports: BondReport[]): string[] => R.uniq(getMarkets(bondReports));
-export const getUniqueCurrencies = (bondReports: BondReport[]): string[] => R.uniq(getCurrencies(bondReports));
+export const getUniqueInterestBaseTypes = (bonds: BondReport[]): string[] => [...new Set(bonds.map(interestBaseType))];
+export const getUniqueIssuers = (bonds: BondReport[]): string[] => [...new Set(bonds.map(issuer))];
+export const getUniqueMarkets = (bonds: BondReport[]): string[] => [...new Set(bonds.map(market))];
+export const getUniqueCurrencies = (bonds: BondReport[]): string[] => [...new Set(bonds.map(currency))];
 
 // Group by
-export const groupByType = R.groupBy(bondType);
-export const groupByIssuer = R.groupBy(issuer);
-export const groupByInterestBaseType = R.groupBy(interestBaseType);
+export const groupByType = (bonds: BondReport[]) => Object.groupBy(bonds, bondType) as Record<string, BondReport[]>;
+export const groupByIssuer = (bonds: BondReport[]) => Object.groupBy(bonds, issuer) as Record<string, BondReport[]>;
+export const groupByInterestBaseType = (bonds: BondReport[]) => Object.groupBy(bonds, interestBaseType) as Record<string, BondReport[]>;
 
 // Filters
 type BondReportPredicate = (bondReport: BondReport) => boolean;
-export const filterByBondType = (bondType: string) => R.filter(isBondType(bondType));
-export const filterByIssuer = (issuers: string[]) => R.filter(isIssuedBy(issuers));
-export const filterBy = (predicates: BondReportPredicate[]) => R.filter(R.allPass(predicates));
+export const filterBy = (predicates: BondReportPredicate[]) => (bonds: BondReport[]) => bonds.filter(b => predicates.every(p => p(b)));
 
 // Sorting
-export const sortStrings = R.sortBy<string>(R.identity);
+export const sortStrings = (arr: string[]) => [...arr].sort();
 
-export const sortByName = R.sortBy<BondReport>(name);
-export const sortByTimeToMaturityAsc = R.sortBy<BondReport>(timeToMaturity);
-export const sortByInterestProgress = R.sortBy<BondReport>(interestProgress);
+export const sortByName = (bonds: BondReport[]) => [...bonds].sort((a, b) => name(a).localeCompare(name(b)));
+export const sortByTimeToMaturityAsc = (bonds: BondReport[]) => [...bonds].sort((a, b) => timeToMaturity(a) - timeToMaturity(b));
+export const sortByInterestProgress = (bonds: BondReport[]) => [...bonds].sort((a, b) => interestProgress(a) - interestProgress(b));

@@ -1,5 +1,3 @@
-import * as R from 'ramda';
-
 export type IssuerReport = {
     name: string;
     interestBaseType: string;
@@ -12,6 +10,4 @@ export type IssuerReport = {
     totalIssueValue: number;
 }
 
-const interestConstAverage = R.prop<'interestConstAverage'>('interestConstAverage');
-
-export const sortByInterestConstAverage = R.sortBy<IssuerReport>(interestConstAverage);
+export const sortByInterestConstAverage = (reports: IssuerReport[]) => [...reports].sort((a, b) => a.interestConstAverage - b.interestConstAverage);
