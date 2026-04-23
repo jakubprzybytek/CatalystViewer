@@ -1,20 +1,9 @@
-import { BondReport, BondDetails, BondCurrentValues } from '@/sdk/Bonds';
+import { BondReport } from '@/sdk/Bonds';
 
-// Properties extractors - BondDetails
-const name = (b: BondReport) => b.details.name;
-const bondType = (b: BondReport) => b.details.type;
-const issuer = (b: BondReport) => b.details.issuer;
-const market = (b: BondReport) => b.details.market;
+// Properties extractors
 export const interestBaseType = (b: BondReport) => b.details.interestVariable ?? 'Const';
 export const interestConstPart = (b: BondReport) => b.details.interestConst;
 export const firstDay = (b: BondReport) => b.details.firstDayTs;
-const nominalValue = (b: BondReport) => b.details.nominalValue;
-const currency = (b: BondReport) => b.details.currency;
-const issueValue = (b: BondReport) => b.details.issueValue;
-
-// Properties extractors - CurrentValues
-const timeToMaturity = (b: BondReport) => b.currentValues.yearsToMaturity;
-const interestProgress = (b: BondReport) => b.currentValues.interestProgress;
 
 // Predicates
 export const isBondType = (type: string) => type !== 'all' ? (b: BondReport) => b.details.type === type : () => true;
@@ -30,18 +19,18 @@ export const isTreasuryBondType = (treasuryBondTypes: string[]) =>
 
 // Getters
 export const getInterestConstParts = (bonds: BondReport[]) => bonds.map(interestConstPart);
-export const getNominalValues = (bonds: BondReport[]) => bonds.map(nominalValue);
-export const getIssueValues = (bonds: BondReport[]) => bonds.map(issueValue);
+export const getNominalValues = (bonds: BondReport[]) => bonds.map(b => b.details.nominalValue);
+export const getIssueValues = (bonds: BondReport[]) => bonds.map(b => b.details.issueValue);
 
 // Getters with unique values
 export const getUniqueInterestBaseTypes = (bonds: BondReport[]): string[] => [...new Set(bonds.map(interestBaseType))];
-export const getUniqueIssuers = (bonds: BondReport[]): string[] => [...new Set(bonds.map(issuer))];
-export const getUniqueMarkets = (bonds: BondReport[]): string[] => [...new Set(bonds.map(market))];
-export const getUniqueCurrencies = (bonds: BondReport[]): string[] => [...new Set(bonds.map(currency))];
+export const getUniqueIssuers = (bonds: BondReport[]): string[] => [...new Set(bonds.map(b => b.details.issuer))];
+export const getUniqueMarkets = (bonds: BondReport[]): string[] => [...new Set(bonds.map(b => b.details.market))];
+export const getUniqueCurrencies = (bonds: BondReport[]): string[] => [...new Set(bonds.map(b => b.details.currency))];
 
 // Group by
-export const groupByType = (bonds: BondReport[]) => Object.groupBy(bonds, bondType) as Record<string, BondReport[]>;
-export const groupByIssuer = (bonds: BondReport[]) => Object.groupBy(bonds, issuer) as Record<string, BondReport[]>;
+export const groupByType = (bonds: BondReport[]) => Object.groupBy(bonds, b => b.details.type) as Record<string, BondReport[]>;
+export const groupByIssuer = (bonds: BondReport[]) => Object.groupBy(bonds, b => b.details.issuer) as Record<string, BondReport[]>;
 export const groupByInterestBaseType = (bonds: BondReport[]) => Object.groupBy(bonds, interestBaseType) as Record<string, BondReport[]>;
 
 // Filters
@@ -51,6 +40,6 @@ export const filterBy = (predicates: BondReportPredicate[]) => (bonds: BondRepor
 // Sorting
 export const sortStrings = (arr: string[]) => [...arr].sort();
 
-export const sortByName = (bonds: BondReport[]) => [...bonds].sort((a, b) => name(a).localeCompare(name(b)));
-export const sortByTimeToMaturityAsc = (bonds: BondReport[]) => [...bonds].sort((a, b) => timeToMaturity(a) - timeToMaturity(b));
-export const sortByInterestProgress = (bonds: BondReport[]) => [...bonds].sort((a, b) => interestProgress(a) - interestProgress(b));
+export const sortByName = (bonds: BondReport[]) => [...bonds].sort((a, b) => a.details.name.localeCompare(b.details.name));
+export const sortByTimeToMaturityAsc = (bonds: BondReport[]) => [...bonds].sort((a, b) => a.currentValues.yearsToMaturity - b.currentValues.yearsToMaturity);
+export const sortByInterestProgress = (bonds: BondReport[]) => [...bonds].sort((a, b) => a.currentValues.interestProgress - b.currentValues.interestProgress);
