@@ -1,4 +1,5 @@
 import { bondDetailsTable, bondStatisticsTable } from "./storage";
+import { bondDetailsTable, bondStatisticsTable, issuerProfilesTable } from "./storage";
 
 const bondsUpdaterFunction = new sst.aws.Function("BondsUpdater", {
   handler: "packages/functions/src/bonds/updateBondReports.handler",
@@ -7,7 +8,13 @@ const bondsUpdaterFunction = new sst.aws.Function("BondsUpdater", {
   environment: {
     TEMP_FOLDER: $dev ? "." : "/tmp",
   },
-  link: [bondDetailsTable, bondStatisticsTable],
+  link: [bondDetailsTable, bondStatisticsTable, issuerProfilesTable],
+  permissions: [
+    {
+      actions: ["bedrock:InvokeModel"],
+      resources: ["arn:aws:bedrock:*::foundation-model/anthropic.claude-3-haiku-20240307-v1:0"],
+    },
+  ],
 });
 
 const notificationSenderFunction = new sst.aws.Function("NotificationSender", {

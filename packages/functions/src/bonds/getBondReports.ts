@@ -4,9 +4,11 @@ import { differenceInDays } from 'date-fns';
 import { lambdaHandler, Success } from "../HandlerProxy";
 import { BondDetails, BondCurrentValues } from '@core/bonds';
 import { BondDetailsTable } from '@core/storage/bondDetails';
+import { IssuerProfilesTable } from '@core/storage/issuerProfiles';
 import { BondReportsQueryResult } from ".";
 
 const dynamoDBClient = new DynamoDBClient({});
+const issuerProfilesTable = new IssuerProfilesTable(dynamoDBClient, Resource.IssuerProfiles.name);
 
 const cachedBondTypes: string[] = [];
 
@@ -103,6 +105,9 @@ export const handler = lambdaHandler<BondReportsQueryResult>(async event => {
     bondReports,
     facets: {
       type: cachedBondTypes
-    }
+    },
+    issuerProfiles: Object.fromEntries(
+      (await issuerProfilesTable.getAll()).map(p => [p.issuerName, p.industry])
+    ),
   });
 });

@@ -1,4 +1,5 @@
 import { profilesTable, bondDetailsTable, bondStatisticsTable } from "./storage";
+import { profilesTable, bondDetailsTable, bondStatisticsTable, issuerProfilesTable } from "./storage";
 
 const USER_POOL_ID = "eu-west-1_IVai0KEAA";
 const USER_POOL_CLIENT_ID = "3qt6td581r3qqsk23tgv9r5duh";
@@ -21,7 +22,7 @@ const getBondsFunction = new sst.aws.Function("GetBonds", {
   handler: "packages/functions/src/bonds/getBondReports.handler",
   memory: "256 MB",
   timeout: "60 seconds",
-  link: [bondDetailsTable],
+  link: [bondDetailsTable, issuerProfilesTable],
 });
 
 const getBondQuotesFunction = new sst.aws.Function("GetBondQuotes", {

@@ -28,3 +28,12 @@ export const bondStatisticsTable = new sst.aws.Dynamo("BondStatistics", {
     rangeKey: "year#month",
   },
 });
+
+export const issuerProfilesTable = new sst.aws.Dynamo("IssuerProfiles", {
+  fields: {
+    issuerName: "string",
+  },
+  primaryIndex: {
+    hashKey: "issuerName",
+  },
+});

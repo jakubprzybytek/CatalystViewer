@@ -20,6 +20,7 @@ import IssuersViewer from "./issuers/IssuersViewer";
 import BondReportsFilterDrawer, { BondReportsFilteringOptions, filterUsing } from "./filter";
 import BondReportsSortMenu, { BondReportsSortOrder, getBondReportsSortingFunction } from "./sort";
 import { BondReport, getBondReports } from "@/sdk/Bonds";
+import { BondReport, BondReportsQueryResult, getBondReports } from "@/sdk/Bonds";
 import { computeStatisticsForInterestBaseTypes } from "@/bonds/statistics";
 import NewBondsList from "./view/NewBondsList";
 
@@ -73,6 +74,7 @@ export default function BondReportsBrowser({ settings, setSettings }: BondReport
 
   const [allBondReports, setAllBondReports] = useState<BondReport[]>([]);
   const [allBondTypes, setAllBondTypes] = useState<string[]>([]);
+  const [issuerProfiles, setIssuerProfiles] = useState<Record<string, string>>({});
 
   // view
   const [view, setView] = useSettings<BondReportsView>(settings, setSettings, 'view', DEFAULT_VIEW_SETTING);
@@ -101,6 +103,7 @@ export default function BondReportsBrowser({ settings, setSettings }: BondReport
       setErrorMessage(undefined);
       setAllBondReports(bondsResponse.bondReports);
       setAllBondTypes(bondsResponse.facets.type);
+      setIssuerProfiles(bondsResponse.issuerProfiles ?? {});
       console.log(`Fetched '${bondsResponse.bondReports.length}' bond reports`);
     } catch (error) {
       if (error instanceof Error) {
@@ -212,7 +215,7 @@ export default function BondReportsBrowser({ settings, setSettings }: BondReport
           <NewBondsList bondReports={filteredAndSortedBondsReports} statistics={bondReportsStatistics} />
         </Condition>
         <Condition render={view == BondReportsView.Issuers}>
-          <IssuersViewer bondReports={filteredBondReportsWithoutIssuers} statistics={bondReportsStatistics} filteringOptions={filteringOptions} setFilteringOptions={setFilteringOptions} />
+          <IssuersViewer bondReports={filteredBondReportsWithoutIssuers} statistics={bondReportsStatistics} filteringOptions={filteringOptions} setFilteringOptions={setFilteringOptions} issuerProfiles={issuerProfiles} />
         </Condition>
         <Condition render={errorMessage !== undefined}>
           <Alert severity="error">

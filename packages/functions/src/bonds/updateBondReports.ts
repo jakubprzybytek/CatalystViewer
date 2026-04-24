@@ -9,9 +9,13 @@ import { CatalystBondQuote, CatalystDailyStatisticsBondDetails, getCurrentCataly
 import { getBondInformation } from '@core/bonds/obligacjepl';
 import { BondDetailsTable, DbBondDetails } from '@core/storage/bondDetails';
 import { BondQuotesQuery, BondStatisticsTable, DbBondStatistics } from '@core/storage/bondStatistics';
+import { IssuerProfilesTable } from '@core/storage/issuerProfiles';
 import { UpdateBondsResult, UpdatedBond } from '.';
+import { IssuerClassifier } from './IssuerClassifier';
 
 const dynamoDbClient = new DynamoDBClient({});
+const issuerProfilesTable = new IssuerProfilesTable(dynamoDbClient, Resource.IssuerProfiles.name);
+const issuerClassifier = new IssuerClassifier();
 
 const bondId = (bond: DbBondDetails | CatalystBondQuote | CatalystDailyStatisticsBondDetails): string => `${bond.name}#${bond.market}`;
 const mapByBondId = R.reduce((map: Record<string, DbBondDetails | CatalystBondQuote>, curr: DbBondDetails | CatalystBondQuote) => R.assoc(bondId(curr), curr, map), {});
@@ -127,6 +131,28 @@ export async function handler(): Promise<UpdateBondsResult> {
       ...bond,
       status: 'inactive'
     }));
+
+  // classify new issuers
+  const storedIssuerNames = new Set(storedBondsList.map(b => b.issuer));
+  const newIssuerNames = [...new Set(newBondsToStore.map(b => b.issuer))]
+    .filter(issuer => !storedIssuerNames.has(issuer));
+
+  for (const issuerName of newIssuerNames) {
+    try {
+      const existing = await issuerProfilesTable.get(issuerName);
+      if (!existing) {
+        const { industry, modelId } = await issuerClassifier.classifyIndustry(issuerName);
+        await issuerProfilesTable.store({
+          issuerName,
+          industry,
+          classifiedAt: Date.now(),
+          classifiedBy: modelId,
+        });
+      }
+    } catch (error) {
+      console.error(`Failed to classify issuer '${issuerName}':`, error);
+    }
+  }
 
   await bondDetailsTable.storeAll(updatedBondsToStore
     .concat(newBondsToStore)

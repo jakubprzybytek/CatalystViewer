@@ -34,6 +34,10 @@ declare module "sst" {
       "name": string
       "type": "sst.aws.Function"
     }
+    "IssuerProfiles": {
+      "name": string
+      "type": "sst.aws.Dynamo"
+    }
     "NotificationSender": {
       "name": string
       "type": "sst.aws.Function"

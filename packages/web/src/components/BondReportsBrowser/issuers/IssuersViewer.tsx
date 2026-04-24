@@ -13,9 +13,10 @@ type IssuersViewerParams = {
   statistics: InterestPercentilesByInterestBaseType;
   filteringOptions: BondReportsFilteringOptions;
   setFilteringOptions: (param: BondReportsFilteringOptions) => void;
+  issuerProfiles: Record<string, string>;
 }
 
-export default function IssuersViewer({ bondReports, statistics, filteringOptions, setFilteringOptions }: IssuersViewerParams): React.JSX.Element {
+export default function IssuersViewer({ bondReports, statistics, filteringOptions, setFilteringOptions, issuerProfiles }: IssuersViewerParams): React.JSX.Element {
   const issuerReports = useMemo(() => {
     const bondsByIssuer = groupByIssuer(bondReports);
     const issuerReports: IssuerReport[] = [];
@@ -37,7 +38,8 @@ export default function IssuersViewer({ bondReports, statistics, filteringOption
           minNominalValue: min(nominalValues),
           maxNominalValue: max(nominalValues),
           avgIssueValue: average(issueValues),
-          totalIssueValue: sum(issueValues)
+          totalIssueValue: sum(issueValues),
+          industry: issuerProfiles[issuer],
         });
       });
     });

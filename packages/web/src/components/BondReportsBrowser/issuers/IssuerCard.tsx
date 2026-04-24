@@ -49,6 +49,13 @@ export default function IssuerCard({ issuerReport, statistics, selectedIssuers, 
               onChange={(event: React.ChangeEvent<HTMLInputElement>) => event.target.checked ? addIssuer(issuerReport.name) : removeIssuer(issuerReport.name)} />
           </Stack>
         </CardSectionRow>
+        {issuerReport.industry && (
+          <CardSectionRow>
+            <CardEntry caption='Industry'>
+              <CardValue colorCode='white'>{issuerReport.industry}</CardValue>
+            </CardEntry>
+          </CardSectionRow>
+        )}
         <CardSectionRow>
           <CardEntry caption='Bonds'>
             <CardValue bold>{issuerReport.count}</CardValue>

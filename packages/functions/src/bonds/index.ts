@@ -25,6 +25,7 @@ export type BondReportsQueryResult = {
     facets: {
         type: string[];
     };
+    issuerProfiles: Record<string, string>;
 }
 
 export type UpdatedBond = {
