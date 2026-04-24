@@ -1,11 +1,11 @@
-import { DynamoDBClient, ScanCommand, ScanCommandOutput } from '@aws-sdk/client-dynamodb';
+import { DynamoDBDocumentClient, ScanCommand, ScanCommandOutput } from '@aws-sdk/lib-dynamodb';
 
-export const scanAll = async (dynamoDBClient: DynamoDBClient, scanCommand: ScanCommand): Promise<ScanCommandOutput> => {
-    const result = await dynamoDBClient.send(scanCommand);
+export const scanAll = async (dynamoDBDocumentClient: DynamoDBDocumentClient, scanCommand: ScanCommand): Promise<ScanCommandOutput> => {
+    const result = await dynamoDBDocumentClient.send(scanCommand);
     let lastEvaluatedKey = result.LastEvaluatedKey;
     while (lastEvaluatedKey && Object.keys(lastEvaluatedKey).length !== 0 && !scanCommand.input.Limit) {
         scanCommand.input.ExclusiveStartKey = lastEvaluatedKey;
-        const newResult = await dynamoDBClient.send(scanCommand);
+        const newResult = await dynamoDBDocumentClient.send(scanCommand);
         lastEvaluatedKey = newResult.LastEvaluatedKey;
         if (newResult.Items) {
             if (!result.Items) {

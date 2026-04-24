@@ -1,13 +1,15 @@
-import { marshall, unmarshall } from "@aws-sdk/util-dynamodb";
-import { AttributeValue, DynamoDBClient, GetItemCommand, GetItemInput, PutItemCommand, PutItemInput, UpdateItemCommand, UpdateItemCommandInput } from "@aws-sdk/client-dynamodb";
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { DynamoDBDocumentClient, GetCommand, PutCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import { BondQuote, DbBondStatistics } from ".";
 
 export class BondStatisticsTable {
-  readonly dynamoDBClient: DynamoDBClient;
+  readonly dynamoDBDocumentClient: DynamoDBDocumentClient;
   readonly tableName: string;
 
   constructor(dynamoDBClient: DynamoDBClient, tableName: string) {
-    this.dynamoDBClient = dynamoDBClient;
+    this.dynamoDBDocumentClient = DynamoDBDocumentClient.from(dynamoDBClient, {
+      marshallOptions: { removeUndefinedValues: true }
+    });
     this.tableName = tableName;
   }
 
@@ -17,113 +19,71 @@ export class BondStatisticsTable {
     const quote = bondStatistics.quotes[0];
     const dateKey = new Date(quote.date).toISOString().substring(0, 10);
 
-    const putInput: PutItemInput = {
+    await this.dynamoDBDocumentClient.send(new PutCommand({
       TableName: this.tableName,
       Item: {
-        name: { S: bondStatistics.name },
-        market: { S: bondStatistics.market },
-        'name#market': { S: `${bondStatistics.name}#${bondStatistics.market}` },
-        year: { N: bondStatistics.year.toString() },
-        month: { N: bondStatistics.month.toString() },
-        'year#month': { S: `${bondStatistics.year}#${bondStatistics.month}` },
-        'quotes': {
-          M: {
-            [dateKey]: {
-              M: {
-                ...(quote.date && { date: { N: quote.date.toString() } }),
-                ...(quote.bid && { bid: { N: quote.bid.toString() } }),
-                ...(quote.ask && { ask: { N: quote.ask.toString() } }),
-                ...(quote.close && { close: { N: quote.close.toString() } }),
-                ...(quote.transactions && { transactions: { N: quote.transactions.toString() } }),
-                ...(quote.volume && { volume: { N: quote.volume.toString() } }),
-                ...(quote.turnover && { turnover: { N: quote.turnover.toString() } })
-              }
-            }
-          }
-        }
+        name: bondStatistics.name,
+        market: bondStatistics.market,
+        'name#market': `${bondStatistics.name}#${bondStatistics.market}`,
+        year: bondStatistics.year,
+        month: bondStatistics.month,
+        'year#month': `${bondStatistics.year}#${bondStatistics.month}`,
+        quotes: { [dateKey]: quote }
       }
-    }
-
-    await this.dynamoDBClient.send(new PutItemCommand(putInput));
+    }));
   }
 
   async updateQuotes(bondStatistics: DbBondStatistics): Promise<boolean> {
-    console.log(`BondStatisticsTable: Updateing quote for '${bondStatistics.name}#${bondStatistics.market}'`);
+    console.log(`BondStatisticsTable: Updating quote for '${bondStatistics.name}#${bondStatistics.market}'`);
 
     const quote = bondStatistics.quotes[0];
     const dateKey = new Date(quote.date).toISOString().substring(0, 10);
 
-    const updateInput: UpdateItemCommandInput = {
-      TableName: this.tableName,
-      ExpressionAttributeNames: {
-        "#QUOTES": "quotes",
-        "#DATE": dateKey
-      },
-      ExpressionAttributeValues: {
-        ":quote": {
-          M: {
-            ...(quote.date && { date: { N: quote.date.toString() } }),
-            ...(quote.bid && { bid: { N: quote.bid.toString() } }),
-            ...(quote.ask && { ask: { N: quote.ask.toString() } }),
-            ...(quote.close && { close: { N: quote.close.toString() } }),
-            ...(quote.transactions && { transactions: { N: quote.transactions.toString() } }),
-            ...(quote.volume && { volume: { N: quote.volume.toString() } }),
-            ...(quote.turnover && { turnover: { N: quote.turnover.toString() } })
-          }
-        }
-      },
-      Key: {
-        'name#market': { S: `${bondStatistics.name}#${bondStatistics.market}` },
-        'year#month': { S: `${bondStatistics.year}#${bondStatistics.month}` }
-      },
-      UpdateExpression: "SET #QUOTES.#DATE = :quote",
-      ConditionExpression: "attribute_exists(#QUOTES)"
-    };
-
     try {
-      await this.dynamoDBClient.send(new UpdateItemCommand(updateInput));
+      await this.dynamoDBDocumentClient.send(new UpdateCommand({
+        TableName: this.tableName,
+        Key: {
+          'name#market': `${bondStatistics.name}#${bondStatistics.market}`,
+          'year#month': `${bondStatistics.year}#${bondStatistics.month}`
+        },
+        ExpressionAttributeNames: {
+          "#QUOTES": "quotes",
+          "#DATE": dateKey
+        },
+        ExpressionAttributeValues: {
+          ":quote": quote
+        },
+        UpdateExpression: "SET #QUOTES.#DATE = :quote",
+        ConditionExpression: "attribute_exists(#QUOTES)"
+      }));
       return true;
     } catch (error: any) {
       if (error.name === 'ConditionalCheckFailedException') {
         return false;
       }
-      else {
-        throw error;
-      }
+      throw error;
     }
   }
 
   async get(bondId: string, year: number, month: number): Promise<DbBondStatistics | undefined> {
     console.log(`DbBondStatistics: Fetching statistics for: ${bondId} | ${year}-${month}`);
 
-    const getInput: GetItemInput = {
+    const result = await this.dynamoDBDocumentClient.send(new GetCommand({
       TableName: this.tableName,
       Key: {
-        'name#market': { S: `${bondId}` },
-        'year#month': { S: `${year}#${month}` }
+        'name#market': bondId,
+        'year#month': `${year}#${month}`
       }
-    }
+    }));
 
-    const result = await this.dynamoDBClient.send(new GetItemCommand(getInput));
     const item = result.Item;
-
-    return item !== undefined ? {
-      name: item['name']['S'] || '',
-      market: item['market']['S'] || '',
-      year: Number(item['year']?.['N']),
-      month: Number(item['month']?.['N']),
-      quotes: this.unmarshallQuotes(item['quotes']?.['M']),
+    return item ? {
+      name: item.name,
+      market: item.market,
+      year: item.year,
+      month: item.month,
+      quotes: Object.values(item.quotes) as BondQuote[]
     } : undefined;
-  }
-
-  unmarshallQuotes(map: Record<string, AttributeValue> | undefined): BondQuote[] {
-    if (map === undefined) {
-      return [];
-    }
-    return Object.values(map)
-      .map(quoteAttributeValue => quoteAttributeValue['M'])
-      .filter((quoteObject): quoteObject is Record<string, AttributeValue> => !!quoteObject)
-      .map(quoteAttributeValue => unmarshall(quoteAttributeValue) as BondQuote);
   }
 
 }

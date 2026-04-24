@@ -1,17 +1,44 @@
 import * as R from 'ramda';
-import { DynamoDBClient, BatchWriteItemCommandInput, BatchWriteItemCommand, ScanCommand, QueryCommand } from '@aws-sdk/client-dynamodb';
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
+import { DynamoDBDocumentClient, BatchWriteCommand, ScanCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
 import { DbBondDetails } from '.';
 import { queryAll, scanAll } from '../utils';
-import { DbBondDetailsToPutRequest, ItemToDbBondDetails } from './BondDetailsTableMapper';
+
+function DbBondDetailsToPutRequest(dbBondDetails: DbBondDetails) {
+  const { type, status, maturityDay, ...rest } = dbBondDetails;
+  return {
+    PutRequest: {
+      Item: {
+        ...rest,
+        bondType: type,
+        bondStatus: status,
+        'name#market': `${dbBondDetails.name}#${dbBondDetails.market}`,
+        maturityDay: maturityDay.toISOString().substring(0, 10),
+      }
+    }
+  };
+}
+
+function ItemToDbBondDetails(item: Record<string, any>): DbBondDetails {
+  const { bondType, bondStatus, 'name#market': _nm, maturityDay, ...rest } = item;
+  return {
+    ...rest,
+    type: bondType,
+    status: bondStatus || 'inactive',
+    maturityDay: new Date(Date.parse(maturityDay)),
+  } as DbBondDetails;
+}
 
 const BATCH_SIZE = 25;
 
 export class BondDetailsTable {
-  readonly dynamoDBClient: DynamoDBClient;
+  readonly dynamoDBDocumentClient: DynamoDBDocumentClient;
   readonly tableName: string;
 
   constructor(dynamoDBClient: DynamoDBClient, tableName: string) {
-    this.dynamoDBClient = dynamoDBClient;
+    this.dynamoDBDocumentClient = DynamoDBDocumentClient.from(dynamoDBClient, {
+      marshallOptions: { removeUndefinedValues: true }
+    });
     this.tableName = tableName;
   }
 
@@ -20,18 +47,15 @@ export class BondDetailsTable {
 
     const bondsBatches: DbBondDetails[][] = [];
     for (let i = 0; i < bonds.length; i += BATCH_SIZE) {
-      const batch = bonds.slice(i, i + BATCH_SIZE);
-      bondsBatches.push(batch);
+      bondsBatches.push(bonds.slice(i, i + BATCH_SIZE));
     }
 
     for (const bondsBatch of bondsBatches) {
-      const batchWriteParams: BatchWriteItemCommandInput = {
-        "RequestItems": {
+      const result = await this.dynamoDBDocumentClient.send(new BatchWriteCommand({
+        RequestItems: {
           [this.tableName]: bondsBatch.map(DbBondDetailsToPutRequest),
         },
-      }
-
-      const result = await this.dynamoDBClient.send(new BatchWriteItemCommand(batchWriteParams));
+      }));
 
       const errors = result.UnprocessedItems?.[this.tableName];
       console.log(`Saved ${bondsBatch.length} objects`);
@@ -44,7 +68,6 @@ export class BondDetailsTable {
   }
 
   async getAllActive(): Promise<DbBondDetails[]> {
-
     console.log('BondDetailsTable: Fetching all active bonds');
 
     const startTimestamp = new Date().getTime();
@@ -53,11 +76,11 @@ export class BondDetailsTable {
       TableName: this.tableName,
       FilterExpression: 'bondStatus = :bs',
       ExpressionAttributeValues: {
-        ":bs": { S: "active" }
+        ':bs': 'active'
       }
     });
 
-    const result = await scanAll(this.dynamoDBClient, scanCommand);
+    const result = await scanAll(this.dynamoDBDocumentClient, scanCommand);
     const endTimestamp = new Date().getTime();
     console.log(`BondDetailsTable: Returning ${result.Count ? result.Count : 0} bonds in ${endTimestamp - startTimestamp} ms.`);
 
@@ -65,7 +88,6 @@ export class BondDetailsTable {
   }
 
   async getActive(bondType: string): Promise<DbBondDetails[]> {
-
     console.log(`BondDetailsTable: Fetching active bonds with type: ${bondType}`);
 
     const startTimestamp = new Date().getTime();
@@ -75,12 +97,12 @@ export class BondDetailsTable {
       KeyConditionExpression: 'bondType = :bt',
       FilterExpression: 'bondStatus = :bs',
       ExpressionAttributeValues: {
-        ':bs': { S: "active" },
-        ':bt': { S: bondType }
+        ':bs': 'active',
+        ':bt': bondType
       }
     });
 
-    const result = await queryAll(this.dynamoDBClient, queryCommand);
+    const result = await queryAll(this.dynamoDBDocumentClient, queryCommand);
     const endTimestamp = new Date().getTime();
     console.log(`BondDetailsTable: Returning ${result.Count ? result.Count : 0} bonds in ${endTimestamp - startTimestamp} ms.`);
 
@@ -88,7 +110,6 @@ export class BondDetailsTable {
   }
 
   async getAllTypes(): Promise<string[]> {
-
     console.log('BondDetailsTable: Fetching all bonds types');
 
     const startTimestamp = new Date().getTime();
@@ -97,15 +118,15 @@ export class BondDetailsTable {
       TableName: this.tableName,
       FilterExpression: 'bondStatus = :bs',
       ExpressionAttributeValues: {
-        ":bs": { S: "active" }
+        ':bs': 'active'
       },
       ProjectionExpression: 'bondType'
     });
 
-    const result = await scanAll(this.dynamoDBClient, scanCommand);
+    const result = await scanAll(this.dynamoDBDocumentClient, scanCommand);
     const endTimestamp = new Date().getTime();
 
-    const allBondTypes = result.Items ? result.Items.map(item => item['bondType']['S'] || '') : [];
+    const allBondTypes = result.Items ? result.Items.map(item => item['bondType'] as string || '') : [];
     const uniqueBondTypes = R.uniq(allBondTypes);
 
     console.log(`BondDetailsTable: Returning ${uniqueBondTypes.length} bond types in ${endTimestamp - startTimestamp} ms.`);

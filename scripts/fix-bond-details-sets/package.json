@@ -1,0 +1,18 @@
+{
+  "name": "fix-bond-details-sets",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "fix": "tsx fix-bond-details-sets.ts",
+    "fix:dry": "tsx fix-bond-details-sets.ts --dry-run"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.0.0",
+    "@aws-sdk/lib-dynamodb": "^3.0.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.0.0",
+    "typescript": "^5.0.0"
+  }
+}
