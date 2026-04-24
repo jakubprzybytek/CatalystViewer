@@ -22,6 +22,18 @@ declare module "sst" {
       "name": string
       "type": "sst.aws.Function"
     }
+    "ClassificationNotificationSender": {
+      "name": string
+      "type": "sst.aws.Function"
+    }
+    "ClassifyIssuers": {
+      "name": string
+      "type": "sst.aws.Function"
+    }
+    "CollectUnclassifiedIssuers": {
+      "name": string
+      "type": "sst.aws.Function"
+    }
     "GetBondQuotes": {
       "name": string
       "type": "sst.aws.Function"
@@ -33,6 +45,10 @@ declare module "sst" {
     "GetProfile": {
       "name": string
       "type": "sst.aws.Function"
+    }
+    "IssuerProfiles": {
+      "name": string
+      "type": "sst.aws.Dynamo"
     }
     "NotificationSender": {
       "name": string

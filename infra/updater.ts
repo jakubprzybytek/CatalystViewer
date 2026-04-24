@@ -1,4 +1,4 @@
-import { bondDetailsTable, bondStatisticsTable } from "./storage";
+import { bondDetailsTable, bondStatisticsTable, issuerProfilesTable } from "./storage";
 
 const bondsUpdaterFunction = new sst.aws.Function("BondsUpdater", {
   handler: "packages/functions/src/bonds/updateBondReports.handler",
@@ -15,6 +15,47 @@ const notificationSenderFunction = new sst.aws.Function("NotificationSender", {
   timeout: "10 seconds",
   copyFiles: [
     { from: "packages/functions/src/emails/bondsUpdateReportNotification.pug" },
+  ],
+  permissions: [
+    {
+      actions: ["ses:SendEmail"],
+      resources: ["arn:aws:ses:eu-west-1:198805281865:identity/*"],
+    },
+    {
+      actions: ["ssm:GetParameter"],
+      resources: [
+        "arn:aws:ssm:eu-west-1:198805281865:parameter/catalyst-viewer/notifications/recipients",
+      ],
+    },
+  ],
+});
+
+const collectUnclassifiedIssuersFunction = new sst.aws.Function("CollectUnclassifiedIssuers", {
+  handler: "packages/functions/src/issuers/collectUnclassifiedIssuers.handler",
+  timeout: "60 seconds",
+  link: [bondDetailsTable, issuerProfilesTable],
+});
+
+const classifyIssuersFunction = new sst.aws.Function("ClassifyIssuers", {
+  handler: "packages/functions/src/issuers/classifyIssuers.handler",
+  timeout: "5 minutes",
+  link: [issuerProfilesTable],
+  permissions: [
+    {
+      actions: ["bedrock:InvokeModel"],
+      resources: [
+        "arn:aws:bedrock:*::foundation-model/*",
+        "arn:aws:bedrock:*:*:inference-profile/*",
+      ],
+    },
+  ],
+});
+
+const classificationNotificationSenderFunction = new sst.aws.Function("ClassificationNotificationSender", {
+  handler: "packages/functions/src/emails/sendClassificationNotification.handler",
+  timeout: "10 seconds",
+  copyFiles: [
+    { from: "packages/functions/src/emails/issuerClassificationNotification.pug" },
   ],
   permissions: [
     {
@@ -49,14 +90,17 @@ new aws.iam.RolePolicy("BondsUpdaterSfnPolicy", {
   policy: $resolve([
     bondsUpdaterFunction.arn,
     notificationSenderFunction.arn,
-  ]).apply(([updaterArn, notifArn]) =>
+    collectUnclassifiedIssuersFunction.arn,
+    classifyIssuersFunction.arn,
+    classificationNotificationSenderFunction.arn,
+  ]).apply(([updaterArn, notifArn, collectArn, classifyArn, classifNotifArn]) =>
     JSON.stringify({
       Version: "2012-10-17",
       Statement: [
         {
           Effect: "Allow",
           Action: "lambda:InvokeFunction",
-          Resource: [updaterArn, notifArn],
+          Resource: [updaterArn, notifArn, collectArn, classifyArn, classifNotifArn],
         },
       ],
     })
@@ -68,7 +112,10 @@ const stateMachine = new aws.sfn.StateMachine("BondsUpdaterStateMachine", {
   definition: $resolve([
     bondsUpdaterFunction.arn,
     notificationSenderFunction.arn,
-  ]).apply(([updaterArn, notifArn]) =>
+    collectUnclassifiedIssuersFunction.arn,
+    classifyIssuersFunction.arn,
+    classificationNotificationSenderFunction.arn,
+  ]).apply(([updaterArn, notifArn, collectArn, classifyArn, classifNotifArn]) =>
     JSON.stringify({
       StartAt: "UpdateBonds",
       States: {
@@ -79,6 +126,48 @@ const stateMachine = new aws.sfn.StateMachine("BondsUpdaterStateMachine", {
             FunctionName: updaterArn,
           },
           TimeoutSeconds: 600,
+          Next: "CollectUnclassifiedIssuers",
+        },
+        "CollectUnclassifiedIssuers": {
+          Type: "Task",
+          Resource: "arn:aws:states:::lambda:invoke",
+          Parameters: {
+            FunctionName: collectArn,
+            "Payload.$": "$.Payload",
+          },
+          TimeoutSeconds: 60,
+          Next: "HasUnclassifiedIssuers",
+        },
+        "HasUnclassifiedIssuers": {
+          Type: "Choice",
+          Choices: [
+            {
+              Variable: "$.Payload.unclassifiedIssuers[0]",
+              IsPresent: true,
+              Next: "ClassifyIssuers",
+            },
+          ],
+          Default: "MajorChanges",
+        },
+        "ClassifyIssuers": {
+          Type: "Task",
+          Resource: "arn:aws:states:::lambda:invoke",
+          Parameters: {
+            FunctionName: classifyArn,
+            "Payload.$": "$.Payload",
+          },
+          TimeoutSeconds: 300,
+          Retry: [],
+          Next: "SendClassificationNotification",
+        },
+        "SendClassificationNotification": {
+          Type: "Task",
+          Resource: "arn:aws:states:::lambda:invoke",
+          Parameters: {
+            FunctionName: classifNotifArn,
+            "Payload.$": "$.Payload",
+          },
+          TimeoutSeconds: 10,
           Next: "MajorChanges",
         },
         "MajorChanges": {
