@@ -73,8 +73,8 @@ export default function IssuerCard({ issuerReport, statistics, selectedIssuers, 
             <Stack direction='row' justifyContent='space-between' alignItems='center'>
               <Typography variant='h6'>{issuerReport.name}</Typography>
               <Stack direction='row' alignItems='center'>
-                {issuerReport.businessSummary && (
-                  <IconButton size='small' onClick={() => setSummaryOpen(true)}>
+                {issuerReport.industry && issuerReport.businessSummary && (
+                  <IconButton size='small' aria-label='View issuer business summary' onClick={() => setSummaryOpen(true)}>
                     <InfoOutlinedIcon fontSize='small' />
                   </IconButton>
                 )}

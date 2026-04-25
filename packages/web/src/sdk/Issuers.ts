@@ -22,7 +22,7 @@ export async function getIssuerProfiles(): Promise<IssuerProfile[]> {
         const data = (await response.body.json()) as unknown as { issuerProfiles: IssuerProfile[] };
         return data.issuerProfiles;
     } catch (error) {
-        console.log('Failed to fetch issuer profiles:', error);
+        console.error('Failed to fetch issuer profiles:', error);
         return [];
     }
 }
