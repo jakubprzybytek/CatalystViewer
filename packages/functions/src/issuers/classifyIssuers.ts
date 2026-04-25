@@ -96,7 +96,8 @@ export async function handler(input: CollectIssuersResult): Promise<ClassifyIssu
                 issuerName,
                 industry: classification.industry,
                 businessSummary: classification.businessSummary,
-                classifiedAt: Date.now(),
+                classifiedAt: new Date().toISOString(),
+                classifiedAtTs: Date.now(),
                 modelId: MODEL_ID,
             });
 
