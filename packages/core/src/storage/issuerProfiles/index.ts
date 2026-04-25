@@ -4,6 +4,7 @@ export type DbIssuerProfile = {
     issuerName: string;
     industry: string;
     businessSummary: string;
-    classifiedAt: number;
+    classifiedAt: string;
+    classifiedAtTs: number;
     modelId: string;
 }
