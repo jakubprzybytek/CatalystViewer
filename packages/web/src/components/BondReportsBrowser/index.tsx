@@ -20,6 +20,7 @@ import IssuersViewer from "./issuers/IssuersViewer";
 import BondReportsFilterDrawer, { BondReportsFilteringOptions, filterUsing } from "./filter";
 import BondReportsSortMenu, { BondReportsSortOrder, getBondReportsSortingFunction } from "./sort";
 import { BondReport, getBondReports } from "@/sdk/Bonds";
+import { IssuerProfile, getIssuerProfiles } from "@/sdk/Issuers";
 import { computeStatisticsForInterestBaseTypes } from "@/bonds/statistics";
 import NewBondsList from "./view/NewBondsList";
 
@@ -73,6 +74,7 @@ export default function BondReportsBrowser({ settings, setSettings }: BondReport
 
   const [allBondReports, setAllBondReports] = useState<BondReport[]>([]);
   const [allBondTypes, setAllBondTypes] = useState<string[]>([]);
+  const [issuerProfiles, setIssuerProfiles] = useState<IssuerProfile[]>([]);
 
   // view
   const [view, setView] = useSettings<BondReportsView>(settings, setSettings, 'view', DEFAULT_VIEW_SETTING);
@@ -97,10 +99,11 @@ export default function BondReportsBrowser({ settings, setSettings }: BondReport
   async function fetchData(bondType: string) {
     console.log(`Fetching reports for bond type: ${bondType}`);
     try {
-      const bondsResponse = await getBondReports(bondType);
+      const [bondsResponse, profiles] = await Promise.all([getBondReports(bondType), getIssuerProfiles()]);
       setErrorMessage(undefined);
       setAllBondReports(bondsResponse.bondReports);
       setAllBondTypes(bondsResponse.facets.type);
+      setIssuerProfiles(profiles);
       console.log(`Fetched '${bondsResponse.bondReports.length}' bond reports`);
     } catch (error) {
       if (error instanceof Error) {
@@ -212,7 +215,7 @@ export default function BondReportsBrowser({ settings, setSettings }: BondReport
           <NewBondsList bondReports={filteredAndSortedBondsReports} statistics={bondReportsStatistics} />
         </Condition>
         <Condition render={view == BondReportsView.Issuers}>
-          <IssuersViewer bondReports={filteredBondReportsWithoutIssuers} statistics={bondReportsStatistics} filteringOptions={filteringOptions} setFilteringOptions={setFilteringOptions} />
+          <IssuersViewer bondReports={filteredBondReportsWithoutIssuers} issuerProfiles={issuerProfiles} statistics={bondReportsStatistics} filteringOptions={filteringOptions} setFilteringOptions={setFilteringOptions} />
         </Condition>
         <Condition render={errorMessage !== undefined}>
           <Alert severity="error">

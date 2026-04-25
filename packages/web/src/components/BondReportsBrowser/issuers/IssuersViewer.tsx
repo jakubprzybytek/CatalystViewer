@@ -4,19 +4,22 @@ import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import IssuersList from './IssuersList';
 import { BondReport } from '@/sdk/Bonds';
+import { IssuerProfile } from '@/sdk/Issuers';
 import { InterestPercentilesByInterestBaseType, getInterestConstParts, groupByIssuer, groupByInterestBaseType, getNominalValues, getIssueValues } from '@/bonds/statistics';
 import { IssuerReport, sortByInterestConstAverage } from '.';
 import { BondReportsFilteringOptions } from '../filter';
 
 type IssuersViewerParams = {
   bondReports: BondReport[];
+  issuerProfiles: IssuerProfile[];
   statistics: InterestPercentilesByInterestBaseType;
   filteringOptions: BondReportsFilteringOptions;
   setFilteringOptions: (param: BondReportsFilteringOptions) => void;
 }
 
-export default function IssuersViewer({ bondReports, statistics, filteringOptions, setFilteringOptions }: IssuersViewerParams): React.JSX.Element {
+export default function IssuersViewer({ bondReports, issuerProfiles, statistics, filteringOptions, setFilteringOptions }: IssuersViewerParams): React.JSX.Element {
   const issuerReports = useMemo(() => {
+    const profilesByName = new Map<string, IssuerProfile>(issuerProfiles.map(p => [p.issuerName, p]));
     const bondsByIssuer = groupByIssuer(bondReports);
     const issuerReports: IssuerReport[] = [];
 
@@ -27,6 +30,7 @@ export default function IssuersViewer({ bondReports, statistics, filteringOption
 
         const nominalValues = getNominalValues(bondsByInterestVariablePart);
         const issueValues = getIssueValues(bondsByInterestVariablePart);
+        const profile = profilesByName.get(issuer);
 
         issuerReports.push({
           name: issuer,
@@ -37,13 +41,14 @@ export default function IssuersViewer({ bondReports, statistics, filteringOption
           minNominalValue: min(nominalValues),
           maxNominalValue: max(nominalValues),
           avgIssueValue: average(issueValues),
-          totalIssueValue: sum(issueValues)
+          totalIssueValue: sum(issueValues),
+          ...(profile && { industry: profile.industry, businessSummary: profile.businessSummary }),
         });
       });
     });
 
     return sortByInterestConstAverage(issuerReports);
-  }, [bondReports]);
+  }, [bondReports, issuerProfiles]);
 
   return (
     <IssuersList issuers={issuerReports} statistics={statistics} filteringOptions={filteringOptions} setFilteringOptions={setFilteringOptions} />
