@@ -187,8 +187,16 @@ const stateMachine = new aws.sfn.StateMachine("BondsUpdaterStateMachine", {
           Type: "Choice",
           Choices: [
             {
-              Variable: "$$.Execution.Input.forceClassification",
-              BooleanEquals: true,
+              And: [
+                {
+                  Variable: "$$.Execution.Input.forceClassification",
+                  IsPresent: true,
+                },
+                {
+                  Variable: "$$.Execution.Input.forceClassification",
+                  BooleanEquals: true,
+                },
+              ],
               Next: "ApplyForceClassification",
             },
           ],
