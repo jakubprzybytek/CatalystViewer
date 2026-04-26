@@ -21,21 +21,21 @@ export const interestConstPartColors: ColorCode[] = ['green', 'yellow', 'orange'
 function getIndustryColors(industry: string): { backgroundColor: string; color: string } {
   switch (industry) {
     case 'Developer':
-      return { backgroundColor: '#d32f2f', color: '#ffffff' };
+      return { backgroundColor: '#FECACA', color: '#7F1D1D' };
     case 'Finance':
-      return { backgroundColor: '#1565c0', color: '#ffffff' };
+      return { backgroundColor: '#BFDBFE', color: '#1E3A5F' };
     case 'Energy':
-      return { backgroundColor: '#e65100', color: '#ffffff' };
+      return { backgroundColor: '#FED7AA', color: '#7C2D12' };
     case 'Health Services':
-      return { backgroundColor: '#2e7d32', color: '#ffffff' };
+      return { backgroundColor: '#BBF7D0', color: '#14532D' };
     case 'Retail':
-      return { backgroundColor: '#6a1b9a', color: '#ffffff' };
+      return { backgroundColor: '#E9D5FF', color: '#4C1D95' };
     case 'Manufacturing':
-      return { backgroundColor: '#4e342e', color: '#ffffff' };
+      return { backgroundColor: '#D6BCB0', color: '#3E2118' };
     case 'Municipal':
-      return { backgroundColor: '#00695c', color: '#ffffff' };
+      return { backgroundColor: '#99F6E4', color: '#134E4A' };
     default:
-      return { backgroundColor: '#546e7a', color: '#ffffff' };
+      return { backgroundColor: '#CBD5E1', color: '#1E293B' };
   }
 }
 
