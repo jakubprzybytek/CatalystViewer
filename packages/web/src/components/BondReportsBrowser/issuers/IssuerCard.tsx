@@ -78,7 +78,7 @@ export default function IssuerCard({ issuerReport, statistics, selectedIssuers, 
               <Checkbox
                 checked={isChecked}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>) => event.target.checked ? addIssuer(issuerReport.name) : removeIssuer(issuerReport.name)} />
-              {issuerReport.businessSummary && (
+              {(issuerReport.businessSummary || issuerReport.websiteUrl) && (
                 <IconButton size='small' onClick={() => setExpanded(!expanded)}>
                   {expanded ? <ExpandLessOutlinedIcon /> : <ExpandMoreOutlinedIcon />}
                 </IconButton>
@@ -101,12 +101,23 @@ export default function IssuerCard({ issuerReport, statistics, selectedIssuers, 
             </Box>
           </CardSectionRow>
         )}
-        <Collapse in={expanded && !!issuerReport.businessSummary}>
+        <Collapse in={expanded && !!(issuerReport.businessSummary || issuerReport.websiteUrl)}>
           <CardSectionRow>
-            <CardEntry caption='Summary' width='100%'>
-              <CardValue>{issuerReport.businessSummary ?? ''}</CardValue>
-            </CardEntry>
+            {issuerReport.businessSummary && (
+              <CardEntry caption='Summary' width='100%'>
+                <CardValue>{issuerReport.businessSummary}</CardValue>
+              </CardEntry>
+            )}
           </CardSectionRow>
+          {issuerReport.websiteUrl && (
+            <CardSectionRow>
+              <CardEntry caption='Website URL' width='100%'>
+                <CardValue>
+                  <a href={issuerReport.websiteUrl} target='_blank' rel='noreferrer'>{issuerReport.websiteUrl}</a>
+                </CardValue>
+              </CardEntry>
+            </CardSectionRow>
+          )}
         </Collapse>
         <CardSectionRow>
           <CardEntry caption='Bonds'>

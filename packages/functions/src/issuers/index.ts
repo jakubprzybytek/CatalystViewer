@@ -6,6 +6,7 @@ export type ClassifiedIssuer = {
     issuerName: string;
     industry: string;
     businessSummary: string;
+    websiteUrl?: string;
     modelId: string;
 };
 

@@ -39,6 +39,7 @@ export async function handler(input: CollectIssuersResult): Promise<ClassifyIssu
                 issuerName,
                 industry: classification.industry,
                 businessSummary: classification.businessSummary,
+                websiteUrl: classification.websiteUrl,
                 classifiedAt: now.toISOString(),
                 classifiedAtTs: now.getTime(),
                 modelId: MODEL_ID,
@@ -48,6 +49,7 @@ export async function handler(input: CollectIssuersResult): Promise<ClassifyIssu
                 issuerName,
                 industry: classification.industry,
                 businessSummary: classification.businessSummary,
+                websiteUrl: classification.websiteUrl,
                 modelId: MODEL_ID,
             });
 

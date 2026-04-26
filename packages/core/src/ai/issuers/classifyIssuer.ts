@@ -20,6 +20,7 @@ export type Industry = typeof INDUSTRY_LABELS[number];
 export type ClassificationResponse = {
     industry: Industry;
     businessSummary: string;
+    websiteUrl: string;
 };
 
 function buildPrompt(issuerName: string): string {
@@ -30,7 +31,8 @@ Company name: "${issuerName}"
 Respond with a JSON object only, no markdown, no explanation. Use this exact structure:
 {
   "industry": "<one of: ${INDUSTRY_LABELS.join(' | ')}>",
-  "businessSummary": "<2-3 sentences in English describing the company's main business activity>"
+  "businessSummary": "<2-3 sentences in English describing the company's main business activity>",
+  "websiteUrl": "<the company's official website URL, e.g. https://www.example.com>"
 }`;
 }
 
@@ -41,16 +43,18 @@ function parseClassificationResponse(text: string): ClassificationResponse {
         parsed === null ||
         !('industry' in parsed) ||
         !('businessSummary' in parsed) ||
+        !('websiteUrl' in parsed) ||
         typeof (parsed as Record<string, unknown>).industry !== 'string' ||
-        typeof (parsed as Record<string, unknown>).businessSummary !== 'string'
+        typeof (parsed as Record<string, unknown>).businessSummary !== 'string' ||
+        typeof (parsed as Record<string, unknown>).websiteUrl !== 'string'
     ) {
         throw new Error('InvalidResponseFormat: missing or wrong-typed fields');
     }
-    const { industry, businessSummary } = parsed as { industry: string; businessSummary: string };
+    const { industry, businessSummary, websiteUrl } = parsed as { industry: string; businessSummary: string; websiteUrl: string };
     if (!(INDUSTRY_LABELS as readonly string[]).includes(industry)) {
         throw new Error(`InvalidResponseFormat: unknown industry label "${industry}"`);
     }
-    return { industry: industry as Industry, businessSummary };
+    return { industry: industry as Industry, businessSummary, websiteUrl };
 }
 
 export async function classifyIssuer(bedrockClient: BedrockRuntimeClient, issuerName: string): Promise<ClassificationResponse> {

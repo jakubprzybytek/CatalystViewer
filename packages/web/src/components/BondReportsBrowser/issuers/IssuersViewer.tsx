@@ -44,6 +44,7 @@ export default function IssuersViewer({ bondReports, issuerProfiles, statistics,
           totalIssueValue: sum(issueValues),
           industry: issuerProfile?.industry,
           businessSummary: issuerProfile?.businessSummary,
+          websiteUrl: issuerProfile?.websiteUrl,
         });
       });
     });
