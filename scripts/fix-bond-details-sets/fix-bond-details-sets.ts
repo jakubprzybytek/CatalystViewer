@@ -12,7 +12,7 @@ import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 // AWS credentials must be available in the environment (AWS_PROFILE or env vars).
 
 const REGION = "eu-west-1";
-const TABLE_NAME = "catalyst-viewer-int-BondDetailsTable-naxwuwws"; // ← replace with actual table name
+const TABLE_NAME = "catalyst-viewer-dev-BondDetailsTable-ewmcbkdw"; // ← replace with actual table name
 
 // ─── Fields to convert from SS (Set) → L (List) ──────────────────────────────
 // String date fields — sorted ascending (ISO date strings sort lexicographically).

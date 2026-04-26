@@ -7,7 +7,7 @@ import { CollectIssuersResult, ClassifyIssuersResult, ClassifiedIssuer, FailedIs
 // EU Amazon Nova Lite inference profile - system-defined, actively maintained
 // Available across eu-central-1, eu-west-1, eu-west-3, eu-north-1
 const MODEL_ID = 'eu.amazon.nova-lite-v1:0';
-const MAX_ISSUERS_PER_RUN = 20;
+const DEFAULT_MAX_ISSUERS_PER_RUN = 20;
 
 const INDUSTRY_LABELS = [
     'Developer',
@@ -64,11 +64,19 @@ const bedrockClient = new BedrockRuntimeClient({
     maxAttempts: 1,
 });
 
+function resolveClassyficationsCap(value: number | undefined): number {
+    if (typeof value !== 'number' || Number.isNaN(value)) {
+        return DEFAULT_MAX_ISSUERS_PER_RUN;
+    }
+    return Math.max(0, Math.floor(value));
+}
+
 export async function handler(input: CollectIssuersResult): Promise<ClassifyIssuersResult> {
     const issuerProfilesTable = new IssuerProfilesTable(dynamoDbClient, Resource.IssuerProfiles.name);
+    const classyficationsCap = resolveClassyficationsCap(input.classyficationsCap);
 
-    const batch = input.unclassifiedIssuers.slice(0, MAX_ISSUERS_PER_RUN);
-    console.log(`ClassifyIssuers: classifying ${batch.length} of ${input.unclassifiedIssuers.length} unclassified issuers (cap: ${MAX_ISSUERS_PER_RUN})`);
+    const batch = input.unclassifiedIssuers.slice(0, classyficationsCap);
+    console.log(`ClassifyIssuers: classifying ${batch.length} of ${input.unclassifiedIssuers.length} unclassified issuers (cap: ${classyficationsCap})`);
 
     const classifiedIssuers: ClassifiedIssuer[] = [];
     const failedIssuers: FailedIssuer[] = [];

@@ -53,10 +53,7 @@ const classifyIssuersFunction = new sst.aws.Function("ClassifyIssuers", {
 
 const classificationNotificationSenderFunction = new sst.aws.Function("ClassificationNotificationSender", {
   handler: "packages/functions/src/emails/sendClassificationNotification.handler",
-  timeout: "10 seconds",
-  copyFiles: [
-    { from: "packages/functions/src/emails/issuerClassificationNotification.pug" },
-  ],
+  timeout: "30 seconds",
   permissions: [
     {
       actions: ["ses:SendEmail"],
@@ -108,6 +105,7 @@ new aws.iam.RolePolicy("BondsUpdaterSfnPolicy", {
 });
 
 const stateMachine = new aws.sfn.StateMachine("BondsUpdaterStateMachine", {
+  name: `BondsUpdaterStateMachine-${$app.stage}`,
   roleArn: sfnRole.arn,
   definition: $resolve([
     bondsUpdaterFunction.arn,
@@ -117,8 +115,30 @@ const stateMachine = new aws.sfn.StateMachine("BondsUpdaterStateMachine", {
     classificationNotificationSenderFunction.arn,
   ]).apply(([updaterArn, notifArn, collectArn, classifyArn, classifNotifArn]) =>
     JSON.stringify({
-      StartAt: "UpdateBonds",
+      StartAt: "ShouldUpdateBonds",
       States: {
+        "ShouldUpdateBonds": {
+          Type: "Choice",
+          Choices: [
+            {
+              Variable: "$.updateBonds",
+              BooleanEquals: false,
+              Next: "PrepareClassificationOnlyInput",
+            },
+          ],
+          Default: "UpdateBonds",
+        },
+        "PrepareClassificationOnlyInput": {
+          Type: "Pass",
+          Result: {
+            bondsUpdated: 0,
+            newBonds: [],
+            bondsDeactivated: [],
+            bondsFailed: [],
+          },
+          ResultPath: "$.Payload",
+          Next: "HasClassyficationsCap",
+        },
         "UpdateBonds": {
           Type: "Task",
           Resource: "arn:aws:states:::lambda:invoke",
@@ -126,6 +146,41 @@ const stateMachine = new aws.sfn.StateMachine("BondsUpdaterStateMachine", {
             FunctionName: updaterArn,
           },
           TimeoutSeconds: 600,
+          Next: "HasClassyficationsCap",
+        },
+        "HasClassyficationsCap": {
+          Type: "Choice",
+          Choices: [
+            {
+              Variable: "$$.Execution.Input.classyficationsCap",
+              IsPresent: true,
+              Next: "ApplyProvidedClassyficationsCap",
+            },
+          ],
+          Default: "ApplyDefaultClassyficationsCap",
+        },
+        "ApplyProvidedClassyficationsCap": {
+          Type: "Pass",
+          Parameters: {
+            "bondsUpdated.$": "$.Payload.bondsUpdated",
+            "newBonds.$": "$.Payload.newBonds",
+            "bondsDeactivated.$": "$.Payload.bondsDeactivated",
+            "bondsFailed.$": "$.Payload.bondsFailed",
+            "classyficationsCap.$": "$$.Execution.Input.classyficationsCap",
+          },
+          ResultPath: "$.Payload",
+          Next: "CollectUnclassifiedIssuers",
+        },
+        "ApplyDefaultClassyficationsCap": {
+          Type: "Pass",
+          Parameters: {
+            "bondsUpdated.$": "$.Payload.bondsUpdated",
+            "newBonds.$": "$.Payload.newBonds",
+            "bondsDeactivated.$": "$.Payload.bondsDeactivated",
+            "bondsFailed.$": "$.Payload.bondsFailed",
+            classyficationsCap: 20,
+          },
+          ResultPath: "$.Payload",
           Next: "CollectUnclassifiedIssuers",
         },
         "CollectUnclassifiedIssuers": {
@@ -167,7 +222,7 @@ const stateMachine = new aws.sfn.StateMachine("BondsUpdaterStateMachine", {
             FunctionName: classifNotifArn,
             "Payload.$": "$.Payload",
           },
-          TimeoutSeconds: 10,
+          TimeoutSeconds: 30,
           Next: "MajorChanges",
         },
         "MajorChanges": {

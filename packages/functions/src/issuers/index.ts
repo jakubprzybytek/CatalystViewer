@@ -14,9 +14,13 @@ export type FailedIssuer = {
     errorReason: string;
 };
 
+export type ClassificationConfig = {
+    classyficationsCap?: number;
+};
+
 export type CollectIssuersResult = UpdateBondsResult & {
     unclassifiedIssuers: string[];
-};
+} & ClassificationConfig;
 
 export type ClassifyIssuersResult = CollectIssuersResult & {
     classifiedIssuers: ClassifiedIssuer[];

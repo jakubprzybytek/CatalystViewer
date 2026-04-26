@@ -1,7 +1,8 @@
-import { compileFile } from 'pug';
+import { compile } from 'pug';
 import { SSMClient, GetParameterCommand, GetParameterCommandInput } from '@aws-sdk/client-ssm';
 import { sendEmail, SendEmailParams } from './EmailClient';
 import { ClassifyIssuersResult } from '../issuers';
+import { issuerClassificationNotificationTemplate } from './issuerClassificationNotificationTemplate';
 
 const RECIPIENTS_PARAM_NAME = '/catalyst-viewer/notifications/recipients';
 
@@ -30,7 +31,7 @@ async function getNotificationRecipientEmails(): Promise<string[]> {
 export async function handler(input: ClassifyIssuersResult): Promise<SendClassificationNotificationResult> {
     console.log(`SendClassificationNotification: ${input.classifiedIssuers.length} classified, ${input.failedIssuers.length} failed`);
 
-    const template = compileFile('packages/functions/src/emails/issuerClassificationNotification.pug', { pretty: true });
+    const template = compile(issuerClassificationNotificationTemplate, { pretty: true });
     const emailBody = template({
         dateTime: new Date(),
         classifiedIssuers: input.classifiedIssuers,
