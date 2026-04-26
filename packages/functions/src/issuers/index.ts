@@ -6,6 +6,7 @@ export type ClassifiedIssuer = {
     issuerName: string;
     industry: string;
     businessSummary: string;
+    websiteUrl?: string;
     modelId: string;
 };
 
@@ -16,6 +17,7 @@ export type FailedIssuer = {
 
 export type ClassificationConfig = {
     classyficationsCap?: number;
+    forceClassification?: boolean;
 };
 
 export type CollectIssuersResult = UpdateBondsResult & {

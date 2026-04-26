@@ -169,7 +169,7 @@ const stateMachine = new aws.sfn.StateMachine("BondsUpdaterStateMachine", {
             "classyficationsCap.$": "$$.Execution.Input.classyficationsCap",
           },
           ResultPath: "$.Payload",
-          Next: "CollectUnclassifiedIssuers",
+          Next: "HasForceClassification",
         },
         "ApplyDefaultClassyficationsCap": {
           Type: "Pass",
@@ -181,6 +181,23 @@ const stateMachine = new aws.sfn.StateMachine("BondsUpdaterStateMachine", {
             classyficationsCap: 20,
           },
           ResultPath: "$.Payload",
+          Next: "HasForceClassification",
+        },
+        "HasForceClassification": {
+          Type: "Choice",
+          Choices: [
+            {
+              Variable: "$$.Execution.Input.forceClassification",
+              BooleanEquals: true,
+              Next: "ApplyForceClassification",
+            },
+          ],
+          Default: "CollectUnclassifiedIssuers",
+        },
+        "ApplyForceClassification": {
+          Type: "Pass",
+          Result: true,
+          ResultPath: "$.Payload.forceClassification",
           Next: "CollectUnclassifiedIssuers",
         },
         "CollectUnclassifiedIssuers": {

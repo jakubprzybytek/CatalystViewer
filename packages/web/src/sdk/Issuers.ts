@@ -7,6 +7,7 @@ export type IssuerProfile = {
   issuerName: string;
   industry: string;
   businessSummary: string;
+  websiteUrl?: string;
 };
 
 type IssuerProfilesQueryResult = {
