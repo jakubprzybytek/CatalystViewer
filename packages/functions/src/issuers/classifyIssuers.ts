@@ -100,11 +100,13 @@ export async function handler(input: CollectIssuersResult): Promise<ClassifyIssu
 
             const classification = parseClassificationResponse(rawText);
 
+            const now = new Date();
             await issuerProfilesTable.store({
                 issuerName,
                 industry: classification.industry,
                 businessSummary: classification.businessSummary,
-                classifiedAt: Date.now(),
+                classifiedAt: now.toISOString(),
+                classifiedAtTs: now.getTime(),
                 modelId: MODEL_ID,
             });
 
