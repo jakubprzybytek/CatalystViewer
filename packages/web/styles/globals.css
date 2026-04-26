@@ -13,6 +13,15 @@ body {
   min-height: 100vh;
 }
 
+.issuer-card {
+  .MuiCollapse-root {
+    .MuiCollapse-wrapper {
+      margin: 0;
+      padding: 0;
+    }
+  }
+}
+
 .bond-card {
   .MuiCollapse-root {
     .MuiCollapse-wrapper {
