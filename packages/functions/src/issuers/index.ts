@@ -17,6 +17,7 @@ export type FailedIssuer = {
 
 export type ClassificationConfig = {
     classyficationsCap?: number;
+    forceClassification?: boolean;
 };
 
 export type CollectIssuersResult = UpdateBondsResult & {

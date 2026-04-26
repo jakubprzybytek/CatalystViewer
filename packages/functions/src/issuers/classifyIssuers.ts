@@ -22,10 +22,12 @@ function resolveClassyficationsCap(value: number | undefined): number {
 
 export async function handler(input: CollectIssuersResult): Promise<ClassifyIssuersResult> {
     const issuerProfilesTable = new IssuerProfilesTable(dynamoDbClient, Resource.IssuerProfiles.name);
-    const classyficationsCap = resolveClassyficationsCap(input.classyficationsCap);
 
-    const batch = input.unclassifiedIssuers.slice(0, classyficationsCap);
-    console.log(`ClassifyIssuers: classifying ${batch.length} of ${input.unclassifiedIssuers.length} unclassified issuers (cap: ${classyficationsCap})`);
+    const batch = input.forceClassification
+        ? input.unclassifiedIssuers
+        : input.unclassifiedIssuers.slice(0, resolveClassyficationsCap(input.classyficationsCap));
+
+    console.log(`ClassifyIssuers: classifying ${batch.length} of ${input.unclassifiedIssuers.length} unclassified issuers${input.forceClassification ? ' (forceClassification=true, cap disabled)' : ` (cap: ${resolveClassyficationsCap(input.classyficationsCap)})`}`);
 
     const classifiedIssuers: ClassifiedIssuer[] = [];
     const failedIssuers: FailedIssuer[] = [];
