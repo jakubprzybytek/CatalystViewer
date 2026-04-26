@@ -34,6 +34,14 @@ function getIndustryColors(industry: string): { backgroundColor: string; color: 
       return { backgroundColor: '#D6BCB0', color: '#3E2118' };
     case 'Municipal':
       return { backgroundColor: '#99F6E4', color: '#134E4A' };
+    case 'Telecommunications':
+      return { backgroundColor: '#BAE6FD', color: '#0C4A6E' };
+    case 'Transportation & Logistics':
+      return { backgroundColor: '#FEF08A', color: '#713F12' };
+    case 'Media':
+      return { backgroundColor: '#FBCFE8', color: '#831843' };
+    case 'Construction':
+      return { backgroundColor: '#D9F99D', color: '#365314' };
     default:
       return { backgroundColor: '#CBD5E1', color: '#1E293B' };
   }
@@ -72,7 +80,7 @@ export default function IssuerCard({ issuerReport, statistics, selectedIssuers, 
         }
       }}>
         <CardSectionRow>
-          <Stack direction='row' flexGrow={1} justifyContent='space-between'>
+          <Stack direction='row' flexGrow={1} justifyContent='space-between' alignItems='center'>
             <Typography variant='h6'>{issuerReport.name}</Typography>
             <Stack direction='row' alignItems='center' spacing={0.5}>
               <Checkbox
@@ -88,7 +96,7 @@ export default function IssuerCard({ issuerReport, statistics, selectedIssuers, 
         </CardSectionRow>
         {issuerReport.industry && industryColors && (
           <CardSectionRow>
-            <Box sx={{ mt: -0.5 }}>
+            <Box sx={{ mt: -1 }}>
               <Chip
                 size='small'
                 label={issuerReport.industry}

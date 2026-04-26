@@ -137,7 +137,7 @@ const stateMachine = new aws.sfn.StateMachine("BondsUpdaterStateMachine", {
             bondsFailed: [],
           },
           ResultPath: "$.Payload",
-          Next: "HasClassyficationsCap",
+          Next: "HasClassificationsCap",
         },
         "UpdateBonds": {
           Type: "Task",
@@ -146,39 +146,39 @@ const stateMachine = new aws.sfn.StateMachine("BondsUpdaterStateMachine", {
             FunctionName: updaterArn,
           },
           TimeoutSeconds: 600,
-          Next: "HasClassyficationsCap",
+          Next: "HasClassificationsCap",
         },
-        "HasClassyficationsCap": {
+        "HasClassificationsCap": {
           Type: "Choice",
           Choices: [
             {
-              Variable: "$$.Execution.Input.classyficationsCap",
+              Variable: "$$.Execution.Input.classificationsCap",
               IsPresent: true,
-              Next: "ApplyProvidedClassyficationsCap",
+              Next: "ApplyProvidedClassificationsCap",
             },
           ],
-          Default: "ApplyDefaultClassyficationsCap",
+          Default: "ApplyDefaultClassificationsCap",
         },
-        "ApplyProvidedClassyficationsCap": {
+        "ApplyProvidedClassificationsCap": {
           Type: "Pass",
           Parameters: {
             "bondsUpdated.$": "$.Payload.bondsUpdated",
             "newBonds.$": "$.Payload.newBonds",
             "bondsDeactivated.$": "$.Payload.bondsDeactivated",
             "bondsFailed.$": "$.Payload.bondsFailed",
-            "classyficationsCap.$": "$$.Execution.Input.classyficationsCap",
+            "classificationsCap.$": "$$.Execution.Input.classificationsCap",
           },
           ResultPath: "$.Payload",
           Next: "HasForceClassification",
         },
-        "ApplyDefaultClassyficationsCap": {
+        "ApplyDefaultClassificationsCap": {
           Type: "Pass",
           Parameters: {
             "bondsUpdated.$": "$.Payload.bondsUpdated",
             "newBonds.$": "$.Payload.newBonds",
             "bondsDeactivated.$": "$.Payload.bondsDeactivated",
             "bondsFailed.$": "$.Payload.bondsFailed",
-            classyficationsCap: 20,
+            classificationsCap: 20,
           },
           ResultPath: "$.Payload",
           Next: "HasForceClassification",

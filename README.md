@@ -13,6 +13,7 @@ npm run dev
 
 ### Catalyst CLI
 * `npm run quote -- FPC0631` - Get a quote for a bond
+* `npm run classify-issuer -- "Kruk S.A."` - Classify an issuer using AI (displays result)
 
 ### Testing
 

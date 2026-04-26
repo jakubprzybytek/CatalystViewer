@@ -16,7 +16,7 @@ export type FailedIssuer = {
 };
 
 export type ClassificationConfig = {
-    classyficationsCap?: number;
+    classificationsCap?: number;
     forceClassification?: boolean;
 };
 

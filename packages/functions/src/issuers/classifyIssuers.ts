@@ -13,7 +13,7 @@ const bedrockClient = new BedrockRuntimeClient({
     maxAttempts: 1,
 });
 
-function resolveClassyficationsCap(value: number | undefined): number {
+function resolveClassificationsCap(value: number | undefined): number {
     if (typeof value !== 'number' || Number.isNaN(value)) {
         return DEFAULT_MAX_ISSUERS_PER_RUN;
     }
@@ -25,9 +25,9 @@ export async function handler(input: CollectIssuersResult): Promise<ClassifyIssu
 
     const batch = input.forceClassification
         ? input.unclassifiedIssuers
-        : input.unclassifiedIssuers.slice(0, resolveClassyficationsCap(input.classyficationsCap));
+        : input.unclassifiedIssuers.slice(0, resolveClassificationsCap(input.classificationsCap));
 
-    console.log(`ClassifyIssuers: classifying ${batch.length} of ${input.unclassifiedIssuers.length} unclassified issuers${input.forceClassification ? ' (forceClassification=true, cap disabled)' : ` (cap: ${resolveClassyficationsCap(input.classyficationsCap)})`}`);
+    console.log(`ClassifyIssuers: classifying ${batch.length} of ${input.unclassifiedIssuers.length} unclassified issuers${input.forceClassification ? ' (forceClassification=true, cap disabled)' : ` (cap: ${resolveClassificationsCap(input.classificationsCap)})`}`);
 
     const classifiedIssuers: ClassifiedIssuer[] = [];
     const failedIssuers: FailedIssuer[] = [];
@@ -55,7 +55,7 @@ export async function handler(input: CollectIssuersResult): Promise<ClassifyIssu
                 modelId: MODEL_ID,
             });
 
-            console.log(`ClassifyIssuers: classified '${issuerName}' as '${classification.industry}'`);
+            console.log(`ClassifyIssuers: classified '${issuerName}' as '${classification.industry}' | ${classification.websiteUrl || 'no url'} | ${classification.businessSummary}`);
         } catch (error) {
             const errorReason = error instanceof Error ? error.message : String(error);
             console.error(`ClassifyIssuers: failed to classify '${issuerName}': ${errorReason}`);

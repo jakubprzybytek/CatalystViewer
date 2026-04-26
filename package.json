@@ -14,6 +14,7 @@
     "test:smoke": "node --env-file=.env.local node_modules/@playwright/test/cli.js test",
     "test:smoke:int": "STAGE=int node_modules/@playwright/test/cli.js test",
     "quote": "esrun packages/core/src/bonds/catalyst/catalyst.ts quote",
+    "classify-issuer": "esrun packages/core/src/issuers/cli.ts",
     "email": "esrun packages/functions/src/emails/testEmail.ts"
   },
   "devDependencies": {
