@@ -1,24 +1,27 @@
 ---
 name: code-base-functions
-description: "**CODEBASE CONVENTION** — Defines where AI/ML business logic and storage logic live and how Lambda functions should delegate to them. USE FOR: adding or updating AI/ML logic invoked by Lambda functions; reviewing Lambda handlers for correct separation of concerns; moving inline AI or storage logic out of Lambda handlers into the core package. DO NOT USE FOR: frontend code."
+description: "**CODEBASE CONVENTION** — Defines where business logic and storage logic live and how Lambda functions should delegate to them. USE FOR: adding or updating any business logic invoked by Lambda functions; reviewing Lambda handlers for correct separation of concerns; moving inline logic out of Lambda handlers into the core package. DO NOT USE FOR: frontend code."
 ---
 
 # Code Base Functions Skill
 
 ## Overview
 
-Business logic (AI/ML) and storage access must live in the **`packages/core`** package. Lambda function handlers in `packages/functions` are thin orchestrators responsible only for:
+Business logic and storage access must live in the **`packages/core`** package. Lambda function handlers in `packages/functions` are thin orchestrators responsible only for:
 
 1. Taking and validating inputs (event payload, AWS resource references)
-2. Orchestrating calls to core AI/ML functions and storage classes
+2. Orchestrating calls to core business logic functions and storage classes
 3. Preparing and returning the response
 
-No AI/ML logic (prompt construction, model invocation, response parsing) and no raw storage logic (DynamoDB commands, query construction) belongs inside a Lambda handler file.
+No business logic (data fetching, transformation, external service calls, AI/ML, etc.) and no raw storage logic (DynamoDB commands, query construction) belongs inside a Lambda handler file.
 
 ## Folder Structure
 
 ```
 packages/core/src/
+├── <domain>/            ← general business logic for a domain
+│   ├── <operation>.ts   ← exported function(s) + types
+│   └── index.ts         ← re-exports everything from the domain
 ├── ai/
 │   └── <domain>/
 │       ├── <operation>.ts   ← exported AI function(s) + types
@@ -41,16 +44,27 @@ packages/core/src/
     └── index.ts                ← DbIssuerProfile type
 ```
 
+**Example — bond data fetching:**
+
+```
+packages/core/src/
+└── bonds/
+    ├── catalyst/
+    │   ├── fetchBonds.ts   ← fetchBonds(), types
+    │   └── index.ts
+    └── index.ts
+```
+
 ## Rules
 
-### 1. Core package owns AI logic
+### 1. Core package owns business logic
 
-All of the following belong in `packages/core/src/ai/<domain>/`:
+All domain logic belongs in `packages/core/src/<domain>/` (or `packages/core/src/ai/<domain>/` for AI/ML-specific operations). This includes:
 
-- Model ID constants
-- Prompt-building functions
-- Response-parsing functions
-- The function that calls the AI service (e.g. `BedrockRuntimeClient`)
+- Data fetching and transformation functions
+- Business rules and calculations
+- External service calls (AI models, third-party APIs, etc.)
+- Any supporting types and constants
 
 ### 2. Core package owns storage logic
 
@@ -66,20 +80,20 @@ A Lambda handler may only call methods on storage table classes imported from `@
 
 A Lambda handler in `packages/functions` must:
 
-- Validate and resolve inputs (e.g. cap values, defaults)
-- Instantiate AWS clients (DynamoDB, Bedrock, etc.) and table classes
-- Call core AI functions and storage table methods in the correct order
+- Validate and resolve inputs (e.g. cap values, defaults, flags)
+- Instantiate AWS clients (DynamoDB, Bedrock, HTTP clients, etc.) and table classes
+- Call core business logic functions and storage table methods in the correct order
 - Map results into the output shape and return it
 
 A Lambda handler must **not** contain:
-- Prompt strings or model IDs
-- JSON parsing for model responses
+- Business rules or domain logic
+- External API / AI model call logic
 - Raw DynamoDB commands
-- Complex data transformation or business rules
+- Complex data transformation
 
-### 4. AI clients are constructed in the handler, injected into core
+### 4. External service clients are constructed in the handler, injected into core
 
-Core functions accept the AI client as a parameter to keep them testable without real AWS calls.
+Core functions accept external service clients as parameters to keep them testable without real AWS or network calls.
 
 ```typescript
 // packages/core/src/ai/issuers/classifyIssuer.ts
@@ -95,9 +109,9 @@ const bedrockClient = new BedrockRuntimeClient({ maxAttempts: 1 });
 const classification = await classifyIssuer(bedrockClient, issuerName);
 ```
 
-### 5. Bedrock dependency lives in both packages
+### 5. Dependencies used by core must be listed in both packages
 
-`@aws-sdk/client-bedrock-runtime` must be listed in `packages/core/package.json` as well as in `packages/functions/package.json`. Use strict (no `^`) version pinning consistent with the rest of the dependencies.
+Any package that `packages/core` uses (e.g. `@aws-sdk/client-bedrock-runtime`, HTTP clients) must be listed in both `packages/core/package.json` and `packages/functions/package.json`. Use strict (no `^`) version pinning consistent with the rest of the dependencies.
 
 ### 6. Path aliases for imports
 
@@ -105,16 +119,24 @@ Import core helpers via the aliases configured in `packages/functions/tsconfig.j
 
 ```typescript
 import { classifyIssuer, MODEL_ID } from '@core/ai/issuers';
+import { fetchBonds } from '@core/bonds';
 import { IssuerProfilesTable } from '@core/storage/issuerProfiles';
 ```
 
 ## How to Apply
 
+### Adding a new business logic operation
+
+1. Create `packages/core/src/<domain>/<operation>.ts` with the function and all supporting types/constants.
+2. Create or update `packages/core/src/<domain>/index.ts` to re-export the new module.
+3. If the operation requires a new external dependency, add it to both `packages/core/package.json` and `packages/functions/package.json` with a strict version.
+4. Update the Lambda handler to import from `@core/<domain>` and remove any inline logic.
+
 ### Adding a new AI operation
 
 1. Create `packages/core/src/ai/<domain>/<operation>.ts` with the AI function and all supporting types/constants.
 2. Create or update `packages/core/src/ai/<domain>/index.ts` to re-export the new module.
-3. Ensure `@aws-sdk/client-bedrock-runtime` (or the relevant AI SDK) is in `packages/core/package.json` with a strict version.
+3. Ensure `@aws-sdk/client-bedrock-runtime` (or the relevant AI SDK) is in both `packages/core/package.json` and `packages/functions/package.json` with a strict version.
 4. Update the Lambda handler to import from `@core/ai/<domain>` and remove the inline AI logic.
 
 ### Adding a new storage operation
