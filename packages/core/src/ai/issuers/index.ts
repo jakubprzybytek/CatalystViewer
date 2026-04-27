@@ -1,1 +1,1 @@
-export * from './classifyIssuer';
+export * from './IssuerClassification';

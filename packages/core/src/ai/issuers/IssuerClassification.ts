@@ -1,8 +1,6 @@
 import { BedrockRuntimeClient, ConverseCommand } from '@aws-sdk/client-bedrock-runtime';
 
-// EU Amazon Nova Lite inference profile - system-defined, actively maintained
-// Available across eu-central-1, eu-west-1, eu-west-3, eu-north-1
-export const MODEL_ID = 'eu.amazon.nova-lite-v1:0';
+export const MODEL_ID = 'arn:aws:bedrock:eu-west-1:198805281865:inference-profile/eu.anthropic.claude-haiku-4-5-20251001-v1:0';
 
 export const INDUSTRY_LABELS = [
     'Developer',
