@@ -10,11 +10,11 @@ const bondsUpdaterFunction = new sst.aws.Function("BondsUpdater", {
   link: [bondDetailsTable, bondStatisticsTable],
 });
 
-const notificationSenderFunction = new sst.aws.Function("NotificationSender", {
-  handler: "packages/functions/src/emails/sendNotification.handler",
-  timeout: "10 seconds",
+const sendReportFunction = new sst.aws.Function("SendReport", {
+  handler: "packages/functions/src/emails/sendReport.handler",
+  timeout: "30 seconds",
   copyFiles: [
-    { from: "packages/functions/src/emails/bondsUpdateReportNotification.pug" },
+    { from: "packages/functions/src/emails/reportNotification.pug" },
   ],
   permissions: [
     {
@@ -51,23 +51,6 @@ const classifyIssuersFunction = new sst.aws.Function("ClassifyIssuers", {
   ],
 });
 
-const classificationNotificationSenderFunction = new sst.aws.Function("ClassificationNotificationSender", {
-  handler: "packages/functions/src/emails/sendClassificationNotification.handler",
-  timeout: "30 seconds",
-  permissions: [
-    {
-      actions: ["ses:SendEmail"],
-      resources: ["arn:aws:ses:eu-west-1:198805281865:identity/*"],
-    },
-    {
-      actions: ["ssm:GetParameter"],
-      resources: [
-        "arn:aws:ssm:eu-west-1:198805281865:parameter/catalyst-viewer/notifications/recipients",
-      ],
-    },
-  ],
-});
-
 // Step Functions state machine
 const sfnRole = new aws.iam.Role("BondsUpdaterSfnRole", {
   assumeRolePolicy: JSON.stringify({
@@ -86,18 +69,17 @@ new aws.iam.RolePolicy("BondsUpdaterSfnPolicy", {
   role: sfnRole.id,
   policy: $resolve([
     bondsUpdaterFunction.arn,
-    notificationSenderFunction.arn,
+    sendReportFunction.arn,
     collectUnclassifiedIssuersFunction.arn,
     classifyIssuersFunction.arn,
-    classificationNotificationSenderFunction.arn,
-  ]).apply(([updaterArn, notifArn, collectArn, classifyArn, classifNotifArn]) =>
+  ]).apply(([updaterArn, sendReportArn, collectArn, classifyArn]) =>
     JSON.stringify({
       Version: "2012-10-17",
       Statement: [
         {
           Effect: "Allow",
           Action: "lambda:InvokeFunction",
-          Resource: [updaterArn, notifArn, collectArn, classifyArn, classifNotifArn],
+          Resource: [updaterArn, sendReportArn, collectArn, classifyArn],
         },
       ],
     })
@@ -109,11 +91,10 @@ const stateMachine = new aws.sfn.StateMachine("BondsUpdaterStateMachine", {
   roleArn: sfnRole.arn,
   definition: $resolve([
     bondsUpdaterFunction.arn,
-    notificationSenderFunction.arn,
+    sendReportFunction.arn,
     collectUnclassifiedIssuersFunction.arn,
     classifyIssuersFunction.arn,
-    classificationNotificationSenderFunction.arn,
-  ]).apply(([updaterArn, notifArn, collectArn, classifyArn, classifNotifArn]) =>
+  ]).apply(([updaterArn, sendReportArn, collectArn, classifyArn]) =>
     JSON.stringify({
       StartAt: "ShouldUpdateBonds",
       States: {
@@ -121,8 +102,10 @@ const stateMachine = new aws.sfn.StateMachine("BondsUpdaterStateMachine", {
           Type: "Choice",
           Choices: [
             {
-              Variable: "$.updateBonds",
-              BooleanEquals: false,
+              And: [
+                { Variable: "$.updateBonds", IsPresent: true },
+                { Variable: "$.updateBonds", BooleanEquals: false },
+              ],
               Next: "PrepareClassificationOnlyInput",
             },
           ],
@@ -227,7 +210,7 @@ const stateMachine = new aws.sfn.StateMachine("BondsUpdaterStateMachine", {
               Next: "ClassifyIssuers",
             },
           ],
-          Default: "MajorChanges",
+          Default: "ShouldSendReport",
         },
         "ClassifyIssuers": {
           Type: "Task",
@@ -238,42 +221,30 @@ const stateMachine = new aws.sfn.StateMachine("BondsUpdaterStateMachine", {
           },
           TimeoutSeconds: 300,
           Retry: [],
-          Next: "SendClassificationNotification",
+          Next: "ShouldSendReport",
         },
-        "SendClassificationNotification": {
-          Type: "Task",
-          Resource: "arn:aws:states:::lambda:invoke",
-          Parameters: {
-            FunctionName: classifNotifArn,
-            "Payload.$": "$.Payload",
-          },
-          TimeoutSeconds: 30,
-          Next: "MajorChanges",
-        },
-        "MajorChanges": {
+        "ShouldSendReport": {
           Type: "Choice",
           Choices: [
             {
               Or: [
                 { Variable: "$.Payload.newBonds[0]", IsPresent: true },
-                {
-                  Variable: "$.Payload.bondsDeactivated[0]",
-                  IsPresent: true,
-                },
+                { Variable: "$.Payload.bondsDeactivated[0]", IsPresent: true },
+                { Variable: "$.Payload.unclassifiedIssuers[0]", IsPresent: true },
               ],
-              Next: "SendNotification",
+              Next: "SendReport",
             },
           ],
           Default: "Skip",
         },
-        "SendNotification": {
+        "SendReport": {
           Type: "Task",
           Resource: "arn:aws:states:::lambda:invoke",
           Parameters: {
-            FunctionName: notifArn,
+            FunctionName: sendReportArn,
             "Payload.$": "$.Payload",
           },
-          TimeoutSeconds: 10,
+          TimeoutSeconds: 30,
           End: true,
         },
         Skip: {

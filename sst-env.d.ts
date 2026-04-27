@@ -22,10 +22,6 @@ declare module "sst" {
       "name": string
       "type": "sst.aws.Function"
     }
-    "ClassificationNotificationSender": {
-      "name": string
-      "type": "sst.aws.Function"
-    }
     "ClassifyIssuers": {
       "name": string
       "type": "sst.aws.Function"
@@ -54,13 +50,13 @@ declare module "sst" {
       "name": string
       "type": "sst.aws.Dynamo"
     }
-    "NotificationSender": {
-      "name": string
-      "type": "sst.aws.Function"
-    }
     "Profiles": {
       "name": string
       "type": "sst.aws.Dynamo"
+    }
+    "SendReport": {
+      "name": string
+      "type": "sst.aws.Function"
     }
     "Site": {
       "type": "sst.aws.Nextjs"

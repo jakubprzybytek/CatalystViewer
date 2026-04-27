@@ -28,3 +28,5 @@ export type ClassifyIssuersResult = CollectIssuersResult & {
     classifiedIssuers: ClassifiedIssuer[];
     failedIssuers: FailedIssuer[];
 };
+
+export type SendReportInput = CollectIssuersResult & Partial<Pick<ClassifyIssuersResult, 'classifiedIssuers' | 'failedIssuers'>>;

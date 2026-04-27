@@ -1,7 +1,6 @@
-export const issuerClassificationNotificationTemplate = `
 html
   head
-    title Issuer Classification Report
+    title Catalyst Update Report
     meta(charset="utf-8")
     style(type="text/css").
       body {
@@ -33,10 +32,10 @@ html
       .section {
         margin-top: 12px;
       }
-      .classified-list {
+      .item-list {
         margin-top: 8px;
       }
-      .classified-item {
+      .item {
         background-color: #fff3df;
         border: 1px solid #e4b26f;
         border-radius: 10px;
@@ -89,7 +88,7 @@ html
           padding: 0 10px 12px 10px;
           border-radius: 12px;
         }
-        .classified-item {
+        .item {
           padding: 8px;
         }
         .label {
@@ -102,14 +101,82 @@ html
   body
     main
       div(class="header")
-        h1 Issuer Classification Report
+        h1 Catalyst Update Report
         p Date: #{dateTime.toLocaleString("pl-PL")}
+      if newBonds.length > 0
+        div(class="section")
+          h2 New Bonds (#{newBonds.length})
+          div(class="item-list")
+            each bond in newBonds
+              div(class="item")
+                div(class="row")
+                  span(class="label") Bond:
+                  | 
+                  span(class="value") #{bond.name}
+                div(class="row")
+                  span(class="label") Issuer:
+                  | 
+                  span(class="value") #{bond.issuer}
+                div(class="row")
+                  span(class="label") Type:
+                  | 
+                  span(class="value") #{bond.type}
+                div(class="row")
+                  span(class="label") Interest:
+                  | 
+                  span(class="value")
+                    if bond.interestVariable
+                      | #{bond.interestVariable} + #{bond.interestConst}%
+                    else
+                      | #{bond.interestConst}%
+                div(class="row")
+                  span(class="label") Nominal:
+                  | 
+                  span(class="value") #{bond.nominalValue}
+                div(class="row")
+                  span(class="label") Issue value:
+                  | 
+                  span(class="value") #{bond.issueValue}
+      if bondsDeactivated.length > 0
+        div(class="section")
+          h2 Decommissioned Bonds (#{bondsDeactivated.length})
+          div(class="item-list")
+            each bond in bondsDeactivated
+              div(class="item")
+                div(class="row")
+                  span(class="label") Bond:
+                  | 
+                  span(class="value") #{bond.name}
+                div(class="row")
+                  span(class="label") Issuer:
+                  | 
+                  span(class="value") #{bond.issuer}
+                div(class="row")
+                  span(class="label") Type:
+                  | 
+                  span(class="value") #{bond.type}
+                div(class="row")
+                  span(class="label") Interest:
+                  | 
+                  span(class="value")
+                    if bond.interestVariable
+                      | #{bond.interestVariable} + #{bond.interestConst}%
+                    else
+                      | #{bond.interestConst}%
+                div(class="row")
+                  span(class="label") Nominal:
+                  | 
+                  span(class="value") #{bond.nominalValue}
+                div(class="row")
+                  span(class="label") Issue value:
+                  | 
+                  span(class="value") #{bond.issueValue}
       if classifiedIssuers.length > 0
         div(class="section")
-          h2 Classified (#{classifiedIssuers.length})
-          div(class="classified-list")
+          h2 Classified Issuers (#{classifiedIssuers.length})
+          div(class="item-list")
             each issuer in classifiedIssuers
-              div(class="classified-item")
+              div(class="item")
                 div(class="row")
                   span(class="label") Issuer:
                   | 
@@ -123,7 +190,7 @@ html
                 div(class="row summary-value") #{issuer.businessSummary}
       if failedIssuers.length > 0
         div(class="section")
-          h2 Failed (#{failedIssuers.length})
+          h2 Failed Issuer Classifications (#{failedIssuers.length})
           table
             thead
               tr
@@ -134,4 +201,3 @@ html
                 tr
                   td #{issuer.issuerName}
                   td(class="error") #{issuer.errorReason}
-`;
