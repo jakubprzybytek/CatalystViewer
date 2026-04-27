@@ -9,6 +9,7 @@ import Collapse from '@mui/material/Collapse';
 import IconButton from '@mui/material/IconButton';
 import ExpandMoreOutlinedIcon from '@mui/icons-material/ExpandMoreOutlined';
 import ExpandLessOutlinedIcon from '@mui/icons-material/ExpandLessOutlined';
+import OpenInNewOutlinedIcon from '@mui/icons-material/OpenInNewOutlined';
 import { CardSectionRow, CardEntry, CardValue } from "@/common/Cards";
 import { ColorCode } from "@/common/ColorCodes";
 import { getInterestConstColorCode, getNominalValueColorCode } from "@/bonds/BondIndicators";
@@ -121,7 +122,11 @@ export default function IssuerCard({ issuerReport, statistics, selectedIssuers, 
             <CardSectionRow>
               <CardEntry caption='Website URL' width='100%'>
                 <CardValue>
-                  <a href={issuerReport.websiteUrl} target='_blank' rel='noreferrer'>{issuerReport.websiteUrl}</a>
+                  <Box component='a' href={issuerReport.websiteUrl} target='_blank' rel='noreferrer'
+                    sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5, color: 'primary.main', textDecorationColor: 'primary.main' }}>
+                    {issuerReport.websiteUrl}
+                    <OpenInNewOutlinedIcon sx={{ fontSize: '0.9em' }} />
+                  </Box>
                 </CardValue>
               </CardEntry>
             </CardSectionRow>
