@@ -131,6 +131,9 @@ export default function IssuerCard({ issuerReport, statistics, selectedIssuers, 
               </CardEntry>
             </CardSectionRow>
           )}
+          {issuerReport.classifiedAtTs && (
+            <Typography component='span' className='tiny-text'>Classified on: {new Date(issuerReport.classifiedAtTs).toLocaleString('pl-PL')}</Typography>
+          )}
         </Collapse>
         <CardSectionRow>
           <CardEntry caption='Bonds'>

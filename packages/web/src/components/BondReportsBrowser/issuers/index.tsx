@@ -11,6 +11,7 @@ export type IssuerReport = {
     industry?: string;
     businessSummary?: string;
     websiteUrl?: string;
+    classifiedAtTs?: number;
 }
 
 export const sortByInterestConstAverage = (reports: IssuerReport[]) => [...reports].sort((a, b) => a.interestConstAverage - b.interestConstAverage);
