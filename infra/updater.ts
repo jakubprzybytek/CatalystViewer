@@ -15,14 +15,9 @@ const sendReportFunction = new sst.aws.Function("SendReport", {
   timeout: "30 seconds",
   nodejs: {
     esbuild: {
-      loader: {
-        ".pug": "text",
-      },
+      loader: { ".pug": "text" },
     },
   },
-  copyFiles: [
-    { from: "packages/functions/src/emails/reportNotification.pug" },
-  ],
   permissions: [
     {
       actions: ["ses:SendEmail"],

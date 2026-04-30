@@ -8,6 +8,7 @@ export type IssuerProfile = {
   industry: string;
   businessSummary: string;
   websiteUrl?: string;
+  classifiedAtTs?: number;
 };
 
 type IssuerProfilesQueryResult = {

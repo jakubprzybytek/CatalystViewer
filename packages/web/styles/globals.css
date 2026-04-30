@@ -20,6 +20,14 @@ body {
       padding: 0;
     }
   }
+
+  .tiny-text {
+    display: flex;
+    justify-content: end;
+    padding-right: 8px;
+    color: lightgray;
+    font-size: 0.7em;
+  }
 }
 
 .bond-card {
@@ -56,6 +64,7 @@ body {
     color: lightgray;
     font-size: 0.7em;
   }
+
 }
 
 .report-section {

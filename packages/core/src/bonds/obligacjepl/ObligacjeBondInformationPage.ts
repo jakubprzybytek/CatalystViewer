@@ -1,4 +1,3 @@
-import * as R from 'ramda';
 import { InterestPeriod, InterestType, ObligacjeBondInformation } from ".";
 import assert from 'assert';
 
@@ -18,7 +17,7 @@ const INTEREST_TYPE_VARIABLE_REGEX = /zmienne\s(.+)\s\+\s+([\w.]+)%/;
 const INTEREST_TYPE_CONST_REGEX = /stałe\s+([\w.]+)%/;
 const INTEREST_TYPE_ZERO_COUPON_REGEX = /obligacje\szerokuponowe\s\+\s0%/;
 
-const unique = R.uniqBy(R.identity);
+const unique = <T>(arr: T[]): T[] => [...new Set(arr)];
 
 function firstGroup(markup: string, regexp: RegExp): string {
     const regexpMatch = markup.match(regexp);

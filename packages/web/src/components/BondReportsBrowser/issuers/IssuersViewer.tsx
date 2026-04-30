@@ -45,6 +45,7 @@ export default function IssuersViewer({ bondReports, issuerProfiles, statistics,
           industry: issuerProfile?.industry,
           businessSummary: issuerProfile?.businessSummary,
           websiteUrl: issuerProfile?.websiteUrl,
+          classifiedAtTs: issuerProfile?.classifiedAtTs,
         });
       });
     });

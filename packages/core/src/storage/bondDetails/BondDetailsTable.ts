@@ -1,4 +1,3 @@
-import * as R from 'ramda';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, BatchWriteCommand, ScanCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
 import { DbBondDetails } from '.';
@@ -127,7 +126,7 @@ export class BondDetailsTable {
     const endTimestamp = new Date().getTime();
 
     const allBondTypes = result.Items ? result.Items.map(item => item['bondType'] as string || '') : [];
-    const uniqueBondTypes = R.uniq(allBondTypes);
+    const uniqueBondTypes = [...new Set(allBondTypes)];
 
     console.log(`BondDetailsTable: Returning ${uniqueBondTypes.length} bond types in ${endTimestamp - startTimestamp} ms.`);
 

@@ -1,4 +1,5 @@
-import { compileFile } from 'pug';
+import { compile } from 'pug';
+import templateSource from './reportNotification.pug';
 import { SSMClient, GetParameterCommand, GetParameterCommandInput } from '@aws-sdk/client-ssm';
 import { sendEmail, SendEmailParams } from './EmailClient';
 import { SendReportInput } from '../issuers';
@@ -48,7 +49,7 @@ export async function handler(input: SendReportInput): Promise<SendReportResult>
 
     console.log(`SendReport: newBonds=${input.newBonds.length}, bondsDeactivated=${input.bondsDeactivated.length}, classifiedIssuers=${classifiedIssuers.length}, failedIssuers=${failedIssuers.length}`);
 
-    const template = compileFile('packages/functions/src/emails/reportNotification.pug', { pretty: true });
+    const template = compile(templateSource, { pretty: true });
     const emailBody = template({
         dateTime: new Date(),
         newBonds: input.newBonds.map(formatBond),

@@ -1,4 +1,3 @@
-import * as R from 'ramda';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { Resource } from 'sst';
 import { differenceInBusinessDays, getTime, sub } from 'date-fns';
@@ -14,7 +13,8 @@ import { UpdateBondsResult, UpdatedBond } from '.';
 const dynamoDbClient = new DynamoDBClient({});
 
 const bondId = (bond: DbBondDetails | CatalystBondQuote | CatalystDailyStatisticsBondDetails): string => `${bond.name}#${bond.market}`;
-const mapByBondId = R.reduce((map: Record<string, DbBondDetails | CatalystBondQuote>, curr: DbBondDetails | CatalystBondQuote) => R.assoc(bondId(curr), curr, map), {});
+const mapByBondId = (list: Array<DbBondDetails | CatalystBondQuote>): Record<string, DbBondDetails | CatalystBondQuote> =>
+  list.reduce((map: Record<string, DbBondDetails | CatalystBondQuote>, curr) => ({ ...map, [bondId(curr)]: curr }), {});
 
 export async function handler(): Promise<UpdateBondsResult> {
   const bondDetailsTable = new BondDetailsTable(dynamoDbClient, Resource.BondDetails.name);
