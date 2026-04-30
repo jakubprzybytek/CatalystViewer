@@ -1,6 +1,7 @@
 import '../styles/globals.css';
 import React from 'react';
 import type { AppProps } from 'next/app';
+import CssBaseline from '@mui/material/CssBaseline';
 import localFont from 'next/font/local';
 import { Amplify } from "aws-amplify";
 
@@ -39,5 +40,5 @@ Amplify.configure(amplifyConfig);
 
 export default function App({ Component, pageProps }: AppProps) {
   const Page = Component as React.ComponentType<typeof pageProps>;
-  return <Page className={roboto.className} {...pageProps} />;
+  return <><CssBaseline /><Page className={roboto.className} {...pageProps} /></>;
 }
