@@ -14,9 +14,7 @@ const sendReportFunction = new sst.aws.Function("SendReport", {
   handler: "packages/functions/src/emails/sendReport.handler",
   timeout: "30 seconds",
   nodejs: {
-    esbuild: {
-      loader: { ".pug": "text" },
-    },
+    loader: { ".pug": "text" },
   },
   permissions: [
     {
