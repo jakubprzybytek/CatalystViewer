@@ -102,7 +102,7 @@ html
     main
       div(class="header")
         h1 Catalyst Update Report
-        p Date: #{dateTime.toLocaleString("pl-PL")}
+        p Date: #{dateTime.toLocaleString("pl-PL", { timeZone: 'Europe/Warsaw' })} | Stage: #{stage}
       if newBonds.length > 0
         div(class="section")
           h2 New Bonds (#{newBonds.length})

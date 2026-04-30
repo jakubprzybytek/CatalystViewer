@@ -52,6 +52,7 @@ export async function handler(input: SendReportInput): Promise<SendReportResult>
     const template = compile(templateSource, { pretty: true });
     const emailBody = template({
         dateTime: new Date(),
+        stage: process.env.SST_STAGE ?? 'unknown',
         newBonds: input.newBonds.map(formatBond),
         bondsDeactivated: input.bondsDeactivated.map(formatBond),
         classifiedIssuers,
