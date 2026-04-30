@@ -13,6 +13,13 @@ const bondsUpdaterFunction = new sst.aws.Function("BondsUpdater", {
 const sendReportFunction = new sst.aws.Function("SendReport", {
   handler: "packages/functions/src/emails/sendReport.handler",
   timeout: "30 seconds",
+  nodejs: {
+    esbuild: {
+      loader: {
+        ".pug": "text",
+      },
+    },
+  },
   copyFiles: [
     { from: "packages/functions/src/emails/reportNotification.pug" },
   ],
