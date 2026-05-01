@@ -13,18 +13,18 @@ import Refresh from "@mui/icons-material/Refresh";
 import Sort from "@mui/icons-material/Sort";
 import Condition from "@/common/Condition";
 import MainNavigation from "../MainNavigation";
-import BondsNew2dStats from "./view/BondsNew2dStats";
+import BondsStats from "./view/BondsStats";
 import IssuersViewer from "./issuers/IssuersViewer";
 import BondReportsFilterDrawer, { BondReportsFilteringOptions, filterUsing } from "./filter";
 import BondReportsSortMenu, { BondReportsSortOrder, getBondReportsSortingFunction } from "./sort";
 import { BondReport, getBondReports } from "@/sdk/Bonds";
 import { IssuerProfile, getIssuerProfiles } from "@/sdk/Issuers";
 import { computeStatisticsForInterestBaseTypes } from "@/bonds/statistics";
-import NewBondsList from "./view/NewBondsList";
+import BondsList from "./view/BondsList";
 
 export enum BondReportsView {
   Issuers,
-  NewBonds
+  Bonds
 }
 
 export type BondReportsBrowserSettings = {
@@ -190,18 +190,18 @@ export default function BondReportsBrowser({ settings, setSettings }: BondReport
             value={view}
             onChange={(event: React.MouseEvent<HTMLElement>, newView: BondReportsView) => setView(newView !== null ? newView : view)}>
             <ToggleButton value={BondReportsView.Issuers}>Issuers</ToggleButton>
-            <ToggleButton value={BondReportsView.NewBonds}>New Bonds</ToggleButton>
+            <ToggleButton value={BondReportsView.Bonds}>Bonds</ToggleButton>
           </ToggleButtonGroup>
           <ToggleButton color="secondary" size="small" value="check2" selected={newStatsShown}
             onChange={() => setNewStatsShown(!newStatsShown)}>
-            Show new stats
+            Show stats
           </ToggleButton>
         </Stack>
         <Collapse in={newStatsShown}>
-          <BondsNew2dStats bondReports={filteredBondReports} statistics={bondReportsStatistics} />
+          <BondsStats bondReports={filteredBondReports} statistics={bondReportsStatistics} />
         </Collapse>
-        <Condition render={view == BondReportsView.NewBonds}>
-          <NewBondsList bondReports={filteredAndSortedBondsReports} statistics={bondReportsStatistics} />
+        <Condition render={view == BondReportsView.Bonds}>
+          <BondsList bondReports={filteredAndSortedBondsReports} statistics={bondReportsStatistics} />
         </Condition>
         <Condition render={view == BondReportsView.Issuers}>
           <IssuersViewer bondReports={filteredBondReportsWithoutIssuers} issuerProfiles={issuerProfiles} statistics={bondReportsStatistics} filteringOptions={filteringOptions} setFilteringOptions={setFilteringOptions} />
