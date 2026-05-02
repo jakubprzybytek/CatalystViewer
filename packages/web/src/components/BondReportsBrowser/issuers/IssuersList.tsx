@@ -1,19 +1,77 @@
+import { useMemo } from 'react';
+import { average, min, max, sum } from 'simple-statistics';
 import Grid from "@mui/material/Grid";
 import Box from "@mui/material/Box";
 import IssuerCard from "./IssuerCard";
-import { IssuerReport } from ".";
-import { InterestPercentilesByInterestBaseType } from "@/bonds/statistics";
+import { InterestPercentilesByInterestBaseType, getInterestConstParts, groupByIssuer, groupByInterestBaseType, getNominalValues, getIssueValues } from "@/bonds/statistics";
 import { BondReportsFilteringOptions, issuersModifiers } from "../filter";
+import { BondReport } from '@/sdk/Bonds';
+import { IssuerProfile } from '@/sdk/Issuers';
+
+export type IssuerReport = {
+  name: string;
+  interestBaseType: string;
+  interestConstAverage: number;
+  currency: string;
+  count: number;
+  minNominalValue: number;
+  maxNominalValue: number;
+  avgIssueValue: number;
+  totalIssueValue: number;
+  industry?: string;
+  businessSummary?: string;
+  websiteUrl?: string;
+  classifiedAtTs?: number;
+}
+
+const sortByInterestConstAverage = (reports: IssuerReport[]) => [...reports].sort((a, b) => a.interestConstAverage - b.interestConstAverage);
 
 type IssuersListParam = {
-  issuers: IssuerReport[];
+  bondReports: BondReport[];
+  issuerProfiles: IssuerProfile[];
   statistics: InterestPercentilesByInterestBaseType;
   filteringOptions: BondReportsFilteringOptions;
   setFilteringOptions: (param: BondReportsFilteringOptions) => void;
 }
 
-export default function IssuersList({ issuers, statistics, filteringOptions, setFilteringOptions }: IssuersListParam): React.JSX.Element {
+export default function IssuersList({ bondReports, issuerProfiles, statistics, filteringOptions, setFilteringOptions }: IssuersListParam): React.JSX.Element {
   const { addIssuer, removeIssuer } = issuersModifiers(filteringOptions, setFilteringOptions);
+
+  const issuers = useMemo(() => {
+    const bondsByIssuer = groupByIssuer(bondReports);
+    const issuerProfileByName = new Map(issuerProfiles.map(profile => [profile.issuerName, profile]));
+    const issuerReports: IssuerReport[] = [];
+
+    Object.entries(bondsByIssuer).map(([issuer, issuerBonds]) => {
+      Object.entries(groupByInterestBaseType(issuerBonds as BondReport[])).map(([interestVariableType, bondsByInterestVariablePartUndefined]) => {
+
+        const bondsByInterestVariablePart = bondsByInterestVariablePartUndefined as BondReport[];
+        const issuerProfile = issuerProfileByName.get(issuer);
+
+        const nominalValues = getNominalValues(bondsByInterestVariablePart);
+        const issueValues = getIssueValues(bondsByInterestVariablePart);
+
+        issuerReports.push({
+          name: issuer,
+          interestBaseType: interestVariableType,
+          interestConstAverage: average(getInterestConstParts(bondsByInterestVariablePart)),
+          currency: bondsByInterestVariablePart[0].details.currency,
+          count: bondsByInterestVariablePart.length,
+          minNominalValue: min(nominalValues),
+          maxNominalValue: max(nominalValues),
+          avgIssueValue: average(issueValues),
+          totalIssueValue: sum(issueValues),
+          industry: issuerProfile?.industry,
+          businessSummary: issuerProfile?.businessSummary,
+          websiteUrl: issuerProfile?.websiteUrl,
+          classifiedAtTs: issuerProfile?.classifiedAtTs,
+        });
+      });
+    });
+
+    return sortByInterestConstAverage(issuerReports);
+  }, [bondReports, issuerProfiles]);
+
   return (
     <Box>
       <Grid container spacing={1}>

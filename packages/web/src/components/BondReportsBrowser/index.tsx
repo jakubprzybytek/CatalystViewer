@@ -13,14 +13,14 @@ import Refresh from "@mui/icons-material/Refresh";
 import Sort from "@mui/icons-material/Sort";
 import Condition from "@/common/Condition";
 import MainNavigation from "../MainNavigation";
-import BondsStats from "./view/BondsStats";
-import IssuersViewer from "./issuers/IssuersViewer";
+import BondsStats from "./bonds/BondsStats";
+import IssuersList from "./issuers/IssuersList";
 import BondReportsFilterDrawer, { BondReportsFilteringOptions, filterUsing } from "./filter";
 import BondReportsSortMenu, { BondReportsSortOrder, getBondReportsSortingFunction } from "./sort";
 import { BondReport, getBondReports } from "@/sdk/Bonds";
 import { IssuerProfile, getIssuerProfiles } from "@/sdk/Issuers";
 import { computeStatisticsForInterestBaseTypes } from "@/bonds/statistics";
-import BondsList from "./view/BondsList";
+import BondsList from "./bonds/BondsList";
 
 export enum BondReportsView {
   Issuers,
@@ -204,7 +204,7 @@ export default function BondReportsBrowser({ settings, setSettings }: BondReport
           <BondsList bondReports={filteredAndSortedBondsReports} statistics={bondReportsStatistics} />
         </Condition>
         <Condition render={view == BondReportsView.Issuers}>
-          <IssuersViewer bondReports={filteredBondReportsWithoutIssuers} issuerProfiles={issuerProfiles} statistics={bondReportsStatistics} filteringOptions={filteringOptions} setFilteringOptions={setFilteringOptions} />
+          <IssuersList bondReports={filteredBondReportsWithoutIssuers} issuerProfiles={issuerProfiles} statistics={bondReportsStatistics} filteringOptions={filteringOptions} setFilteringOptions={setFilteringOptions} />
         </Condition>
         <Condition render={errorMessage !== undefined}>
           <Alert severity="error">

@@ -13,7 +13,7 @@ import OpenInNewOutlinedIcon from '@mui/icons-material/OpenInNewOutlined';
 import { CardSectionRow, CardEntry, CardValue } from "@/common/Cards";
 import { ColorCode } from "@/common/ColorCodes";
 import { getInterestConstColorCode, getNominalValueColorCode } from "@/bonds/BondIndicators";
-import { IssuerReport } from '.';
+import { IssuerReport } from './IssuersList';
 import { InterestPercentilesByInterestBaseType } from "@/bonds/statistics";
 import { formatCurrency } from "@/common/Formats";
 

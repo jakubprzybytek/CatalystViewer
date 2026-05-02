@@ -11,7 +11,7 @@ import Link from "@mui/material/Link";
 import ExpandMoreOutlinedIcon from '@mui/icons-material/ExpandMoreOutlined';
 import ExpandLessOutlinedIcon from '@mui/icons-material/ExpandLessOutlined';
 import BondCardYTMSection from './BondCardYTMSection';
-import BondLiquidityDialog from '../BondLiquidityDialog';
+import BondLiquidityDialog from './BondLiquidityDialog';
 import { interestBaseType, InterestPercentilesByInterestBaseType } from "@bonds/statistics";
 import { BondReport } from "@sdk/Bonds";
 import { formatCompactCurrency, formatCurrency, formatDate } from '@/common/Formats';
