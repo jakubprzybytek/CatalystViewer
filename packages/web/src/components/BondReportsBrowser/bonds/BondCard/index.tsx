@@ -1,4 +1,3 @@
-import { styled, alpha } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import Box from '@mui/material/Box';
 import Paper from "@mui/material/Paper";
@@ -6,12 +5,12 @@ import Collapse from '@mui/material/Collapse';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
 import Typography from "@mui/material/Typography";
-import LinearProgress, { linearProgressClasses } from '@mui/material/LinearProgress';
 import Link from "@mui/material/Link";
 import ExpandMoreOutlinedIcon from '@mui/icons-material/ExpandMoreOutlined';
 import ExpandLessOutlinedIcon from '@mui/icons-material/ExpandLessOutlined';
 import BondCardYTMSection from './BondCardYTMSection';
 import BondLiquidityDialog from './BondLiquidityDialog';
+import InterestProgressBar from './InterestProgressBar';
 import { interestBaseType, InterestPercentilesByInterestBaseType } from "@bonds/statistics";
 import { BondReport } from "@sdk/Bonds";
 import { formatCompactCurrency, formatCurrency, formatDate } from '@/common/Formats';
@@ -20,15 +19,6 @@ import { CardSectionRow } from '@/common/Cards/CardSectionRow';
 import { getInterestConstColorCode, getNominalValueColorCode } from '@/bonds/BondIndicators';
 import { ColorCode } from '@/common/ColorCodes';
 import { useState } from 'react';
-
-const BorderLinearProgress = styled(LinearProgress)(({ theme }) => ({
-  height: 10,
-  borderRadius: 5,
-  flexGrow: 1,
-  [`&.${linearProgressClasses.colorPrimary}`]: {
-    backgroundColor: theme.palette.grey[theme.palette.mode === 'light' ? 200 : 800],
-  }
-}));
 
 type BondCardParam = {
   bondReport: BondReport;
@@ -97,15 +87,12 @@ export default function BondCard({ bondReport, statistics }: BondCardParam): Rea
           <CardSectionRow>
             <CardEntry caption='Interest progress' flexGrow={1}>
               <CardValue>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
-                  {Array.from({ length: currentValues.pastInterestPeriods }).map((_, i) => (
-                    <Box key={i} sx={{ width: 10, height: 10, borderRadius: '5px', flexShrink: 0, bgcolor: 'error.main' }} />
-                  ))}
-                  <BorderLinearProgress variant='determinate' color={interestBarColor} value={currentValues.interestProgress} />
-                  {Array.from({ length: currentValues.futureInterestPeriods }).map((_, i) => (
-                    <Box key={i} sx={{ width: 10, height: 10, borderRadius: '5px', flexShrink: 0, bgcolor: (theme) => alpha(theme.palette.error.main, 0.38) }} />
-                  ))}
-                </Box>
+                <InterestProgressBar
+                  progress={currentValues.interestProgress}
+                  color={interestBarColor}
+                  pastPeriods={currentValues.pastInterestPeriods}
+                  futurePeriods={currentValues.futureInterestPeriods}
+                />
               </CardValue>
             </CardEntry>
           </CardSectionRow>
