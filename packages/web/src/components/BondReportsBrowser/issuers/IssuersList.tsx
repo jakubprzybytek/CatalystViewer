@@ -1,12 +1,13 @@
-import { useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { average, min, max, sum } from 'simple-statistics';
 import Grid from "@mui/material/Grid";
 import Box from "@mui/material/Box";
 import IssuerCard from "./IssuerCard";
 import { InterestPercentilesByInterestBaseType, getInterestConstParts, groupByIssuer, groupByInterestBaseType, getNominalValues, getIssueValues } from "@/bonds/statistics";
-import { BondReportsFilteringOptions, issuersModifiers } from "../filter";
+import { BondReportsFilteringOptions } from "../filter";
 import { BondReport } from '@/sdk/Bonds';
 import { IssuerProfile } from '@/sdk/Issuers';
+import { removeElement } from '@/common/Arrays';
 
 export type IssuerReport = {
   name: string;
@@ -35,7 +36,27 @@ type IssuersListParam = {
 }
 
 export default function IssuersList({ bondReports, issuerProfiles, statistics, filteringOptions, setFilteringOptions }: IssuersListParam): React.JSX.Element {
-  const { addIssuer, removeIssuer } = issuersModifiers(filteringOptions, setFilteringOptions);
+  const filteringOptionsRef = useRef(filteringOptions);
+
+  useEffect(() => {
+    filteringOptionsRef.current = filteringOptions;
+  }, [filteringOptions]);
+
+  const toggleIssuer = useCallback((issuerName: string, checked: boolean) => {
+    const currentFilteringOptions = filteringOptionsRef.current;
+    const currentIssuers = currentFilteringOptions.issuers;
+
+    const nextIssuers = checked
+      ? (currentIssuers.includes(issuerName) ? currentIssuers : [...currentIssuers, issuerName])
+      : removeElement(currentIssuers, issuerName);
+
+    setFilteringOptions({
+      ...currentFilteringOptions,
+      issuers: nextIssuers,
+    });
+  }, [setFilteringOptions]);
+
+  const selectedIssuerNames = useMemo(() => new Set(filteringOptions.issuers), [filteringOptions.issuers]);
 
   const issuers = useMemo(() => {
     const bondsByIssuer = groupByIssuer(bondReports);
@@ -77,7 +98,12 @@ export default function IssuersList({ bondReports, issuerProfiles, statistics, f
       <Grid container spacing={1}>
         {issuers.map(issuerReport => (
           <Grid key={`${issuerReport.name}#${issuerReport.interestBaseType}`} size={{ xs: 12, sm: 6, lg: 4, xl: 3 }}>
-            <IssuerCard issuerReport={issuerReport} statistics={statistics} selectedIssuers={filteringOptions.issuers} addIssuer={addIssuer} removeIssuer={removeIssuer} />
+            <IssuerCard
+              issuerReport={issuerReport}
+              statistics={statistics}
+              isChecked={selectedIssuerNames.has(issuerReport.name)}
+              onIssuerChecked={toggleIssuer}
+            />
           </Grid>
         ))}
       </Grid>
