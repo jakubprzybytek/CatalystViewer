@@ -21,6 +21,8 @@ export type BondCurrentValues = {
     readonly interestRecordDay: number;
     readonly interestPayableDay: number;
     readonly interestProgress: number;
+    readonly pastInterestPeriods: number;
+    readonly futureInterestPeriods: number;
 
     readonly interestRate: number;
     readonly accuredInterest: number;

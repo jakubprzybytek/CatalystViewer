@@ -1,4 +1,4 @@
-import { styled } from '@mui/material';
+import { styled, alpha } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import Box from '@mui/material/Box';
 import Paper from "@mui/material/Paper";
@@ -97,7 +97,15 @@ export default function BondCard({ bondReport, statistics }: BondCardParam): Rea
           <CardSectionRow>
             <CardEntry caption='Interest progress' flexGrow={1}>
               <CardValue>
-                <BorderLinearProgress variant='determinate' color={interestBarColor} value={currentValues.interestProgress} />
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
+                  {Array.from({ length: currentValues.pastInterestPeriods }).map((_, i) => (
+                    <Box key={i} sx={{ width: 10, height: 10, borderRadius: '5px', flexShrink: 0, bgcolor: 'error.main' }} />
+                  ))}
+                  <BorderLinearProgress variant='determinate' color={interestBarColor} value={currentValues.interestProgress} />
+                  {Array.from({ length: currentValues.futureInterestPeriods }).map((_, i) => (
+                    <Box key={i} sx={{ width: 10, height: 10, borderRadius: '5px', flexShrink: 0, bgcolor: (theme) => alpha(theme.palette.error.main, 0.38) }} />
+                  ))}
+                </Box>
               </CardValue>
             </CardEntry>
           </CardSectionRow>

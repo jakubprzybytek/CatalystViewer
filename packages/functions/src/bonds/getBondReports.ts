@@ -64,6 +64,8 @@ export const handler = lambdaHandler<BondReportsQueryResult>(async event => {
       interestRecordDay: currentInterestRecordDay,
       interestPayableDay: currentInterestPayableDay,
       interestProgress: Number(currentInterestProgress.toFixed(2)),
+      pastInterestPeriods: interestPeriodIndex,
+      futureInterestPeriods: dbBond.interestPayoffDayTss.length - interestPeriodIndex - 1,
       interestRate: dbBond.currentInterestRate,
       accuredInterest: Number(accuredInterest.toFixed(2)),
       periodInterest: Number(periodInterest.toFixed(2)),
