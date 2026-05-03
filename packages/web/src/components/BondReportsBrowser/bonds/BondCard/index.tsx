@@ -101,8 +101,14 @@ export default function BondCard({ bondReport, statistics }: BondCardParam): Rea
               </CardValue>
             </CardEntry>
           </CardSectionRow>
-          <CardSectionRow>
-            <Box hidden={!expanded}>
+          <Box sx={{
+            display: 'grid',
+            gridTemplateColumns: expanded ? '1fr 1fr 1fr' : '0fr 1fr 1fr',
+            transition: 'grid-template-columns 300ms cubic-bezier(0.4, 0, 0.2, 1)',
+            p: 1,
+            pb: 0,
+          }}>
+            <Box sx={{ overflow: 'hidden', whiteSpace: 'nowrap' }}>
               <CardEntry caption='First day'>
                 <CardValue>{formatDate(currentValues.interestFirstDay)}</CardValue>
               </CardEntry>
@@ -113,7 +119,7 @@ export default function BondCard({ bondReport, statistics }: BondCardParam): Rea
             <CardEntry caption='Payable'>
               <CardValue>{formatDate(currentValues.interestPayableDay)}</CardValue>
             </CardEntry>
-          </CardSectionRow>
+          </Box>
           <Collapse in={expanded}>
             <CardSectionRow>
               <CardEntry caption='Current interest' width='33%'>

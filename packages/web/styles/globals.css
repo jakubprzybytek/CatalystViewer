@@ -38,11 +38,11 @@ body {
     padding-bottom: 4px;
 
     @media screen and (max-width: 899px) {
-      border-bottom: 2px solid rgb(var(--background-rgb));
+      border-bottom: 1px solid rgb(var(--background-rgb));
     }
 
     @media screen and (min-width: 900px) {
-      border-right: 2px solid rgb(var(--background-rgb));
+      border-right: 1px solid rgb(var(--background-rgb));
     }
   }
 
