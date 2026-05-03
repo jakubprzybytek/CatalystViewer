@@ -20,6 +20,48 @@ This runs `vitest run` from the workspace root and picks up all `*.test.ts` file
 
 ---
 
+## Integration Tests
+
+Integration tests run against a dedicated `int` environment with **stable, fixture-based data** — no live internet fetching. This makes the tests deterministic and repeatable regardless of what the real Catalyst/Obligacje.pl sites serve at any given time.
+
+### How the fixture data works
+
+The `int` environment runs the **Bonds Update workflow** (AWS Step Function) in a *test mode*. In test mode the workflow's data-fetching steps read from **local fixture files** (Excel spreadsheets, HTML pages) stored on disk instead of downloading them from the internet. This guarantees the exact same bond data is loaded every time the workflow runs.
+
+Fixture files are committed to the repository under `tests/fixtures/` and cover a representative, stable snapshot of bonds and issuers.
+
+### Deployment trigger
+
+During deployment to `int`, the Bonds Update workflow is automatically triggered in test mode. By the time the deployment completes, the database is populated with the fixture data and the environment is ready to test against.
+
+### Test layers
+
+Two layers of tests run against the `int` environment:
+
+1. **API integration tests** — call the backend API directly (without a browser) and assert on the shape and content of the responses. These live in `tests/integration/` and use [Vitest](https://vitest.dev/).
+2. **E2E tests** — drive a real browser with [Playwright](https://playwright.dev/) and verify that the UI correctly fetches and renders data. These live in `tests/e2e/` and share infrastructure with the existing smoke tests.
+
+### How to run integration tests
+
+**Against Integration (`int`) environment:**
+```bash
+npm run test:integration:int
+```
+
+**Against a custom URL:**
+Create an `.env.local` file in the repository root and set the API base URL, then run:
+```bash
+npm run test:integration
+```
+
+### How to run E2E tests
+
+```bash
+npm run test:e2e:int
+```
+
+---
+
 ## Smoke Tests
 
 Smoke tests live in `/tests/smoke` and use [Playwright](https://playwright.dev/).
