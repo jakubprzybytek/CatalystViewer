@@ -123,6 +123,69 @@ import { fetchBonds } from '@core/bonds';
 import { IssuerProfilesTable } from '@core/storage/issuerProfiles';
 ```
 
+## Logging
+
+Lambda handlers must use `@aws-lambda-powertools/logger` for all log output. `console.log`, `console.error`, and `console.warn` are forbidden in handler files.
+
+### Setup
+
+Instantiate a module-level `Logger` with a `serviceName` matching the function's purpose:
+
+```typescript
+import { Logger } from '@aws-lambda-powertools/logger';
+
+const logger = new Logger({ serviceName: 'ClassifyIssuers' });
+```
+
+### Attach Lambda context
+
+At the very start of every handler, call `logger.addContext(context)` to automatically enrich all subsequent log entries with AWS request ID, function name, and cold-start indicator:
+
+```typescript
+export async function handler(input: CollectIssuersResult, context: Context): Promise<ClassifyIssuersResult> {
+    logger.addContext(context);
+    // ...
+}
+```
+
+### Structured log entries
+
+Pass a plain object as the second argument to include structured metadata alongside the message — never interpolate data into the message string:
+
+```typescript
+// correct — structured fields
+logger.info('Classifying issuers', { batchSize: batch.length, totalUnclassified: input.unclassifiedIssuers.length });
+
+// wrong — string interpolation
+console.log(`Classifying ${batch.length} issuers`);
+```
+
+### Error logging
+
+Use `logger.error` and include both the error context and the resolved reason:
+
+```typescript
+catch (error) {
+    const errorReason = error instanceof Error ? error.message : String(error);
+    logger.error('Failed to classify issuer', { issuerName, errorReason });
+}
+```
+
+### Log levels
+
+| Situation | Method |
+|-----------|--------|
+| Normal operational milestones | `logger.info` |
+| Recoverable problems or unexpected state | `logger.warn` |
+| Caught errors, failed items | `logger.error` |
+| Detailed diagnostic data (disabled in prod) | `logger.debug` |
+
+### Dependency
+
+`@aws-lambda-powertools/logger` must be listed in `packages/functions/package.json` with a strict version consistent with the rest of the dependencies.
+
+---
+
 ## How to Apply
 
 ### Adding a new business logic operation
