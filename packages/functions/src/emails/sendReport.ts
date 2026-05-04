@@ -1,4 +1,6 @@
 import { compile } from 'pug';
+import { Context } from 'aws-lambda';
+import { Logger } from '@aws-lambda-powertools/logger';
 import templateSource from './reportNotification.pug';
 import { SSMClient, GetParameterCommand, GetParameterCommandInput } from '@aws-sdk/client-ssm';
 import { sendEmail, SendEmailParams } from './EmailClient';
@@ -7,6 +9,8 @@ import { UpdatedBond } from '../bonds';
 import { formatCurrency, formatCompactCurrency } from '@core/common/Formats';
 
 const RECIPIENTS_PARAM_NAME = '/catalyst-viewer/notifications/recipients';
+
+const logger = new Logger({ serviceName: 'SendReport' });
 
 type SendReportResult = {
     emailSent: boolean;
@@ -43,11 +47,13 @@ async function getNotificationRecipientEmails(): Promise<string[]> {
     return recipientsValue.split(',');
 }
 
-export async function handler(input: SendReportInput): Promise<SendReportResult> {
+export async function handler(input: SendReportInput, context: Context): Promise<SendReportResult> {
+    logger.addContext(context);
+
     const classifiedIssuers = input.classifiedIssuers ?? [];
     const failedIssuers = input.failedIssuers ?? [];
 
-    console.log(`SendReport: newBonds=${input.newBonds.length}, bondsDeactivated=${input.bondsDeactivated.length}, classifiedIssuers=${classifiedIssuers.length}, failedIssuers=${failedIssuers.length}`);
+    logger.info('Sending report', { newBonds: input.newBonds.length, bondsDeactivated: input.bondsDeactivated.length, classifiedIssuers: classifiedIssuers.length, failedIssuers: failedIssuers.length });
 
     const template = compile(templateSource, { pretty: true });
     const emailBody = template({
