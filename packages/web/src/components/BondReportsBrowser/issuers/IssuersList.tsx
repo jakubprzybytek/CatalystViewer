@@ -37,10 +37,15 @@ type IssuersListParam = {
 
 export default function IssuersList({ bondReports, issuerProfiles, statistics, filteringOptions, setFilteringOptions }: IssuersListParam): React.JSX.Element {
   const filteringOptionsRef = useRef(filteringOptions);
+  const setFilteringOptionsRef = useRef(setFilteringOptions);
 
   useEffect(() => {
     filteringOptionsRef.current = filteringOptions;
   }, [filteringOptions]);
+
+  useEffect(() => {
+    setFilteringOptionsRef.current = setFilteringOptions;
+  }, [setFilteringOptions]);
 
   const toggleIssuer = useCallback((issuerName: string, checked: boolean) => {
     const currentFilteringOptions = filteringOptionsRef.current;
@@ -50,11 +55,11 @@ export default function IssuersList({ bondReports, issuerProfiles, statistics, f
       ? (currentIssuers.includes(issuerName) ? currentIssuers : [...currentIssuers, issuerName])
       : removeElement(currentIssuers, issuerName);
 
-    setFilteringOptions({
+    setFilteringOptionsRef.current({
       ...currentFilteringOptions,
       issuers: nextIssuers,
     });
-  }, [setFilteringOptions]);
+  }, []);
 
   const selectedIssuerNames = useMemo(() => new Set(filteringOptions.issuers), [filteringOptions.issuers]);
 
@@ -63,19 +68,21 @@ export default function IssuersList({ bondReports, issuerProfiles, statistics, f
     const issuerProfileByName = new Map(issuerProfiles.map(profile => [profile.issuerName, profile]));
     const issuerReports: IssuerReport[] = [];
 
-    Object.entries(bondsByIssuer).map(([issuer, issuerBonds]) => {
-      Object.entries(groupByInterestBaseType(issuerBonds as BondReport[])).map(([interestVariableType, bondsByInterestVariablePartUndefined]) => {
+    Object.entries(bondsByIssuer).forEach(([issuer, issuerBonds]) => {
+      Object.entries(groupByInterestBaseType(issuerBonds as BondReport[])).forEach(([interestVariableType, bondsByInterestVariablePartUndefined]) => {
 
         const bondsByInterestVariablePart = bondsByInterestVariablePartUndefined as BondReport[];
         const issuerProfile = issuerProfileByName.get(issuer);
 
+        // Pre-compute extracted arrays once, then reuse for all statistics calls
         const nominalValues = getNominalValues(bondsByInterestVariablePart);
         const issueValues = getIssueValues(bondsByInterestVariablePart);
+        const interestConstParts = getInterestConstParts(bondsByInterestVariablePart);
 
         issuerReports.push({
           name: issuer,
           interestBaseType: interestVariableType,
-          interestConstAverage: average(getInterestConstParts(bondsByInterestVariablePart)),
+          interestConstAverage: average(interestConstParts),
           currency: bondsByInterestVariablePart[0].details.currency,
           count: bondsByInterestVariablePart.length,
           minNominalValue: min(nominalValues),
