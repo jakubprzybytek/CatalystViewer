@@ -1,4 +1,6 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
+import { Context } from 'aws-lambda';
+import { Logger } from '@aws-lambda-powertools/logger';
 import { Resource } from 'sst';
 import { differenceInBusinessDays, getTime, sub } from 'date-fns';
 import { average } from 'simple-statistics'
@@ -10,13 +12,17 @@ import { BondDetailsTable, DbBondDetails } from '@core/storage/bondDetails';
 import { BondQuotesQuery, BondStatisticsTable, DbBondStatistics } from '@core/storage/bondStatistics';
 import { UpdateBondsResult, UpdatedBond } from '.';
 
+const logger = new Logger({ serviceName: 'UpdateBondReports' });
+
 const dynamoDbClient = new DynamoDBClient({});
 
 const bondId = (bond: DbBondDetails | CatalystBondQuote | CatalystDailyStatisticsBondDetails): string => `${bond.name}#${bond.market}`;
 const mapByBondId = (list: Array<DbBondDetails | CatalystBondQuote>): Record<string, DbBondDetails | CatalystBondQuote> =>
   list.reduce((map: Record<string, DbBondDetails | CatalystBondQuote>, curr) => ({ ...map, [bondId(curr)]: curr }), {});
 
-export async function handler(): Promise<UpdateBondsResult> {
+export async function handler(_event: unknown, context: Context): Promise<UpdateBondsResult> {
+  logger.addContext(context);
+
   const bondDetailsTable = new BondDetailsTable(dynamoDbClient, Resource.BondDetails.name);
 
   const bondsQuotesList: CatalystBondQuote[] = await getCurrentCatalystBondsQuotes();
@@ -33,7 +39,7 @@ export async function handler(): Promise<UpdateBondsResult> {
   const now = new Date();
   const liquidityStatisticsEndDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
   const liquidityStatisticsStartDate = sub(liquidityStatisticsEndDate, { days: 30, hours: 23, minutes: 59, seconds: 59 });
-  console.log(`Time range for liquidity computations: ${liquidityStatisticsStartDate.toISOString()} - ${liquidityStatisticsEndDate.toISOString()}`);
+  logger.info('Time range for liquidity computations', { start: liquidityStatisticsStartDate.toISOString(), end: liquidityStatisticsEndDate.toISOString() });
 
   const newBondsToStore: DbBondDetails[] = [];
   const updatedBondsToStore: DbBondDetails[] = [];
@@ -46,7 +52,7 @@ export async function handler(): Promise<UpdateBondsResult> {
       const bondQuote = bondsQuotes[bondId(bondStats)];
 
       const liquidityStatistics = await computeLiquidityStatistics(bondStats.name, bondStats.market, liquidityStatisticsStartDate, liquidityStatisticsEndDate);
-      console.log(`${bondStats.name} - Avg turnover: ${liquidityStatistics.averageTurnover}, trading days: ${liquidityStatistics.tradingDaysRatio}, avg spread: ${liquidityStatistics.averageSpread}`);
+      logger.info('Bond liquidity computed', { bond: bondStats.name, averageTurnover: liquidityStatistics.averageTurnover, tradingDaysRatio: liquidityStatistics.tradingDaysRatio, averageSpread: liquidityStatistics.averageSpread });
 
       if (storedBondDetails !== undefined) {
         // update existing bond information
@@ -114,8 +120,9 @@ export async function handler(): Promise<UpdateBondsResult> {
         });
       }
     } catch (error: any) {
+      const errorReason = error instanceof Error ? error.message : String(error);
       bondsFailed.push(bondStats.name);
-      console.error(error);
+      logger.error('Failed to process bond', { bond: bondStats.name, errorReason });
     }
   }
 
@@ -132,12 +139,16 @@ export async function handler(): Promise<UpdateBondsResult> {
     .concat(newBondsToStore)
     .concat(deactivatedBondsToStore));
 
-  return {
+  const result: UpdateBondsResult = {
     bondsUpdated: updatedBondsToStore.length,
     newBonds: newBondsToStore.map(toUpdatedBond),
     bondsDeactivated: deactivatedBondsToStore.map(toUpdatedBond),
     bondsFailed
-  }
+  };
+
+  logger.info('Update bonds done', { bondsUpdated: result.bondsUpdated, newBonds: result.newBonds.length, bondsDeactivated: result.bondsDeactivated.length, bondsFailed: result.bondsFailed.length });
+
+  return result;
 }
 
 function toUpdatedBond(dbBond: DbBondDetails): UpdatedBond {
@@ -164,12 +175,12 @@ async function storeBondQuotes(bondsQuotesList: CatalystBondQuote[]): Promise<vo
   for (const bondQuote of bondStatistics) {
     const updated = await bondStatisticsTable.updateQuotes(bondQuote);
     if (!updated) {
-      console.log('Item not existing yet. Creating.')
+      logger.info('Bond statistics item not found, creating new record', { bond: bondQuote.name, market: bondQuote.market });
       await bondStatisticsTable.store(bondQuote);
     }
   };
 
-  console.log(`Stored ${bondStatistics.length} quotes.`);
+  logger.info('Bond quotes stored', { count: bondStatistics.length });
 }
 
 export function toBondStatistics(quote: CatalystBondQuote): DbBondStatistics {
