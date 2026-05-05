@@ -18,7 +18,7 @@ const bedrockClient = new BedrockRuntimeClient({
     maxAttempts: 1,
 });
 
-const tavilyClient = new TavilyClient(Resource.TavilyApiKey.value);
+const tavilyClient = new TavilyClient(process.env.TAVILY_API_KEY ?? '');
 
 function resolveClassificationsCap(value: number | undefined): number {
     if (typeof value !== 'number' || Number.isNaN(value)) {
