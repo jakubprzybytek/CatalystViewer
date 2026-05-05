@@ -16,6 +16,9 @@ const sendReportFunction = new sst.aws.Function("SendReport", {
   nodejs: {
     loader: { ".pug": "text" },
   },
+  environment: {
+    SST_STAGE: $app.stage,
+  },
   permissions: [
     {
       actions: ["ses:SendEmail"],
