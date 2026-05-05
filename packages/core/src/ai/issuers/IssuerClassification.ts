@@ -57,8 +57,12 @@ Respond with a JSON object ONLY — no markdown, no explanation:
 function parseClassificationResponse(text: string): ClassificationResponse {
     let parsed: unknown;
     try {
-        const stripped = text.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '');
-        parsed = JSON.parse(stripped);
+        const start = text.indexOf('{');
+        const end = text.lastIndexOf('}');
+        if (start === -1 || end === -1 || end < start) {
+            throw new SyntaxError('no JSON object found');
+        }
+        parsed = JSON.parse(text.slice(start, end + 1));
     } catch {
         console.error(`parseClassificationResponse: raw model output:\n${text}`);
         throw new Error('InvalidResponseFormat: response is not valid JSON');
