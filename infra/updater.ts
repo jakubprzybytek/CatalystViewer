@@ -1,5 +1,7 @@
 import { bondDetailsTable, bondStatisticsTable, issuerProfilesTable } from "./storage";
 
+export const tavilyApiKey = new sst.Secret("TavilyApiKey");
+
 const bondsUpdaterFunction = new sst.aws.Function("BondsUpdater", {
   handler: "packages/functions/src/bonds/updateBondReports.handler",
   memory: "512 MB",
@@ -39,7 +41,7 @@ const collectUnclassifiedIssuersFunction = new sst.aws.Function("CollectUnclassi
 const classifyIssuersFunction = new sst.aws.Function("ClassifyIssuers", {
   handler: "packages/functions/src/issuers/classifyIssuers.handler",
   timeout: "5 minutes",
-  link: [issuerProfilesTable],
+  link: [issuerProfilesTable, tavilyApiKey],
   permissions: [
     {
       actions: ["bedrock:InvokeModel"],

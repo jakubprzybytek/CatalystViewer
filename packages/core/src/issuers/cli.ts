@@ -1,12 +1,6 @@
-// Classify an issuer by name using AI and print the result.
-//
-// Usage (from repo root):
-//   npm run classify-issuer -- "Kruk S.A."
-//
-// AWS credentials must be available (AWS_PROFILE or environment variables).
-
 import { BedrockRuntimeClient } from '@aws-sdk/client-bedrock-runtime';
 import { classifyIssuer, MODEL_ID } from '../ai/issuers/index';
+import { TavilyClient } from '../ai/tools/tavily/TavilyClient';
 
 // ─── CLI args ─────────────────────────────────────────────────────────────────
 
@@ -17,14 +11,22 @@ if (!issuerName) {
     process.exit(1);
 }
 
+const tavilyApiKey = process.env.TAVILY_API_KEY;
+
+if (!tavilyApiKey) {
+    console.error('Error: TAVILY_API_KEY environment variable is not set.');
+    process.exit(1);
+}
+
 // ─── Core ─────────────────────────────────────────────────────────────────────
 
 async function run(): Promise<void> {
     console.log(`Classifying: "${issuerName}"\n`);
 
     const bedrockClient = new BedrockRuntimeClient({ maxAttempts: 2 });
+    const tavilyClient = new TavilyClient(tavilyApiKey!);
 
-    const result = await classifyIssuer(bedrockClient, issuerName);
+    const result = await classifyIssuer(bedrockClient, tavilyClient, issuerName);
 
     console.log('Classification result:');
     console.log(`  Industry:         ${result.industry}`);
