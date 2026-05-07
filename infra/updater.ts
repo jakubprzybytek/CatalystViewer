@@ -35,6 +35,7 @@ const sendReportFunction = new sst.aws.Function("SendReport", {
 
 const collectUnclassifiedIssuersFunction = new sst.aws.Function("CollectUnclassifiedIssuers", {
   handler: "packages/functions/src/issuers/collectUnclassifiedIssuers.handler",
+  memory: "512 MB",
   timeout: "60 seconds",
   link: [bondDetailsTable, issuerProfilesTable],
 });
