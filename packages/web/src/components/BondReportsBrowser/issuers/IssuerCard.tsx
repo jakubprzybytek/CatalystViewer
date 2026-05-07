@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { memo, useState } from 'react';
 import Stack from "@mui/material/Stack";
 import Paper from "@mui/material/Paper";
 import Checkbox from "@mui/material/Checkbox";
@@ -13,7 +13,7 @@ import OpenInNewOutlinedIcon from '@mui/icons-material/OpenInNewOutlined';
 import { CardSectionRow, CardEntry, CardValue } from "@/common/Cards";
 import { ColorCode } from "@/common/ColorCodes";
 import { getInterestConstColorCode, getNominalValueColorCode } from "@/bonds/BondIndicators";
-import { IssuerReport } from '.';
+import { IssuerReport } from './IssuersList';
 import { InterestPercentilesByInterestBaseType } from "@/bonds/statistics";
 import { formatCurrency } from "@/common/Formats";
 
@@ -51,14 +51,12 @@ function getIndustryColors(industry: string): { backgroundColor: string; color: 
 type IssuerCardParam = {
   issuerReport: IssuerReport;
   statistics: InterestPercentilesByInterestBaseType;
-  selectedIssuers: string[];
-  addIssuer: (newIssuer: string) => void;
-  removeIssuer: (issuerToRemove: string) => void;
+  isChecked: boolean;
+  onIssuerChecked: (issuerName: string, checked: boolean) => void;
 }
 
-export default function IssuerCard({ issuerReport, statistics, selectedIssuers, addIssuer, removeIssuer }: IssuerCardParam): React.JSX.Element {
+function IssuerCard({ issuerReport, statistics, isChecked, onIssuerChecked }: IssuerCardParam): React.JSX.Element {
   const [expanded, setExpanded] = useState(false);
-  const isChecked = selectedIssuers.includes(issuerReport.name);
 
   const minNominalValueColorCode = getNominalValueColorCode(issuerReport.minNominalValue);
   const interestConstColorCode = getInterestConstColorCode(issuerReport.interestConstAverage, statistics[issuerReport.interestBaseType]);
@@ -86,7 +84,7 @@ export default function IssuerCard({ issuerReport, statistics, selectedIssuers, 
             <Stack direction='row' alignItems='center' spacing={0.5}>
               <Checkbox
                 checked={isChecked}
-                onChange={(event: React.ChangeEvent<HTMLInputElement>) => event.target.checked ? addIssuer(issuerReport.name) : removeIssuer(issuerReport.name)} />
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) => onIssuerChecked(issuerReport.name, event.target.checked)} />
               {(issuerReport.businessSummary || issuerReport.websiteUrl) && (
                 <IconButton size='small' onClick={() => setExpanded(!expanded)}>
                   {expanded ? <ExpandLessOutlinedIcon /> : <ExpandMoreOutlinedIcon />}
@@ -165,3 +163,9 @@ export default function IssuerCard({ issuerReport, statistics, selectedIssuers, 
     </>
   );
 }
+
+export default memo(IssuerCard, (prevProps, nextProps) => {
+  return prevProps.issuerReport === nextProps.issuerReport
+    && prevProps.statistics === nextProps.statistics
+    && prevProps.isChecked === nextProps.isChecked;
+});

@@ -1,8 +1,7 @@
-import { useEffect, useState } from "react";
-import CircularProgress from "@mui/material/CircularProgress";
-import { BondReport, BondDetails, BondCurrentValues } from "../../../sdk/Bonds";
-import { YieldToMaturityCalculator, YieldToMaturityReport } from "../../../bonds/YieldToMaturity";
-import { CardSectionRow, CardEntry } from "../../../common/Cards";
+import { useMemo, useState } from "react";
+import { BondReport, BondDetails, BondCurrentValues } from "@sdk/Bonds";
+import { YieldToMaturityCalculator, YieldToMaturityReport } from "@bonds/YieldToMaturity";
+import { CardSectionRow, CardEntry } from "@common/Cards";
 import Button from "@mui/material/Button";
 import BondYTMReportDialog from "./BondYTMDialog";
 
@@ -24,20 +23,10 @@ type BondCardYTMSectionParam = {
 export default function BondCardYTMSection({ title, bondReport, price, secondary }: BondCardYTMSectionParam): React.JSX.Element {
   const [ytmReport, setYtmReport] = useState<YieldToMaturityReport | undefined>(undefined);
 
-  const [ytmNet, setYtmNet] = useState<YieldToMaturityReport>();
-  const [ytmGros, setYtmGros] = useState<YieldToMaturityReport>();
-
-  useEffect(() => {
-    const { ytmNet, ytmGros } = computeYTM(bondReport.details, bondReport.currentValues, price);
-    setYtmNet(ytmNet);
-    setYtmGros(ytmGros);
-  }, []);
-
-  if (!ytmNet || !ytmGros) {
-    return (
-      <CircularProgress size='1.5rem' />
-    )
-  }
+  const { ytmNet, ytmGros } = useMemo(
+    () => computeYTM(bondReport.details, bondReport.currentValues, price),
+    [bondReport.details, bondReport.currentValues, price]
+  );
 
   return (
     <CardSectionRow>

@@ -1,4 +1,7 @@
-import { BedrockRuntimeClient, ConverseCommand } from '@aws-sdk/client-bedrock-runtime';
+import { BedrockRuntimeClient } from '@aws-sdk/client-bedrock-runtime';
+import { AgentLoop } from '../agent/AgentLoop';
+import { WebSearchTool } from '../tools/WebSearchTool';
+import { TavilyClient } from '../tools/tavily/TavilyClient';
 
 // export const MODEL_ID = 'arn:aws:bedrock:eu-west-1:198805281865:inference-profile/eu.anthropic.claude-haiku-4-5-20251001-v1:0';
 export const MODEL_ID = 'arn:aws:bedrock:eu-west-1:198805281865:inference-profile/eu.anthropic.claude-sonnet-4-6';
@@ -27,31 +30,39 @@ export type ClassificationResponse = {
 };
 
 function buildPrompt(issuerName: string): string {
-    return `You are a financial analyst with deep knowledge of Polish companies and the Catalyst bond market.
+    return `You are a financial analyst researching Polish companies that issue bonds on the Catalyst bond market.
 
-Your task is to classify the company below. The name provided is the legal registered name (e.g. "P4 Sp. z o.o." is the legal entity behind the Play mobile network). Use your training knowledge to identify the real-world company behind the legal name, including its brand name, actual business activity, and official website.
+Your task is to research the company below using web search, then classify it.
 
 Company name: "${issuerName}"
 
-Instructions:
-- Identify what real-world company or brand this legal entity corresponds to.
-- Choose the industry that best describes its PRIMARY business activity.
-- Write a 2-3 sentence business summary in English based on what you know about the company.
-- Provide the company's real, publicly known official website URL. Do NOT guess or fabricate a URL — only use URLs you are confident exist (e.g. https://www.play.pl for P4 Sp. z o.o.). If you are not confident, use an empty string.
+The name provided is the legal registered name (e.g. "P4 Sp. z o.o." is the legal entity behind the Play mobile network).
 
-Respond with a JSON object only, no markdown, no explanation. Use this exact structure:
+Instructions:
+1. Search the web to identify the real-world company or brand behind this legal name.
+2. Search for its official website, main business activity, and any recent information.
+3. Based on your search results, classify the company:
+   - Choose the industry that best describes its PRIMARY business activity.
+   - Write a 2-3 sentence business summary in English based on current web data.
+   - Use the confirmed official website URL from the search results.
+
+Respond with a JSON object ONLY — no markdown, no explanation:
 {
   "industry": "<one of: ${INDUSTRY_LABELS.join(' | ')}>",
   "businessSummary": "<2-3 sentences in English describing the company's main business activity>",
-  "websiteUrl": "<the company's confirmed official website URL, or empty string if unknown>"
+  "websiteUrl": "<the company's official website URL confirmed from search results, or empty string if not found>"
 }`;
 }
 
 function parseClassificationResponse(text: string): ClassificationResponse {
     let parsed: unknown;
     try {
-        const stripped = text.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
-        parsed = JSON.parse(stripped);
+        const start = text.indexOf('{');
+        const end = text.lastIndexOf('}');
+        if (start === -1 || end === -1 || end < start) {
+            throw new SyntaxError('no JSON object found');
+        }
+        parsed = JSON.parse(text.slice(start, end + 1));
     } catch {
         console.error(`parseClassificationResponse: raw model output:\n${text}`);
         throw new Error('InvalidResponseFormat: response is not valid JSON');
@@ -75,21 +86,15 @@ function parseClassificationResponse(text: string): ClassificationResponse {
     return { industry: industry as Industry, businessSummary, websiteUrl };
 }
 
-export async function classifyIssuer(bedrockClient: BedrockRuntimeClient, issuerName: string): Promise<ClassificationResponse> {
-    const response = await bedrockClient.send(new ConverseCommand({
-        modelId: MODEL_ID,
-        messages: [
-            {
-                role: 'user',
-                content: [{ text: buildPrompt(issuerName) }],
-            },
-        ],
-    }));
+export async function classifyIssuer(
+    bedrockClient: BedrockRuntimeClient,
+    tavilyClient: TavilyClient,
+    issuerName: string,
+): Promise<ClassificationResponse> {
+    const webSearchTool = new WebSearchTool(tavilyClient);
+    const agentLoop = new AgentLoop(bedrockClient, MODEL_ID, [webSearchTool]);
 
-    const rawText = response.output?.message?.content?.[0]?.text;
-    if (!rawText) {
-        throw new Error('InvalidResponseFormat: empty response from model');
-    }
+    const rawText = await agentLoop.run(buildPrompt(issuerName));
 
     return parseClassificationResponse(rawText);
 }

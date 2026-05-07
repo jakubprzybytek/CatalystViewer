@@ -188,6 +188,11 @@ html
                 div(class="row")
                   span(class="label") Summary:
                 div(class="row summary-value") #{issuer.businessSummary}
+                if issuer.websiteUrl
+                  div(class="row")
+                    span(class="label") Website:
+                    | 
+                    a(href=issuer.websiteUrl) #{issuer.websiteUrl}
       if failedIssuers.length > 0
         div(class="section")
           h2 Failed Issuer Classifications (#{failedIssuers.length})

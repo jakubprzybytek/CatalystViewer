@@ -1,13 +1,7 @@
 ### Development
 
-#### SST
+#### Local environment
 ```
-npm run dev
-```
-
-#### Next.js web app:
-```
-cd packages/web
 npm run dev
 ```
 
@@ -37,6 +31,31 @@ The bonds update workflow is an AWS Step Functions state machine (`BondsUpdaterS
 
 See [docs/testing.md](docs/testing.md) for full details on our testing setup.
 
-* **Unit Tests**: `npm run test`
-* **Smoke Tests**: `npm run test:smoke` (requires `.env.local` to be setup, check docs for details).
-* **Integration Smoke Tests**: `npm run test:smoke:int` (targets the `int` stage URL using Playwright).
+#### Unit Tests
+
+Preparation:
+- No additional setup required beyond `npm install`.
+
+Run:
+```bash
+npm run test
+```
+
+#### Smoke Tests
+
+Preparation:
+1. Install Playwright browser binaries (first time only):
+```bash
+npx playwright install chromium
+```
+2. Copy `.env.local.example` to `.env.local` and fill in smoke-test credentials.
+
+Run (local/custom URL):
+```bash
+npm run test:smoke
+```
+
+Run (integration `int` environment):
+```bash
+npm run test:smoke:int
+```

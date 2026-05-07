@@ -16,6 +16,9 @@ const sendReportFunction = new sst.aws.Function("SendReport", {
   nodejs: {
     loader: { ".pug": "text" },
   },
+  environment: {
+    SST_STAGE: $app.stage,
+  },
   permissions: [
     {
       actions: ["ses:SendEmail"],
@@ -57,6 +60,9 @@ const classifyIssuersFunction = new sst.aws.Function("ClassifyIssuers", {
   handler: "packages/functions/src/issuers/classifyIssuers.handler",
   timeout: "5 minutes",
   link: [issuerProfilesTable],
+  environment: {
+    TAVILY_API_KEY: process.env.TAVILY_API_KEY ?? "",
+  },
   permissions: [
     {
       actions: ["bedrock:InvokeModel"],

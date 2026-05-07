@@ -61,8 +61,8 @@ test.describe.serial('Smoke Tests', () => {
     const anyIssuerCard = page.locator('.issuer-card').first();
     await expect(anyIssuerCard).toBeVisible({ timeout: 15000 });
 
-    // Switch to 'New Bonds' tab to check bonds
-    const newBondsToggleButton = page.getByRole('button', { name: 'New Bonds' });
+    // Switch to 'Bonds' tab to check bonds
+    const newBondsToggleButton = page.getByRole('button', { name: 'Bonds' });
     await expect(newBondsToggleButton).toBeVisible();
     await newBondsToggleButton.click();
 

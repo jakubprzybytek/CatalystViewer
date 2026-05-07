@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import Grid from "@mui/material/Grid";
 import Button from "@mui/material/Button";
-import NewBondCard from "./NewBondCard";
+import BondCard from "./BondCard";
 import { BondReport } from "@/sdk/Bonds";
 import { InterestPercentilesByInterestBaseType } from '@bonds/statistics';
 
@@ -21,7 +21,7 @@ export default function BondsList({ bondReports, statistics }: BondsListParam): 
     <Grid container padding={1} spacing={0.75}>
       {bondReports.slice(0, displayedItemsCount).map(bondReport => (
         <Grid key={`${bondReport.details.name}#${bondReport.details.market}`} size={{ xs: 12, sm: 6, md: 12 }}>
-          <NewBondCard bondReport={bondReport} statistics={statistics} />
+          <BondCard bondReport={bondReport} statistics={statistics} />
         </Grid>
       ))
       }

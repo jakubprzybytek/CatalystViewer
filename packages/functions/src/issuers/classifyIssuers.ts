@@ -5,6 +5,7 @@ import { Logger } from '@aws-lambda-powertools/logger';
 import { Resource } from 'sst';
 import { IssuerProfilesTable } from '@core/storage/issuerProfiles';
 import { classifyIssuer, MODEL_ID } from '@core/ai/issuers';
+import { TavilyClient } from '@core/ai/tools/tavily/TavilyClient';
 import { CollectIssuersResult, ClassifyIssuersResult, ClassifiedIssuer, FailedIssuer } from '.';
 
 const logger = new Logger({ serviceName: 'ClassifyIssuers' });
@@ -16,6 +17,8 @@ const dynamoDbClient = new DynamoDBClient({});
 const bedrockClient = new BedrockRuntimeClient({
     maxAttempts: 1,
 });
+
+const tavilyClient = new TavilyClient(process.env.TAVILY_API_KEY ?? '');
 
 function resolveClassificationsCap(value: number | undefined): number {
     if (typeof value !== 'number' || Number.isNaN(value)) {
@@ -40,7 +43,7 @@ export async function handler(input: CollectIssuersResult, context: Context): Pr
 
     for (const issuerName of batch) {
         try {
-            const classification = await classifyIssuer(bedrockClient, issuerName);
+            const classification = await classifyIssuer(bedrockClient, tavilyClient, issuerName);
 
             const now = new Date();
             await issuerProfilesTable.store({

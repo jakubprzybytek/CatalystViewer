@@ -1,4 +1,5 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
+import { Logger } from '@aws-lambda-powertools/logger';
 import { Resource } from 'sst';
 import { differenceInDays } from 'date-fns';
 import { lambdaHandler, Success } from "../HandlerProxy";
@@ -6,13 +7,15 @@ import { BondDetails, BondCurrentValues } from '@core/bonds';
 import { BondDetailsTable } from '@core/storage/bondDetails';
 import { BondReportsQueryResult } from ".";
 
+const logger = new Logger({ serviceName: 'GetBondReports' });
+
 const dynamoDBClient = new DynamoDBClient({});
 
 const cachedBondTypes: string[] = [];
 
 export const handler = lambdaHandler<BondReportsQueryResult>(async event => {
   const bondTypeFilter = event.pathParameters?.['bondType'];
-  console.log(`Requested active bond reports, type=${bondTypeFilter}`);
+  logger.info('Received request for bond reports', { bondType: bondTypeFilter });
 
   const bondDetailsTable = new BondDetailsTable(dynamoDBClient, Resource.BondDetails.name);
 
@@ -22,7 +25,7 @@ export const handler = lambdaHandler<BondReportsQueryResult>(async event => {
     const bondTypes = await bondDetailsTable.getAllTypes();
     bondTypes.forEach(bondType => cachedBondTypes.push(bondType));
   } else {
-    console.log(`Using cached bond types (${cachedBondTypes.length})`);
+    logger.debug('Using cached bond types', { count: cachedBondTypes.length });
   }
 
   const today = new Date().getTime();
@@ -64,6 +67,8 @@ export const handler = lambdaHandler<BondReportsQueryResult>(async event => {
       interestRecordDay: currentInterestRecordDay,
       interestPayableDay: currentInterestPayableDay,
       interestProgress: Number(currentInterestProgress.toFixed(2)),
+      pastInterestPeriods: interestPeriodIndex,
+      futureInterestPeriods: dbBond.interestPayoffDayTss.length - interestPeriodIndex - 1,
       interestRate: dbBond.currentInterestRate,
       accuredInterest: Number(accuredInterest.toFixed(2)),
       periodInterest: Number(periodInterest.toFixed(2)),

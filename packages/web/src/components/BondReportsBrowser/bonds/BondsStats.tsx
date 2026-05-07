@@ -93,12 +93,12 @@ function InterestBaseTypeChart({ interestBaseType, points }: InterestBaseTypeCha
     );
 }
 
-type BondsNew2dStatsProps = {
+type BondsStatsProps = {
     bondReports: BondReport[];
     statistics: InterestPercentilesByInterestBaseType;
 };
 
-export default function BondsNew2dStats({ bondReports, statistics }: BondsNew2dStatsProps): React.JSX.Element {
+export default function BondsStats({ bondReports, statistics }: BondsStatsProps): React.JSX.Element {
     const pointsByBaseType = useMemo(
         () => get2dStatsForInterestBaseTypes(bondReports, statistics),
         [bondReports, statistics]

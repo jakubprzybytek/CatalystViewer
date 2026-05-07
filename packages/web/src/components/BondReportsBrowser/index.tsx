@@ -6,7 +6,6 @@ import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import ToggleButton from "@mui/material/ToggleButton";
 import Alert from "@mui/material/Alert";
 import AlertTitle from "@mui/material/AlertTitle";
-import BondsList from "./view/BondsList";
 import IconButton from "@mui/material/IconButton";
 import CircularProgress from "@mui/material/CircularProgress";
 import FilterAlt from "@mui/icons-material/FilterAlt";
@@ -14,20 +13,18 @@ import Refresh from "@mui/icons-material/Refresh";
 import Sort from "@mui/icons-material/Sort";
 import Condition from "@/common/Condition";
 import MainNavigation from "../MainNavigation";
-import BondsListStats from "./view/BondsListStats";
-import BondsNew2dStats from "./view/BondsNew2dStats";
-import IssuersViewer from "./issuers/IssuersViewer";
+import BondsStats from "./bonds/BondsStats";
+import IssuersList from "./issuers/IssuersList";
 import BondReportsFilterDrawer, { BondReportsFilteringOptions, filterUsing } from "./filter";
 import BondReportsSortMenu, { BondReportsSortOrder, getBondReportsSortingFunction } from "./sort";
 import { BondReport, getBondReports } from "@/sdk/Bonds";
 import { IssuerProfile, getIssuerProfiles } from "@/sdk/Issuers";
 import { computeStatisticsForInterestBaseTypes } from "@/bonds/statistics";
-import NewBondsList from "./view/NewBondsList";
+import BondsList from "./bonds/BondsList";
 
 export enum BondReportsView {
   Issuers,
-  Bonds,
-  NewBonds
+  Bonds
 }
 
 export type BondReportsBrowserSettings = {
@@ -87,8 +84,6 @@ export default function BondReportsBrowser({ settings, setSettings }: BondReport
   const [sortOrder, setSortOrder] = useSettings<BondReportsSortOrder>(settings, setSettings, 'sortOrder', DEFAULT_SORT_ORDER_SETTING);
   const [sortMenuTriggerEl, setSortMenuTriggerEl] = useState<null | HTMLElement>(null);
 
-  // stats
-  const [statsShown, setStatsShown] = useState(false);
   const [newStatsShown, setNewStatsShown] = useState(false);
 
   function selectBondReportsSortOrder(sortOrder: BondReportsSortOrder) {
@@ -196,31 +191,20 @@ export default function BondReportsBrowser({ settings, setSettings }: BondReport
             onChange={(event: React.MouseEvent<HTMLElement>, newView: BondReportsView) => setView(newView !== null ? newView : view)}>
             <ToggleButton value={BondReportsView.Issuers}>Issuers</ToggleButton>
             <ToggleButton value={BondReportsView.Bonds}>Bonds</ToggleButton>
-            <ToggleButton value={BondReportsView.NewBonds}>New Bonds</ToggleButton>
           </ToggleButtonGroup>
-          <ToggleButton color="secondary" size="small" value="check" selected={statsShown}
-            onChange={() => setStatsShown(!statsShown)}>
-            Show stats
-          </ToggleButton>
           <ToggleButton color="secondary" size="small" value="check2" selected={newStatsShown}
             onChange={() => setNewStatsShown(!newStatsShown)}>
-            Show new stats
+            Show stats
           </ToggleButton>
         </Stack>
-        <Collapse in={statsShown}>
-          <BondsListStats bondReports={filteredBondReports} statistics={bondReportsStatistics} />
-        </Collapse>
         <Collapse in={newStatsShown}>
-          <BondsNew2dStats bondReports={filteredBondReports} statistics={bondReportsStatistics} />
+          <BondsStats bondReports={filteredBondReports} statistics={bondReportsStatistics} />
         </Collapse>
         <Condition render={view == BondReportsView.Bonds}>
           <BondsList bondReports={filteredAndSortedBondsReports} statistics={bondReportsStatistics} />
         </Condition>
-        <Condition render={view == BondReportsView.NewBonds}>
-          <NewBondsList bondReports={filteredAndSortedBondsReports} statistics={bondReportsStatistics} />
-        </Condition>
         <Condition render={view == BondReportsView.Issuers}>
-          <IssuersViewer bondReports={filteredBondReportsWithoutIssuers} issuerProfiles={issuerProfiles} statistics={bondReportsStatistics} filteringOptions={filteringOptions} setFilteringOptions={setFilteringOptions} />
+          <IssuersList bondReports={filteredBondReportsWithoutIssuers} issuerProfiles={issuerProfiles} statistics={bondReportsStatistics} filteringOptions={filteringOptions} setFilteringOptions={setFilteringOptions} />
         </Condition>
         <Condition render={errorMessage !== undefined}>
           <Alert severity="error">

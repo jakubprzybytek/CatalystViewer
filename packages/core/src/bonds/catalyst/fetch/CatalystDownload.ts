@@ -1,10 +1,10 @@
 import axios from 'axios';
 import { writeFileSync, existsSync } from 'fs';
-import { subDays, getDay, format } from 'date-fns';
+import { subDays, isWeekend, format } from 'date-fns';
 
-async function downloadCatalystFile(url: string, fileNameToSave: string) {
-    console.log(`Fetching: ${url}`);
+const MAX_LOOKBACK_DAYS = 7;
 
+async function tryDownloadCatalystFile(url: string, fileNameToSave: string): Promise<boolean> {
     const response = await axios({
         method: 'GET',
         url: url,
@@ -13,20 +13,22 @@ async function downloadCatalystFile(url: string, fileNameToSave: string) {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36',
         },
         responseType: 'arraybuffer'
-    })
-        .then(response => {
-            if (response.status === 200 && response.headers['content-type'] === 'application/vnd.ms-excel') {
-                return response.data;
-            } else {
-                throw Error(`Cannot fetch: ${response.statusText} / content-type: ${response.headers['content-type']}`);
-            }
-        })
-        .catch(error => {
-            throw Error(`Cannot fetch: ${error}`);
-        });
+    }).catch(() => null);
 
-    console.log(`Storing as: ${fileNameToSave}`);
-    writeFileSync(fileNameToSave, response, { encoding: null });
+    if (!response || response.status !== 200 || response.headers['content-type'] !== 'application/vnd.ms-excel') {
+        return false;
+    }
+
+    writeFileSync(fileNameToSave, response.data, { encoding: null });
+    return true;
+}
+
+function previousTradingDay(date: Date): Date {
+    let candidate = subDays(date, 1);
+    while (isWeekend(candidate)) {
+        candidate = subDays(candidate, 1);
+    }
+    return candidate;
 }
 
 export async function downloadLatestCatalystDailyStatisticsFile(): Promise<string> {
@@ -34,23 +36,24 @@ export async function downloadLatestCatalystDailyStatisticsFile(): Promise<strin
         throw new Error('Temp folder is not defined');
     }
 
-    let reportDay = subDays(new Date(), 1);
-    while ((getDay(reportDay) + 1) % 7 < 2) { // skip Saturday and Sunday
-        reportDay = subDays(reportDay, 1);
-    }
+    let reportDay = previousTradingDay(new Date());
 
-    const fileName = `catalyst_${format(reportDay, 'yyyyMMdd')}.xls`;
-    console.log(`Daily statistics xls file: ${fileName}`);
+    for (let attempt = 0; attempt < MAX_LOOKBACK_DAYS; attempt++) {
+        const fileName = `catalyst_${format(reportDay, 'yyyyMMdd')}.xls`;
+        const localFileName = `${process.env.TEMP_FOLDER}/${fileName}`;
 
-    const localFileName = `${process.env.TEMP_FOLDER}/${fileName}`;
-    console.log('cwd: ' + process.cwd())
+        if (existsSync(localFileName)) {
+            return localFileName;
+        }
 
-    if (existsSync(localFileName)) {
-        console.log(`File ${localFileName} already exists. Skipping downloading.`);
-    } else {
         const url = `https://gpwcatalyst.pl/pub/CATALYST/statystyki/statystyki_dzienne/${fileName}`;
-        await downloadCatalystFile(url, localFileName);
+        const downloaded = await tryDownloadCatalystFile(url, localFileName);
+        if (downloaded) {
+            return localFileName;
+        }
+
+        reportDay = previousTradingDay(reportDay);
     }
 
-    return localFileName;
+    throw new Error(`Could not find a Catalyst daily statistics file within the last ${MAX_LOOKBACK_DAYS} trading days`);
 }
