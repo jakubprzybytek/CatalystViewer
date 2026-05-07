@@ -1,10 +1,10 @@
 {
-  "name": "find-issuer-website",
+  "name": "analyze-issuer",
   "version": "1.0.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "start": "tsx find-issuer-website.ts"
+    "start": "tsx analyze-issuer.ts"
   },
   "dependencies": {
     "@aws-sdk/client-bedrock-runtime": "3.896.0",

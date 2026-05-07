@@ -54,10 +54,6 @@ declare module "sst" {
       "name": string
       "type": "sst.aws.Dynamo"
     }
-    "SendErrorReport_Error": {
-      "name": string
-      "type": "sst.aws.Function"
-    }
     "SendReport": {
       "name": string
       "type": "sst.aws.Function"

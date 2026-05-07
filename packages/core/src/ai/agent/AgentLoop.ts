@@ -6,17 +6,19 @@ import {
 } from '@aws-sdk/client-bedrock-runtime';
 import { type AgentTool, type AgentEvent, LoopLimitExceeded, UnexpectedStopReason } from './Tool';
 
-const MAX_ITERATIONS = 10;
+const DEFAULT_MAX_ITERATIONS = 10;
 
 export class AgentLoop {
     private readonly bedrockClient: BedrockRuntimeClient;
     private readonly modelId: string;
     private readonly tools: AgentTool[];
+    private readonly maxIterations: number;
 
-    constructor(bedrockClient: BedrockRuntimeClient, modelId: string, tools: AgentTool[]) {
+    constructor(bedrockClient: BedrockRuntimeClient, modelId: string, tools: AgentTool[], maxIterations = DEFAULT_MAX_ITERATIONS) {
         this.bedrockClient = bedrockClient;
         this.modelId = modelId;
         this.tools = tools;
+        this.maxIterations = maxIterations;
     }
 
     async run(taskPrompt: string, onEvent?: (event: AgentEvent) => void): Promise<string> {
@@ -39,7 +41,7 @@ export class AgentLoop {
 
         let iteration = 0;
 
-        while (iteration < MAX_ITERATIONS) {
+        while (iteration < this.maxIterations) {
             iteration++;
 
             const response = await this.bedrockClient.send(new ConverseCommand({
@@ -105,11 +107,30 @@ export class AgentLoop {
 
                 // Append tool results as a user turn.
                 // ContentBlock union also includes $unknown, so we cast here.
-                messages.push({
-                    role: 'user',
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    content: toolResults.map((r) => ({ toolResult: r })) as any,
-                });
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const toolResultContent = toolResults.map((r) => ({ toolResult: r })) as any;
+
+                // If this was the last allowed iteration, force a final answer by
+                // appending a plain user message and calling without toolConfig.
+                if (iteration >= this.maxIterations) {
+                    messages.push({ role: 'user', content: toolResultContent });
+                    messages.push({
+                        role: 'user',
+                        content: [{ text: 'You have reached the search limit. Stop searching and produce the final answer now using only the data you have already gathered. Do not call any more tools.' }],
+                    });
+                    const finalResponse = await this.bedrockClient.send(new ConverseCommand({
+                        modelId: this.modelId,
+                        messages,
+                        toolConfig,  // must be present whenever history contains toolUse/toolResult blocks
+                    }));
+                    const text = finalResponse.output?.message?.content
+                        ?.find((block) => 'text' in block && typeof block.text === 'string')
+                        ?.text ?? '';
+                    onEvent?.({ type: 'end_turn', iteration: iteration + 1, text });
+                    return text;
+                }
+
+                messages.push({ role: 'user', content: toolResultContent });
 
                 continue;
             }
@@ -117,6 +138,6 @@ export class AgentLoop {
             throw new UnexpectedStopReason(stopReason);
         }
 
-        throw new LoopLimitExceeded(MAX_ITERATIONS);
+        throw new LoopLimitExceeded(this.maxIterations);
     }
 }
