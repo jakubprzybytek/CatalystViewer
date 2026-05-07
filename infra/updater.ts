@@ -36,6 +36,23 @@ const collectUnclassifiedIssuersFunction = new sst.aws.Function("CollectUnclassi
   link: [bondDetailsTable, issuerProfilesTable],
 });
 
+const sendErrorReportFunction = new sst.aws.Function("SendErrorReport_Error", {
+  handler: "packages/functions/src/emails/sendErrorReport.handler",
+  timeout: "30 seconds",
+  permissions: [
+    {
+      actions: ["ses:SendEmail"],
+      resources: ["arn:aws:ses:eu-west-1:198805281865:identity/*"],
+    },
+    {
+      actions: ["ssm:GetParameter"],
+      resources: [
+        "arn:aws:ssm:eu-west-1:198805281865:parameter/catalyst-viewer/notifications/recipients",
+      ],
+    },
+  ],
+});
+
 const classifyIssuersFunction = new sst.aws.Function("ClassifyIssuers", {
   handler: "packages/functions/src/issuers/classifyIssuers.handler",
   timeout: "5 minutes",
@@ -72,14 +89,15 @@ new aws.iam.RolePolicy("BondsUpdaterSfnPolicy", {
     sendReportFunction.arn,
     collectUnclassifiedIssuersFunction.arn,
     classifyIssuersFunction.arn,
-  ]).apply(([updaterArn, sendReportArn, collectArn, classifyArn]) =>
+    sendErrorReportFunction.arn,
+  ]).apply(([updaterArn, sendReportArn, collectArn, classifyArn, sendErrorReportArn]) =>
     JSON.stringify({
       Version: "2012-10-17",
       Statement: [
         {
           Effect: "Allow",
           Action: "lambda:InvokeFunction",
-          Resource: [updaterArn, sendReportArn, collectArn, classifyArn],
+          Resource: [updaterArn, sendReportArn, collectArn, classifyArn, sendErrorReportArn],
         },
       ],
     })
@@ -94,161 +112,196 @@ const stateMachine = new aws.sfn.StateMachine("BondsUpdaterStateMachine", {
     sendReportFunction.arn,
     collectUnclassifiedIssuersFunction.arn,
     classifyIssuersFunction.arn,
-  ]).apply(([updaterArn, sendReportArn, collectArn, classifyArn]) =>
+    sendErrorReportFunction.arn,
+  ]).apply(([updaterArn, sendReportArn, collectArn, classifyArn, sendErrorReportArn]) =>
     JSON.stringify({
-      StartAt: "ShouldUpdateBonds",
+      StartAt: "MainWorkflow",
       States: {
-        "ShouldUpdateBonds": {
-          Type: "Choice",
-          Choices: [
+        "MainWorkflow": {
+          Type: "Parallel",
+          Branches: [
             {
-              And: [
-                { Variable: "$.updateBonds", IsPresent: true },
-                { Variable: "$.updateBonds", BooleanEquals: false },
-              ],
-              Next: "PrepareClassificationOnlyInput",
-            },
-          ],
-          Default: "UpdateBonds",
-        },
-        "PrepareClassificationOnlyInput": {
-          Type: "Pass",
-          Result: {
-            bondsUpdated: 0,
-            newBonds: [],
-            bondsDeactivated: [],
-            bondsFailed: [],
-          },
-          ResultPath: "$.Payload",
-          Next: "HasClassificationsCap",
-        },
-        "UpdateBonds": {
-          Type: "Task",
-          Resource: "arn:aws:states:::lambda:invoke",
-          Parameters: {
-            FunctionName: updaterArn,
-          },
-          TimeoutSeconds: 600,
-          Next: "HasClassificationsCap",
-        },
-        "HasClassificationsCap": {
-          Type: "Choice",
-          Choices: [
-            {
-              Variable: "$$.Execution.Input.classificationsCap",
-              IsPresent: true,
-              Next: "ApplyProvidedClassificationsCap",
-            },
-          ],
-          Default: "ApplyDefaultClassificationsCap",
-        },
-        "ApplyProvidedClassificationsCap": {
-          Type: "Pass",
-          Parameters: {
-            "bondsUpdated.$": "$.Payload.bondsUpdated",
-            "newBonds.$": "$.Payload.newBonds",
-            "bondsDeactivated.$": "$.Payload.bondsDeactivated",
-            "bondsFailed.$": "$.Payload.bondsFailed",
-            "classificationsCap.$": "$$.Execution.Input.classificationsCap",
-          },
-          ResultPath: "$.Payload",
-          Next: "HasForceClassification",
-        },
-        "ApplyDefaultClassificationsCap": {
-          Type: "Pass",
-          Parameters: {
-            "bondsUpdated.$": "$.Payload.bondsUpdated",
-            "newBonds.$": "$.Payload.newBonds",
-            "bondsDeactivated.$": "$.Payload.bondsDeactivated",
-            "bondsFailed.$": "$.Payload.bondsFailed",
-            classificationsCap: 20,
-          },
-          ResultPath: "$.Payload",
-          Next: "HasForceClassification",
-        },
-        "HasForceClassification": {
-          Type: "Choice",
-          Choices: [
-            {
-              And: [
-                {
-                  Variable: "$$.Execution.Input.forceClassification",
-                  IsPresent: true,
+              StartAt: "ShouldUpdateBonds",
+              States: {
+                "ShouldUpdateBonds": {
+                  Type: "Choice",
+                  Choices: [
+                    {
+                      And: [
+                        { Variable: "$.updateBonds", IsPresent: true },
+                        { Variable: "$.updateBonds", BooleanEquals: false },
+                      ],
+                      Next: "PrepareClassificationOnlyInput",
+                    },
+                  ],
+                  Default: "UpdateBonds",
                 },
-                {
-                  Variable: "$$.Execution.Input.forceClassification",
-                  BooleanEquals: true,
+                "PrepareClassificationOnlyInput": {
+                  Type: "Pass",
+                  Result: {
+                    bondsUpdated: 0,
+                    newBonds: [],
+                    bondsDeactivated: [],
+                    bondsFailed: [],
+                  },
+                  ResultPath: "$.Payload",
+                  Next: "HasClassificationsCap",
                 },
-              ],
-              Next: "ApplyForceClassification",
+                "UpdateBonds": {
+                  Type: "Task",
+                  Resource: "arn:aws:states:::lambda:invoke",
+                  Parameters: {
+                    FunctionName: updaterArn,
+                  },
+                  TimeoutSeconds: 600,
+                  Next: "HasClassificationsCap",
+                },
+                "HasClassificationsCap": {
+                  Type: "Choice",
+                  Choices: [
+                    {
+                      Variable: "$$.Execution.Input.classificationsCap",
+                      IsPresent: true,
+                      Next: "ApplyProvidedClassificationsCap",
+                    },
+                  ],
+                  Default: "ApplyDefaultClassificationsCap",
+                },
+                "ApplyProvidedClassificationsCap": {
+                  Type: "Pass",
+                  Parameters: {
+                    "bondsUpdated.$": "$.Payload.bondsUpdated",
+                    "newBonds.$": "$.Payload.newBonds",
+                    "bondsDeactivated.$": "$.Payload.bondsDeactivated",
+                    "bondsFailed.$": "$.Payload.bondsFailed",
+                    "classificationsCap.$": "$$.Execution.Input.classificationsCap",
+                  },
+                  ResultPath: "$.Payload",
+                  Next: "HasForceClassification",
+                },
+                "ApplyDefaultClassificationsCap": {
+                  Type: "Pass",
+                  Parameters: {
+                    "bondsUpdated.$": "$.Payload.bondsUpdated",
+                    "newBonds.$": "$.Payload.newBonds",
+                    "bondsDeactivated.$": "$.Payload.bondsDeactivated",
+                    "bondsFailed.$": "$.Payload.bondsFailed",
+                    classificationsCap: 20,
+                  },
+                  ResultPath: "$.Payload",
+                  Next: "HasForceClassification",
+                },
+                "HasForceClassification": {
+                  Type: "Choice",
+                  Choices: [
+                    {
+                      And: [
+                        {
+                          Variable: "$$.Execution.Input.forceClassification",
+                          IsPresent: true,
+                        },
+                        {
+                          Variable: "$$.Execution.Input.forceClassification",
+                          BooleanEquals: true,
+                        },
+                      ],
+                      Next: "ApplyForceClassification",
+                    },
+                  ],
+                  Default: "CollectUnclassifiedIssuers",
+                },
+                "ApplyForceClassification": {
+                  Type: "Pass",
+                  Result: true,
+                  ResultPath: "$.Payload.forceClassification",
+                  Next: "CollectUnclassifiedIssuers",
+                },
+                "CollectUnclassifiedIssuers": {
+                  Type: "Task",
+                  Resource: "arn:aws:states:::lambda:invoke",
+                  Parameters: {
+                    FunctionName: collectArn,
+                    "Payload.$": "$.Payload",
+                  },
+                  TimeoutSeconds: 60,
+                  Next: "HasUnclassifiedIssuers",
+                },
+                "HasUnclassifiedIssuers": {
+                  Type: "Choice",
+                  Choices: [
+                    {
+                      Variable: "$.Payload.unclassifiedIssuers[0]",
+                      IsPresent: true,
+                      Next: "ClassifyIssuers",
+                    },
+                  ],
+                  Default: "ShouldSendReport",
+                },
+                "ClassifyIssuers": {
+                  Type: "Task",
+                  Resource: "arn:aws:states:::lambda:invoke",
+                  Parameters: {
+                    FunctionName: classifyArn,
+                    "Payload.$": "$.Payload",
+                  },
+                  TimeoutSeconds: 300,
+                  Retry: [],
+                  Next: "ShouldSendReport",
+                },
+                "ShouldSendReport": {
+                  Type: "Choice",
+                  Choices: [
+                    {
+                      Or: [
+                        { Variable: "$.Payload.newBonds[0]", IsPresent: true },
+                        { Variable: "$.Payload.bondsDeactivated[0]", IsPresent: true },
+                        { Variable: "$.Payload.unclassifiedIssuers[0]", IsPresent: true },
+                      ],
+                      Next: "SendReport",
+                    },
+                  ],
+                  Default: "Skip",
+                },
+                "SendReport": {
+                  Type: "Task",
+                  Resource: "arn:aws:states:::lambda:invoke",
+                  Parameters: {
+                    FunctionName: sendReportArn,
+                    "Payload.$": "$.Payload",
+                  },
+                  TimeoutSeconds: 30,
+                  End: true,
+                },
+                "Skip": {
+                  Type: "Succeed",
+                },
+              },
             },
           ],
-          Default: "CollectUnclassifiedIssuers",
-        },
-        "ApplyForceClassification": {
-          Type: "Pass",
-          Result: true,
-          ResultPath: "$.Payload.forceClassification",
-          Next: "CollectUnclassifiedIssuers",
-        },
-        "CollectUnclassifiedIssuers": {
-          Type: "Task",
-          Resource: "arn:aws:states:::lambda:invoke",
-          Parameters: {
-            FunctionName: collectArn,
-            "Payload.$": "$.Payload",
-          },
-          TimeoutSeconds: 60,
-          Next: "HasUnclassifiedIssuers",
-        },
-        "HasUnclassifiedIssuers": {
-          Type: "Choice",
-          Choices: [
+          Catch: [
             {
-              Variable: "$.Payload.unclassifiedIssuers[0]",
-              IsPresent: true,
-              Next: "ClassifyIssuers",
+              ErrorEquals: ["States.ALL"],
+              ResultPath: "$.error",
+              Next: "SendErrorReport",
             },
           ],
-          Default: "ShouldSendReport",
+          Next: "WorkflowSucceeded",
         },
-        "ClassifyIssuers": {
+        "WorkflowSucceeded": {
+          Type: "Succeed",
+        },
+        "SendErrorReport": {
           Type: "Task",
           Resource: "arn:aws:states:::lambda:invoke",
           Parameters: {
-            FunctionName: classifyArn,
-            "Payload.$": "$.Payload",
-          },
-          TimeoutSeconds: 300,
-          Retry: [],
-          Next: "ShouldSendReport",
-        },
-        "ShouldSendReport": {
-          Type: "Choice",
-          Choices: [
-            {
-              Or: [
-                { Variable: "$.Payload.newBonds[0]", IsPresent: true },
-                { Variable: "$.Payload.bondsDeactivated[0]", IsPresent: true },
-                { Variable: "$.Payload.unclassifiedIssuers[0]", IsPresent: true },
-              ],
-              Next: "SendReport",
+            FunctionName: sendErrorReportArn,
+            Payload: {
+              "error.$": "$.error",
+              "executionId.$": "$$.Execution.Name",
             },
-          ],
-          Default: "Skip",
-        },
-        "SendReport": {
-          Type: "Task",
-          Resource: "arn:aws:states:::lambda:invoke",
-          Parameters: {
-            FunctionName: sendReportArn,
-            "Payload.$": "$.Payload",
           },
           TimeoutSeconds: 30,
           End: true,
-        },
-        Skip: {
-          Type: "Succeed",
         },
       },
     })
