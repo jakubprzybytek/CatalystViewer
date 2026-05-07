@@ -42,6 +42,9 @@ const collectUnclassifiedIssuersFunction = new sst.aws.Function("CollectUnclassi
 const sendErrorReportFunction = new sst.aws.Function("SendErrorReport_Error", {
   handler: "packages/functions/src/emails/sendErrorReport.handler",
   timeout: "30 seconds",
+  environment: {
+    SST_STAGE: $app.stage,
+  },
   permissions: [
     {
       actions: ["ses:SendEmail"],
@@ -303,7 +306,7 @@ const stateMachine = new aws.sfn.StateMachine("BondsUpdaterStateMachine", {
             FunctionName: sendErrorReportArn,
             Payload: {
               "error.$": "$.error",
-              "executionId.$": "$$.Execution.Name",
+              "executionArn.$": "$$.Execution.Id",
             },
           },
           TimeoutSeconds: 30,
