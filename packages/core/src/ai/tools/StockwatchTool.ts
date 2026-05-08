@@ -112,18 +112,15 @@ function extractCompanyPath(html: string): string | null {
 }
 
 function extractTableText(html: string): string {
-    // Remove script and style blocks to reduce noise.
-    // Use \s* before closing > to handle end tags like </script > or </style >.
-    const cleaned = html
-        .replace(/<script[\s\S]*?<\/script\s*>/gi, '')
-        .replace(/<style[\s\S]*?<\/style\s*>/gi, '');
-
     const tables: string[] = [];
 
+    // Extract table elements directly from the raw HTML.
+    // Individual cell content is stripped of all tags below, so there is no need
+    // to pre-process the full document.
     const tableRegex = /<table[^>]*>([\s\S]*?)<\/table>/gi;
     let tableMatch: RegExpExecArray | null;
 
-    while ((tableMatch = tableRegex.exec(cleaned)) !== null) {
+    while ((tableMatch = tableRegex.exec(html)) !== null) {
         const tableHtml = tableMatch[1];
         const rows: string[] = [];
 
