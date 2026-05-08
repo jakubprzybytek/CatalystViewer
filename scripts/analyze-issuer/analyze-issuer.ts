@@ -6,6 +6,7 @@ dotenv.config({ path: join(dirname(fileURLToPath(import.meta.url)), '.env.local'
 import { BedrockRuntimeClient } from '@aws-sdk/client-bedrock-runtime';
 import { AgentLoop, type AgentEvent } from '@core/ai/agent/index';
 import { WebSearchTool } from '@core/ai/tools/WebSearchTool';
+import { StockwatchTool } from '@core/ai/tools/StockwatchTool';
 import { TavilyClient } from '@core/ai/tools/tavily/TavilyClient';
 import { MODEL_ID } from '@core/ai/issuers/IssuerClassification';
 
@@ -49,7 +50,8 @@ if (!tavilyApiKey) {
 const bedrockClient = new BedrockRuntimeClient({});
 const tavilyClient = new TavilyClient(tavilyApiKey!);
 const webSearchTool = new WebSearchTool(tavilyClient);
-const agentLoop = new AgentLoop(bedrockClient, MODEL_ID, [webSearchTool], 5);
+const stockwatchTool = new StockwatchTool();
+const agentLoop = new AgentLoop(bedrockClient, MODEL_ID, [stockwatchTool, webSearchTool], 5);
 
 const taskPrompt = `You are a financial analyst researching Polish companies that issue bonds on the Catalyst bond market.
 
@@ -61,11 +63,11 @@ The name provided is the legal registered name (e.g. "P4 Sp. z o.o." is the lega
 
 Instructions:
 1. First, identify the real-world company or brand behind this legal name.
-2. Search for its annual reports, financial results, or investor relations pages.
-3. Find key financial indicators for the most recent 3 years available.
+2. Use the stockwatch_financials tool with the company's common brand name to fetch financial data directly from stockwatch.pl — this is your primary and most reliable source.
+3. If stockwatch.pl does not return useful data, supplement with web_search to find annual reports, financial results, or investor relations pages.
 4. Focus on: Revenue, EBITDA, Net Debt (total debt minus cash), Net Income.
 5. All monetary values should be in PLN millions (if originally in thousands, divide by 1000; if in billions, multiply by 1000). If the company reports in a different currency, note that in the currency field.
-6. Limit yourself to at most 8 web searches. Stop searching as soon as you have enough data to fill in most indicators — do not keep searching for perfect completeness. Produce the JSON with whatever you found, using null for missing values.
+6. Limit yourself to at most 8 tool calls in total. Stop as soon as you have enough data to fill in most indicators — do not keep searching for perfect completeness. Produce the JSON with whatever you found, using null for missing values.
 
 Respond with a JSON object ONLY — no markdown, no explanation:
 {
@@ -94,19 +96,28 @@ function onEvent(event: AgentEvent): void {
     switch (event.type) {
         case 'tool_use': {
             const input = event.input as Record<string, unknown>;
-            const query = typeof input['query'] === 'string' ? input['query'] : JSON.stringify(input);
-            console.log(`\n[iter ${event.iteration}] Searching: "${query}"`);
+            if (event.toolName === 'stockwatch_financials') {
+                const name = typeof input['companyName'] === 'string' ? input['companyName'] : JSON.stringify(input);
+                console.log(`\n[iter ${event.iteration}] stockwatch.pl lookup: "${name}"`);
+            } else {
+                const query = typeof input['query'] === 'string' ? input['query'] : JSON.stringify(input);
+                console.log(`\n[iter ${event.iteration}] Searching: "${query}"`);
+            }
             break;
         }
         case 'tool_result': {
-            let results: Array<{ url: string; title: string; content: string }> = [];
-            try { results = JSON.parse(event.result); } catch { /* not JSON */ }
-            if (results.length > 0) {
-                console.log(`           Got ${results.length} result(s):`);
-                for (const r of results) {
-                    console.log(`             · ${r.url}`);
-                    console.log(`               ${truncate(r.title, 80)}`);
-                    console.log(`               ${truncate(r.content, 120)}`);
+            if (event.toolName === 'stockwatch_financials') {
+                console.log(`           ${truncate(event.result, 200)}`);
+            } else {
+                let results: Array<{ url: string; title: string; content: string }> = [];
+                try { results = JSON.parse(event.result); } catch { /* not JSON */ }
+                if (results.length > 0) {
+                    console.log(`           Got ${results.length} result(s):`);
+                    for (const r of results) {
+                        console.log(`             · ${r.url}`);
+                        console.log(`               ${truncate(r.title, 80)}`);
+                        console.log(`               ${truncate(r.content, 120)}`);
+                    }
                 }
             }
             break;
