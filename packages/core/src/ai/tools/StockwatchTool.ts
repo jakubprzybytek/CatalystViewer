@@ -68,8 +68,9 @@ export class StockwatchTool implements AgentTool {
                 if (tableText) {
                     return `Financial data for "${companyName}" from ${financialUrl}:\n\n${tableText}`;
                 }
-            } catch {
-                // tab path not found, try the next one
+            } catch (err) {
+                // This tab path is not available; try the next one
+                console.debug(`StockwatchTool: ${financialUrl} unavailable: ${err instanceof Error ? err.message : String(err)}`);
             }
         }
 
@@ -94,8 +95,8 @@ async function fetchPage(url: string): Promise<string> {
 }
 
 function extractCompanyPath(html: string): string | null {
-    // Match /gpw/TICKER/ or /obligacje/TICKER/ style links in search results.
-    // Tickers on stockwatch.pl are 2–10 alphanumeric characters.
+    // GPW/Catalyst tickers are 2–10 alphanumeric characters; emitent slugs can include
+    // hyphens and be longer (up to 30 chars) for non-listed bond issuers.
     const patterns = [
         /href="(\/gpw\/[A-Za-z0-9]{2,10}\/)"/,
         /href="(\/obligacje\/[A-Za-z0-9]{2,10}\/)"/,
@@ -111,10 +112,11 @@ function extractCompanyPath(html: string): string | null {
 }
 
 function extractTableText(html: string): string {
-    // Remove script and style blocks to reduce noise
+    // Remove script and style blocks to reduce noise.
+    // Use \s* before closing > to handle end tags like </script > or </style >.
     const cleaned = html
-        .replace(/<script[\s\S]*?<\/script>/gi, '')
-        .replace(/<style[\s\S]*?<\/style>/gi, '');
+        .replace(/<script[\s\S]*?<\/script\s*>/gi, '')
+        .replace(/<style[\s\S]*?<\/style\s*>/gi, '');
 
     const tables: string[] = [];
 
@@ -139,9 +141,10 @@ function extractTableText(html: string): string {
                 const cellContent = cellMatch[1]
                     .replace(/<[^>]+>/g, ' ')
                     .replace(/&nbsp;/g, ' ')
-                    .replace(/&amp;/g, '&')
                     .replace(/&lt;/g, '<')
                     .replace(/&gt;/g, '>')
+                    // Replace &amp; last to avoid double-unescaping (e.g. &amp;lt; → &lt; → <)
+                    .replace(/&amp;/g, '&')
                     .replace(/\s+/g, ' ')
                     .trim();
                 if (cellContent) cells.push(cellContent);
