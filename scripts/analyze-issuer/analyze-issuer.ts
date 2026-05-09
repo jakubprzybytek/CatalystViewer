@@ -49,42 +49,44 @@ if (!tavilyApiKey) {
 const bedrockClient = new BedrockRuntimeClient({});
 const tavilyClient = new TavilyClient(tavilyApiKey!);
 const webSearchTool = new WebSearchTool(tavilyClient);
-const agentLoop = new AgentLoop(bedrockClient, MODEL_ID, [webSearchTool], 5);
+const agentLoop = new AgentLoop(bedrockClient, MODEL_ID, [webSearchTool], 25);
 
-const taskPrompt = `You are a financial analyst researching Polish companies that issue bonds on the Catalyst bond market.
+const taskPrompt = `Jesteś analitykiem finansowym badającym polskie spółki emitujące obligacje na rynku Catalyst.
 
-Your task is to find and extract key financial indicators for the company below.
+Twoim zadaniem jest znalezienie i zebranie kluczowych wskaźników finansowych dla podanej spółki.
 
-Company name: "${issuerName}"
+Nazwa spółki: "${issuerName}"
 
-The name provided is the legal registered name (e.g. "P4 Sp. z o.o." is the legal entity behind the Play mobile network).
+Podana nazwa to zarejestrowana nazwa prawna (np. "P4 Sp. z o.o." to podmiot prawny stojący za siecią komórkową Play).
 
-Instructions:
-1. First, identify the real-world company or brand behind this legal name.
-2. Search for its annual reports, financial results, or investor relations pages.
-3. Find key financial indicators for the most recent 3 years available.
-4. Focus on: Revenue, EBITDA, Net Debt (total debt minus cash), Net Income.
-5. All monetary values should be in PLN millions (if originally in thousands, divide by 1000; if in billions, multiply by 1000). If the company reports in a different currency, note that in the currency field.
-6. Limit yourself to at most 8 web searches. Stop searching as soon as you have enough data to fill in most indicators — do not keep searching for perfect completeness. Produce the JSON with whatever you found, using null for missing values.
+Instrukcje:
+1. Zidentyfikuj spółkę lub markę kryjącą się za tą nazwą prawną.
+2. Wyszukaj stronę spółki na portalu stockwatch.pl — najpierw wyszukaj firmę (np. "stockwatch.pl ${issuerName}"), a następnie przejdź do sekcji z raportami rocznymi lub wynikami finansowymi.
+3. Jeśli nie znajdziesz danych na stockwatch.pl, poszukaj raportów rocznych lub wyników finansowych w innych polskich źródłach (np. strona relacji inwestorskich, Bankier.pl, Stooq.pl, oficjalne raporty okresowe).
+4. Zbierz kluczowe wskaźniki finansowe za ostatnie 5 lat (lata obrotowe).
+5. Skup się na: Przychodach (Revenue), EBITDA, Długu netto (zadłużenie ogółem minus gotówka), Zysku netto (Net Income).
+6. Wszystkie wartości pieniężne podaj w milionach PLN (jeśli dane są w tysiącach — podziel przez 1000; jeśli w miliardach — pomnóż przez 1000). Jeśli spółka raportuje w innej walucie, zaznacz to w polu currency.
+7. Wszystkie zapytania wyszukiwania formułuj w języku polskim — to zwiększa dokładność wyników.
+8. Ogranicz się do maksymalnie 10 wyszukiwań. Zakończ wyszukiwanie, gdy masz wystarczające dane dla większości wskaźników — nie szukaj perfekcji. Uzupełnij JSON tym, co znalazłeś, wstawiając null dla brakujących wartości.
 
-Respond with a JSON object ONLY — no markdown, no explanation:
+Odpowiedz WYŁĄCZNIE obiektem JSON — bez markdown, bez wyjaśnień:
 {
-  "companyName": "<common name or brand of the company>",
+  "companyName": "<popularna nazwa lub marka spółki>",
   "currency": "PLN",
   "unit": "millions",
   "years": [
     {
       "year": <YYYY>,
-      "revenue": <number or null if not found>,
-      "ebitda": <number or null if not found>,
-      "netDebt": <number or null if not found>,
-      "netIncome": <number or null if not found>
+      "revenue": <liczba lub null jeśli nie znaleziono>,
+      "ebitda": <liczba lub null jeśli nie znaleziono>,
+      "netDebt": <liczba lub null jeśli nie znaleziono>,
+      "netIncome": <liczba lub null jeśli nie znaleziono>
     }
   ],
-  "notes": "<brief note on data sources or any caveats, e.g. estimated figures, fiscal year differences>"
+  "notes": "<krótka notatka o źródłach danych lub zastrzeżeniach, np. szacunkowe dane, różnice w roku obrotowym>"
 }
 
-Include up to 3 years, ordered from most recent to oldest. Only include years where you found at least one indicator.`;
+Uwzględnij do 5 lat, posortowanych od najnowszego do najstarszego. Uwzględniaj tylko lata, dla których znalazłeś co najmniej jeden wskaźnik.`;
 
 // ─── Live event handler ───────────────────────────────────────────────────────
 
