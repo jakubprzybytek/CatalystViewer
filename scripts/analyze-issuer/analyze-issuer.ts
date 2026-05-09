@@ -51,42 +51,42 @@ const bedrockClient = new BedrockRuntimeClient({});
 const tavilyClient = new TavilyClient(tavilyApiKey!);
 const webSearchTool = new WebSearchTool(tavilyClient);
 const stockwatchTool = new StockwatchTool();
-const agentLoop = new AgentLoop(bedrockClient, MODEL_ID, [stockwatchTool, webSearchTool], 5);
+const agentLoop = new AgentLoop(bedrockClient, MODEL_ID, [stockwatchTool, webSearchTool], 8);
 
-const taskPrompt = `You are a financial analyst researching Polish companies that issue bonds on the Catalyst bond market.
+const taskPrompt = `Jesteś analitykiem finansowym badającym polskie spółki emitujące obligacje na rynku Catalyst.
 
-Your task is to find and extract key financial indicators for the company below.
+Twoim zadaniem jest znalezienie i zebranie kluczowych wskaźników finansowych dla podanej spółki.
 
-Company name: "${issuerName}"
+Nazwa spółki: "${issuerName}"
 
-The name provided is the legal registered name (e.g. "P4 Sp. z o.o." is the legal entity behind the Play mobile network).
+Podana nazwa to zarejestrowana nazwa prawna (np. "P4 Sp. z o.o." to podmiot prawny stojący za siecią komórkową Play).
 
-Instructions:
-1. First, identify the real-world company or brand behind this legal name.
-2. Use the stockwatch_financials tool with the company's common brand name to fetch financial data directly from stockwatch.pl — this is your primary and most reliable source.
-3. If stockwatch.pl does not return useful data, supplement with web_search to find annual reports, financial results, or investor relations pages.
-4. Focus on: Revenue, EBITDA, Net Debt (total debt minus cash), Net Income.
-5. All monetary values should be in PLN millions (if originally in thousands, divide by 1000; if in billions, multiply by 1000). If the company reports in a different currency, note that in the currency field.
-6. Limit yourself to at most 8 tool calls in total. Stop as soon as you have enough data to fill in most indicators — do not keep searching for perfect completeness. Produce the JSON with whatever you found, using null for missing values.
+Instrukcje:
+1. Zidentyfikuj spółkę lub markę kryjącą się za tą nazwą prawną.
+2. Użyj narzędzia stockwatch_financials z popularną nazwą spółki, aby pobrać dane finansowe bezpośrednio ze stockwatch.pl — to jest Twoje główne i najbardziej wiarygodne źródło.
+3. Jeśli stockwatch.pl nie zwróci użytecznych danych, uzupełnij je przez web_search, szukając raportów rocznych, wyników finansowych lub stron relacji inwestorskich (np. Bankier.pl, Stooq.pl, oficjalne raporty okresowe).
+4. Skup się na: Przychodach (Revenue), EBITDA, Długu netto (zadłużenie ogółem minus gotówka), Zysku netto (Net Income).
+5. Wszystkie wartości pieniężne podaj w milionach PLN (jeśli dane są w tysiącach — podziel przez 1000; jeśli w miliardach — pomnóż przez 1000). Jeśli spółka raportuje w innej walucie, zaznacz to w polu currency.
+6. Ogranicz się do maksymalnie 8 wywołań narzędzi. Zakończ, gdy masz wystarczające dane dla większości wskaźników — nie szukaj perfekcji. Uzupełnij JSON tym, co znalazłeś, wstawiając null dla brakujących wartości.
 
-Respond with a JSON object ONLY — no markdown, no explanation:
+Odpowiedz WYŁĄCZNIE obiektem JSON — bez markdown, bez wyjaśnień:
 {
-  "companyName": "<common name or brand of the company>",
+  "companyName": "<popularna nazwa lub marka spółki>",
   "currency": "PLN",
   "unit": "millions",
   "years": [
     {
       "year": <YYYY>,
-      "revenue": <number or null if not found>,
-      "ebitda": <number or null if not found>,
-      "netDebt": <number or null if not found>,
-      "netIncome": <number or null if not found>
+      "revenue": <liczba lub null jeśli nie znaleziono>,
+      "ebitda": <liczba lub null jeśli nie znaleziono>,
+      "netDebt": <liczba lub null jeśli nie znaleziono>,
+      "netIncome": <liczba lub null jeśli nie znaleziono>
     }
   ],
-  "notes": "<brief note on data sources or any caveats, e.g. estimated figures, fiscal year differences>"
+  "notes": "<krótka notatka o źródłach danych lub zastrzeżeniach, np. szacunkowe dane, różnice w roku obrotowym>"
 }
 
-Include up to 3 years, ordered from most recent to oldest. Only include years where you found at least one indicator.`;
+Uwzględnij do 5 lat, posortowanych od najnowszego do najstarszego. Uwzględniaj tylko lata, dla których znalazłeś co najmniej jeden wskaźnik.`;
 
 // ─── Live event handler ───────────────────────────────────────────────────────
 
