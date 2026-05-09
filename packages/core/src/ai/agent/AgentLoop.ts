@@ -8,6 +8,10 @@ import { type AgentTool, type AgentEvent, LoopLimitExceeded, UnexpectedStopReaso
 
 const DEFAULT_MAX_ITERATIONS = 10;
 
+function emitUsage(onEvent: ((event: AgentEvent) => void) | undefined, inputTokens: number, outputTokens: number): void {
+    onEvent?.({ type: 'usage', inputTokens, outputTokens, totalTokens: inputTokens + outputTokens });
+}
+
 export class AgentLoop {
     private readonly bedrockClient: BedrockRuntimeClient;
     private readonly modelId: string;
@@ -40,6 +44,8 @@ export class AgentLoop {
         };
 
         let iteration = 0;
+        let totalInputTokens = 0;
+        let totalOutputTokens = 0;
 
         while (iteration < this.maxIterations) {
             iteration++;
@@ -49,6 +55,9 @@ export class AgentLoop {
                 messages,
                 toolConfig,
             }));
+
+            totalInputTokens += response.usage?.inputTokens ?? 0;
+            totalOutputTokens += response.usage?.outputTokens ?? 0;
 
             const stopReason = response.stopReason;
             const responseMessage = response.output?.message;
@@ -63,6 +72,7 @@ export class AgentLoop {
                     ?.text ?? '';
 
                 onEvent?.({ type: 'end_turn', iteration, text });
+                emitUsage(onEvent, totalInputTokens, totalOutputTokens);
                 return text;
             }
 
@@ -123,10 +133,13 @@ export class AgentLoop {
                         messages,
                         toolConfig,  // must be present whenever history contains toolUse/toolResult blocks
                     }));
+                    totalInputTokens += finalResponse.usage?.inputTokens ?? 0;
+                    totalOutputTokens += finalResponse.usage?.outputTokens ?? 0;
                     const text = finalResponse.output?.message?.content
                         ?.find((block) => 'text' in block && typeof block.text === 'string')
                         ?.text ?? '';
                     onEvent?.({ type: 'end_turn', iteration: iteration + 1, text });
+                    emitUsage(onEvent, totalInputTokens, totalOutputTokens);
                     return text;
                 }
 
