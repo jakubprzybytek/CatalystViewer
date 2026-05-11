@@ -106,7 +106,7 @@ export class AgentLoop {
                         }
                     }
 
-                    onEvent?.({ type: 'tool_result', iteration, toolUseId: toolUseId ?? '', result: resultText, isError });
+                    onEvent?.({ type: 'tool_result', iteration, toolName: name ?? '', toolUseId: toolUseId ?? '', result: resultText, isError });
 
                     toolResults.push({
                         toolUseId: toolUseId ?? '',

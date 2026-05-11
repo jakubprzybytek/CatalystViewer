@@ -6,6 +6,7 @@ dotenv.config({ path: join(dirname(fileURLToPath(import.meta.url)), '.env.local'
 import { BedrockRuntimeClient } from '@aws-sdk/client-bedrock-runtime';
 import { AgentLoop, type AgentEvent } from '@core/ai/agent/index';
 import { WebSearchTool } from '@core/ai/tools/WebSearchTool';
+import { StockwatchTool } from '@core/ai/tools/StockwatchTool';
 import { TavilyClient } from '@core/ai/tools/tavily/TavilyClient';
 import { MODEL_ID } from '@core/ai/issuers/IssuerClassification';
 
@@ -49,7 +50,8 @@ if (!tavilyApiKey) {
 const bedrockClient = new BedrockRuntimeClient({});
 const tavilyClient = new TavilyClient(tavilyApiKey!);
 const webSearchTool = new WebSearchTool(tavilyClient);
-const agentLoop = new AgentLoop(bedrockClient, MODEL_ID, [webSearchTool], 25);
+const stockwatchTool = new StockwatchTool();
+const agentLoop = new AgentLoop(bedrockClient, MODEL_ID, [stockwatchTool, webSearchTool], 8);
 
 const taskPrompt = `Jesteś analitykiem finansowym badającym polskie spółki emitujące obligacje na rynku Catalyst.
 
@@ -61,13 +63,11 @@ Podana nazwa to zarejestrowana nazwa prawna (np. "P4 Sp. z o.o." to podmiot praw
 
 Instrukcje:
 1. Zidentyfikuj spółkę lub markę kryjącą się za tą nazwą prawną.
-2. Wyszukaj stronę spółki na portalu stockwatch.pl — najpierw wyszukaj firmę (np. "stockwatch.pl ${issuerName}"), a następnie przejdź do sekcji z raportami rocznymi lub wynikami finansowymi.
-3. Jeśli nie znajdziesz danych na stockwatch.pl, poszukaj raportów rocznych lub wyników finansowych w innych polskich źródłach (np. strona relacji inwestorskich, Bankier.pl, Stooq.pl, oficjalne raporty okresowe).
-4. Zbierz kluczowe wskaźniki finansowe za ostatnie 5 lat (lata obrotowe).
-5. Skup się na: Przychodach (Revenue), EBITDA, Długu netto (zadłużenie ogółem minus gotówka), Zysku netto (Net Income).
-6. Wszystkie wartości pieniężne podaj w milionach PLN (jeśli dane są w tysiącach — podziel przez 1000; jeśli w miliardach — pomnóż przez 1000). Jeśli spółka raportuje w innej walucie, zaznacz to w polu currency.
-7. Wszystkie zapytania wyszukiwania formułuj w języku polskim — to zwiększa dokładność wyników.
-8. Ogranicz się do maksymalnie 10 wyszukiwań. Zakończ wyszukiwanie, gdy masz wystarczające dane dla większości wskaźników — nie szukaj perfekcji. Uzupełnij JSON tym, co znalazłeś, wstawiając null dla brakujących wartości.
+2. Użyj narzędzia stockwatch_financials z popularną nazwą spółki, aby pobrać dane finansowe bezpośrednio ze stockwatch.pl — to jest Twoje główne i najbardziej wiarygodne źródło.
+3. Jeśli stockwatch.pl nie zwróci użytecznych danych, uzupełnij je przez web_search, szukając raportów rocznych, wyników finansowych lub stron relacji inwestorskich (np. Bankier.pl, Stooq.pl, oficjalne raporty okresowe).
+4. Skup się na: Przychodach (Revenue), EBITDA, Długu netto (zadłużenie ogółem minus gotówka), Zysku netto (Net Income).
+5. Wszystkie wartości pieniężne podaj w milionach PLN (jeśli dane są w tysiącach — podziel przez 1000; jeśli w miliardach — pomnóż przez 1000). Jeśli spółka raportuje w innej walucie, zaznacz to w polu currency.
+6. Ogranicz się do maksymalnie 8 wywołań narzędzi. Zakończ, gdy masz wystarczające dane dla większości wskaźników — nie szukaj perfekcji. Uzupełnij JSON tym, co znalazłeś, wstawiając null dla brakujących wartości.
 
 Odpowiedz WYŁĄCZNIE obiektem JSON — bez markdown, bez wyjaśnień:
 {
@@ -96,25 +96,37 @@ function onEvent(event: AgentEvent): void {
     switch (event.type) {
         case 'tool_use': {
             const input = event.input as Record<string, unknown>;
-            const query = typeof input['query'] === 'string' ? input['query'] : JSON.stringify(input);
-            console.log(`\n[iter ${event.iteration}] Searching: "${query}"`);
+            if (event.toolName === 'stockwatch_financials') {
+                const name = typeof input['companyName'] === 'string' ? input['companyName'] : JSON.stringify(input);
+                console.log(`\n[iter ${event.iteration}] stockwatch.pl lookup: "${name}"`);
+            } else {
+                const query = typeof input['query'] === 'string' ? input['query'] : JSON.stringify(input);
+                console.log(`\n[iter ${event.iteration}] Searching: "${query}"`);
+            }
             break;
         }
         case 'tool_result': {
-            let results: Array<{ url: string; title: string; content: string }> = [];
-            try { results = JSON.parse(event.result); } catch { /* not JSON */ }
-            if (results.length > 0) {
-                console.log(`           Got ${results.length} result(s):`);
-                for (const r of results) {
-                    console.log(`             · ${r.url}`);
-                    console.log(`               ${truncate(r.title, 80)}`);
-                    console.log(`               ${truncate(r.content, 120)}`);
+            if (event.toolName === 'stockwatch_financials') {
+                console.log(`           ${truncate(event.result, 200)}`);
+            } else {
+                let results: Array<{ url: string; title: string; content: string }> = [];
+                try { results = JSON.parse(event.result); } catch { /* not JSON */ }
+                if (results.length > 0) {
+                    console.log(`           Got ${results.length} result(s):`);
+                    for (const r of results) {
+                        console.log(`             · ${r.url}`);
+                        console.log(`               ${truncate(r.title, 80)}`);
+                        console.log(`               ${truncate(r.content, 120)}`);
+                    }
                 }
             }
             break;
         }
         case 'end_turn':
             console.log(`\n[iter ${event.iteration}] Agent finished.`);
+            break;
+        case 'usage':
+            console.log(`\nTokens:  input=${event.inputTokens.toLocaleString()}  output=${event.outputTokens.toLocaleString()}  total=${event.totalTokens.toLocaleString()}`);
             break;
     }
 }
