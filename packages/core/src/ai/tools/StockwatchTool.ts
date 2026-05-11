@@ -13,16 +13,22 @@ function isStockwatchInput(value: unknown): value is StockwatchInput {
     );
 }
 
-const STOCKWATCH_BASE_URL = 'https://stockwatch.pl';
+const STOCKWATCH_BASE_URL = 'https://www.stockwatch.pl';
+const STOCKWATCH_API_URL = 'https://api.stockwatch.pl';
 
 const FETCH_HEADERS: Record<string, string> = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
     'Accept-Language': 'pl-PL,pl;q=0.9,en;q=0.8',
+    'Referer': 'https://www.stockwatch.pl/',
 };
 
-// Financial data tab paths to try in order
-const FINANCIAL_TAB_PATHS = ['dane-finansowe/', 'wyniki-finansowe/'];
+const API_HEADERS: Record<string, string> = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Accept': 'application/json',
+    'Referer': 'https://www.stockwatch.pl/',
+    'Origin': 'https://www.stockwatch.pl',
+};
 
 export class StockwatchTool implements AgentTool {
     readonly name = 'stockwatch_financials';
@@ -49,40 +55,31 @@ export class StockwatchTool implements AgentTool {
 
         const { companyName } = input;
 
-        // Step 1: search stockwatch.pl for the company
-        const searchUrl = `${STOCKWATCH_BASE_URL}/szukaj/?q=${encodeURIComponent(companyName)}`;
-        const searchHtml = await fetchPage(searchUrl);
+        // Step 1: search using the stockwatch autocomplete API
+        const apiUrl = `${STOCKWATCH_API_URL}/Capitalization/GetCompaniesAndIndeces?q=${encodeURIComponent(companyName)}`;
+        const apiResponse = await fetch(apiUrl, { headers: API_HEADERS });
+        if (!apiResponse.ok) {
+            throw new Error(`HTTP ${apiResponse.status} fetching stockwatch search API`);
+        }
+        const results = await apiResponse.json() as Array<{ isin: string; name: string; ticker: string; type: string }>;
 
-        // Step 2: extract company path from search results (e.g. /gpw/P4S/ or /obligacje/P4/)
-        const companyPath = extractCompanyPath(searchHtml);
-        if (!companyPath) {
+        if (!results || results.length === 0) {
             return `No matching company found on stockwatch.pl for "${companyName}". Try a shorter or different name.`;
         }
 
-        // Step 3: try each financial data tab path in order
-        for (const tabPath of FINANCIAL_TAB_PATHS) {
-            const financialUrl = `${STOCKWATCH_BASE_URL}${companyPath}${tabPath}`;
-            try {
-                const financialHtml = await fetchPage(financialUrl);
-                const tableText = extractTableText(financialHtml);
-                if (tableText) {
-                    return `Financial data for "${companyName}" from ${financialUrl}:\n\n${tableText}`;
-                }
-            } catch (err) {
-                // This tab path is not available; try the next one
-                console.debug(`StockwatchTool: ${financialUrl} unavailable: ${err instanceof Error ? err.message : String(err)}`);
-            }
+        // Pick the first result (most relevant match)
+        const { name: matchedName, ticker } = results[0];
+
+        // Step 2: fetch the financial data page using the comma-based URL format
+        const financialUrl = `${STOCKWATCH_BASE_URL}/gpw/${ticker.toLowerCase()},notowania,dane-finansowe.aspx`;
+        const financialHtml = await fetchPage(financialUrl);
+        const tableText = extractTableText(financialHtml);
+
+        if (tableText) {
+            return `Financial data for "${matchedName}" from ${financialUrl}:\n\n${tableText}`;
         }
 
-        // Step 4: fall back to the main company page
-        const mainUrl = `${STOCKWATCH_BASE_URL}${companyPath}`;
-        const mainHtml = await fetchPage(mainUrl);
-        const fallbackText = extractTableText(mainHtml);
-        if (fallbackText) {
-            return `Financial data for "${companyName}" from ${mainUrl}:\n\n${fallbackText}`;
-        }
-
-        return `Found company page at ${mainUrl} but could not extract financial data tables.`;
+        return `Found company page for "${matchedName}" (${ticker}) but could not extract financial data tables.`;
     }
 }
 
@@ -92,23 +89,6 @@ async function fetchPage(url: string): Promise<string> {
         throw new Error(`HTTP ${response.status} fetching ${url}`);
     }
     return response.text();
-}
-
-function extractCompanyPath(html: string): string | null {
-    // GPW/Catalyst tickers are 2–10 alphanumeric characters; emitent slugs can include
-    // hyphens and be longer (up to 30 chars) for non-listed bond issuers.
-    const patterns = [
-        /href="(\/gpw\/[A-Za-z0-9]{2,10}\/)"/,
-        /href="(\/obligacje\/[A-Za-z0-9]{2,10}\/)"/,
-        /href="(\/emitent\/[A-Za-z0-9-]{2,30}\/)"/,
-    ];
-
-    for (const pattern of patterns) {
-        const match = html.match(pattern);
-        if (match) return match[1];
-    }
-
-    return null;
 }
 
 function extractTableText(html: string): string {

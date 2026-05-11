@@ -125,6 +125,9 @@ function onEvent(event: AgentEvent): void {
         case 'end_turn':
             console.log(`\n[iter ${event.iteration}] Agent finished.`);
             break;
+        case 'usage':
+            console.log(`\nTokens:  input=${event.inputTokens.toLocaleString()}  output=${event.outputTokens.toLocaleString()}  total=${event.totalTokens.toLocaleString()}`);
+            break;
     }
 }
 
