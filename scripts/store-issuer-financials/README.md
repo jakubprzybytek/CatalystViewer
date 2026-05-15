@@ -1,21 +1,30 @@
 # store-issuer-financials
 
-Ingests issuer financial data (annual P&L and balance sheet figures) into the
-`IssuerFinancials` DynamoDB table.
+One-off script that ingests issuer financial data (annual P&L and balance sheet
+figures) into the `IssuerFinancials` DynamoDB table.
 
-## Usage
+## Setup
+
+1. Open `store-issuer-financials.ts` and fill in the `Configuration` section at the top:
+   - `TABLE_NAME` — find it in the AWS console or SST deployment output
+   - `JSON_FILE_PATH` — path to your financials JSON file
+2. Install dependencies:
 
 ```bash
 npm install
-
-# Dry run (no writes):
-npm run store:dry -- <table-name> <path/to/financials.json>
-
-# Live run:
-npm run store -- <table-name> <path/to/financials.json>
 ```
 
-Find the table name in the AWS console or in the SST deployment output.
+## Run
+
+```bash
+# Dry run first — reports what would change, no writes (default)
+npm run store
+
+# Live run — stores records into DynamoDB
+npm run store:live
+```
+
+AWS credentials must be available in the environment (`AWS_PROFILE` or env vars).
 
 ## Input format
 

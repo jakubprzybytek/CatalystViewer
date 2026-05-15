@@ -5,12 +5,11 @@
   "type": "module",
   "scripts": {
     "store": "tsx store-issuer-financials.ts",
-    "store:dry": "tsx store-issuer-financials.ts --dry-run"
+    "store:live": "tsx store-issuer-financials.ts --live"
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "3.896.0",
-    "@aws-sdk/lib-dynamodb": "3.896.0",
-    "dotenv": "16.5.0"
+    "@aws-sdk/lib-dynamodb": "3.896.0"
   },
   "devDependencies": {
     "tsx": "4.19.3",
