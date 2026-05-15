@@ -46,6 +46,10 @@ declare module "sst" {
       "name": string
       "type": "sst.aws.Function"
     }
+    "IssuerFinancials": {
+      "name": string
+      "type": "sst.aws.Dynamo"
+    }
     "IssuerProfiles": {
       "name": string
       "type": "sst.aws.Dynamo"
