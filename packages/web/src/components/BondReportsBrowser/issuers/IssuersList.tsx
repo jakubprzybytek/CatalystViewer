@@ -10,6 +10,8 @@ import { IssuerProfile } from '@/sdk/Issuers';
 import type { FinancialYear } from '@/sdk/Issuers';
 import { removeElement } from '@/common/Arrays';
 
+const EMPTY_FINANCIALS: FinancialYear[] = [];
+
 export type IssuerReport = {
   name: string;
   interestBaseType: string;
@@ -112,7 +114,7 @@ export default function IssuersList({ bondReports, issuerProfiles, financialsByI
               statistics={statistics}
               isChecked={selectedIssuerNames.has(issuerReport.name)}
               onIssuerChecked={toggleIssuer}
-              financials={financialsByIssuer.get(issuerReport.name) ?? []}
+              financials={financialsByIssuer.get(issuerReport.name) ?? EMPTY_FINANCIALS}
             />
           </Grid>
         ))}

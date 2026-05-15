@@ -1,4 +1,4 @@
-import { memo, useState } from 'react';
+import { memo, useMemo, useState } from 'react';
 import Stack from "@mui/material/Stack";
 import Paper from "@mui/material/Paper";
 import Checkbox from "@mui/material/Checkbox";
@@ -17,7 +17,7 @@ import { IssuerReport } from './IssuersList';
 import { InterestPercentilesByInterestBaseType } from "@/bonds/statistics";
 import { formatCurrency } from "@/common/Formats";
 import IssuerScorecard from './IssuerScorecard';
-import { computeScorecard, type FundamentalScorecard } from '@/bonds/fundamentals/scorecard';
+import { computeScorecard } from '@/bonds/fundamentals/scorecard';
 import type { FinancialYear } from '@/sdk/Issuers';
 
 export const interestConstPartColors: ColorCode[] = ['green', 'yellow', 'orange', 'red'];
@@ -65,7 +65,7 @@ function IssuerCard({ issuerReport, statistics, isChecked, onIssuerChecked, fina
   const minNominalValueColorCode = getNominalValueColorCode(issuerReport.minNominalValue);
   const interestConstColorCode = getInterestConstColorCode(issuerReport.interestConstAverage, statistics[issuerReport.interestBaseType]);
   const industryColors = issuerReport.industry ? getIndustryColors(issuerReport.industry) : undefined;
-  const scorecard: FundamentalScorecard = computeScorecard(financials);
+  const scorecard = useMemo(() => computeScorecard(financials), [financials]);
   const hasScorecard = financials.length > 0;
 
   return (
