@@ -1,0 +1,19 @@
+{
+  "name": "store-issuer-financials",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "store": "tsx store-issuer-financials.ts",
+    "store:dry": "tsx store-issuer-financials.ts --dry-run"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "3.896.0",
+    "@aws-sdk/lib-dynamodb": "3.896.0",
+    "dotenv": "16.5.0"
+  },
+  "devDependencies": {
+    "tsx": "4.19.3",
+    "typescript": "5.8.3"
+  }
+}
