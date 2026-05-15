@@ -37,3 +37,14 @@ export const issuerProfilesTable = new sst.aws.Dynamo("IssuerProfiles", {
     hashKey: "issuerName",
   },
 });
+
+export const issuerFinancialsTable = new sst.aws.Dynamo("IssuerFinancials", {
+  fields: {
+    issuerName: "string",
+    year: "number",
+  },
+  primaryIndex: {
+    hashKey: "issuerName",
+    rangeKey: "year",
+  },
+});

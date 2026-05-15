@@ -1,4 +1,4 @@
-import { profilesTable, bondDetailsTable, bondStatisticsTable, issuerProfilesTable } from "./storage";
+import { profilesTable, bondDetailsTable, bondStatisticsTable, issuerProfilesTable, issuerFinancialsTable } from "./storage";
 
 const USER_POOL_ID = "eu-west-1_IVai0KEAA";
 const USER_POOL_CLIENT_ID = "3qt6td581r3qqsk23tgv9r5duh";
@@ -38,6 +38,13 @@ const getIssuerProfilesFunction = new sst.aws.Function("GetIssuerProfiles", {
   link: [issuerProfilesTable],
 });
 
+const getIssuerFinancialsFunction = new sst.aws.Function("GetIssuerFinancials", {
+  handler: "packages/functions/src/issuers/getIssuerFinancials.handler",
+  memory: "256 MB",
+  timeout: "10 seconds",
+  link: [issuerFinancialsTable],
+});
+
 export const api = new sst.aws.ApiGatewayV2("Api");
 
 const cognitoAuthorizer = api.addAuthorizer({
@@ -62,6 +69,7 @@ api.route("GET /api/bonds", getBondsFunction.arn, jwtAuth);
 api.route("GET /api/bonds/{bondType}", getBondsFunction.arn, jwtAuth);
 api.route("GET /api/bondQuotes", getBondQuotesFunction.arn, jwtAuth);
 api.route("GET /api/issuers/profiles", getIssuerProfilesFunction.arn, jwtAuth);
+api.route("GET /api/issuers/financials", getIssuerFinancialsFunction.arn, jwtAuth);
 
 export const userPoolId = USER_POOL_ID;
 export const userPoolClientId = USER_POOL_CLIENT_ID;
