@@ -1,7 +1,7 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, PutCommand, QueryCommand, ScanCommand } from '@aws-sdk/lib-dynamodb';
 import { DbIssuerFinancials } from '.';
-import { scanAll } from '../utils';
+import { scanAll, queryAll } from '../utils';
 
 export class IssuerFinancialsTable {
     readonly dynamoDBDocumentClient: DynamoDBDocumentClient;
@@ -33,12 +33,13 @@ export class IssuerFinancialsTable {
     async getByIssuer(issuerName: string): Promise<DbIssuerFinancials[]> {
         console.log(`IssuerFinancialsTable: Fetching financials for '${issuerName}'`);
 
-        const result = await this.dynamoDBDocumentClient.send(new QueryCommand({
+        const queryCommand = new QueryCommand({
             TableName: this.tableName,
             KeyConditionExpression: 'issuerName = :name',
             ExpressionAttributeValues: { ':name': issuerName },
-        }));
+        });
 
+        const result = await queryAll(this.dynamoDBDocumentClient, queryCommand);
         return result.Items ? result.Items as DbIssuerFinancials[] : [];
     }
 
