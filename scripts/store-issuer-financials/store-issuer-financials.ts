@@ -15,6 +15,7 @@ import { DynamoDBDocumentClient, PutCommand } from '@aws-sdk/lib-dynamodb';
 const REGION = 'eu-west-1';
 const TABLE_NAME = 'replace-with-actual-table-name'; // ← replace before running
 const JSON_FILE_PATH = 'replace-with-path-to-financials.json'; // ← replace before running
+const ISSUER_NAME: string | undefined = undefined; // ← set to process only one issuer, e.g. 'Acme S.A.'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -72,7 +73,13 @@ async function run(dryRun: boolean): Promise<void> {
     process.exit(1);
   }
 
-  console.log(`Found ${records.length} record(s) in ${JSON_FILE_PATH}`);
+  if (ISSUER_NAME !== undefined) {
+    const before = records.length;
+    records = records.filter(r => r.issuerName === ISSUER_NAME);
+    console.log(`Found ${before} record(s) in ${JSON_FILE_PATH}; filtered to ${records.length} for issuer '${ISSUER_NAME}'`);
+  } else {
+    console.log(`Found ${records.length} record(s) in ${JSON_FILE_PATH}`);
+  }
 
   const client = new DynamoDBClient({ region: REGION });
   const docClient = DynamoDBDocumentClient.from(client, {
