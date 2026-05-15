@@ -37,6 +37,10 @@ npm start -- "<Issuer Name>"
 The issuer name should be the legal entity name as it appears on Catalyst,
 e.g. `"P4 Sp. z o.o."` or `"Echo Investment S.A."`.
 
+```bash
+npm start -- "Dadelo S.A."
+```
+
 ## Output
 
 ```
