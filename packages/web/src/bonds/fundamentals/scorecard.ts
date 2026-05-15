@@ -59,17 +59,30 @@ function computeDebtBurden(year: FinancialYear): DimensionResult {
     : undefined;
   const ndEbitda = div(netDebt, ebitda);
 
+  // Negative equity means the company owes more than it owns — always red
+  const deSignal: Signal =
+    de == null ? 'na'
+    : year.equity != null && year.equity <= 0 ? 'red'
+    : signalFromValue(de, v => v < 1.0, v => v <= 2.0);
+
   const deMetric: MetricResult = {
     name: 'D/E',
     value: de,
     formattedValue: mult(de),
-    signal: signalFromValue(de, v => v < 1.0, v => v <= 2.0),
+    signal: deSignal,
   };
+
+  // Negative EBITDA means no operating cash generation — always red
+  const ndEbitdaSignal: Signal =
+    ndEbitda == null ? 'na'
+    : ebitda != null && ebitda <= 0 ? 'red'
+    : signalFromValue(ndEbitda, v => v < 2.5, v => v <= 4.0);
+
   const ndMetric: MetricResult = {
     name: 'Net Debt/EBITDA',
     value: ndEbitda,
     formattedValue: mult(ndEbitda),
-    signal: signalFromValue(ndEbitda, v => v < 2.5, v => v <= 4.0),
+    signal: ndEbitdaSignal,
   };
 
   const metrics = [deMetric, ndMetric];
@@ -224,7 +237,9 @@ function computeTrend(years: FinancialYear[]): DimensionResult {
   if (ebitdaMargins.length >= 3) {
     ebitdaSlopeValue = linearSlope(ebitdaMargins);
     const latestMargin = ebitdaMargins[ebitdaMargins.length - 1];
-    if (ebitdaSlopeValue > 0 || latestMargin > 0.10) ebitdaMarginSignal = 'green';
+    const isImproving = ebitdaSlopeValue > 0;
+    const isStableHigh = Math.abs(ebitdaSlopeValue) <= 0.005 && latestMargin > 0.10;
+    if (isImproving || isStableHigh) ebitdaMarginSignal = 'green';
     else if (ebitdaSlopeValue >= -0.005) ebitdaMarginSignal = 'yellow';
     else ebitdaMarginSignal = 'red';
   }

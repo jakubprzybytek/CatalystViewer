@@ -57,6 +57,36 @@ describe('computeScorecard', () => {
       expect(ndEbitda.value).toBeCloseTo(7.97, 1);
       expect(ndEbitda.signal).toBe('red');
     });
+
+    it('D/E: red when equity is negative', () => {
+      const negativeEquityYear: FinancialYear[] = [{
+        issuerName: 'Test', year: 2024,
+        financialDebt: 10000, equity: -2000,
+        ebit: 500, depreciation: 200, interestExpense: 400,
+        netProfit: -100, revenue: 5000,
+        totalAssets: 15000, intangibleAssets: 200,
+        cash: 300, currentAssets: 4000, inventory: 500, currentLiabilities: 3000,
+      }];
+      const sc = computeScorecard(negativeEquityYear);
+      const d1 = sc.dimensions.find(d => d.name === 'Debt Burden')!;
+      const de = d1.metrics.find(m => m.name === 'D/E')!;
+      expect(de.signal).toBe('red');
+    });
+
+    it('Net Debt/EBITDA: red when EBITDA is negative', () => {
+      const negativeEbitdaYear: FinancialYear[] = [{
+        issuerName: 'Test', year: 2024,
+        financialDebt: 10000, cash: 500, equity: 3000,
+        ebit: -1000, depreciation: 400, interestExpense: 400,
+        netProfit: -1500, revenue: 5000,
+        totalAssets: 15000, intangibleAssets: 200,
+        currentAssets: 4000, inventory: 500, currentLiabilities: 3000,
+      }];
+      const sc = computeScorecard(negativeEbitdaYear);
+      const d1 = sc.dimensions.find(d => d.name === 'Debt Burden')!;
+      const ndEbitda = d1.metrics.find(m => m.name === 'Net Debt/EBITDA')!;
+      expect(ndEbitda.signal).toBe('red');
+    });
   });
 
   describe('Dimension 2 — Debt Service', () => {
@@ -188,6 +218,38 @@ describe('computeScorecard', () => {
       const sc = computeScorecard(twoYears);
       const d6 = sc.dimensions.find(d => d.name === 'Financial Trend')!;
       expect(d6.signal).toBe('na');
+    });
+
+    it('EBITDA Margin Trend: green when consistently improving', () => {
+      const sc = computeScorecard(exampleA);
+      const d6 = sc.dimensions.find(d => d.name === 'Financial Trend')!;
+      const ebitdaTrend = d6.metrics.find(m => m.name === 'EBITDA Margin Trend')!;
+      // Polmech EBITDA margins ~16.2% stable with slight positive slope → green
+      expect(ebitdaTrend.signal).toBe('green');
+    });
+
+    it('EBITDA Margin Trend: red when consistently deteriorating', () => {
+      const sc = computeScorecard(exampleB);
+      const d6 = sc.dimensions.find(d => d.name === 'Financial Trend')!;
+      const ebitdaTrend = d6.metrics.find(m => m.name === 'EBITDA Margin Trend')!;
+      // Budmax EBITDA margins: 8.5% → 8.2% → 7.7% → 6.7% → 5.6% → red
+      expect(ebitdaTrend.signal).toBe('red');
+    });
+
+    it('Net Debt/EBITDA Trend: green when declining', () => {
+      const sc = computeScorecard(exampleA);
+      const d6 = sc.dimensions.find(d => d.name === 'Financial Trend')!;
+      const ndTrend = d6.metrics.find(m => m.name === 'Net Debt/EBITDA Trend')!;
+      // Polmech: 2.65 → 2.24 → 1.89 → 1.60 → 1.38 (strongly declining) → green
+      expect(ndTrend.signal).toBe('green');
+    });
+
+    it('Net Debt/EBITDA Trend: red when rapidly rising', () => {
+      const sc = computeScorecard(exampleB);
+      const d6 = sc.dimensions.find(d => d.name === 'Financial Trend')!;
+      const ndTrend = d6.metrics.find(m => m.name === 'Net Debt/EBITDA Trend')!;
+      // Budmax: 2.67 → 3.43 → 4.50 → 6.02 → 7.97 (rapidly rising) → red
+      expect(ndTrend.signal).toBe('red');
     });
   });
 
