@@ -7,8 +7,7 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "paths": {
-      "@core/*": ["../../packages/core/src/*"],
-      "@/*": ["../../packages/web/src/*"]
+      "@core/*": ["../../packages/core/src/*"]
     }
   }
 }

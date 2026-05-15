@@ -7,9 +7,10 @@ import { BedrockRuntimeClient } from '@aws-sdk/client-bedrock-runtime';
 import { AgentLoop, type AgentEvent } from '@core/ai/agent/index';
 import { WebSearchTool } from '@core/ai/tools/WebSearchTool';
 import { StockwatchTool } from '@core/ai/tools/StockwatchTool';
+import { BiznesradarTool } from '@core/ai/tools/BiznesradarTool';
 import { TavilyClient } from '@core/ai/tools/tavily/TavilyClient';
 import { MODEL_ID } from '@core/ai/issuers/IssuerClassification';
-import { computeScorecard, type Signal, type FundamentalScorecard } from '@/bonds/fundamentals/scorecard';
+import { computeScorecard, type Signal, type FundamentalScorecard } from '@core/bonds/fundamentals/scorecard';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -63,7 +64,8 @@ const bedrockClient = new BedrockRuntimeClient({});
 const tavilyClient = new TavilyClient(tavilyApiKey!);
 const webSearchTool = new WebSearchTool(tavilyClient);
 const stockwatchTool = new StockwatchTool();
-const agentLoop = new AgentLoop(bedrockClient, MODEL_ID, [stockwatchTool, webSearchTool], 10);
+const biznesradarTool = new BiznesradarTool();
+const agentLoop = new AgentLoop(bedrockClient, MODEL_ID, [biznesradarTool, stockwatchTool, webSearchTool], 10);
 
 const taskPrompt = `Jesteś analitykiem finansowym badającym polskie spółki emitujące obligacje na rynku Catalyst.
 
@@ -75,13 +77,14 @@ Podana nazwa to zarejestrowana nazwa prawna (np. "P4 Sp. z o.o." to podmiot praw
 
 Instrukcje:
 1. Zidentyfikuj spółkę lub markę kryjącą się za tą nazwą prawną.
-2. Użyj narzędzia stockwatch_financials z popularną nazwą spółki — to jest Twoje główne i najbardziej wiarygodne źródło.
-3. Jeśli stockwatch.pl nie zwróci użytecznych danych, uzupełnij przez web_search (Bankier.pl, Biznesradar.pl, raporty roczne spółki).
+2. Użyj narzędzia stockwatch_financials z popularną nazwą lub tickerem GPW — to jest Twoje główne źródło danych (zwraca roczny rachunek zysków i strat oraz bilans za wiele lat w jednym wywołaniu).
+3. Jeśli stockwatch nie znajdzie spółki, spróbuj biznesradar_financials.
+4. Tylko jeśli oba powyższe zawiodą, uzupełnij brakujące dane przez web_search (Bankier.pl, raporty roczne spółki).
 4. Zbierz następujące dane dla maksymalnie 5 ostatnich lat:
    - Rachunek zysków i strat: Przychody (revenue), EBIT, Amortyzacja (depreciation), Koszty odsetkowe (interestExpense), Zysk netto (netProfit)
    - Bilans: Aktywa ogółem (totalAssets), Wartości niematerialne (intangibleAssets), Kapitał własny (equity), Dług finansowy (financialDebt), Gotówka (cash), Aktywa obrotowe (currentAssets), Zapasy (inventory), Zobowiązania krótkoterminowe (currentLiabilities)
-5. Wszystkie wartości pieniężne podaj w milionach PLN (jeśli dane są w tysiącach — podziel przez 1000; jeśli w miliardach — pomnóż przez 1000). Jeśli spółka raportuje w innej walucie, zaznacz to w polu currency.
-6. Ogranicz się do maksymalnie 10 wywołań narzędzi. Wstaw null dla brakujących wartości.
+5. Uwaga: oba narzędzia finansowe zwracają wartości w tysiącach PLN — podziel przez 1000 aby uzyskać miliony. Jeśli spółka raportuje w innej walucie, zaznacz to w polu currency.
+6. Ogranicz się do maksymalnie 5 wywołań narzędzi. Wstaw null dla brakujących wartości.
 
 Odpowiedz WYŁĄCZNIE obiektem JSON — bez markdown, bez wyjaśnień:
 {
@@ -119,9 +122,10 @@ function onEvent(event: AgentEvent): void {
     switch (event.type) {
         case 'tool_use': {
             const input = event.input as Record<string, unknown>;
-            if (event.toolName === 'stockwatch_financials') {
+            if (event.toolName === 'biznesradar_financials' || event.toolName === 'stockwatch_financials') {
+                const site = event.toolName === 'biznesradar_financials' ? 'biznesradar.pl' : 'stockwatch.pl';
                 const name = typeof input['companyName'] === 'string' ? input['companyName'] : JSON.stringify(input);
-                console.log(`\n[iter ${event.iteration}] stockwatch.pl lookup: "${name}"`);
+                console.log(`\n[iter ${event.iteration}] ${site} lookup: "${name}"`);
             } else {
                 const query = typeof input['query'] === 'string' ? input['query'] : JSON.stringify(input);
                 console.log(`\n[iter ${event.iteration}] Searching: "${query}"`);
@@ -129,7 +133,7 @@ function onEvent(event: AgentEvent): void {
             break;
         }
         case 'tool_result': {
-            if (event.toolName === 'stockwatch_financials') {
+            if (event.toolName === 'biznesradar_financials' || event.toolName === 'stockwatch_financials') {
                 console.log(`           ${truncate(event.result, 200)}`);
             } else {
                 let results: Array<{ url: string; title: string; content: string }> = [];
@@ -162,7 +166,13 @@ function parseResult(text: string): AgentFinancials {
     if (start === -1 || end === -1 || end < start) {
         throw new Error('Response does not contain a JSON object');
     }
-    const parsed = JSON.parse(text.slice(start, end + 1)) as Record<string, unknown>;
+    // Strip thousands-separator spaces that LLMs sometimes copy from source data
+    // e.g. "280 571" → "280571", applied repeatedly for multi-group numbers
+    let json = text.slice(start, end + 1);
+    while (/\d [ \u00a0]\d/.test(json)) {
+        json = json.replace(/(\d)[ \u00a0](\d)/g, '$1$2');
+    }
+    const parsed = JSON.parse(json) as Record<string, unknown>;
     if (
         typeof parsed['companyName'] !== 'string' ||
         !Array.isArray(parsed['years'])
