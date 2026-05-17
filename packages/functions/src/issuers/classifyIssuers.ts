@@ -46,8 +46,9 @@ export async function handler(input: CollectIssuersResult, context: Context): Pr
             const classification = await classifyIssuer(bedrockClient, tavilyClient, issuerName);
 
             const now = new Date();
-            await issuerProfilesTable.store({
+            await issuerProfilesTable.storeProfile({
                 issuerName,
+                recordType: '#PROFILE',
                 industry: classification.industry,
                 businessSummary: classification.businessSummary,
                 websiteUrl: classification.websiteUrl,

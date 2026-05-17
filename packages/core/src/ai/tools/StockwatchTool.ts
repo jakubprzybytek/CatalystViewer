@@ -152,6 +152,11 @@ function extractTableText(html: string): string {
             continue;
         }
 
+        // Rows that are snapshots in nature but appear outside the balance sheet section
+        // (e.g. share count in the per-share block). Summing quarters would multiply the value by 4.
+        const SNAPSHOT_LABELS = ['Liczba akcji', 'Liczba akcji (śr.)'];
+        const isSnapshotRow = SNAPSHOT_LABELS.some(s => label.startsWith(s));
+
         // cells[0] = label, cells[1] = icon/empty col, cells[2..] = quarter values
         const values: (number | null)[] = cells.slice(2).map(v => {
             // Remove spaces used as thousands separators; handle "- 123" as -123
@@ -163,7 +168,7 @@ function extractTableText(html: string): string {
         while (values.length < periods.length) values.push(null);
         rows.push({
             label,
-            isBalanceSheet: isBalanceSection,
+            isBalanceSheet: isBalanceSection || isSnapshotRow,
             values: values.slice(0, periods.length),
         });
     }

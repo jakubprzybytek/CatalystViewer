@@ -7,10 +7,7 @@ import { InterestPercentilesByInterestBaseType, getInterestConstParts, groupByIs
 import { BondReportsFilteringOptions } from "../filter";
 import { BondReport } from '@/sdk/Bonds';
 import { IssuerProfile } from '@/sdk/Issuers';
-import type { FinancialYear } from '@/sdk/Issuers';
 import { removeElement } from '@/common/Arrays';
-
-const EMPTY_FINANCIALS: FinancialYear[] = [];
 
 export type IssuerReport = {
   name: string;
@@ -33,13 +30,12 @@ const sortByInterestConstAverage = (reports: IssuerReport[]) => [...reports].sor
 type IssuersListParam = {
   bondReports: BondReport[];
   issuerProfiles: IssuerProfile[];
-  financialsByIssuer: Map<string, FinancialYear[]>;
   statistics: InterestPercentilesByInterestBaseType;
   filteringOptions: BondReportsFilteringOptions;
   setFilteringOptions: (param: BondReportsFilteringOptions) => void;
 }
 
-export default function IssuersList({ bondReports, issuerProfiles, financialsByIssuer, statistics, filteringOptions, setFilteringOptions }: IssuersListParam): React.JSX.Element {
+export default function IssuersList({ bondReports, issuerProfiles, statistics, filteringOptions, setFilteringOptions }: IssuersListParam): React.JSX.Element {
   const filteringOptionsRef = useRef(filteringOptions);
   const setFilteringOptionsRef = useRef(setFilteringOptions);
 
@@ -114,7 +110,6 @@ export default function IssuersList({ bondReports, issuerProfiles, financialsByI
               statistics={statistics}
               isChecked={selectedIssuerNames.has(issuerReport.name)}
               onIssuerChecked={toggleIssuer}
-              financials={financialsByIssuer.get(issuerReport.name) ?? EMPTY_FINANCIALS}
             />
           </Grid>
         ))}

@@ -19,7 +19,7 @@ export async function handler(input: UpdateBondsResult & ClassificationConfig, c
 
     const [activeBonds, existingProfiles] = await Promise.all([
         bondDetailsTable.getAllActive(),
-        issuerProfilesTable.getAll(),
+        issuerProfilesTable.getProfiles(),
     ]);
 
     const allIssuers = [...new Set(activeBonds.map(b => b.issuer))];

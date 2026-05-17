@@ -32,12 +32,16 @@ export const bondStatisticsTable = new sst.aws.Dynamo("BondStatistics", {
 export const issuerProfilesTable = new sst.aws.Dynamo("IssuerProfiles", {
   fields: {
     issuerName: "string",
+    recordType: "string",
   },
   primaryIndex: {
     hashKey: "issuerName",
+    rangeKey: "recordType",
   },
 });
 
+// Keep this table defined so SST does not delete it during deploy.
+// Run scripts/migrate-issuer-financials to copy data to IssuerProfiles, then remove this block.
 export const issuerFinancialsTable = new sst.aws.Dynamo("IssuerFinancials", {
   fields: {
     issuerName: "string",

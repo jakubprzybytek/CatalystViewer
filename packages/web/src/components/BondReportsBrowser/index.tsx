@@ -18,8 +18,7 @@ import IssuersList from "./issuers/IssuersList";
 import BondReportsFilterDrawer, { BondReportsFilteringOptions, filterUsing } from "./filter";
 import BondReportsSortMenu, { BondReportsSortOrder, getBondReportsSortingFunction } from "./sort";
 import { BondReport, getBondReports } from "@/sdk/Bonds";
-import { IssuerProfile, getIssuerProfiles, getIssuerFinancials } from "@/sdk/Issuers";
-import type { FinancialYear } from "@/sdk/Issuers";
+import { IssuerProfile, getIssuerProfiles } from "@/sdk/Issuers";
 import { computeStatisticsForInterestBaseTypes } from "@/bonds/statistics";
 import BondsList from "./bonds/BondsList";
 
@@ -72,7 +71,6 @@ export default function BondReportsBrowser({ settings, setSettings }: BondReport
 
   const [allBondReports, setAllBondReports] = useState<BondReport[]>([]);
   const [issuerProfiles, setIssuerProfiles] = useState<IssuerProfile[]>([]);
-  const [issuerFinancials, setIssuerFinancials] = useState<FinancialYear[]>([]);
   const [allBondTypes, setAllBondTypes] = useState<string[]>([]);
 
   // view
@@ -96,15 +94,13 @@ export default function BondReportsBrowser({ settings, setSettings }: BondReport
   async function fetchData(bondType: string) {
     console.log(`Fetching reports for bond type: ${bondType}`);
     try {
-      const [bondsResponse, issuerProfilesResponse, issuerFinancialsResponse] = await Promise.all([
+      const [bondsResponse, issuerProfilesResponse] = await Promise.all([
         getBondReports(bondType),
         getIssuerProfiles(),
-        getIssuerFinancials(),
       ]);
       setErrorMessage(undefined);
       setAllBondReports(bondsResponse.bondReports);
       setIssuerProfiles(issuerProfilesResponse);
-      setIssuerFinancials(issuerFinancialsResponse);
       setAllBondTypes(bondsResponse.facets.type);
       console.log(`Fetched '${bondsResponse.bondReports.length}' bond reports`);
     } catch (error) {
@@ -112,12 +108,10 @@ export default function BondReportsBrowser({ settings, setSettings }: BondReport
         setErrorMessage(error.message);
         setAllBondReports([]);
         setIssuerProfiles([]);
-        setIssuerFinancials([]);
       } else {
         setErrorMessage(Object(error));
         setAllBondReports([]);
         setIssuerProfiles([]);
-        setIssuerFinancials([]);
       }
     }
     setIsLoading(false);
@@ -149,16 +143,6 @@ export default function BondReportsBrowser({ settings, setSettings }: BondReport
     getBondReportsSortingFunction(sortOrder)(filteredBondReports), [sortOrder, filteredBondReports]);
 
   const bondReportsStatistics = useMemo(() => computeStatisticsForInterestBaseTypes(allBondReports), [allBondReports]);
-
-  const financialsByIssuer = useMemo(
-    () => issuerFinancials.reduce((map, f) => {
-      const list = map.get(f.issuerName) ?? [];
-      list.push(f);
-      map.set(f.issuerName, list);
-      return map;
-    }, new Map<string, FinancialYear[]>()),
-    [issuerFinancials]
-  );
 
   const title = `${filteredBondReports.length} ${filteringOptions.bondType}`;
 
@@ -220,7 +204,7 @@ export default function BondReportsBrowser({ settings, setSettings }: BondReport
           <BondsList bondReports={filteredAndSortedBondsReports} statistics={bondReportsStatistics} />
         </Condition>
         <Condition render={view == BondReportsView.Issuers}>
-          <IssuersList bondReports={filteredBondReportsWithoutIssuers} issuerProfiles={issuerProfiles} financialsByIssuer={financialsByIssuer} statistics={bondReportsStatistics} filteringOptions={filteringOptions} setFilteringOptions={setFilteringOptions} />
+          <IssuersList bondReports={filteredBondReportsWithoutIssuers} issuerProfiles={issuerProfiles} statistics={bondReportsStatistics} filteringOptions={filteringOptions} setFilteringOptions={setFilteringOptions} />
         </Condition>
         <Condition render={errorMessage !== undefined}>
           <Alert severity="error">

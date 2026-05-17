@@ -7,7 +7,7 @@ const dynamoDBClient = new DynamoDBClient({});
 
 export const handler = lambdaHandler(async () => {
     const issuerProfilesTable = new IssuerProfilesTable(dynamoDBClient, Resource.IssuerProfiles.name);
-    const issuerProfiles = await issuerProfilesTable.getAll();
+    const issuerProfiles = await issuerProfilesTable.getProfiles();
 
     return Success({ issuerProfiles });
 });

@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import { computeScorecard } from './scorecard';
-import type { FinancialYear } from '@/sdk/Issuers';
+import type { FinancialYearData } from './scorecard';
 
 // Example A from the design spec — low risk, all data present
-const exampleA: FinancialYear[] = [
+const exampleA: FinancialYearData[] = [
   { issuerName: 'Polmech', year: 2024, revenue: 48200, ebit: 5100, depreciation: 2700, interestExpense: 1200, netProfit: 2900, totalAssets: 42000, intangibleAssets: 800, equity: 18500, financialDebt: 14000, cash: 3200, currentAssets: 16000, inventory: 4500, currentLiabilities: 9800 },
   { issuerName: 'Polmech', year: 2023, revenue: 43500, ebit: 4600, depreciation: 2500, interestExpense: 1200, netProfit: 2700, totalAssets: 40000, intangibleAssets: 800, equity: 17000, financialDebt: 14200, cash: 2800, currentAssets: 15000, inventory: 4400, currentLiabilities: 9500 },
   { issuerName: 'Polmech', year: 2022, revenue: 39800, ebit: 4100, depreciation: 2400, interestExpense: 1150, netProfit: 2300, totalAssets: 38500, intangibleAssets: 850, equity: 15500, financialDebt: 14500, cash: 2200, currentAssets: 13800, inventory: 4400, currentLiabilities: 9200 },
@@ -12,7 +12,7 @@ const exampleA: FinancialYear[] = [
 ];
 
 // Example B from the design spec — high risk
-const exampleB: FinancialYear[] = [
+const exampleB: FinancialYearData[] = [
   { issuerName: 'Budmax', year: 2024, revenue: 61000, ebit: 1800, depreciation: 1600, interestExpense: 1600, netProfit: 100, totalAssets: 55000, intangibleAssets: 1200, equity: 8000, financialDebt: 28000, cash: 900, currentAssets: 22000, inventory: 3000, currentLiabilities: 24000 },
   { issuerName: 'Budmax', year: 2023, revenue: 63000, ebit: 2400, depreciation: 1800, interestExpense: 1500, netProfit: 400, totalAssets: 53500, intangibleAssets: 1200, equity: 9500, financialDebt: 26500, cash: 1200, currentAssets: 22000, inventory: 2900, currentLiabilities: 23000 },
   { issuerName: 'Budmax', year: 2022, revenue: 65200, ebit: 3100, depreciation: 1900, interestExpense: 1400, netProfit: 900, totalAssets: 52000, intangibleAssets: 1100, equity: 12500, financialDebt: 24000, cash: 1500, currentAssets: 22000, inventory: 2800, currentLiabilities: 21500 },
@@ -59,7 +59,7 @@ describe('computeScorecard', () => {
     });
 
     it('D/E: red when equity is negative', () => {
-      const negativeEquityYear: FinancialYear[] = [{
+      const negativeEquityYear: FinancialYearData[] = [{
         issuerName: 'Test', year: 2024,
         financialDebt: 10000, equity: -2000,
         ebit: 500, depreciation: 200, interestExpense: 400,
@@ -74,7 +74,7 @@ describe('computeScorecard', () => {
     });
 
     it('Net Debt/EBITDA: red when EBITDA is negative', () => {
-      const negativeEbitdaYear: FinancialYear[] = [{
+      const negativeEbitdaYear: FinancialYearData[] = [{
         issuerName: 'Test', year: 2024,
         financialDebt: 10000, cash: 500, equity: 3000,
         ebit: -1000, depreciation: 400, interestExpense: 400,
@@ -150,7 +150,7 @@ describe('computeScorecard', () => {
 
     it('EBIT Margin: yellow when 5–10%', () => {
       // ebit = 3700, revenue = 61000 → 6.1%
-      const yellowYear: FinancialYear[] = [{
+      const yellowYear: FinancialYearData[] = [{
         issuerName: 'Test', year: 2024,
         revenue: 61000, ebit: 3700, depreciation: 1000,
         interestExpense: 500, netProfit: 2000,

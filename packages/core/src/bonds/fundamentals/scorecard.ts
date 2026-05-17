@@ -1,6 +1,22 @@
-import type { DbIssuerFinancials } from '../../storage/issuerFinancials';
-
 export type Signal = 'green' | 'yellow' | 'red' | 'na';
+
+export type FinancialYearData = {
+  issuerName: string;
+  year: number;
+  revenue?: number;
+  ebit?: number;
+  depreciation?: number;
+  interestExpense?: number;
+  netProfit?: number;
+  totalAssets?: number;
+  intangibleAssets?: number;
+  equity?: number;
+  financialDebt?: number;
+  cash?: number;
+  currentAssets?: number;
+  inventory?: number;
+  currentLiabilities?: number;
+};
 
 export type MetricResult = {
   name: string;
@@ -49,7 +65,7 @@ function mult(value: number | null, decimals = 2): string {
 
 // ─── Dimension 1 — Debt Burden ────────────────────────────────────────────────
 
-function computeDebtBurden(year: DbIssuerFinancials): DimensionResult {
+function computeDebtBurden(year: FinancialYearData): DimensionResult {
   const de = div(year.financialDebt, year.equity);
   const ebitda = year.ebit != null && year.depreciation != null
     ? year.ebit + year.depreciation
@@ -91,7 +107,7 @@ function computeDebtBurden(year: DbIssuerFinancials): DimensionResult {
 
 // ─── Dimension 2 — Debt Service ───────────────────────────────────────────────
 
-function computeDebtService(year: DbIssuerFinancials): DimensionResult {
+function computeDebtService(year: FinancialYearData): DimensionResult {
   const icr = div(year.ebit, year.interestExpense);
 
   const icrMetric: MetricResult = {
@@ -106,7 +122,7 @@ function computeDebtService(year: DbIssuerFinancials): DimensionResult {
 
 // ─── Dimension 3 — Liquidity ──────────────────────────────────────────────────
 
-function computeLiquidity(year: DbIssuerFinancials): DimensionResult {
+function computeLiquidity(year: FinancialYearData): DimensionResult {
   const cr = div(year.currentAssets, year.currentLiabilities);
   const liquidAssets = year.currentAssets != null && year.inventory != null
     ? year.currentAssets - year.inventory
@@ -132,7 +148,7 @@ function computeLiquidity(year: DbIssuerFinancials): DimensionResult {
 
 // ─── Dimension 4 — Profitability ──────────────────────────────────────────────
 
-function computeProfitability(year: DbIssuerFinancials): DimensionResult {
+function computeProfitability(year: FinancialYearData): DimensionResult {
   const ebitMargin = div(year.ebit, year.revenue);
   const netMargin = div(year.netProfit, year.revenue);
 
@@ -155,7 +171,7 @@ function computeProfitability(year: DbIssuerFinancials): DimensionResult {
 
 // ─── Dimension 5 — Asset Coverage ────────────────────────────────────────────
 
-function computeAssetCoverage(year: DbIssuerFinancials): DimensionResult {
+function computeAssetCoverage(year: FinancialYearData): DimensionResult {
   const tangibleNetAssets =
     year.totalAssets != null && year.intangibleAssets != null && year.currentLiabilities != null
       ? year.totalAssets - year.intangibleAssets - year.currentLiabilities
@@ -199,7 +215,7 @@ function linearSlope(values: number[]): number {
   return den === 0 ? 0 : num / den;
 }
 
-function computeTrend(years: DbIssuerFinancials[]): DimensionResult {
+function computeTrend(years: FinancialYearData[]): DimensionResult {
   if (years.length < 3) {
     const naMetric = (name: string): MetricResult => ({ name, value: null, formattedValue: 'n/a', signal: 'na' });
     const metrics = [naMetric('Revenue CAGR'), naMetric('EBITDA Margin Trend'), naMetric('Net Debt/EBITDA Trend')];
@@ -299,7 +315,7 @@ function worstSignal(metrics: MetricResult[]): Signal {
 
 // ─── Entry point ──────────────────────────────────────────────────────────────
 
-export function computeScorecard(years: DbIssuerFinancials[]): FundamentalScorecard {
+export function computeScorecard(years: FinancialYearData[]): FundamentalScorecard {
   if (years.length === 0) {
     return { dimensions: [] };
   }

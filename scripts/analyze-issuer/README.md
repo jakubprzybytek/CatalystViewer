@@ -39,6 +39,7 @@ e.g. `"P4 Sp. z o.o."` or `"Echo Investment S.A."`.
 
 ```bash
 npm start -- "Dadelo S.A."
+DEBUG=1 npm start -- "Dadelo S.A."
 ```
 
 ## Output

@@ -1,11 +1,11 @@
 {
-  "name": "store-issuer-financials",
+  "name": "migrate-issuer-financials",
   "version": "1.0.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "store": "tsx store-issuer-financials.ts",
-    "store:live": "tsx store-issuer-financials.ts --live"
+    "migrate": "tsx migrate-issuer-financials.ts",
+    "migrate:live": "tsx migrate-issuer-financials.ts --live"
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "3.896.0",

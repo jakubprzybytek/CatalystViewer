@@ -4,6 +4,7 @@ import { join, dirname } from 'node:path';
 dotenv.config({ path: join(dirname(fileURLToPath(import.meta.url)), '.env.local') });
 
 import { BedrockRuntimeClient } from '@aws-sdk/client-bedrock-runtime';
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { AgentLoop, type AgentEvent } from '@core/ai/agent/index';
 import { WebSearchTool } from '@core/ai/tools/WebSearchTool';
 import { StockwatchTool } from '@core/ai/tools/StockwatchTool';
@@ -11,6 +12,7 @@ import { BiznesradarTool } from '@core/ai/tools/BiznesradarTool';
 import { TavilyClient } from '@core/ai/tools/tavily/TavilyClient';
 import { MODEL_ID } from '@core/ai/issuers/IssuerClassification';
 import { computeScorecard, type Signal, type FundamentalScorecard } from '@core/bonds/fundamentals/scorecard';
+import { IssuerProfilesTable } from '@core/storage/issuerProfiles';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -57,6 +59,8 @@ if (!tavilyApiKey) {
     console.error('Create a .env.local file with: TAVILY_API_KEY=tvly-your-key-here');
     process.exit(1);
 }
+
+const ISSUER_PROFILES_TABLE_NAME = process.env.ISSUER_PROFILES_TABLE_NAME ?? '';
 
 // ─── Agent setup ──────────────────────────────────────────────────────────────
 
@@ -116,8 +120,10 @@ Uwzględnij lata posortowane od najnowszego do najstarszego. Uwzględniaj tylko 
 
 // ─── Live event handler ───────────────────────────────────────────────────────
 
+const DEBUG = process.env.DEBUG === '1' || process.env.DEBUG === 'true';
+
 function onEvent(event: AgentEvent): void {
-    const truncate = (s: string, n: number) => s.length > n ? s.slice(0, n) + '...' : s;
+    const truncate = (s: string, n: number) => DEBUG || s.length <= n ? s : s.slice(0, n) + '...';
 
     switch (event.type) {
         case 'tool_use': {
@@ -134,7 +140,11 @@ function onEvent(event: AgentEvent): void {
         }
         case 'tool_result': {
             if (event.toolName === 'biznesradar_financials' || event.toolName === 'stockwatch_financials') {
-                console.log(`           ${truncate(event.result, 200)}`);
+                if (DEBUG) {
+                    console.log(`\n[DEBUG] Full result (${event.toolName}):\n${event.result}`);
+                } else {
+                    console.log(`           ${truncate(event.result, 200)}`);
+                }
             } else {
                 let results: Array<{ url: string; title: string; content: string }> = [];
                 try { results = JSON.parse(event.result); } catch { /* not JSON */ }
@@ -242,10 +252,14 @@ console.log(`Model:   ${MODEL_ID}`);
 console.log('─'.repeat(80));
 
 try {
-    const rawAnswer = await agentLoop.run(taskPrompt, onEvent);
+    const agentEvents: unknown[] = [];
+    const rawAnswer = await agentLoop.run(taskPrompt, (event) => {
+        agentEvents.push(event);
+        onEvent(event);
+    });
     const result = parseResult(rawAnswer);
 
-    // Map agent result to FinancialYear[] for scorecard computation
+    // Map agent result to FinancialYearData[] for scorecard computation
     const financialYears = result.years.map(y => ({
         issuerName,
         year: y.year,
@@ -270,6 +284,27 @@ try {
     printTable(result);
     printScorecard(scorecard);
     console.log('═'.repeat(60));
+
+    if (ISSUER_PROFILES_TABLE_NAME) {
+        const dynamoDBClient = new DynamoDBClient({});
+        const issuerProfilesTable = new IssuerProfilesTable(dynamoDBClient, ISSUER_PROFILES_TABLE_NAME);
+
+        const now = new Date();
+        await issuerProfilesTable.storeAnalysis({
+            issuerName,
+            recordType: `#ANALYSIS#${now.toISOString()}`,
+            performedAt: now.toISOString(),
+            performedAtTs: now.getTime(),
+            modelId: MODEL_ID,
+            scorecard,
+            agentFinancials: result,
+            agentLog: agentEvents,
+        });
+
+        console.log(`\nAnalysis stored to DynamoDB (${ISSUER_PROFILES_TABLE_NAME})`);
+    } else {
+        console.log('\n[DRY RUN] ISSUER_PROFILES_TABLE_NAME not set — skipping DynamoDB write.');
+    }
 } catch (error) {
     console.error('Failed:', error instanceof Error ? error.message : error);
     process.exit(1);

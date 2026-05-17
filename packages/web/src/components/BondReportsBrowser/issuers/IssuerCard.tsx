@@ -1,4 +1,4 @@
-import { memo, useMemo, useState } from 'react';
+import { memo, useState } from 'react';
 import Stack from "@mui/material/Stack";
 import Paper from "@mui/material/Paper";
 import Checkbox from "@mui/material/Checkbox";
@@ -16,9 +16,6 @@ import { getInterestConstColorCode, getNominalValueColorCode } from "@/bonds/Bon
 import { IssuerReport } from './IssuersList';
 import { InterestPercentilesByInterestBaseType } from "@/bonds/statistics";
 import { formatCurrency } from "@/common/Formats";
-import IssuerScorecard from './IssuerScorecard';
-import { computeScorecard } from '@/bonds/fundamentals/scorecard';
-import type { FinancialYear } from '@/sdk/Issuers';
 
 export const interestConstPartColors: ColorCode[] = ['green', 'yellow', 'orange', 'red'];
 
@@ -56,17 +53,14 @@ type IssuerCardParam = {
   statistics: InterestPercentilesByInterestBaseType;
   isChecked: boolean;
   onIssuerChecked: (issuerName: string, checked: boolean) => void;
-  financials: FinancialYear[];
 }
 
-function IssuerCard({ issuerReport, statistics, isChecked, onIssuerChecked, financials }: IssuerCardParam): React.JSX.Element {
+function IssuerCard({ issuerReport, statistics, isChecked, onIssuerChecked }: IssuerCardParam): React.JSX.Element {
   const [expanded, setExpanded] = useState(false);
 
   const minNominalValueColorCode = getNominalValueColorCode(issuerReport.minNominalValue);
   const interestConstColorCode = getInterestConstColorCode(issuerReport.interestConstAverage, statistics[issuerReport.interestBaseType]);
   const industryColors = issuerReport.industry ? getIndustryColors(issuerReport.industry) : undefined;
-  const scorecard = useMemo(() => computeScorecard(financials), [financials]);
-  const hasScorecard = financials.length > 0;
 
   return (
     <>
@@ -91,7 +85,7 @@ function IssuerCard({ issuerReport, statistics, isChecked, onIssuerChecked, fina
               <Checkbox
                 checked={isChecked}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>) => onIssuerChecked(issuerReport.name, event.target.checked)} />
-              {(issuerReport.businessSummary || issuerReport.websiteUrl || hasScorecard) && (
+              {(issuerReport.businessSummary || issuerReport.websiteUrl) && (
                 <IconButton size='small' onClick={() => setExpanded(!expanded)}>
                   {expanded ? <ExpandLessOutlinedIcon /> : <ExpandMoreOutlinedIcon />}
                 </IconButton>
@@ -114,7 +108,7 @@ function IssuerCard({ issuerReport, statistics, isChecked, onIssuerChecked, fina
             </Box>
           </CardSectionRow>
         )}
-        <Collapse in={expanded && !!(issuerReport.businessSummary || issuerReport.websiteUrl || hasScorecard)}>
+        <Collapse in={expanded && !!(issuerReport.businessSummary || issuerReport.websiteUrl)}>
           <CardSectionRow>
             {issuerReport.businessSummary && (
               <CardEntry caption='Summary' width='100%'>
@@ -133,11 +127,6 @@ function IssuerCard({ issuerReport, statistics, isChecked, onIssuerChecked, fina
                   </Box>
                 </CardValue>
               </CardEntry>
-            </CardSectionRow>
-          )}
-          {hasScorecard && (
-            <CardSectionRow>
-              <IssuerScorecard scorecard={scorecard} />
             </CardSectionRow>
           )}
           {issuerReport.classifiedAtTs && (
@@ -178,6 +167,5 @@ function IssuerCard({ issuerReport, statistics, isChecked, onIssuerChecked, fina
 export default memo(IssuerCard, (prevProps, nextProps) => {
   return prevProps.issuerReport === nextProps.issuerReport
     && prevProps.statistics === nextProps.statistics
-    && prevProps.isChecked === nextProps.isChecked
-    && prevProps.financials === nextProps.financials;
+    && prevProps.isChecked === nextProps.isChecked;
 });
