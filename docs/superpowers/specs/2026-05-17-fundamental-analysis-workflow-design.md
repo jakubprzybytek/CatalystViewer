@@ -34,14 +34,15 @@ SelectIssuers (Task · Lambda)
   │
   ▼
 AnalyzeIssuers (Map · MaxConcurrency: 1)
-  ├─ RunAgent      (Task · Lambda · 10 min timeout)
-  └─ StoreResult   (Task · Lambda · 30 sec timeout)
+  └─ AnalyzeIssuer  (Task · Lambda · 10 min timeout)
   │
   ▼
 SendAnalysisReport (Task · Lambda · 30 sec timeout)
 
 Catch-all on any state → SendErrorReport (existing Lambda)
 ```
+
+> **Note on payload size:** Step Functions enforces a 256 KB per-state payload limit. Passing raw agent logs and markdown between two separate Lambdas (RunAgent → StoreResult) would likely exceed this limit. The two states are therefore merged into a single `AnalyzeIssuer` Lambda that runs the agent, computes the scorecard, builds the markdown, and writes to DynamoDB in one invocation.
 
 ### SelectIssuers
 
@@ -58,9 +59,9 @@ Determines which issuers will be analysed:
 
 ### AnalyzeIssuers (Map)
 
-Iterates over `selectedIssuers` with `MaxConcurrency: 1` to respect Bedrock rate limits. Each iteration runs two sequential states:
+Iterates over `selectedIssuers` with `MaxConcurrency: 1` to respect Bedrock rate limits. Each iteration is a single state:
 
-#### RunAgent
+#### AnalyzeIssuer
 
 - Input: `{ issuerName: string }`
 - Runs `analyzeIssuer()` from `@core/ai/issuers/IssuerAnalysis` — the same logic as `scripts/analyze-issuer/analyze-issuer.ts`:
@@ -68,18 +69,10 @@ Iterates over `selectedIssuers` with `MaxConcurrency: 1` to respect Bedrock rate
   - Parses the agent's JSON output into `AgentFinancials`.
   - Computes `FundamentalScorecard` via `computeScorecard()`.
   - Builds `reportMarkdown` (see Markdown Report section below).
-- Output: `{ issuerName, scorecard, agentFinancials, agentLog, reportMarkdown, modelId }`
-- Timeout: 10 minutes.
-- On failure: the Map state catches the error and continues to `SendAnalysisReport` with a failure record for this issuer.
-
-#### StoreResult
-
-- Input: `RunAgent` output.
-- Calls `IssuerProfilesTable.storeAnalysis()`:
-  - Writes `#ANALYSIS#<iso>` timestamped record.
-  - Overwrites `#LATEST_ANALYSIS` mirror record.
+  - Calls `IssuerProfilesTable.storeAnalysis()`: writes `#ANALYSIS#<iso>` record and overwrites `#LATEST_ANALYSIS` mirror.
 - Output: `{ issuerName, performedAt, success: true }`
-- Timeout: 30 seconds.
+- Timeout: 10 minutes.
+- **Error handling:** The Map iteration has a `Catch` block that transitions to a `HandleAnalysisFailure` Pass state on any error. This Pass state produces `{ issuerName, success: false, error: <States.StringToJson on the error> }`. This ensures the Map always completes — per-issuer failures are recorded without aborting the remaining issuers. The overall Map output is `Array<{ issuerName, performedAt, success: true } | { issuerName, success: false, error }>`.
 
 ### SendAnalysisReport
 
@@ -215,11 +208,10 @@ The `AgentFinancials` type (currently defined inline in the script) is also defi
 | Lambda | Handler file | Timeout | Links |
 |--------|-------------|---------|-------|
 | `SelectIssuers` | `packages/functions/src/issuers/selectIssuers.ts` | 60 s | `bondDetailsTable`, `issuerProfilesTable` |
-| `RunIssuerAnalysis` | `packages/functions/src/issuers/runIssuerAnalysis.ts` | 10 min | — (no DynamoDB access) |
-| `StoreIssuerAnalysis` | `packages/functions/src/issuers/storeIssuerAnalysis.ts` | 30 s | `issuerProfilesTable` |
+| `AnalyzeIssuer` | `packages/functions/src/issuers/analyzeIssuer.ts` | 10 min | `issuerProfilesTable` |
 | `SendAnalysisReport` | `packages/functions/src/emails/sendAnalysisReport.ts` | 30 s | SES + SSM (permissions only) |
 
-`RunIssuerAnalysis` needs Bedrock `InvokeModel` permission and `TAVILY_API_KEY` environment variable. It does not write to DynamoDB — that is `StoreIssuerAnalysis`'s responsibility.
+`AnalyzeIssuer` needs Bedrock `InvokeModel` permission and `TAVILY_API_KEY` environment variable. It links to `issuerProfilesTable` for writing the analysis result.
 
 ---
 
@@ -228,7 +220,7 @@ The `AgentFinancials` type (currently defined inline in the script) is also defi
 A second state machine is added to `updater.ts` alongside the existing `BondsUpdaterStateMachine`:
 
 - New IAM role: `FundamentalAnalysisSfnRole`
-- New IAM policy: `FundamentalAnalysisSfnPolicy` — allows `lambda:InvokeFunction` on the 4 new Lambdas plus the existing `SendErrorReport_Error` Lambda.
+- New IAM policy: `FundamentalAnalysisSfnPolicy` — allows `lambda:InvokeFunction` on the 3 new Lambdas plus the existing `SendErrorReport_Error` Lambda.
 - New state machine: `FundamentalAnalysisStateMachine` — name pattern `FundamentalAnalysisStateMachine-{stage}`.
 - No EventBridge scheduler (on-demand only).
 
@@ -242,9 +234,8 @@ A second state machine is added to `updater.ts` alongside the existing `BondsUpd
 | `packages/core/src/storage/issuerProfiles/IssuerProfilesTable.ts` | Modify | Add `getAllLatestAnalyses()` method |
 | `packages/core/src/ai/issuers/IssuerAnalysis.ts` | Create | `analyzeIssuer()`, `buildReportMarkdown()`, `AgentFinancials` type |
 | `packages/functions/src/issuers/selectIssuers.ts` | Create | SelectIssuers Lambda handler |
-| `packages/functions/src/issuers/runIssuerAnalysis.ts` | Create | RunAgent Lambda handler |
-| `packages/functions/src/issuers/storeIssuerAnalysis.ts` | Create | StoreResult Lambda handler |
-| `packages/functions/src/issuers/index.ts` | Modify | Add `SelectIssuersInput`, `SelectIssuersResult`, `RunAnalysisInput`, `RunAnalysisResult`, `StoreResultInput`, `StoreResultOutput` |
+| `packages/functions/src/issuers/analyzeIssuer.ts` | Create | AnalyzeIssuer Lambda handler |
+| `packages/functions/src/issuers/index.ts` | Modify | Add `SelectIssuersInput`, `SelectIssuersResult`, `AnalyzeIssuerInput`, `AnalyzeIssuerResult` |
 | `packages/functions/src/emails/sendAnalysisReport.ts` | Create | SendAnalysisReport email Lambda handler |
 | `infra/updater.ts` | Modify | Add 4 Lambda definitions, IAM role/policy, `FundamentalAnalysisStateMachine` |
 | `README.md` | Modify | Document state machine name and input parameters |
