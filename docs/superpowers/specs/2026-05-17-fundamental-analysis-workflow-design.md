@@ -48,14 +48,14 @@ Catch-all on any state → SendErrorReport (existing Lambda)
 
 Determines which issuers will be analysed:
 
-1. Call `BondDetailsTable.getActive('Corporate bonds')` → collect unique `issuer` names from all active corporate bonds.
-2. Scan `IssuerProfiles` for all `recordType = '#LATEST_ANALYSIS'` records → build a `Map<issuerName, performedAtTs>`.
-3. For each issuer from step 1: look up `performedAtTs` (use `0` if the issuer has never been analysed).
-4. Sort ascending by `performedAtTs` — never-analysed issuers (timestamp 0) go first.
-5. Selection:
-   - If `issuers` input parameter is provided → use those exact names (no sorting applied).
-   - Otherwise → take the top `count` (default 2) from the sorted list.
-6. Output: `{ selectedIssuers: string[] }`.
+- **If `issuers` input parameter is provided:** return it directly as `{ selectedIssuers: issuers }`. No table queries are made.
+- **Otherwise (count-based selection):**
+  1. Call `BondDetailsTable.getActive('Corporate bonds')` → collect unique `issuer` names from all active corporate bonds.
+  2. Scan `IssuerProfiles` for all `recordType = '#LATEST_ANALYSIS'` records → build a `Map<issuerName, performedAtTs>`.
+  3. For each issuer from step 1: look up `performedAtTs` (use `0` if the issuer has never been analysed).
+  4. Sort ascending by `performedAtTs` — never-analysed issuers (timestamp 0) go first.
+  5. Take the top `count` (default 2) from the sorted list.
+  6. Output: `{ selectedIssuers: string[] }`.
 
 ### AnalyzeIssuers (Map)
 
