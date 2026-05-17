@@ -76,6 +76,31 @@ export class IssuerProfilesTable {
         return result.Item as DbIssuerAnalysisRecord | undefined;
     }
 
+    async getAllLatestAnalyses(): Promise<Map<string, number>> {
+        console.log('IssuerProfilesTable: Fetching all latest analyses');
+
+        const startTimestamp = new Date().getTime();
+
+        const scanCommand = new ScanCommand({
+            TableName: this.tableName,
+            FilterExpression: 'recordType = :rt',
+            ExpressionAttributeValues: { ':rt': '#LATEST_ANALYSIS' },
+            ProjectionExpression: 'issuerName, performedAtTs',
+        });
+
+        const result = await scanAll(this.dynamoDBDocumentClient, scanCommand);
+        const endTimestamp = new Date().getTime();
+        console.log(`IssuerProfilesTable: Returning ${result.Count ?? 0} latest analyses in ${endTimestamp - startTimestamp} ms.`);
+
+        const map = new Map<string, number>();
+        if (result.Items) {
+            for (const item of result.Items) {
+                map.set(item['issuerName'] as string, item['performedAtTs'] as number);
+            }
+        }
+        return map;
+    }
+
     async getAnalysisHistory(issuerName: string): Promise<DbIssuerAnalysisRecord[]> {
         const queryCommand = new QueryCommand({
             TableName: this.tableName,

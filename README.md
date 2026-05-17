@@ -27,6 +27,31 @@ The bonds update workflow is an AWS Step Functions state machine (`BondsUpdaterS
 }
 ```
 
+### Fundamental Analysis Workflow
+
+The fundamental analysis workflow is an AWS Step Functions state machine (`FundamentalAnalysisStateMachine`) that runs on demand only. It selects corporate bond issuers that have the oldest (or no) analysis, runs an AI-powered analysis on each, and sends a summary email on completion.
+
+Trigger manually via the AWS console or CLI with the following JSON input:
+
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `issuers` | string[] | — | Optional list of issuer names to analyse. When provided, skips automatic selection entirely. |
+| `count` | number | `2` | Number of issuers to select automatically (oldest-analysed first). Ignored when `issuers` is provided. |
+
+**Example** – analyse 5 of the least-recently analysed corporate issuers:
+```json
+{
+  "count": 5
+}
+```
+
+**Example** – analyse specific issuers:
+```json
+{
+  "issuers": ["Kruk S.A.", "Best S.A."]
+}
+```
+
 ### Testing
 
 See [docs/testing.md](docs/testing.md) for full details on our testing setup.

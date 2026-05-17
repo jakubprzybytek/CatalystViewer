@@ -22,4 +22,5 @@ export type DbIssuerAnalysisRecord = {
     scorecard?: FundamentalScorecard;
     agentFinancials?: unknown;
     agentLog?: unknown[];
+    reportMarkdown?: string;   // Full markdown report of the analysis run
 };

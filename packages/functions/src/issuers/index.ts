@@ -30,3 +30,22 @@ export type ClassifyIssuersResult = CollectIssuersResult & {
 };
 
 export type SendReportInput = CollectIssuersResult & Partial<Pick<ClassifyIssuersResult, 'classifiedIssuers' | 'failedIssuers'>>;
+
+// ─── Fundamental Analysis Workflow ───────────────────────────────────────────
+
+export type SelectIssuersInput = {
+    issuers?: string[];
+    count?: number;
+};
+
+export type SelectIssuersResult = {
+    selectedIssuers: string[];
+};
+
+export type AnalyzeIssuerInput = {
+    issuerName: string;
+};
+
+export type AnalyzeIssuerResult =
+    | { issuerName: string; performedAt: string; success: true }
+    | { issuerName: string; success: false; error: string };

@@ -78,6 +78,47 @@ const classifyIssuersFunction = new sst.aws.Function("ClassifyIssuers", {
   ],
 });
 
+const selectIssuersFunction = new sst.aws.Function("SelectIssuers", {
+  handler: "packages/functions/src/issuers/selectIssuers.handler",
+  timeout: "60 seconds",
+  link: [bondDetailsTable, issuerProfilesTable],
+});
+
+const analyzeIssuerFunction = new sst.aws.Function("AnalyzeIssuer", {
+  handler: "packages/functions/src/issuers/analyzeIssuer.handler",
+  timeout: "10 minutes",
+  link: [issuerProfilesTable],
+  environment: {
+    TAVILY_API_KEY: process.env.TAVILY_API_KEY ?? "",
+  },
+  permissions: [
+    {
+      actions: ["bedrock:InvokeModel"],
+      resources: [
+        "arn:aws:bedrock:*::foundation-model/*",
+        "arn:aws:bedrock:*:*:inference-profile/*",
+      ],
+    },
+  ],
+});
+
+const sendAnalysisReportFunction = new sst.aws.Function("SendAnalysisReport", {
+  handler: "packages/functions/src/emails/sendAnalysisReport.handler",
+  timeout: "30 seconds",
+  permissions: [
+    {
+      actions: ["ses:SendEmail"],
+      resources: ["arn:aws:ses:eu-west-1:198805281865:identity/*"],
+    },
+    {
+      actions: ["ssm:GetParameter"],
+      resources: [
+        "arn:aws:ssm:eu-west-1:198805281865:parameter/catalyst-viewer/notifications/recipients",
+      ],
+    },
+  ],
+});
+
 // Step Functions state machine
 const sfnRole = new aws.iam.Role("BondsUpdaterSfnRole", {
   assumeRolePolicy: JSON.stringify({
@@ -312,6 +353,147 @@ const stateMachine = new aws.sfn.StateMachine("BondsUpdaterStateMachine", {
           },
           TimeoutSeconds: 30,
           End: true,
+        },
+      },
+    })
+  ),
+});
+
+// ─── Fundamental Analysis State Machine ──────────────────────────────────────
+
+const fundamentalAnalysisSfnRole = new aws.iam.Role("FundamentalAnalysisSfnRole", {
+  assumeRolePolicy: JSON.stringify({
+    Version: "2012-10-17",
+    Statement: [
+      {
+        Effect: "Allow",
+        Principal: { Service: "states.amazonaws.com" },
+        Action: "sts:AssumeRole",
+      },
+    ],
+  }),
+});
+
+new aws.iam.RolePolicy("FundamentalAnalysisSfnPolicy", {
+  role: fundamentalAnalysisSfnRole.id,
+  policy: $resolve([
+    selectIssuersFunction.arn,
+    analyzeIssuerFunction.arn,
+    sendAnalysisReportFunction.arn,
+    sendErrorReportFunction.arn,
+  ]).apply(([selectArn, analyzeArn, sendReportArn, sendErrorArn]) =>
+    JSON.stringify({
+      Version: "2012-10-17",
+      Statement: [
+        {
+          Effect: "Allow",
+          Action: "lambda:InvokeFunction",
+          Resource: [selectArn, analyzeArn, sendReportArn, sendErrorArn],
+        },
+      ],
+    })
+  ),
+});
+
+new aws.sfn.StateMachine("FundamentalAnalysisStateMachine", {
+  name: `FundamentalAnalysisStateMachine-${$app.stage}`,
+  roleArn: fundamentalAnalysisSfnRole.arn,
+  definition: $resolve([
+    selectIssuersFunction.arn,
+    analyzeIssuerFunction.arn,
+    sendAnalysisReportFunction.arn,
+    sendErrorReportFunction.arn,
+  ]).apply(([selectArn, analyzeArn, sendReportArn, sendErrorArn]) =>
+    JSON.stringify({
+      StartAt: "SelectIssuers",
+      States: {
+        "SelectIssuers": {
+          Type: "Task",
+          Resource: "arn:aws:states:::lambda:invoke",
+          Parameters: {
+            FunctionName: selectArn,
+            "Payload.$": "$",
+          },
+          ResultSelector: {
+            "selectedIssuers.$": "$.Payload.selectedIssuers",
+          },
+          ResultPath: "$",
+          TimeoutSeconds: 60,
+          Next: "AnalyzeIssuers",
+          Catch: [{ ErrorEquals: ["States.ALL"], Next: "SendErrorReport" }],
+        },
+        "AnalyzeIssuers": {
+          Type: "Map",
+          ItemsPath: "$.selectedIssuers",
+          Parameters: {
+            "issuerName.$": "$$.Map.Item.Value",
+          },
+          MaxConcurrency: 1,
+          Iterator: {
+            StartAt: "AnalyzeIssuer",
+            States: {
+              "AnalyzeIssuer": {
+                Type: "Task",
+                Resource: "arn:aws:states:::lambda:invoke",
+                Parameters: {
+                  FunctionName: analyzeArn,
+                  "Payload.$": "$",
+                },
+                ResultSelector: {
+                  "issuerName.$": "$.Payload.issuerName",
+                  "performedAt.$": "$.Payload.performedAt",
+                  "success.$": "$.Payload.success",
+                },
+                TimeoutSeconds: 600,
+                End: true,
+                Catch: [
+                  {
+                    ErrorEquals: ["States.ALL"],
+                    ResultPath: "$.errorInfo",
+                    Next: "HandleAnalysisFailure",
+                  },
+                ],
+              },
+              "HandleAnalysisFailure": {
+                Type: "Pass",
+                Parameters: {
+                  "issuerName.$": "$.issuerName",
+                  "success": false,
+                  "error.$": "$.errorInfo.Cause",
+                },
+                End: true,
+              },
+            },
+          },
+          Next: "SendAnalysisReport",
+          Catch: [{ ErrorEquals: ["States.ALL"], Next: "SendErrorReport" }],
+        },
+        "SendAnalysisReport": {
+          Type: "Task",
+          Resource: "arn:aws:states:::lambda:invoke",
+          Parameters: {
+            FunctionName: sendReportArn,
+            "Payload.$": "$",
+          },
+          TimeoutSeconds: 30,
+          Next: "Done",
+          Catch: [{ ErrorEquals: ["States.ALL"], Next: "SendErrorReport" }],
+        },
+        "Done": {
+          Type: "Succeed",
+        },
+        "SendErrorReport": {
+          Type: "Task",
+          Resource: "arn:aws:states:::lambda:invoke",
+          Parameters: {
+            FunctionName: sendErrorArn,
+            "Payload.$": "$",
+          },
+          TimeoutSeconds: 30,
+          Next: "Fail",
+        },
+        "Fail": {
+          Type: "Fail",
         },
       },
     })
