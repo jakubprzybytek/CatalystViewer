@@ -16,6 +16,8 @@ import { getInterestConstColorCode, getNominalValueColorCode } from "@/bonds/Bon
 import { IssuerReport } from './IssuersList';
 import { InterestPercentilesByInterestBaseType } from "@/bonds/statistics";
 import { formatCurrency } from "@/common/Formats";
+import IssuerScorecard from './IssuerScorecard';
+import AnalysisReportModal from './AnalysisReportModal';
 
 export const interestConstPartColors: ColorCode[] = ['green', 'yellow', 'orange', 'red'];
 
@@ -57,6 +59,7 @@ type IssuerCardParam = {
 
 function IssuerCard({ issuerReport, statistics, isChecked, onIssuerChecked }: IssuerCardParam): React.JSX.Element {
   const [expanded, setExpanded] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
 
   const minNominalValueColorCode = getNominalValueColorCode(issuerReport.minNominalValue);
   const interestConstColorCode = getInterestConstColorCode(issuerReport.interestConstAverage, statistics[issuerReport.interestBaseType]);
@@ -85,7 +88,7 @@ function IssuerCard({ issuerReport, statistics, isChecked, onIssuerChecked }: Is
               <Checkbox
                 checked={isChecked}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>) => onIssuerChecked(issuerReport.name, event.target.checked)} />
-              {(issuerReport.businessSummary || issuerReport.websiteUrl) && (
+              {(issuerReport.businessSummary || issuerReport.websiteUrl || issuerReport.scorecard) && (
                 <IconButton size='small' onClick={() => setExpanded(!expanded)}>
                   {expanded ? <ExpandLessOutlinedIcon /> : <ExpandMoreOutlinedIcon />}
                 </IconButton>
@@ -108,7 +111,7 @@ function IssuerCard({ issuerReport, statistics, isChecked, onIssuerChecked }: Is
             </Box>
           </CardSectionRow>
         )}
-        <Collapse in={expanded && !!(issuerReport.businessSummary || issuerReport.websiteUrl)}>
+        <Collapse in={expanded && !!(issuerReport.businessSummary || issuerReport.websiteUrl || issuerReport.scorecard)}>
           <CardSectionRow>
             {issuerReport.businessSummary && (
               <CardEntry caption='Summary' width='100%'>
@@ -131,6 +134,25 @@ function IssuerCard({ issuerReport, statistics, isChecked, onIssuerChecked }: Is
           )}
           {issuerReport.classifiedAtTs && (
             <Typography component='span' className='tiny-text'>Classified on: {new Date(issuerReport.classifiedAtTs).toLocaleString('pl-PL')}</Typography>
+          )}
+          {issuerReport.scorecard && (
+            <>
+              <CardSectionRow>
+                <IssuerScorecard scorecard={issuerReport.scorecard} />
+              </CardSectionRow>
+              {issuerReport.performedAt && (
+                <Typography component='span' className='tiny-text'>
+                  Analysed: {new Date(issuerReport.performedAt).toLocaleString('pl-PL')}{' '}
+                  <Box
+                    component='span'
+                    onClick={() => setModalOpen(true)}
+                    sx={{ color: 'primary.main', cursor: 'pointer', textDecoration: 'underline' }}
+                  >
+                    Full report →
+                  </Box>
+                </Typography>
+              )}
+            </>
           )}
         </Collapse>
         <CardSectionRow>
@@ -160,6 +182,11 @@ function IssuerCard({ issuerReport, statistics, isChecked, onIssuerChecked }: Is
           </CardEntry>
         </CardSectionRow>
       </Paper>
+      <AnalysisReportModal
+        issuerName={issuerReport.name}
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+      />
     </>
   );
 }

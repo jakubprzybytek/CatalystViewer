@@ -8,6 +8,7 @@ import { BondReportsFilteringOptions } from "../filter";
 import { BondReport } from '@/sdk/Bonds';
 import { IssuerProfile } from '@/sdk/Issuers';
 import { removeElement } from '@/common/Arrays';
+import type { FundamentalScorecard } from '@/bonds/fundamentals/scorecard';
 
 export type IssuerReport = {
   name: string;
@@ -23,6 +24,8 @@ export type IssuerReport = {
   businessSummary?: string;
   websiteUrl?: string;
   classifiedAtTs?: number;
+  scorecard?: FundamentalScorecard;
+  performedAt?: string;
 }
 
 const sortByInterestConstAverage = (reports: IssuerReport[]) => [...reports].sort((a, b) => a.interestConstAverage - b.interestConstAverage);
@@ -93,6 +96,8 @@ export default function IssuersList({ bondReports, issuerProfiles, statistics, f
           businessSummary: issuerProfile?.businessSummary,
           websiteUrl: issuerProfile?.websiteUrl,
           classifiedAtTs: issuerProfile?.classifiedAtTs,
+          scorecard: issuerProfile?.scorecard,
+          performedAt: issuerProfile?.performedAt,
         });
       });
     });

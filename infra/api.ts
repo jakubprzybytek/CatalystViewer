@@ -38,6 +38,13 @@ const getIssuerProfilesFunction = new sst.aws.Function("GetIssuerProfiles", {
   link: [issuerProfilesTable],
 });
 
+const getIssuerAnalysisFunction = new sst.aws.Function("GetIssuerAnalysis", {
+  handler: "packages/functions/src/issuers/getIssuerAnalysis.handler",
+  memory: "256 MB",
+  timeout: "10 seconds",
+  link: [issuerProfilesTable],
+});
+
 export const api = new sst.aws.ApiGatewayV2("Api");
 
 const cognitoAuthorizer = api.addAuthorizer({
@@ -62,6 +69,7 @@ api.route("GET /api/bonds", getBondsFunction.arn, jwtAuth);
 api.route("GET /api/bonds/{bondType}", getBondsFunction.arn, jwtAuth);
 api.route("GET /api/bondQuotes", getBondQuotesFunction.arn, jwtAuth);
 api.route("GET /api/issuers/profiles", getIssuerProfilesFunction.arn, jwtAuth);
+api.route("GET /api/issuers/{name}/analysis", getIssuerAnalysisFunction.arn, jwtAuth);
 
 export const userPoolId = USER_POOL_ID;
 export const userPoolClientId = USER_POOL_CLIENT_ID;

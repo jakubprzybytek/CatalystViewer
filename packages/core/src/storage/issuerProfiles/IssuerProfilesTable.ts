@@ -1,6 +1,6 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, PutCommand, GetCommand, QueryCommand, ScanCommand } from '@aws-sdk/lib-dynamodb';
-import { DbIssuerProfileRecord, DbIssuerAnalysisRecord } from '.';
+import { DbIssuerProfileRecord, DbIssuerAnalysisRecord, DbIssuerAnalysisSummary } from '.';
 import { scanAll, queryAll } from '../utils';
 
 export class IssuerProfilesTable {
@@ -99,6 +99,25 @@ export class IssuerProfilesTable {
             }
         }
         return map;
+    }
+
+    async getAllLatestAnalysisSummaries(): Promise<DbIssuerAnalysisSummary[]> {
+        console.log('IssuerProfilesTable: Fetching all latest analysis summaries');
+
+        const startTimestamp = new Date().getTime();
+
+        const scanCommand = new ScanCommand({
+            TableName: this.tableName,
+            FilterExpression: 'recordType = :rt',
+            ExpressionAttributeValues: { ':rt': '#LATEST_ANALYSIS' },
+            ProjectionExpression: 'issuerName, performedAt, performedAtTs, scorecard',
+        });
+
+        const result = await scanAll(this.dynamoDBDocumentClient, scanCommand);
+        const endTimestamp = new Date().getTime();
+        console.log(`IssuerProfilesTable: Returning ${result.Count ?? 0} analysis summaries in ${endTimestamp - startTimestamp} ms.`);
+
+        return result.Items ? result.Items as DbIssuerAnalysisSummary[] : [];
     }
 
     async getAnalysisHistory(issuerName: string): Promise<DbIssuerAnalysisRecord[]> {

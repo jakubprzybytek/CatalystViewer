@@ -24,3 +24,10 @@ export type DbIssuerAnalysisRecord = {
     agentLog?: unknown[];
     reportMarkdown?: string;   // Full markdown report of the analysis run
 };
+
+export type DbIssuerAnalysisSummary = {
+    issuerName: string;
+    performedAt: string;
+    performedAtTs: number;
+    scorecard?: FundamentalScorecard;
+};
