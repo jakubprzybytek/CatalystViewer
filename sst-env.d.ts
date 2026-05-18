@@ -6,6 +6,10 @@
 
 declare module "sst" {
   export interface Resource {
+    "AnalyzeIssuer": {
+      "name": string
+      "type": "sst.aws.Function"
+    }
     "Api": {
       "type": "sst.aws.ApiGatewayV2"
       "url": string
@@ -38,10 +42,6 @@ declare module "sst" {
       "name": string
       "type": "sst.aws.Function"
     }
-    "GetIssuerFinancials": {
-      "name": string
-      "type": "sst.aws.Function"
-    }
     "GetIssuerProfiles": {
       "name": string
       "type": "sst.aws.Function"
@@ -50,10 +50,6 @@ declare module "sst" {
       "name": string
       "type": "sst.aws.Function"
     }
-    "IssuerFinancials": {
-      "name": string
-      "type": "sst.aws.Dynamo"
-    }
     "IssuerProfiles": {
       "name": string
       "type": "sst.aws.Dynamo"
@@ -61,6 +57,14 @@ declare module "sst" {
     "Profiles": {
       "name": string
       "type": "sst.aws.Dynamo"
+    }
+    "SelectIssuers": {
+      "name": string
+      "type": "sst.aws.Function"
+    }
+    "SendAnalysisReport": {
+      "name": string
+      "type": "sst.aws.Function"
     }
     "SendErrorReport_Error": {
       "name": string

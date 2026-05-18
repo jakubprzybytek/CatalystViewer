@@ -89,7 +89,7 @@ const analyzeIssuerFunction = new sst.aws.Function("AnalyzeIssuer", {
   timeout: "10 minutes",
   link: [issuerProfilesTable],
   environment: {
-    TAVILY_API_KEY: process.env.TAVILY_API_KEY ?? "",
+    TAVILY_API_KEY: process.env.TAVILY_API_KEY ?? "x",
   },
   permissions: [
     {

@@ -4,7 +4,8 @@ import { WebSearchTool } from '../tools/WebSearchTool';
 import { TavilyClient } from '../tools/tavily/TavilyClient';
 
 // export const MODEL_ID = 'arn:aws:bedrock:eu-west-1:198805281865:inference-profile/eu.anthropic.claude-haiku-4-5-20251001-v1:0';
-export const MODEL_ID = 'arn:aws:bedrock:eu-west-1:198805281865:inference-profile/eu.anthropic.claude-sonnet-4-6';
+// export const MODEL_ID = 'arn:aws:bedrock:eu-west-1:198805281865:inference-profile/eu.anthropic.claude-sonnet-4-6';
+export const MODEL_ID = 'arn:aws:bedrock:eu-west-1:198805281865:inference-profile/global.anthropic.claude-sonnet-4-6';
 
 export const INDUSTRY_LABELS = [
     'Developer',
