@@ -10,7 +10,7 @@ import { CollectIssuersResult, ClassifyIssuersResult, ClassifiedIssuer, FailedIs
 
 const logger = new Logger({ serviceName: 'ClassifyIssuers' });
 
-const DEFAULT_MAX_ISSUERS_PER_RUN = 20;
+const DEFAULT_MAX_ISSUERS_PER_RUN = 10;
 
 const dynamoDbClient = new DynamoDBClient({});
 
