@@ -4,7 +4,7 @@ import { Logger } from '@aws-lambda-powertools/logger';
 import templateSource from './reportNotification.pug';
 import { SSMClient, GetParameterCommand, GetParameterCommandInput } from '@aws-sdk/client-ssm';
 import { sendEmail, SendEmailParams } from './EmailClient';
-import { SendReportInput } from '../issuers';
+import { SendReportInput, ClassifiedIssuerResult, FailedIssuerResult } from '../issuers';
 import { UpdatedBond } from '../bonds';
 import { formatCurrency, formatCompactCurrency } from '@core/common/Formats';
 
@@ -50,8 +50,9 @@ async function getNotificationRecipientEmails(): Promise<string[]> {
 export async function handler(input: SendReportInput, context: Context): Promise<SendReportResult> {
     logger.addContext(context);
 
-    const classifiedIssuers = input.classifiedIssuers ?? [];
-    const failedIssuers = input.failedIssuers ?? [];
+    const classificationResults = input.classificationResults ?? [];
+    const classifiedIssuers = classificationResults.filter((r): r is ClassifiedIssuerResult => r.success);
+    const failedIssuers = classificationResults.filter((r): r is FailedIssuerResult => !r.success);
 
     logger.info('Sending report', { newBonds: input.newBonds.length, bondsDeactivated: input.bondsDeactivated.length, classifiedIssuers: classifiedIssuers.length, failedIssuers: failedIssuers.length });
 

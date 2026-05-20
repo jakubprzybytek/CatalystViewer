@@ -60,9 +60,9 @@ const sendErrorReportFunction = new sst.aws.Function("SendErrorReport_Error", {
   ],
 });
 
-const classifyIssuersFunction = new sst.aws.Function("ClassifyIssuers", {
-  handler: "packages/functions/src/issuers/classifyIssuers.handler",
-  timeout: "5 minutes",
+const classifyIssuerFunction = new sst.aws.Function("ClassifyIssuer", {
+  handler: "packages/functions/src/issuers/classifyIssuer.handler",
+  timeout: "2 minutes",
   link: [issuerProfilesTable],
   environment: {
     TAVILY_API_KEY: process.env.TAVILY_API_KEY ?? "",
@@ -139,16 +139,16 @@ new aws.iam.RolePolicy("BondsUpdaterSfnPolicy", {
     bondsUpdaterFunction.arn,
     sendReportFunction.arn,
     collectUnclassifiedIssuersFunction.arn,
-    classifyIssuersFunction.arn,
+    classifyIssuerFunction.arn,
     sendErrorReportFunction.arn,
-  ]).apply(([updaterArn, sendReportArn, collectArn, classifyArn, sendErrorReportArn]) =>
+  ]).apply(([updaterArn, sendReportArn, collectArn, classifyIssuerArn, sendErrorReportArn]) =>
     JSON.stringify({
       Version: "2012-10-17",
       Statement: [
         {
           Effect: "Allow",
           Action: "lambda:InvokeFunction",
-          Resource: [updaterArn, sendReportArn, collectArn, classifyArn, sendErrorReportArn],
+          Resource: [updaterArn, sendReportArn, collectArn, classifyIssuerArn, sendErrorReportArn],
         },
       ],
     })
@@ -162,9 +162,9 @@ const stateMachine = new aws.sfn.StateMachine("BondsUpdaterStateMachine", {
     bondsUpdaterFunction.arn,
     sendReportFunction.arn,
     collectUnclassifiedIssuersFunction.arn,
-    classifyIssuersFunction.arn,
+    classifyIssuerFunction.arn,
     sendErrorReportFunction.arn,
-  ]).apply(([updaterArn, sendReportArn, collectArn, classifyArn, sendErrorReportArn]) =>
+  ]).apply(([updaterArn, sendReportArn, collectArn, classifyIssuerArn, sendErrorReportArn]) =>
     JSON.stringify({
       StartAt: "MainWorkflow",
       States: {
@@ -289,14 +289,45 @@ const stateMachine = new aws.sfn.StateMachine("BondsUpdaterStateMachine", {
                   Default: "ShouldSendReport",
                 },
                 "ClassifyIssuers": {
-                  Type: "Task",
-                  Resource: "arn:aws:states:::lambda:invoke",
+                  Type: "Map",
+                  ItemsPath: "$.Payload.unclassifiedIssuers",
                   Parameters: {
-                    FunctionName: classifyArn,
-                    "Payload.$": "$.Payload",
+                    "issuerName.$": "$$.Map.Item.Value",
                   },
-                  TimeoutSeconds: 300,
-                  Retry: [],
+                  MaxConcurrency: 1,
+                  Iterator: {
+                    StartAt: "ClassifyIssuer",
+                    States: {
+                      "ClassifyIssuer": {
+                        Type: "Task",
+                        Resource: "arn:aws:states:::lambda:invoke",
+                        Parameters: {
+                          FunctionName: classifyIssuerArn,
+                          "Payload.$": "$",
+                        },
+                        OutputPath: "$.Payload",
+                        TimeoutSeconds: 120,
+                        End: true,
+                        Catch: [
+                          {
+                            ErrorEquals: ["States.ALL"],
+                            ResultPath: "$.errorInfo",
+                            Next: "HandleClassificationFailure",
+                          },
+                        ],
+                      },
+                      "HandleClassificationFailure": {
+                        Type: "Pass",
+                        Parameters: {
+                          "issuerName.$": "$.issuerName",
+                          success: false,
+                          "errorReason.$": "$.errorInfo.Cause",
+                        },
+                        End: true,
+                      },
+                    },
+                  },
+                  ResultPath: "$.Payload.classificationResults",
                   Next: "ShouldSendReport",
                 },
                 "ShouldSendReport": {

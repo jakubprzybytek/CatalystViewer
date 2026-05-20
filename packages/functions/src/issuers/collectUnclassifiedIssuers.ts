@@ -9,7 +9,16 @@ import { ClassificationConfig, CollectIssuersResult } from '.';
 
 const logger = new Logger({ serviceName: 'CollectUnclassifiedIssuers' });
 
+const DEFAULT_MAX_ISSUERS_PER_RUN = 10;
+
 const dynamoDbClient = new DynamoDBClient({});
+
+function resolveClassificationsCap(value: number | undefined): number {
+    if (typeof value !== 'number' || Number.isNaN(value)) {
+        return DEFAULT_MAX_ISSUERS_PER_RUN;
+    }
+    return Math.max(0, Math.floor(value));
+}
 
 export async function handler(input: UpdateBondsResult & ClassificationConfig, context: Context): Promise<CollectIssuersResult> {
     logger.addContext(context);
@@ -33,9 +42,17 @@ export async function handler(input: UpdateBondsResult & ClassificationConfig, c
     }
 
     const classifiedIssuers = new Set(existingProfiles.map(p => p.issuerName));
-    const unclassifiedIssuers = allIssuers.filter(issuer => !classifiedIssuers.has(issuer));
+    const allUnclassifiedIssuers = allIssuers.filter(issuer => !classifiedIssuers.has(issuer));
+    const cap = resolveClassificationsCap(input.classificationsCap);
+    const unclassifiedIssuers = allUnclassifiedIssuers.slice(0, cap);
 
-    logger.info('Unclassified issuers collected', { totalIssuers: allIssuers.length, alreadyClassified: classifiedIssuers.size, toClassify: unclassifiedIssuers.length });
+    logger.info('Unclassified issuers collected', {
+        totalIssuers: allIssuers.length,
+        alreadyClassified: classifiedIssuers.size,
+        toClassify: allUnclassifiedIssuers.length,
+        cap,
+        cappedTo: unclassifiedIssuers.length,
+    });
 
     return {
         ...input,
