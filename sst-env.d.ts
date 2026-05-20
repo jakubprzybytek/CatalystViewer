@@ -26,7 +26,7 @@ declare module "sst" {
       "name": string
       "type": "sst.aws.Function"
     }
-    "ClassifyIssuers": {
+    "ClassifyIssuer": {
       "name": string
       "type": "sst.aws.Function"
     }
@@ -39,6 +39,10 @@ declare module "sst" {
       "type": "sst.aws.Function"
     }
     "GetBonds": {
+      "name": string
+      "type": "sst.aws.Function"
+    }
+    "GetIssuerAnalysis": {
       "name": string
       "type": "sst.aws.Function"
     }
