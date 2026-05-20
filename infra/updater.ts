@@ -237,7 +237,7 @@ const stateMachine = new aws.sfn.StateMachine("BondsUpdaterStateMachine", {
                     "newBonds.$": "$.Payload.newBonds",
                     "bondsDeactivated.$": "$.Payload.bondsDeactivated",
                     "bondsFailed.$": "$.Payload.bondsFailed",
-                    classificationsCap: 20,
+                    classificationsCap: 10,
                   },
                   ResultPath: "$.Payload",
                   Next: "HasForceClassification",

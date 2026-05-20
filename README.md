@@ -16,7 +16,7 @@ The bonds update workflow is an AWS Step Functions state machine (`BondsUpdaterS
 | Parameter | Type | Default | Description |
 |---|---|---|---|
 | `updateBonds` | boolean | `true` | Whether to fetch and update bond data. Set to `false` to skip bond update and run issuer classification only. |
-| `classificationsCap` | number | `20` | Maximum number of unclassified issuers to classify in one run. Ignored when `forceClassification` is `true`. |
+| `classificationsCap` | number | `10` | Maximum number of unclassified issuers to classify in one run. Ignored when `forceClassification` is `true`. |
 | `forceClassification` | boolean | `false` | When `true`, disables `classificationsCap` and re-classifies **all** issuers (including already-classified ones). |
 
 **Example** – skip bond update and force re-classification of all issuers with no cap:
