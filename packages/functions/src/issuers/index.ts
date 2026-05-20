@@ -24,12 +24,17 @@ export type CollectIssuersResult = UpdateBondsResult & {
     unclassifiedIssuers: string[];
 } & ClassificationConfig;
 
-export type ClassifyIssuersResult = CollectIssuersResult & {
-    classifiedIssuers: ClassifiedIssuer[];
-    failedIssuers: FailedIssuer[];
+export type ClassifyIssuerInput = {
+    issuerName: string;
 };
 
-export type SendReportInput = CollectIssuersResult & Partial<Pick<ClassifyIssuersResult, 'classifiedIssuers' | 'failedIssuers'>>;
+export type ClassifiedIssuerResult = ClassifiedIssuer & { success: true };
+export type FailedIssuerResult = { issuerName: string; errorReason: string; success: false };
+export type ClassifyIssuerResult = ClassifiedIssuerResult | FailedIssuerResult;
+
+export type SendReportInput = CollectIssuersResult & {
+    classificationResults?: ClassifyIssuerResult[];
+};
 
 // ─── Fundamental Analysis Workflow ───────────────────────────────────────────
 
