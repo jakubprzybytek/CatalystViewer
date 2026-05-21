@@ -19,5 +19,5 @@ export const handler = lambdaHandler(async (event) => {
         return Failure('Not found', 404);
     }
 
-    return Success({ reportMarkdown: analysis.reportMarkdown ?? '' });
+    return Success({ reportMarkdown: analysis.reportMarkdown ?? '', agentLog: analysis.agentLog ?? [] });
 });
