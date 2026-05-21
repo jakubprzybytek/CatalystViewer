@@ -19,8 +19,20 @@ type IssuerProfilesQueryResult = {
   issuerProfiles: IssuerProfile[];
 };
 
+export type AgentEvent =
+  | { type: 'tool_use'; iteration: number; toolName: string; input: unknown }
+  | { type: 'tool_result'; iteration: number; toolName: string; toolUseId: string; result: string; isError: boolean }
+  | { type: 'end_turn'; iteration: number; text: string }
+  | { type: 'usage'; inputTokens: number; outputTokens: number; totalTokens: number };
+
+export type IssuerAnalysis = {
+  reportMarkdown: string;
+  agentLog: AgentEvent[];
+};
+
 type IssuerAnalysisQueryResult = {
   reportMarkdown: string;
+  agentLog: AgentEvent[];
 };
 
 export async function getIssuerProfiles(): Promise<IssuerProfile[]> {
@@ -44,7 +56,7 @@ export async function getIssuerProfiles(): Promise<IssuerProfile[]> {
   }
 }
 
-export async function getIssuerAnalysis(issuerName: string): Promise<string> {
+export async function getIssuerAnalysis(issuerName: string): Promise<IssuerAnalysis> {
   const session = await fetchAuthSession();
   const response = await get({
     apiName: 'api',
@@ -57,5 +69,5 @@ export async function getIssuerAnalysis(issuerName: string): Promise<string> {
   }).response;
 
   const result = (await response.body.json()) as unknown as IssuerAnalysisQueryResult;
-  return result.reportMarkdown;
+  return { reportMarkdown: result.reportMarkdown, agentLog: result.agentLog ?? [] };
 }
