@@ -52,17 +52,19 @@ export default function BondCardInterestSection({ details, currentValues, expand
         </CardEntry>
       </Box>
       <Collapse in={expanded}>
-        <CardSectionRow>
-          <CardEntry caption='Current interest' width='33%'>
-            <CardValue bold>{currentValues.interestRate.toFixed(2)}%</CardValue>
-          </CardEntry>
-          <CardEntry caption='Accured interest' textAlign='center' width='33%'>
-            <CardValue colorCode={accuredInterestColorCode}>{formatCurrency(currentValues.accuredInterest, details.currency)}</CardValue>
-          </CardEntry>
-          <CardEntry caption='Full interest' textAlign='end' width='33%'>
-            <CardValue>{formatCurrency(currentValues.periodInterest, details.currency)}</CardValue>
-          </CardEntry>
-        </CardSectionRow>
+        <Box className='expanded-content'>
+          <CardSectionRow>
+            <CardEntry caption='Current interest' width='33%'>
+              <CardValue bold>{currentValues.interestRate.toFixed(2)}%</CardValue>
+            </CardEntry>
+            <CardEntry caption='Accured interest' textAlign='center' width='33%'>
+              <CardValue colorCode={accuredInterestColorCode}>{formatCurrency(currentValues.accuredInterest, details.currency)}</CardValue>
+            </CardEntry>
+            <CardEntry caption='Full interest' textAlign='end' width='33%'>
+              <CardValue>{formatCurrency(currentValues.periodInterest, details.currency)}</CardValue>
+            </CardEntry>
+          </CardSectionRow>
+        </Box>
       </Collapse>
     </Grid>
   );

@@ -23,12 +23,12 @@ export const colorMarkers: Record<ColorCode, ColorMarker | undefined> = {
     backgroundColor: 'lightgreen'
   },
   'white': {
-    color: 'black',
-    backgroundColor: 'white'
+    color: '#233247',
+    backgroundColor: '#eef2f7'
   },
   'disabled': {
-    color: 'grey',
-    backgroundColor: 'lightgrey'
+    color: '#67758a',
+    backgroundColor: '#e3e8ef'
   },
   'none': undefined
 }
