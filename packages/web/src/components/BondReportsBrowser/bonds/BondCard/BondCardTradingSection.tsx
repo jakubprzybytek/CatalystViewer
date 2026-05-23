@@ -1,4 +1,5 @@
 import Grid from '@mui/material/Grid';
+import Box from '@mui/material/Box';
 import Collapse from '@mui/material/Collapse';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
@@ -50,8 +51,10 @@ export default function BondCardTradingSection({ bondReport, expanded, onToggleE
       </CardSectionRow>
       {bondReport.lastPrice && <BondCardYTMSection title='Last price (date/time)' bondReport={bondReport} price={bondReport.lastPrice} secondary={bondReport.lastDateTime} />}
       <Collapse in={expanded}>
-        {bondReport.bidPrice && <BondCardYTMSection title='Bid price (vol, cnt)' bondReport={bondReport} price={bondReport.bidPrice} secondary={`${bondReport.bidVolume}, ${bondReport.bidCount}`} />}
-        {bondReport.askPrice && <BondCardYTMSection title='Ask price (vol, cnt)' bondReport={bondReport} price={bondReport.askPrice} secondary={`${bondReport.askVolume}, ${bondReport.askCount}`} />}
+        <Box className='expanded-content'>
+          {bondReport.bidPrice && <BondCardYTMSection title='Bid price (vol, cnt)' bondReport={bondReport} price={bondReport.bidPrice} secondary={`${bondReport.bidVolume}, ${bondReport.bidCount}`} />}
+          {bondReport.askPrice && <BondCardYTMSection title='Ask price (vol, cnt)' bondReport={bondReport} price={bondReport.askPrice} secondary={`${bondReport.askVolume}, ${bondReport.askCount}`} />}
+        </Box>
       </Collapse>
       <Typography component='span' className='tiny-text'>Updated on: {new Date(bondReport.detailsUpdatedTs).toLocaleString('pl-PL')}</Typography>
     </Grid>
