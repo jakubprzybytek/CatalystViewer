@@ -2,7 +2,10 @@ import Drawer from "@mui/material/Drawer";
 import Stack from "@mui/material/Stack";
 import Box from "@mui/material/Box";
 import Divider from "@mui/material/Divider";
+import IconButton from "@mui/material/IconButton";
+import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
+import CloseIcon from "@mui/icons-material/Close";
 import { BondReportsFilterPanel, BondReportsFilteringOptions } from ".";
 import { BondReport } from "@/sdk/Bonds";
 
@@ -26,6 +29,12 @@ export default function BondReportsFilterDrawer({ open, onClose, allBondReports,
           keepMounted: true, // Better open performance on mobile.
         }}>
         <Stack>
+          <Toolbar variant="dense" disableGutters sx={{ justifyContent: 'flex-end', px: 1 }}>
+            <IconButton edge="end" aria-label="close filters" onClick={onClose}>
+              <CloseIcon />
+            </IconButton>
+          </Toolbar>
+          <Divider />
           <BondReportsFilterPanel allBondReports={allBondReports} allBondTypes={allBondTypes} filteringOptions={filteringOptions} setFilteringOptions={setFilteringOptions} />
           <Divider />
           <Typography sx={{ padding: 1 }}>Listing {filteredBondReports.length} bond(s)</Typography>
