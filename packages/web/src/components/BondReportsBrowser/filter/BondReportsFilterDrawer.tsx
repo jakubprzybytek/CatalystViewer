@@ -29,7 +29,8 @@ export default function BondReportsFilterDrawer({ open, onClose, allBondReports,
           keepMounted: true, // Better open performance on mobile.
         }}>
         <Stack>
-          <Toolbar variant="dense" disableGutters sx={{ justifyContent: 'flex-end', px: 1 }}>
+          <Toolbar variant="dense" disableGutters sx={{ justifyContent: 'space-between', px: 1 }}>
+            <Typography variant="h6">Filter bonds</Typography>
             <IconButton edge="end" aria-label="close filters" onClick={onClose}>
               <CloseIcon />
             </IconButton>
