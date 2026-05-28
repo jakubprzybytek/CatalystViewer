@@ -18,6 +18,7 @@ import { InterestPercentilesByInterestBaseType } from "@/bonds/statistics";
 import { formatCurrency } from "@/common/Formats";
 import IssuerScorecard from './IssuerScorecard';
 import AnalysisReportModal from './AnalysisReportModal';
+import { SignalDot } from './SignalDot';
 
 export const interestConstPartColors: ColorCode[] = ['green', 'yellow', 'orange', 'red'];
 
@@ -91,20 +92,36 @@ function IssuerCard({ issuerReport, statistics, isChecked, onIssuerChecked }: Is
             </Stack>
           </Stack>
         </CardSectionRow>
-        {issuerReport.industry && industryColors && (
+        {(issuerReport.industry && industryColors || issuerReport.scorecard) && (
           <CardSectionRow>
-            <Box sx={{ mt: -1 }}>
-              <Chip
-                size='small'
-                label={issuerReport.industry}
-                sx={{
-                  backgroundColor: industryColors.backgroundColor,
-                  color: industryColors.color,
-                  filter: 'saturate(85%)',
-                  fontWeight: 400,
-                }}
-              />
-            </Box>
+            <Stack direction='row' spacing={0.5} sx={{ mt: -1 }} alignItems='center' flexWrap='wrap'>
+              {issuerReport.industry && industryColors && (
+                <Chip
+                  size='small'
+                  label={issuerReport.industry}
+                  sx={{
+                    backgroundColor: industryColors.backgroundColor,
+                    color: industryColors.color,
+                    filter: 'saturate(85%)',
+                    fontWeight: 400,
+                  }}
+                />
+              )}
+              {issuerReport.scorecard && issuerReport.scorecard.dimensions.length > 0 && (
+                <Chip
+                  size='small'
+                  label={
+                    <Stack direction='row' alignItems='center' spacing={0}>
+                      <span>FA:&nbsp;</span>
+                      {issuerReport.scorecard.dimensions.map((d, i) => (
+                        <SignalDot key={i} signal={d.signal} />
+                      ))}
+                    </Stack>
+                  }
+                  sx={{ fontWeight: 400, backgroundColor: 'var(--cv-bg-card-subtle)' }}
+                />
+              )}
+            </Stack>
           </CardSectionRow>
         )}
         <Collapse in={expanded && !!(issuerReport.businessSummary || issuerReport.websiteUrl || issuerReport.scorecard)}>

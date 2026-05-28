@@ -2,33 +2,8 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Stack from '@mui/material/Stack';
 import Tooltip from '@mui/material/Tooltip';
-import type { FundamentalScorecard, Signal, DimensionResult } from '@/bonds/fundamentals/scorecard';
-
-const SIGNAL_COLOR: Record<Signal, string> = {
-  green: '#4ade80',   // green-400
-  yellow: '#facc15',  // yellow-400
-  red: '#f87171',     // red-400
-  na: '#cbd5e1',      // slate-300
-};
-
-const SIGNAL_LABEL: Record<Signal, string> = {
-  green: '●',
-  yellow: '●',
-  red: '●',
-  na: '○',
-};
-
-function SignalDot({ signal }: { signal: Signal }) {
-  return (
-    <Box
-      component='span'
-      sx={{ color: SIGNAL_COLOR[signal], fontSize: '1.1rem', lineHeight: 1 }}
-      aria-label={signal}
-    >
-      {SIGNAL_LABEL[signal]}
-    </Box>
-  );
-}
+import type { FundamentalScorecard, DimensionResult } from '@/bonds/fundamentals/scorecard';
+import { SignalDot } from './SignalDot';
 
 function DimensionRow({ dimension }: { dimension: DimensionResult }) {
   const tooltipContent = (
