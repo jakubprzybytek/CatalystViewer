@@ -15,11 +15,16 @@ export const SIGNAL_LABEL: Record<Signal, string> = {
   na: '○',
 };
 
-export function SignalDot({ signal }: { signal: Signal }) {
+type SignalDotProps = {
+  signal: Signal;
+  size?: 'sm' | 'lg';
+};
+
+export function SignalDot({ signal, size = 'sm' }: SignalDotProps) {
   return (
     <Box
       component='span'
-      sx={{ color: SIGNAL_COLOR[signal], fontSize: '1.1rem', lineHeight: 1 }}
+      sx={{ color: SIGNAL_COLOR[signal], fontSize: size === 'lg' ? '1.75rem' : '1.1rem', lineHeight: 1, verticalAlign: 'middle', display: 'block', mt: 0 }}
       aria-label={signal}
     >
       {SIGNAL_LABEL[signal]}
