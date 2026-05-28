@@ -2,6 +2,8 @@ import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
+import ListSubheader from '@mui/material/ListSubheader';
+import Typography from '@mui/material/Typography';
 import Check from '@mui/icons-material/Check';
 import { BondReportsSortOrder } from '.';
 
@@ -36,6 +38,7 @@ export default function BondReportsSortMenu({ anchorEl, selectedBondReportsSortO
         vertical: 'top',
         horizontal: 'right',
       }}>
+      <ListSubheader><Typography variant="h6">Sort by</Typography></ListSubheader>
       <SortOrderMenuItem selected={selectedBondReportsSortOrder === BondReportsSortOrder.Name}
         onSelect={() => setBondReportsSortOrder(BondReportsSortOrder.Name)}>Name</SortOrderMenuItem>
       <SortOrderMenuItem selected={selectedBondReportsSortOrder === BondReportsSortOrder.TimeToMaturityAsc}

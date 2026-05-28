@@ -23,31 +23,34 @@ type InterestProgressBarParam = {
 }
 
 export default function InterestProgressBar({ progress, color, pastPeriods, futurePeriods }: InterestProgressBarParam): React.JSX.Element {
+  const pastDotColor = `${color}.dark`;
+  const futureDotColor = (theme: import('@mui/material').Theme) => alpha(theme.palette[color].main, 0.38);
+
   return (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
       {pastPeriods > 5
         ? <>
-            <Box sx={{ ...DOT_SX, bgcolor: 'error.main' }} />
-            <Box sx={{ ...DOT_SX, bgcolor: 'error.main' }} />
-            <Typography component='span' sx={{ ...ELLIPSIS_SX, color: 'error.main' }}>⋯</Typography>
-            <Box sx={{ ...DOT_SX, bgcolor: 'error.main' }} />
-            <Box sx={{ ...DOT_SX, bgcolor: 'error.main' }} />
+            <Box sx={{ ...DOT_SX, bgcolor: pastDotColor }} />
+            <Box sx={{ ...DOT_SX, bgcolor: pastDotColor }} />
+            <Typography component='span' sx={{ ...ELLIPSIS_SX, color: pastDotColor }}>⋯</Typography>
+            <Box sx={{ ...DOT_SX, bgcolor: pastDotColor }} />
+            <Box sx={{ ...DOT_SX, bgcolor: pastDotColor }} />
           </>
         : Array.from({ length: pastPeriods }).map((_, i) => (
-            <Box key={i} sx={{ ...DOT_SX, bgcolor: 'error.main' }} />
+            <Box key={i} sx={{ ...DOT_SX, bgcolor: pastDotColor }} />
           ))
       }
       <BorderLinearProgress variant='determinate' color={color} value={progress} />
       {futurePeriods > 5
         ? <>
-            <Box sx={{ ...DOT_SX, bgcolor: (theme) => alpha(theme.palette.error.main, 0.38) }} />
-            <Box sx={{ ...DOT_SX, bgcolor: (theme) => alpha(theme.palette.error.main, 0.38) }} />
-            <Typography component='span' sx={{ ...ELLIPSIS_SX, color: (theme) => alpha(theme.palette.error.main, 0.38) }}>⋯</Typography>
-            <Box sx={{ ...DOT_SX, bgcolor: (theme) => alpha(theme.palette.error.main, 0.38) }} />
-            <Box sx={{ ...DOT_SX, bgcolor: (theme) => alpha(theme.palette.error.main, 0.38) }} />
+            <Box sx={{ ...DOT_SX, bgcolor: futureDotColor }} />
+            <Box sx={{ ...DOT_SX, bgcolor: futureDotColor }} />
+            <Typography component='span' sx={{ ...ELLIPSIS_SX, color: futureDotColor }}>⋯</Typography>
+            <Box sx={{ ...DOT_SX, bgcolor: futureDotColor }} />
+            <Box sx={{ ...DOT_SX, bgcolor: futureDotColor }} />
           </>
         : Array.from({ length: futurePeriods }).map((_, i) => (
-            <Box key={i} sx={{ ...DOT_SX, bgcolor: (theme) => alpha(theme.palette.error.main, 0.38) }} />
+            <Box key={i} sx={{ ...DOT_SX, bgcolor: futureDotColor }} />
           ))
       }
     </Box>
