@@ -1,4 +1,5 @@
 import Grid from '@mui/material/Grid';
+import Box from '@mui/material/Box';
 import Collapse from '@mui/material/Collapse';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
@@ -27,7 +28,9 @@ export default function BondCardDetailsSection({ bondReport, statistics, expande
   return (
     <Grid className='card-section' size={{ xs: 12, md: 4 }}>
       <CardSectionRow>
-        <Typography variant='h6'><Link href={`https://obligacje.pl/pl/obligacja/${details.name}`} target='_blank'>{details.name}</Link></Typography>
+        <Typography variant='h6' sx={{ fontWeight: 700, letterSpacing: '-0.01em', color: 'var(--cv-text-primary)' }}>
+          <Link href={`https://obligacje.pl/pl/obligacja/${details.name}`} target='_blank' underline='hover' color='inherit'>{details.name}</Link>
+        </Typography>
         <IconButton size='small' sx={{ display: { xs: 'inline-flex', md: 'none' } }} onClick={onToggleExpanded}>
           {expanded ? <ExpandLessOutlinedIcon /> : <ExpandMoreOutlinedIcon />}
         </IconButton>
@@ -43,28 +46,30 @@ export default function BondCardDetailsSection({ bondReport, statistics, expande
         </CardEntry>
       </CardSectionRow>
       <Collapse in={expanded}>
-        <CardSectionRow>
-          <CardEntry caption='Market'>{details.market}</CardEntry>
-          <CardEntry caption='Issue Value' textAlign='center'>
-            <CardValue colorCode='white'>{details.issueValue > 0 ? formatCompactCurrency(details.issueValue, details.currency) : 'n/a'}</CardValue>
-          </CardEntry>
-          <CardEntry caption='Nominal value' textAlign='end'>
-            <CardValue colorCode={nominalValueColorCode}>
-              {formatCurrency(details.nominalValue, details.currency)}
-            </CardValue>
-          </CardEntry>
-        </CardSectionRow>
-        <CardSectionRow>
-          <CardEntry caption='First day'>
-            <CardValue>{formatDate(details.firstDayTs)}</CardValue>
-          </CardEntry>
-          <CardEntry caption='Maturity day' textAlign='center'>
-            <CardValue>{formatDate(details.maturityDayTs)}</CardValue>
-          </CardEntry>
-          <CardEntry caption='To maturity' textAlign='end'>
-            <CardValue>{currentValues.yearsToMaturity.toFixed(2)} yrs</CardValue>
-          </CardEntry>
-        </CardSectionRow>
+        <Box className='expanded-content'>
+          <CardSectionRow>
+            <CardEntry caption='Market'>{details.market}</CardEntry>
+            <CardEntry caption='Issue Value' textAlign='center'>
+              <CardValue colorCode='white'>{details.issueValue > 0 ? formatCompactCurrency(details.issueValue, details.currency) : 'n/a'}</CardValue>
+            </CardEntry>
+            <CardEntry caption='Nominal value' textAlign='end'>
+              <CardValue colorCode={nominalValueColorCode}>
+                {formatCurrency(details.nominalValue, details.currency)}
+              </CardValue>
+            </CardEntry>
+          </CardSectionRow>
+          <CardSectionRow>
+            <CardEntry caption='First day'>
+              <CardValue>{formatDate(details.firstDayTs)}</CardValue>
+            </CardEntry>
+            <CardEntry caption='Maturity day' textAlign='center'>
+              <CardValue>{formatDate(details.maturityDayTs)}</CardValue>
+            </CardEntry>
+            <CardEntry caption='To maturity' textAlign='end'>
+              <CardValue>{currentValues.yearsToMaturity.toFixed(2)} yrs</CardValue>
+            </CardEntry>
+          </CardSectionRow>
+        </Box>
       </Collapse>
     </Grid>
   );

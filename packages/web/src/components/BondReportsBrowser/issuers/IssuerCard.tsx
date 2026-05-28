@@ -67,13 +67,8 @@ function IssuerCard({ issuerReport, statistics, isChecked, onIssuerChecked }: Is
 
   return (
     <>
-      <Paper className='issuer-card' variant="outlined" sx={{
+      <Paper className={`issuer-card${isChecked ? ' selected' : ''}`} variant="outlined" sx={{
         pb: 1,
-        ...(isChecked && { backgroundColor: 'oldlace' }),
-        '& .MuiTypography-caption': {
-          color: 'gray',
-          lineHeight: 1.3
-        },
         '& .MuiTypography-subtitle2': {
           lineHeight: '24px'
         },
@@ -83,7 +78,7 @@ function IssuerCard({ issuerReport, statistics, isChecked, onIssuerChecked }: Is
       }}>
         <CardSectionRow>
           <Stack direction='row' flexGrow={1} justifyContent='space-between' alignItems='center'>
-            <Typography variant='h6'>{issuerReport.name}</Typography>
+              <Typography variant='h6' sx={{ fontWeight: 700, letterSpacing: '-0.01em', color: 'var(--cv-text-primary)' }}>{issuerReport.name}</Typography>
             <Stack direction='row' alignItems='center' spacing={0.5}>
               <Checkbox
                 checked={isChecked}
@@ -105,6 +100,7 @@ function IssuerCard({ issuerReport, statistics, isChecked, onIssuerChecked }: Is
                 sx={{
                   backgroundColor: industryColors.backgroundColor,
                   color: industryColors.color,
+                  filter: 'saturate(85%)',
                   fontWeight: 400,
                 }}
               />
@@ -112,48 +108,50 @@ function IssuerCard({ issuerReport, statistics, isChecked, onIssuerChecked }: Is
           </CardSectionRow>
         )}
         <Collapse in={expanded && !!(issuerReport.businessSummary || issuerReport.websiteUrl || issuerReport.scorecard)}>
-          <CardSectionRow>
-            {issuerReport.businessSummary && (
-              <CardEntry caption='Summary' width='100%'>
-                <CardValue>{issuerReport.businessSummary}</CardValue>
-              </CardEntry>
-            )}
-          </CardSectionRow>
-          {issuerReport.websiteUrl && (
+          <Box className='expanded-content'>
             <CardSectionRow>
-              <CardEntry caption='Website URL' width='100%'>
-                <CardValue>
-                  <Box component='a' href={issuerReport.websiteUrl} target='_blank' rel='noreferrer'
-                    sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5, color: 'primary.main', textDecorationColor: 'primary.main' }}>
-                    {issuerReport.websiteUrl}
-                    <OpenInNewOutlinedIcon sx={{ fontSize: '0.9em' }} />
-                  </Box>
-                </CardValue>
-              </CardEntry>
-            </CardSectionRow>
-          )}
-          {issuerReport.classifiedAtTs && (
-            <Typography component='span' className='tiny-text'>Classified on: {new Date(issuerReport.classifiedAtTs).toLocaleString('pl-PL')}</Typography>
-          )}
-          {issuerReport.scorecard && (
-            <>
-              <CardSectionRow>
-                <IssuerScorecard scorecard={issuerReport.scorecard} />
-              </CardSectionRow>
-              {issuerReport.performedAt && (
-                <Typography component='span' className='tiny-text'>
-                  Analysed: {new Date(issuerReport.performedAt).toLocaleString('pl-PL')}{' '}
-                  <Box
-                    component='span'
-                    onClick={() => setModalOpen(true)}
-                    sx={{ color: 'primary.main', cursor: 'pointer', textDecoration: 'underline' }}
-                  >
-                    Full report →
-                  </Box>
-                </Typography>
+              {issuerReport.businessSummary && (
+                <CardEntry caption='Summary' width='100%'>
+                  <CardValue>{issuerReport.businessSummary}</CardValue>
+                </CardEntry>
               )}
-            </>
-          )}
+            </CardSectionRow>
+            {issuerReport.websiteUrl && (
+              <CardSectionRow>
+                <CardEntry caption='Website URL' width='100%'>
+                  <CardValue>
+                    <Box component='a' href={issuerReport.websiteUrl} target='_blank' rel='noreferrer'
+                      sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5, color: 'primary.main', textDecorationColor: 'primary.main' }}>
+                      {issuerReport.websiteUrl}
+                      <OpenInNewOutlinedIcon sx={{ fontSize: '0.9em' }} />
+                    </Box>
+                  </CardValue>
+                </CardEntry>
+              </CardSectionRow>
+            )}
+            {issuerReport.classifiedAtTs && (
+              <Typography component='span' className='tiny-text'>Classified on: {new Date(issuerReport.classifiedAtTs).toLocaleString('pl-PL')}</Typography>
+            )}
+            {issuerReport.scorecard && (
+              <>
+                <CardSectionRow>
+                  <IssuerScorecard scorecard={issuerReport.scorecard} />
+                </CardSectionRow>
+                {issuerReport.performedAt && (
+                  <Typography component='span' className='tiny-text'>
+                    Analysed: {new Date(issuerReport.performedAt).toLocaleString('pl-PL')}{' '}
+                    <Box
+                      component='span'
+                      onClick={() => setModalOpen(true)}
+                      sx={{ color: 'primary.main', cursor: 'pointer', textDecoration: 'underline' }}
+                    >
+                      Full report →
+                    </Box>
+                  </Typography>
+                )}
+              </>
+            )}
+          </Box>
         </Collapse>
         <CardSectionRow>
           <CardEntry caption='Bonds'>

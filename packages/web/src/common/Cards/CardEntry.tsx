@@ -17,6 +17,7 @@ export function CardEntry({ caption, width, textAlign = 'left', flexGrow, childr
   return (
     <Stack className="card-entry" sx={{
       '& > span': { textAlign },
+      '& .MuiTypography-caption': { color: 'var(--cv-text-secondary)' },
       ...(flexGrow && { flexGrow }),
       ...(width && { width })
     }}>
