@@ -7,6 +7,7 @@ import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
 import Collapse from '@mui/material/Collapse';
 import IconButton from '@mui/material/IconButton';
+import Button from '@mui/material/Button';
 import ExpandMoreOutlinedIcon from '@mui/icons-material/ExpandMoreOutlined';
 import ExpandLessOutlinedIcon from '@mui/icons-material/ExpandLessOutlined';
 import OpenInNewOutlinedIcon from '@mui/icons-material/OpenInNewOutlined';
@@ -155,16 +156,20 @@ function IssuerCard({ issuerReport, statistics, isChecked, onIssuerChecked }: Is
                   <IssuerScorecard scorecard={issuerReport.scorecard} />
                 </CardSectionRow>
                 {issuerReport.performedAt && (
-                  <Typography component='span' className='tiny-text'>
-                    Analysed: {new Date(issuerReport.performedAt).toLocaleString('pl-PL')}{' '}
-                    <Box
-                      component='span'
-                      onClick={() => setModalOpen(true)}
-                      sx={{ color: 'primary.main', cursor: 'pointer', textDecoration: 'underline' }}
-                    >
-                      Full report →
+                  <>
+                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', pr: '8px', mt: 0.5 }}>
+                      <Button
+                        size='small'
+                        variant='outlined'
+                        onClick={() => setModalOpen(true)}
+                      >
+                        Full report →
+                      </Button>
                     </Box>
-                  </Typography>
+                    <Typography component='span' className='tiny-text'>
+                      Analysed on: {new Date(issuerReport.performedAt).toLocaleString('pl-PL')}
+                    </Typography>
+                  </>
                 )}
               </>
             )}

@@ -49,7 +49,8 @@ export default function IssuerScorecard({ scorecard }: IssuerScorecardProps): Re
                 onClick={!isHoverDevice ? () => setSelectedDimension(d) : undefined}
                 sx={{
                   cursor: isHoverDevice ? 'default' : 'pointer',
-                  py: 0.75,
+                  pt: 0.75,
+                  pb: 0.25,
                   px: 0.5,
                   mx: 0.25,
                   my: 0.25,
