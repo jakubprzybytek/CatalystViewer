@@ -221,6 +221,7 @@ export function buildReportMarkdown(
 export async function analyzeIssuer(
     deps: IssuerAnalysisDeps,
     issuerName: string,
+    onEvent?: (event: AgentEvent) => void,
 ): Promise<IssuerAnalysisResult> {
     const { bedrockClient, tavilyClient } = deps;
 
@@ -232,6 +233,9 @@ export async function analyzeIssuer(
     const agentEvents: AgentEvent[] = [];
     const rawAnswer = await agentLoop.run(buildTaskPrompt(issuerName), (event) => {
         agentEvents.push(event);
+        if (onEvent) {
+            onEvent(event);
+        }
     });
 
     const agentFinancials = parseAgentFinancials(rawAnswer);

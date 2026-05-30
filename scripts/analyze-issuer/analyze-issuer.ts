@@ -5,43 +5,12 @@ dotenv.config({ path: join(dirname(fileURLToPath(import.meta.url)), '.env.local'
 
 import { BedrockRuntimeClient } from '@aws-sdk/client-bedrock-runtime';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { AgentLoop, type AgentEvent } from '@core/ai/agent/index';
-import { WebSearchTool } from '@core/ai/tools/WebSearchTool';
-import { StockwatchTool } from '@core/ai/tools/StockwatchTool';
-import { BiznesradarTool } from '@core/ai/tools/BiznesradarTool';
 import { TavilyClient } from '@core/ai/tools/tavily/TavilyClient';
 import { MODEL_ID } from '@core/ai/issuers/IssuerClassification';
-import { computeScorecard, type Signal, type FundamentalScorecard } from '@core/bonds/fundamentals/scorecard';
+import { type AgentEvent } from '@core/ai/agent/index';
+import { type Signal, type FundamentalScorecard } from '@core/bonds/fundamentals/scorecard';
 import { IssuerProfilesTable } from '@core/storage/issuerProfiles';
-
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-type YearlyFinancials = {
-    year: number;
-    // P&L
-    revenue?: number | null;
-    ebit?: number | null;
-    depreciation?: number | null;
-    interestExpense?: number | null;
-    netProfit?: number | null;
-    // Balance sheet
-    totalAssets?: number | null;
-    intangibleAssets?: number | null;
-    equity?: number | null;
-    financialDebt?: number | null;
-    cash?: number | null;
-    currentAssets?: number | null;
-    inventory?: number | null;
-    currentLiabilities?: number | null;
-};
-
-type AgentFinancials = {
-    companyName: string;
-    currency: string;
-    unit: string;
-    years: YearlyFinancials[];
-    notes: string;
-};
+import { analyzeIssuer, type AgentFinancials } from '@core/ai/issuers/IssuerAnalysis';
 
 // ─── CLI args ─────────────────────────────────────────────────────────────────
 
@@ -62,61 +31,10 @@ if (!tavilyApiKey) {
 
 const ISSUER_PROFILES_TABLE_NAME = process.env.ISSUER_PROFILES_TABLE_NAME ?? '';
 
-// ─── Agent setup ──────────────────────────────────────────────────────────────
+// ─── Clients setup ────────────────────────────────────────────────────────────
 
 const bedrockClient = new BedrockRuntimeClient({});
 const tavilyClient = new TavilyClient(tavilyApiKey!);
-const webSearchTool = new WebSearchTool(tavilyClient);
-const stockwatchTool = new StockwatchTool();
-const biznesradarTool = new BiznesradarTool();
-const agentLoop = new AgentLoop(bedrockClient, MODEL_ID, [biznesradarTool, stockwatchTool, webSearchTool], 10);
-
-const taskPrompt = `Jesteś analitykiem finansowym badającym polskie spółki emitujące obligacje na rynku Catalyst.
-
-Twoim zadaniem jest zebranie pełnych danych finansowych (rachunek zysków i strat oraz bilans) dla podanej spółki.
-
-Nazwa spółki: "${issuerName}"
-
-Podana nazwa to zarejestrowana nazwa prawna (np. "P4 Sp. z o.o." to podmiot prawny stojący za siecią komórkową Play).
-
-Instrukcje:
-1. Zidentyfikuj spółkę lub markę kryjącą się za tą nazwą prawną.
-2. Użyj narzędzia stockwatch_financials z popularną nazwą lub tickerem GPW — to jest Twoje główne źródło danych (zwraca roczny rachunek zysków i strat oraz bilans za wiele lat w jednym wywołaniu).
-3. Jeśli stockwatch nie znajdzie spółki, spróbuj biznesradar_financials.
-4. Tylko jeśli oba powyższe zawiodą, uzupełnij brakujące dane przez web_search (Bankier.pl, raporty roczne spółki).
-4. Zbierz następujące dane dla maksymalnie 5 ostatnich lat:
-   - Rachunek zysków i strat: Przychody (revenue), EBIT, Amortyzacja (depreciation), Koszty odsetkowe (interestExpense), Zysk netto (netProfit)
-   - Bilans: Aktywa ogółem (totalAssets), Wartości niematerialne (intangibleAssets), Kapitał własny (equity), Dług finansowy (financialDebt), Gotówka (cash), Aktywa obrotowe (currentAssets), Zapasy (inventory), Zobowiązania krótkoterminowe (currentLiabilities)
-5. Uwaga: oba narzędzia finansowe zwracają wartości w tysiącach PLN — podziel przez 1000 aby uzyskać miliony. Jeśli spółka raportuje w innej walucie, zaznacz to w polu currency.
-6. Ogranicz się do maksymalnie 5 wywołań narzędzi. Wstaw null dla brakujących wartości.
-
-Odpowiedz WYŁĄCZNIE obiektem JSON — bez markdown, bez wyjaśnień:
-{
-  "companyName": "<popularna nazwa lub marka spółki>",
-  "currency": "PLN",
-  "unit": "millions",
-  "years": [
-    {
-      "year": <YYYY>,
-      "revenue": <number|null>,
-      "ebit": <number|null>,
-      "depreciation": <number|null>,
-      "interestExpense": <number|null>,
-      "netProfit": <number|null>,
-      "totalAssets": <number|null>,
-      "intangibleAssets": <number|null>,
-      "equity": <number|null>,
-      "financialDebt": <number|null>,
-      "cash": <number|null>,
-      "currentAssets": <number|null>,
-      "inventory": <number|null>,
-      "currentLiabilities": <number|null>
-    }
-  ],
-  "notes": "<źródła, zastrzeżenia>"
-}
-
-Uwzględnij lata posortowane od najnowszego do najstarszego. Uwzględniaj tylko lata, dla których znalazłeś co najmniej jeden wskaźnik.`;
 
 // ─── Live event handler ───────────────────────────────────────────────────────
 
@@ -166,30 +84,6 @@ function onEvent(event: AgentEvent): void {
             console.log(`\nTokens:  input=${event.inputTokens.toLocaleString()}  output=${event.outputTokens.toLocaleString()}  total=${event.totalTokens.toLocaleString()}`);
             break;
     }
-}
-
-// ─── Result parsing ───────────────────────────────────────────────────────────
-
-function parseResult(text: string): AgentFinancials {
-    const start = text.indexOf('{');
-    const end = text.lastIndexOf('}');
-    if (start === -1 || end === -1 || end < start) {
-        throw new Error('Response does not contain a JSON object');
-    }
-    // Strip thousands-separator spaces that LLMs sometimes copy from source data
-    // e.g. "280 571" → "280571", applied repeatedly for multi-group numbers
-    let json = text.slice(start, end + 1);
-    while (/\d [ \u00a0]\d/.test(json)) {
-        json = json.replace(/(\d)[ \u00a0](\d)/g, '$1$2');
-    }
-    const parsed = JSON.parse(json) as Record<string, unknown>;
-    if (
-        typeof parsed['companyName'] !== 'string' ||
-        !Array.isArray(parsed['years'])
-    ) {
-        throw new Error('Response missing required fields');
-    }
-    return parsed as unknown as AgentFinancials;
 }
 
 // ─── Output formatting ────────────────────────────────────────────────────────
@@ -252,37 +146,15 @@ console.log(`Model:   ${MODEL_ID}`);
 console.log('─'.repeat(80));
 
 try {
-    const agentEvents: unknown[] = [];
-    const rawAnswer = await agentLoop.run(taskPrompt, (event) => {
-        agentEvents.push(event);
-        onEvent(event);
-    });
-    const result = parseResult(rawAnswer);
-
-    // Map agent result to FinancialYearData[] for scorecard computation
-    const financialYears = result.years.map(y => ({
+    const result = await analyzeIssuer(
+        { bedrockClient, tavilyClient },
         issuerName,
-        year: y.year,
-        revenue: y.revenue ?? undefined,
-        ebit: y.ebit ?? undefined,
-        depreciation: y.depreciation ?? undefined,
-        interestExpense: y.interestExpense ?? undefined,
-        netProfit: y.netProfit ?? undefined,
-        totalAssets: y.totalAssets ?? undefined,
-        intangibleAssets: y.intangibleAssets ?? undefined,
-        equity: y.equity ?? undefined,
-        financialDebt: y.financialDebt ?? undefined,
-        cash: y.cash ?? undefined,
-        currentAssets: y.currentAssets ?? undefined,
-        inventory: y.inventory ?? undefined,
-        currentLiabilities: y.currentLiabilities ?? undefined,
-    }));
-
-    const scorecard = computeScorecard(financialYears);
+        onEvent
+    );
 
     console.log('\n' + '═'.repeat(60));
-    printTable(result);
-    printScorecard(scorecard);
+    printTable(result.agentFinancials);
+    printScorecard(result.scorecard);
     console.log('═'.repeat(60));
 
     if (ISSUER_PROFILES_TABLE_NAME) {
@@ -296,9 +168,10 @@ try {
             performedAt: now.toISOString(),
             performedAtTs: now.getTime(),
             modelId: MODEL_ID,
-            scorecard,
-            agentFinancials: result,
-            agentLog: agentEvents,
+            scorecard: result.scorecard,
+            agentFinancials: result.agentFinancials,
+            agentLog: result.agentLog,
+            reportMarkdown: result.reportMarkdown,
         });
 
         console.log(`\nAnalysis stored to DynamoDB (${ISSUER_PROFILES_TABLE_NAME})`);
