@@ -79,8 +79,9 @@ export type DbJobRecord = {
   statusPk: string; // STATUS#<JobStatus>
 
   // Primary identity
+  jobId: string; // stable app-level id (not the Step Functions ARN)
   workflowType: JobWorkflowType;
-  executionId: string; // execution ARN
+  executionArn: string;
 
   // Query and display fields
   status: JobStatus;
@@ -107,12 +108,13 @@ Notes:
 - Keep retention indefinite in this version (no TTL field configured).
 - Table/index strategy:
   - Primary index: `listPk` (hash), `listSk` (range) for newest-first list pagination.
-  - GSI on `executionId` for detail lookup.
+  - GSI on `jobId` for detail lookup.
+  - GSI on `executionArn` for operational traceability lookups.
   - GSI on `statusPk` + `listSk` for status-filtered newest-first pagination.
 
 ### 2) Workflow instrumentation
 
-Both state machines write/update the same `DbJobRecord` keyed by workflow and execution id.
+Both state machines write/update the same `DbJobRecord` keyed by workflow and job id.
 
 - On start: write record with `RUNNING` + `inputSummary`.
 - On success: set `SUCCEEDED`, `endedAt*`, `durationMs`, `outputSummary`.
@@ -127,7 +129,7 @@ For `FundamentalAnalysisStateMachine`, output summary should mirror analysis com
 Add endpoints for authenticated users:
 
 - `GET /api/jobs`
-- `GET /api/jobs/{executionId}`
+- `GET /api/jobs/{jobId}`
 
 `GET /api/jobs` supports:
 
@@ -135,7 +137,7 @@ Add endpoints for authenticated users:
 - pagination cursor (exclusive start key style)
 - fixed newest-first order
 
-`GET /api/jobs/{executionId}` returns the full job record for detail display.
+`GET /api/jobs/{jobId}` returns the full job record for detail display.
 
 ### 4) Web UX
 
@@ -164,7 +166,7 @@ Add header menu trigger and dedicated Jobs page.
 3. Workflow executes business logic.
 4. Terminal stage updates same jobs record to `SUCCEEDED`, `FAILED`, or `TIMED_OUT`.
 5. API list endpoint reads jobs table (newest-first, paginated, optional status filter).
-6. API detail endpoint reads one record by execution id.
+6. API detail endpoint reads one record by job id.
 7. Jobs page renders list and detail entirely from API responses.
 
 ---
@@ -176,7 +178,7 @@ Add header menu trigger and dedicated Jobs page.
 - `errorSummary` should be human-readable and compact.
 - Detail view should gracefully handle missing optional sections.
 - API returns:
-  - `404` for unknown execution id
+  - `404` for unknown job id
   - `400` for invalid status filter values
 
 ---
