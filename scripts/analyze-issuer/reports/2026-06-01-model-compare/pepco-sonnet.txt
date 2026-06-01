@@ -1,0 +1,88 @@
+
+> analyze-issuer@1.0.0 start
+> tsx analyze-issuer.ts Pepco Group NV --model sonnet_4.6
+
+Issuer:  Pepco Group NV
+Model:   sonnet_4.6 (arn:aws:bedrock:eu-west-1:198805281865:inference-profile/global.anthropic.claude-sonnet-4-6)
+────────────────────────────────────────────────────────────────────────────────
+
+[iter 1] stockwatch.pl lookup: "Pepco Group"
+           Financial data for "PEPCO - Pepco Group BV" from https://www.stockwatch.pl/gpw/pepco,notowania,dane-finansowe.aspx:
+
+Data in thousands PLN (annual). Balance sheet rows = Q4 snapshot; P&L/CF rows = ann...
+
+[iter 1] biznesradar.pl lookup: "PEO"
+           Financial data for "BANK POLSKA KASA OPIEKI SPÓŁKA AKCYJNA" (PEO) from biznesradar.pl
+Source: https://www.biznesradar.pl/raporty-finansowe-rachunek-zyskow-i-strat/PEKAO
+Unit: thousands PLN
+
+=== P&L (R...
+
+[iter 2] biznesradar.pl lookup: "Pepco Group"
+           Financial data for "PEPCO GROUP N.V." (PCO) from biznesradar.pl
+Source: https://www.biznesradar.pl/raporty-finansowe-rachunek-zyskow-i-strat/PCO
+Unit: thousands PLN
+
+=== P&L (Rachunek zysków i strat) ...
+
+[iter 2] Searching: "Pepco Group NV annual report 2022 2023 2024 revenue EBIT net profit balance sheet"
+           Got 5 result(s):
+             · https://www.pepcogroup.eu/wp-content/uploads/2023/12/2023.12.22_PCO-2023-Annual-Report-and-Accounts_Single-vF.pdf
+               [PDF] Annual Report and Consolidated Financial Statements 2023
+               – Integrated with PGS, our global sourcing office dealing with a supply network of 375+ vendors utilising 700+ factories...
+             · https://www.pepcogroup.eu/media-news/pepco-group-n-v-preliminary-results-for-the-year-to-30-september-2024
+               Pepco Group N.V. Preliminary results for the year to 30 September 2024 - Pepco G...
+               ### Pepco Group N.V. Preliminary results for the year to 30 September 2024. Pepco Group, the fast-growing pan-European v...
+             · https://www.pepsico.com/en/investors/annual-reports-proxy-information
+               Annual Reports & Proxy Information - PepsiCo
+               [![Image 1: Pepsico Logo](https://digitalassets.pepsico.com/transform/fe5c5aad-b8cd-4dd5-a1b2-d79302ff1f1c/PepsiCo-Logo-...
+             · https://www.investing.com/equities/pepco-group-nv-financial-summary
+               WA:PCOP Financials | Pepco Group Nv - Investing.com
+               This summary highlights critical numbers from key financial reports, including the Pepco Group annual report, the income...
+             · https://www.afm.nl/downloadregisterfile.aspx?type=financiele-verslaggeving&enc=W3+45r%2FEgSt+MtL1GWvLPE2Leqbp4xQg3ljkJhP4gElolUDJqF3I7FQeIjKtO175g4Ya2KHQjZ8euvIcHZsTslLKR9RpKISKvkIi%2FO+L4SizbfMZt2UTZXwo0vQAqXA3UGpPxQc9nJJEJhL3ITKhuqHZYTjM%2F1DjLBZqjNuC%2FO9lDu2S2VODGSrfqgzNeShul2Dr9b23iJURoxH%2FI5UlJ+UfsJyCEw0zaTAQUngn5TDzpysg3otpFDRcz72Z7spSKgayt9Svnf644CuyIz0g8MuIOGVq4iFEPOnUfgntkbJaVJtKx2GjVBvC1TFDbVRP2YHXuYah2ESKyQ%2FC5RK46qJePmmApPkNMyXywcZfn6j%2FFgnshNa%2Fjk%2FiQlo9Dvc12r4vzSy5Li9htA%2FIgKeM6g%3D%3D
+               PEPCO GROUP N.V. - AFM
+               ... Group maintains a strong. balance sheet with access to over €400 million in liquidity ... Pepco Group N.V. Annual Re...
+
+[iter 3] Agent finished.
+
+Tokens:  input=37 308  output=3719  total=41 027
+
+════════════════════════════════════════════════════════════
+
+Company:  Pepco Group
+Issuer:   Pepco Group NV
+Unit:     PLN millions
+
+Year   Revenue     EBIT  Net Profit     Equity  Fin. Debt
+────  ────────  ───────  ──────────  ─────────  ─────────
+2025  19,311.6   1,365.6    -750.5     695.9   7,227.5
+2024  26,388.1  -1,904.8  -3,038.9   2,188.4   8,532.4
+2023  26,186.0   1,059.2     474.0   5,364.1   9,374.3
+2022  23,486.2   1,354.9     845.4   5,574.7   8,512.8
+2021  19,095.9   1,308.5     717.2   4,668.3   7,922.8
+
+Notes: Źródło: biznesradar.pl (ticker PCO). Lata fiskalne kończą się 30 września (np. rok 2025 = październik 2024 – wrzesień 2025). Dane pierwotnie w EUR, przeliczone przez biznesradar.pl na PLN (tysiące), podzielone przez 1000 dla milionów PLN. Amortyzacja obliczona jako EBITDA minus EBIT. Dług finansowy = kredyty i pożyczki długoterminowe + zobowiązania leasingowe długoterminowe + kredyty i pożyczki krótkoterminowe + zobowiązania leasingowe krótkoterminowe. W FY2024 wysoka amortyzacja wynika z odpisów goodwill/wartości niematerialnych (impairment) ujętych w EBITDA vs. EBIT. Wartości niematerialne w FY2024–2025 drastycznie niższe wskutek odpisów goodwill dotyczących segmentu Poundland/UK.
+
+Fundamental Scorecard:
+──────────────────────────────────────────────────
+[31m●[0m  Debt Burden
+   [31m●[0m  D/E                       10.39×
+   [32m●[0m  Net Debt/EBITDA           1.46×
+[33m●[0m  Debt Service
+   [33m●[0m  ICR                       2.55×
+[31m●[0m  Liquidity
+   [31m●[0m  Current Ratio             0.78×
+   [31m●[0m  Quick Ratio               0.29×
+[31m●[0m  Profitability
+   [33m●[0m  EBIT Margin               7.1%
+   [31m●[0m  Net Margin                -3.9%
+[31m●[0m  Asset Coverage
+   [31m●[0m  Asset Coverage Ratio      0.69×
+   [31m●[0m  Equity Ratio              5.4%
+[33m●[0m  Financial Trend
+   [33m●[0m  Revenue CAGR              0.3%
+   [32m●[0m  EBITDA Margin Trend       slope 0.009
+   [32m●[0m  Net Debt/EBITDA Trend     slope -0.135
+════════════════════════════════════════════════════════════
+
+[DRY RUN] ISSUER_PROFILES_TABLE_NAME not set — skipping DynamoDB write.

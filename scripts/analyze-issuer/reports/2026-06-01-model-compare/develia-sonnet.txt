@@ -1,0 +1,55 @@
+
+> analyze-issuer@1.0.0 start
+> tsx analyze-issuer.ts Develia S.A. --model sonnet_4.6
+
+Issuer:  Develia S.A.
+Model:   sonnet_4.6 (arn:aws:bedrock:eu-west-1:198805281865:inference-profile/global.anthropic.claude-sonnet-4-6)
+────────────────────────────────────────────────────────────────────────────────
+
+[iter 1] stockwatch.pl lookup: "Develia"
+           Financial data for "DEVELIA - Develia SA" from https://www.stockwatch.pl/gpw/develia,notowania,dane-finansowe.aspx:
+
+Data in thousands PLN (annual). Balance sheet rows = Q4 snapshot; P&L/CF rows = ann...
+
+[iter 2] Agent finished.
+
+Tokens:  input=5914  output=1138  total=7052
+
+════════════════════════════════════════════════════════════
+
+Company:  Develia
+Issuer:   Develia S.A.
+Unit:     PLN millions
+
+Year   Revenue     EBIT  Net Profit     Equity  Fin. Debt
+────  ────────  ───────  ──────────  ─────────  ─────────
+2025   2,076.9     526.2     442.6   1,927.5     953.1
+2024   1,789.5     450.3     379.1   1,717.0     983.8
+2023   1,607.8     329.6     275.4   1,548.4     953.8
+2022   1,067.9     289.4     231.8   1,434.9     652.0
+
+Notes: Źródło: stockwatch.pl (Develia SA, GPW ticker: DVL). Wartości przeliczone z tysięcy PLN na miliony PLN. Rok 2026 pominięty jako niepełny (dane za niepełny rok obrotowy). Dług finansowy obliczony jako suma: kredyty i pożyczki długoterminowe + kredyty i pożyczki krótkoterminowe + zobowiązania z tytułu emisji papierów wartościowych długoterminowe + zobowiązania z tytułu emisji papierów wartościowych krótkoterminowe (leasing pominięty). Koszty finansowe użyte jako przybliżenie kosztów odsetkowych (interestExpense).
+
+Fundamental Scorecard:
+──────────────────────────────────────────────────
+[32m●[0m  Debt Burden
+   [32m●[0m  D/E                       0.49×
+   [32m●[0m  Net Debt/EBITDA           1.25×
+[32m●[0m  Debt Service
+   [32m●[0m  ICR                       31.67×
+[31m●[0m  Liquidity
+   [32m●[0m  Current Ratio             1.90×
+   [31m●[0m  Quick Ratio               0.32×
+[32m●[0m  Profitability
+   [32m●[0m  EBIT Margin               25.3%
+   [32m●[0m  Net Margin                21.3%
+[32m●[0m  Asset Coverage
+   [32m●[0m  Asset Coverage Ratio      2.70×
+   [32m●[0m  Equity Ratio              37.3%
+[33m●[0m  Financial Trend
+   [32m●[0m  Revenue CAGR              24.8%
+   [32m●[0m  EBITDA Margin Trend       slope 0.000
+   [33m●[0m  Net Debt/EBITDA Trend     slope 0.018
+════════════════════════════════════════════════════════════
+
+[DRY RUN] ISSUER_PROFILES_TABLE_NAME not set — skipping DynamoDB write.

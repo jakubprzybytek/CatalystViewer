@@ -1,0 +1,63 @@
+
+> analyze-issuer@1.0.0 start
+> tsx analyze-issuer.ts Allegro.eu SA --model sonnet_4.6
+
+Issuer:  Allegro.eu SA
+Model:   sonnet_4.6 (arn:aws:bedrock:eu-west-1:198805281865:inference-profile/global.anthropic.claude-sonnet-4-6)
+────────────────────────────────────────────────────────────────────────────────
+
+[iter 1] stockwatch.pl lookup: "Allegro"
+           Financial data for "ALLEGRO - ALLEGRO.EU" from https://www.stockwatch.pl/gpw/allegro,notowania,dane-finansowe.aspx:
+
+Data in thousands PLN (annual). Balance sheet rows = Q4 snapshot; P&L/CF rows = ann...
+
+[iter 1] biznesradar.pl lookup: "Allegro"
+           Financial data for "ALLEGRO.EU SOCIÉTÉ ANONYME" (ALE) from biznesradar.pl
+Source: https://www.biznesradar.pl/raporty-finansowe-rachunek-zyskow-i-strat/ALE
+Unit: thousands PLN
+
+=== P&L (Rachunek zysków...
+
+[iter 2] Agent finished.
+
+Tokens:  input=10 854  output=1100  total=11 954
+
+════════════════════════════════════════════════════════════
+
+Company:  Allegro
+Issuer:   Allegro.eu SA
+Unit:     PLN millions
+
+Year   Revenue     EBIT  Net Profit     Equity  Fin. Debt
+────  ────────  ───────  ──────────  ─────────  ─────────
+2025  11,458.1   2,330.3   1,517.1  10,144.3   5,640.7
+2024  10,821.2   1,787.1   1,034.6  10,087.2   5,961.9
+2023  10,185.3     790.1     284.1   9,043.3   6,685.1
+2022   9,004.9  -1,182.1  -1,916.8   8,981.3   7,143.7
+2021   5,352.9   1,472.9   1,089.6   9,454.1   5,617.4
+
+Notes: Źródła: stockwatch.pl i biznesradar.pl (ticker GPW: ALE). Spółka zarejestrowana w Luksemburgu jako Allegro.eu SA, notowana na GPW. Dane w milionach PLN (przeliczone z tysięcy). Dług finansowy = kredyty i pożyczki długoterminowe + kredyty i pożyczki krótkoterminowe + leasing finansowy długoterminowy + leasing finansowy krótkoterminowy. Amortyzacja obliczona jako EBITDA minus EBIT. Rok 2022: wysoka amortyzacja i ujemny EBIT wynikają z odpisów aktualizacyjnych wartości niematerialnych (przejęcie Mall/WRC). Rok 2025: zysk netto obejmuje stratę z działalności zaniechanej (-177,0 mln PLN).
+
+Fundamental Scorecard:
+──────────────────────────────────────────────────
+[32m●[0m  Debt Burden
+   [32m●[0m  D/E                       0.56×
+   [32m●[0m  Net Debt/EBITDA           0.81×
+[32m●[0m  Debt Service
+   [32m●[0m  ICR                       3.91×
+[33m●[0m  Liquidity
+   [33m●[0m  Current Ratio             1.48×
+   [32m●[0m  Quick Ratio               1.45×
+[32m●[0m  Profitability
+   [32m●[0m  EBIT Margin               20.3%
+   [32m●[0m  Net Margin                13.2%
+[31m●[0m  Asset Coverage
+   [31m●[0m  Asset Coverage Ratio      0.57×
+   [32m●[0m  Equity Ratio              51.4%
+[33m●[0m  Financial Trend
+   [32m●[0m  Revenue CAGR              21.0%
+   [31m●[0m  EBITDA Margin Trend       slope -0.010
+   [32m●[0m  Net Debt/EBITDA Trend     slope -0.451
+════════════════════════════════════════════════════════════
+
+[DRY RUN] ISSUER_PROFILES_TABLE_NAME not set — skipping DynamoDB write.

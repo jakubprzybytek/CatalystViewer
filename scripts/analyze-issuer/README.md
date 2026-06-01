@@ -31,7 +31,7 @@ TAVILY_API_KEY=tvly-your-key-here
 ## Run
 
 ```bash
-npm start -- "<Issuer Name>"
+npm start -- "<Issuer Name>" [--model haiku_4.5|sonnet_4.6]
 ```
 
 The issuer name should be the legal entity name as it appears on Catalyst,
@@ -39,8 +39,16 @@ e.g. `"P4 Sp. z o.o."` or `"Echo Investment S.A."`.
 
 ```bash
 npm start -- "Dadelo S.A."
+npm start -- "Dadelo S.A." --model haiku_4.5
 DEBUG=1 npm start -- "Dadelo S.A."
 ```
+
+### Model selection
+
+| Alias | Model | Notes |
+|---|---|---|
+| `sonnet_4.6` | Claude Sonnet 4.6 | Default — higher accuracy |
+| `haiku_4.5` | Claude Haiku 4.5 | Faster and cheaper |
 
 ## Output
 

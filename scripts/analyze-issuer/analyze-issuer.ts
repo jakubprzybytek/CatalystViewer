@@ -6,7 +6,7 @@ dotenv.config({ path: join(dirname(fileURLToPath(import.meta.url)), '.env.local'
 import { BedrockRuntimeClient } from '@aws-sdk/client-bedrock-runtime';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { TavilyClient } from '@core/ai/tools/tavily/TavilyClient';
-import { MODEL_ID } from '@core/ai/issuers/IssuerClassification';
+import { DEFAULT_MODEL_ALIAS, resolveModelId, type ModelAlias } from '@core/ai/models';
 import { type AgentEvent } from '@core/ai/agent/index';
 import { type Signal, type FundamentalScorecard } from '@core/bonds/fundamentals/scorecard';
 import { IssuerProfilesTable } from '@core/storage/issuerProfiles';
@@ -14,10 +14,23 @@ import { analyzeIssuer, type AgentFinancials } from '@core/ai/issuers/IssuerAnal
 
 // ─── CLI args ─────────────────────────────────────────────────────────────────
 
-const issuerName = process.argv[2];
+const args = process.argv.slice(2);
+const modelArgIdx = args.findIndex(a => a === '--model');
+let modelAlias: ModelAlias = DEFAULT_MODEL_ALIAS;
+if (modelArgIdx !== -1) {
+    const value = args[modelArgIdx + 1];
+    if (value !== 'haiku_4.5' && value !== 'sonnet_4.6') {
+        console.error(`Error: --model must be one of: haiku_4.5, sonnet_4.6`);
+        process.exit(1);
+    }
+    modelAlias = value;
+    args.splice(modelArgIdx, 2);
+}
+
+const issuerName = args[0];
 
 if (!issuerName) {
-    console.error('Usage: npx tsx analyze-issuer.ts "<Issuer Name>"');
+    console.error('Usage: npx tsx analyze-issuer.ts "<Issuer Name>" [--model haiku_4.5|sonnet_4.6]');
     process.exit(1);
 }
 
@@ -142,12 +155,12 @@ function printScorecard(scorecard: FundamentalScorecard): void {
 // ─── Run ──────────────────────────────────────────────────────────────────────
 
 console.log(`Issuer:  ${issuerName}`);
-console.log(`Model:   ${MODEL_ID}`);
+console.log(`Model:   ${modelAlias} (${resolveModelId(modelAlias)})`);
 console.log('─'.repeat(80));
 
 try {
     const result = await analyzeIssuer(
-        { bedrockClient, tavilyClient },
+        { bedrockClient, tavilyClient, modelId: resolveModelId(modelAlias) },
         issuerName,
         onEvent
     );
@@ -167,7 +180,7 @@ try {
             recordType: `#ANALYSIS#${now.toISOString()}`,
             performedAt: now.toISOString(),
             performedAtTs: now.getTime(),
-            modelId: MODEL_ID,
+            modelId: result.modelId,
             scorecard: result.scorecard,
             agentFinancials: result.agentFinancials,
             agentLog: result.agentLog,

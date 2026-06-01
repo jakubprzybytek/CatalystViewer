@@ -1,4 +1,4 @@
-import { bondDetailsTable, bondStatisticsTable, issuerProfilesTable } from "./storage";
+import { bondDetailsTable, bondStatisticsTable, issuerProfilesTable, jobsTable } from "./storage";
 
 const bondsUpdaterFunction = new sst.aws.Function("BondsUpdater", {
   handler: "packages/functions/src/bonds/updateBondReports.handler",
@@ -119,6 +119,18 @@ const sendAnalysisReportFunction = new sst.aws.Function("SendAnalysisReport", {
   ],
 });
 
+const logJobStartedFunction = new sst.aws.Function("LogJobStarted", {
+  handler: "packages/functions/src/jobs/logJobStarted.handler",
+  timeout: "30 seconds",
+  link: [jobsTable],
+});
+
+const logJobCompletedFunction = new sst.aws.Function("LogJobCompleted", {
+  handler: "packages/functions/src/jobs/logJobCompleted.handler",
+  timeout: "30 seconds",
+  link: [jobsTable],
+});
+
 // Step Functions state machine
 const sfnRole = new aws.iam.Role("BondsUpdaterSfnRole", {
   assumeRolePolicy: JSON.stringify({
@@ -141,14 +153,16 @@ new aws.iam.RolePolicy("BondsUpdaterSfnPolicy", {
     collectUnclassifiedIssuersFunction.arn,
     classifyIssuerFunction.arn,
     sendErrorReportFunction.arn,
-  ]).apply(([updaterArn, sendReportArn, collectArn, classifyIssuerArn, sendErrorReportArn]) =>
+    logJobStartedFunction.arn,
+    logJobCompletedFunction.arn,
+  ]).apply(([updaterArn, sendReportArn, collectArn, classifyIssuerArn, sendErrorReportArn, logStartArn, logCompletedArn]) =>
     JSON.stringify({
       Version: "2012-10-17",
       Statement: [
         {
           Effect: "Allow",
           Action: "lambda:InvokeFunction",
-          Resource: [updaterArn, sendReportArn, collectArn, classifyIssuerArn, sendErrorReportArn],
+          Resource: [updaterArn, sendReportArn, collectArn, classifyIssuerArn, sendErrorReportArn, logStartArn, logCompletedArn],
         },
       ],
     })
@@ -164,12 +178,36 @@ const stateMachine = new aws.sfn.StateMachine("BondsUpdaterStateMachine", {
     collectUnclassifiedIssuersFunction.arn,
     classifyIssuerFunction.arn,
     sendErrorReportFunction.arn,
-  ]).apply(([updaterArn, sendReportArn, collectArn, classifyIssuerArn, sendErrorReportArn]) =>
+    logJobStartedFunction.arn,
+    logJobCompletedFunction.arn,
+  ]).apply(([updaterArn, sendReportArn, collectArn, classifyIssuerArn, sendErrorReportArn, logStartArn, logCompletedArn]) =>
     JSON.stringify({
-      StartAt: "MainWorkflow",
+      StartAt: "LogJobStarted",
       States: {
+        "LogJobStarted": {
+          Type: "Task",
+          Resource: "arn:aws:states:::lambda:invoke",
+          Parameters: {
+            FunctionName: logStartArn,
+            Payload: {
+              workflowType: "BONDS_UPDATER",
+              "executionArn.$": "$$.Execution.Id",
+              "startedAt.$": "$$.State.EnteredTime",
+              "input.$": "$$.Execution.Input",
+            },
+          },
+          ResultPath: null,
+          Next: "MainWorkflow",
+          Catch: [
+            {
+              ErrorEquals: ["States.ALL"],
+              Next: "MainWorkflow",
+            },
+          ],
+        },
         "MainWorkflow": {
           Type: "Parallel",
+          ResultPath: "$.mainResult",
           Branches: [
             {
               StartAt: "ShouldUpdateBonds",
@@ -364,10 +402,54 @@ const stateMachine = new aws.sfn.StateMachine("BondsUpdaterStateMachine", {
             {
               ErrorEquals: ["States.ALL"],
               ResultPath: "$.error",
+              Next: "LogJobFailed",
+            },
+          ],
+          Next: "LogJobSucceeded",
+        },
+        "LogJobSucceeded": {
+          Type: "Task",
+          Resource: "arn:aws:states:::lambda:invoke",
+          Parameters: {
+            FunctionName: logCompletedArn,
+            Payload: {
+              workflowType: "BONDS_UPDATER",
+              "executionArn.$": "$$.Execution.Id",
+              status: "SUCCEEDED",
+              "output.$": "$.mainResult[0].Payload",
+              stage: "MainWorkflow",
+            },
+          },
+          ResultPath: null,
+          Next: "WorkflowSucceeded",
+          Catch: [
+            {
+              ErrorEquals: ["States.ALL"],
+              Next: "WorkflowSucceeded",
+            },
+          ],
+        },
+        "LogJobFailed": {
+          Type: "Task",
+          Resource: "arn:aws:states:::lambda:invoke",
+          Parameters: {
+            FunctionName: logCompletedArn,
+            Payload: {
+              workflowType: "BONDS_UPDATER",
+              "executionArn.$": "$$.Execution.Id",
+              status: "FAILED",
+              "error.$": "$.error",
+              stage: "MainWorkflow",
+            },
+          },
+          ResultPath: null,
+          Next: "SendErrorReport",
+          Catch: [
+            {
+              ErrorEquals: ["States.ALL"],
               Next: "SendErrorReport",
             },
           ],
-          Next: "WorkflowSucceeded",
         },
         "WorkflowSucceeded": {
           Type: "Succeed",
@@ -412,14 +494,16 @@ new aws.iam.RolePolicy("FundamentalAnalysisSfnPolicy", {
     analyzeIssuerFunction.arn,
     sendAnalysisReportFunction.arn,
     sendErrorReportFunction.arn,
-  ]).apply(([selectArn, analyzeArn, sendReportArn, sendErrorArn]) =>
+    logJobStartedFunction.arn,
+    logJobCompletedFunction.arn,
+  ]).apply(([selectArn, analyzeArn, sendReportArn, sendErrorArn, logStartArn, logCompletedArn]) =>
     JSON.stringify({
       Version: "2012-10-17",
       Statement: [
         {
           Effect: "Allow",
           Action: "lambda:InvokeFunction",
-          Resource: [selectArn, analyzeArn, sendReportArn, sendErrorArn],
+          Resource: [selectArn, analyzeArn, sendReportArn, sendErrorArn, logStartArn, logCompletedArn],
         },
       ],
     })
@@ -434,10 +518,28 @@ new aws.sfn.StateMachine("FundamentalAnalysisStateMachine", {
     analyzeIssuerFunction.arn,
     sendAnalysisReportFunction.arn,
     sendErrorReportFunction.arn,
-  ]).apply(([selectArn, analyzeArn, sendReportArn, sendErrorArn]) =>
+    logJobStartedFunction.arn,
+    logJobCompletedFunction.arn,
+  ]).apply(([selectArn, analyzeArn, sendReportArn, sendErrorArn, logStartArn, logCompletedArn]) =>
     JSON.stringify({
-      StartAt: "SelectIssuers",
+      StartAt: "LogJobStarted",
       States: {
+        "LogJobStarted": {
+          Type: "Task",
+          Resource: "arn:aws:states:::lambda:invoke",
+          Parameters: {
+            FunctionName: logStartArn,
+            Payload: {
+              workflowType: "FUNDAMENTAL_ANALYSIS",
+              "executionArn.$": "$$.Execution.Id",
+              "startedAt.$": "$$.State.EnteredTime",
+              "input.$": "$$.Execution.Input",
+            },
+          },
+          ResultPath: null,
+          Next: "SelectIssuers",
+          Catch: [{ ErrorEquals: ["States.ALL"], Next: "SelectIssuers" }],
+        },
         "SelectIssuers": {
           Type: "Task",
           Resource: "arn:aws:states:::lambda:invoke",
@@ -451,7 +553,7 @@ new aws.sfn.StateMachine("FundamentalAnalysisStateMachine", {
           ResultPath: "$",
           TimeoutSeconds: 60,
           Next: "AnalyzeIssuers",
-          Catch: [{ ErrorEquals: ["States.ALL"], Next: "SendErrorReport" }],
+          Catch: [{ ErrorEquals: ["States.ALL"], ResultPath: "$.error", Next: "LogJobFailed" }],
         },
         "AnalyzeIssuers": {
           Type: "Map",
@@ -496,8 +598,25 @@ new aws.sfn.StateMachine("FundamentalAnalysisStateMachine", {
               },
             },
           },
+          Next: "LogJobSucceeded",
+          Catch: [{ ErrorEquals: ["States.ALL"], ResultPath: "$.error", Next: "LogJobFailed" }],
+        },
+        "LogJobSucceeded": {
+          Type: "Task",
+          Resource: "arn:aws:states:::lambda:invoke",
+          Parameters: {
+            FunctionName: logCompletedArn,
+            Payload: {
+              workflowType: "FUNDAMENTAL_ANALYSIS",
+              "executionArn.$": "$$.Execution.Id",
+              status: "SUCCEEDED",
+              "output.$": "$",
+              stage: "AnalyzeIssuers",
+            },
+          },
+          ResultPath: null,
           Next: "SendAnalysisReport",
-          Catch: [{ ErrorEquals: ["States.ALL"], Next: "SendErrorReport" }],
+          Catch: [{ ErrorEquals: ["States.ALL"], Next: "SendAnalysisReport" }],
         },
         "SendAnalysisReport": {
           Type: "Task",
@@ -508,17 +627,37 @@ new aws.sfn.StateMachine("FundamentalAnalysisStateMachine", {
           },
           TimeoutSeconds: 30,
           Next: "Done",
-          Catch: [{ ErrorEquals: ["States.ALL"], Next: "SendErrorReport" }],
+          Catch: [{ ErrorEquals: ["States.ALL"], ResultPath: "$.error", Next: "LogJobFailed" }],
         },
         "Done": {
           Type: "Succeed",
+        },
+        "LogJobFailed": {
+          Type: "Task",
+          Resource: "arn:aws:states:::lambda:invoke",
+          Parameters: {
+            FunctionName: logCompletedArn,
+            Payload: {
+              workflowType: "FUNDAMENTAL_ANALYSIS",
+              "executionArn.$": "$$.Execution.Id",
+              status: "FAILED",
+              "error.$": "$.error",
+              stage: "WorkflowFailure",
+            },
+          },
+          ResultPath: null,
+          Next: "SendErrorReport",
+          Catch: [{ ErrorEquals: ["States.ALL"], Next: "SendErrorReport" }],
         },
         "SendErrorReport": {
           Type: "Task",
           Resource: "arn:aws:states:::lambda:invoke",
           Parameters: {
             FunctionName: sendErrorArn,
-            "Payload.$": "$",
+            Payload: {
+              "error.$": "$.error",
+              "executionArn.$": "$$.Execution.Id",
+            },
           },
           TimeoutSeconds: 30,
           Next: "Fail",

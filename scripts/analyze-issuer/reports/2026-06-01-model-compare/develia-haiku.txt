@@ -1,0 +1,72 @@
+
+> analyze-issuer@1.0.0 start
+> tsx analyze-issuer.ts Develia S.A. --model haiku_4.5
+
+Issuer:  Develia S.A.
+Model:   haiku_4.5 (arn:aws:bedrock:eu-west-1:198805281865:inference-profile/global.anthropic.claude-haiku-4-5-20251001-v1:0)
+────────────────────────────────────────────────────────────────────────────────
+
+[iter 1] stockwatch.pl lookup: "Develia"
+           Financial data for "DEVELIA - Develia SA" from https://www.stockwatch.pl/gpw/develia,notowania,dane-finansowe.aspx:
+
+Data in thousands PLN (annual). Balance sheet rows = Q4 snapshot; P&L/CF rows = ann...
+
+[iter 1] Searching: "Develia S.A. spółka marka nazwa GPW Catalyst obligacje"
+           Got 5 result(s):
+             · https://www.gpw.pl/komunikat?geru_id=489090&title=Wyznaczenie+pierwszego+i+ostatniego+dnia+notowania+w+alternatywnym+systemie+obrotu+na+Catalyst+obligacji+na+okaziciela+serii+DVL0530OZ14
+               Główny Rynek GPW - Raporty Spółek ESPI/EBI
+               # Wyznaczenie pierwszego i ostatniego dnia notowania w alternatywnym systemie obrotu na Catalyst obligacji na okaziciela...
+             · https://strefainwestorow.pl/wiadomosci/20260519/gpw-w-sprawie-wyznaczenia-pierwszego-dnia-notowania-w-alternatywnym-systemie-0
+               GPW: w sprawie wyznaczenia pierwszego dnia notowania ...
+               ... Catalyst obligacji na okaziciela serii DVL0530OZ14 spółki DEVELIA S.A. ... nazwą skróconą „DVL0530”. § 2. Na podstaw...
+             · https://gpwcatalyst.pl/o-instrumentach-instrument?nazwa=DVL0528
+               DVL0528
+               Nazwa emitenta, DEVELIA ; Data autoryzacji, 2024-07-19 ; Data pierwszego notowania, 2024-07-19 ; Data wykupu, 2028-05-19...
+             · https://biznes.pap.pl/wiadomosci/firmy/gpw-w-sprawie-wprowadzenia-do-alternatywnego-systemu-obrotu-na-catalyst-227
+               GPW: w sprawie wprowadzenia do alternatywnego ...
+               GPW: w sprawie wprowadzenia do alternatywnego systemu obrotu na Catalyst obligacji na okaziciela serii DVL0229OZ12 spółk...
+             · https://x.com/strefainw/status/2056800339920077140
+               GPW: w sprawie wyznaczenia pierwszego dnia notowania ...
+               ... Catalyst obligacji na okaziciela serii DVL0530OZ14 spółki DEVELIA. ... GPW: w sprawie wyznaczenia pierwszego dnia no...
+
+[iter 2] Agent finished.
+
+Tokens:  input=6935  output=771  total=7706
+
+════════════════════════════════════════════════════════════
+
+Company:  Develia
+Issuer:   Develia S.A.
+Unit:     PLN millions
+
+Year   Revenue     EBIT  Net Profit     Equity  Fin. Debt
+────  ────────  ───────  ──────────  ─────────  ─────────
+2024   1,789.5     450.3     379.1   1,717.0     904.9
+2023   1,607.8     329.6     275.4   1,548.4     881.8
+2022   1,067.9     289.4     231.8   1,434.9     583.2
+
+Notes: Dane ze stockwatch.pl, wartości przeliczone z tysięcy PLN na miliony. Financial debt = Credits and loans LT + bonds LT + Credits and loans ST + bonds ST (na dzień raportowania). Spółka notowana na GPW, emituje obligacje na rynku Catalyst (seria DVL0528, DVL0530 i inne).
+
+Fundamental Scorecard:
+──────────────────────────────────────────────────
+[32m●[0m  Debt Burden
+   [32m●[0m  D/E                       0.53×
+   [32m●[0m  Net Debt/EBITDA           0.71×
+[32m●[0m  Debt Service
+   [32m●[0m  ICR                       32.36×
+[31m●[0m  Liquidity
+   [32m●[0m  Current Ratio             2.35×
+   [31m●[0m  Quick Ratio               0.70×
+[32m●[0m  Profitability
+   [32m●[0m  EBIT Margin               25.2%
+   [32m●[0m  Net Margin                21.2%
+[32m●[0m  Asset Coverage
+   [32m●[0m  Asset Coverage Ratio      2.85×
+   [32m●[0m  Equity Ratio              40.1%
+[33m●[0m  Financial Trend
+   [32m●[0m  Revenue CAGR              29.4%
+   [31m●[0m  EBITDA Margin Trend       slope -0.009
+   [33m●[0m  Net Debt/EBITDA Trend     slope -0.041
+════════════════════════════════════════════════════════════
+
+[DRY RUN] ISSUER_PROFILES_TABLE_NAME not set — skipping DynamoDB write.

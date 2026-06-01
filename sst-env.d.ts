@@ -50,6 +50,14 @@ declare module "sst" {
       "name": string
       "type": "sst.aws.Function"
     }
+    "GetJob": {
+      "name": string
+      "type": "sst.aws.Function"
+    }
+    "GetJobs": {
+      "name": string
+      "type": "sst.aws.Function"
+    }
     "GetProfile": {
       "name": string
       "type": "sst.aws.Function"
@@ -57,6 +65,18 @@ declare module "sst" {
     "IssuerProfiles": {
       "name": string
       "type": "sst.aws.Dynamo"
+    }
+    "Jobs": {
+      "name": string
+      "type": "sst.aws.Dynamo"
+    }
+    "LogJobCompleted": {
+      "name": string
+      "type": "sst.aws.Function"
+    }
+    "LogJobStarted": {
+      "name": string
+      "type": "sst.aws.Function"
     }
     "Profiles": {
       "name": string

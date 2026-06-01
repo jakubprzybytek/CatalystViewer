@@ -1,0 +1,64 @@
+λ npm start -- "Dadelo S.A." --model haiku_4.5
+
+> analyze-issuer@1.0.0 start
+> tsx analyze-issuer.ts Dadelo S.A. --model haiku_4.5
+
+Issuer:  Dadelo S.A.
+Model:   haiku_4.5 (arn:aws:bedrock:eu-west-1:198805281865:inference-profile/global.anthropic.claude-haiku-4-5-20251001-v1:0)
+────────────────────────────────────────────────────────────────────────────────
+
+[iter 1] stockwatch.pl lookup: "Dadelo"
+           Financial data for "DADELO - Dadelo SA" from https://www.stockwatch.pl/gpw/dadelo,notowania,dane-finansowe.aspx:
+
+Data in thousands PLN (annual). Balance sheet rows = Q4 snapshot; P&L/CF rows = annual...
+
+[iter 1] biznesradar.pl lookup: "Dadelo"
+           Financial data for "DADELO SPÓŁKA AKCYJNA" (DAD) from biznesradar.pl
+Source: https://www.biznesradar.pl/raporty-finansowe-rachunek-zyskow-i-strat/DAD
+Unit: thousands PLN
+
+=== P&L (Rachunek zysków i st...
+
+[iter 2] Agent finished.
+
+Tokens:  input=10 060  output=1169  total=11 229
+
+════════════════════════════════════════════════════════════
+
+Company:  Dadelo
+Issuer:   Dadelo S.A.
+Unit:     PLN millions
+
+Year   Revenue     EBIT  Net Profit     Equity  Fin. Debt
+────  ────────  ───────  ──────────  ─────────  ─────────
+2025     444.0      25.2      15.4     140.1      49.5
+2024     280.6      15.1      11.5     117.6      40.0
+2023     189.1       0.3       0.1     106.1       0.0
+2022     117.2       4.4       3.9     106.0       0.0
+2021      82.8       7.1       6.0     103.7       0.0
+
+Notes: Dane z stockwatch.pl i biznesradar.pl (źródło oficjalne: GPW/Catalyst). Wartości w tysiącach PLN podzielone przez 1000 na miliony. Spółka Dadelo S.A. (ISIN: PLDADEL00013, ticker: DAD) prowadzi działalność w branży e-commerce (handel internetowy). Od 2024 roku spółka emituje obligacje na Catalyst. Dane obejmują lata 2021-2025 (pełne okresy sprawozdawcze). Finansialny dług obejmuje zobowiązania z tytułu emisji papierów wartościowych i kredyty/pożyczki krótko- i długoterminowe.
+
+Fundamental Scorecard:
+──────────────────────────────────────────────────
+●  Debt Burden
+   ●  D/E                       0.35×
+   ●  Net Debt/EBITDA           1.43×
+●  Debt Service
+   ●  ICR                       4.10×
+●  Liquidity
+   ●  Current Ratio             1.72×
+   ●  Quick Ratio               0.10×
+●  Profitability
+   ●  EBIT Margin               5.7%
+   ●  Net Margin                3.5%
+●  Asset Coverage
+   ●  Asset Coverage Ratio      4.04×
+   ●  Equity Ratio              34.3%
+●  Financial Trend
+   ●  Revenue CAGR              52.2%
+   ●  EBITDA Margin Trend       slope 0.011
+   ●  Net Debt/EBITDA Trend     slope 1.046
+════════════════════════════════════════════════════════════
+
+[DRY RUN] ISSUER_PROFILES_TABLE_NAME not set — skipping DynamoDB write.

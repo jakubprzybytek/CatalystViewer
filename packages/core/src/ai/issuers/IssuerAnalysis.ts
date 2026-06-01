@@ -4,7 +4,7 @@ import { WebSearchTool } from '../tools/WebSearchTool';
 import { StockwatchTool } from '../tools/StockwatchTool';
 import { BiznesradarTool } from '../tools/BiznesradarTool';
 import { TavilyClient } from '../tools/tavily/TavilyClient';
-import { MODEL_ID } from './IssuerClassification';
+import { MODEL_IDS } from '../models';
 import { computeScorecard, type FundamentalScorecard, type Signal } from '../../bonds/fundamentals/scorecard';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -37,6 +37,7 @@ export type AgentFinancials = {
 export type IssuerAnalysisDeps = {
     bedrockClient: BedrockRuntimeClient;
     tavilyClient: TavilyClient;
+    modelId?: string;
 };
 
 export type IssuerAnalysisResult = {
@@ -140,6 +141,7 @@ export function buildReportMarkdown(
     agentFinancials: AgentFinancials,
     scorecard: FundamentalScorecard,
     agentEvents: AgentEvent[],
+    modelId: string,
 ): string {
     const now = new Date().toISOString();
     const lines: string[] = [];
@@ -147,7 +149,7 @@ export function buildReportMarkdown(
     lines.push(`# Fundamental Analysis: ${issuerName}`);
     lines.push('');
     lines.push(`**Date:** ${now}`);
-    lines.push(`**Model:** ${MODEL_ID}`);
+    lines.push(`**Model:** ${modelId}`);
     lines.push(`**Company:** ${agentFinancials.companyName} (${agentFinancials.currency} ${agentFinancials.unit})`);
     lines.push('');
 
@@ -224,11 +226,12 @@ export async function analyzeIssuer(
     onEvent?: (event: AgentEvent) => void,
 ): Promise<IssuerAnalysisResult> {
     const { bedrockClient, tavilyClient } = deps;
+    const resolvedModelId = deps.modelId ?? MODEL_IDS.sonnet_4_6;
 
     const webSearchTool = new WebSearchTool(tavilyClient);
     const stockwatchTool = new StockwatchTool();
     const biznesradarTool = new BiznesradarTool();
-    const agentLoop = new AgentLoop(bedrockClient, MODEL_ID, [biznesradarTool, stockwatchTool, webSearchTool], 10);
+    const agentLoop = new AgentLoop(bedrockClient, resolvedModelId, [biznesradarTool, stockwatchTool, webSearchTool], 10);
 
     const agentEvents: AgentEvent[] = [];
     const rawAnswer = await agentLoop.run(buildTaskPrompt(issuerName), (event) => {
@@ -259,7 +262,7 @@ export async function analyzeIssuer(
     }));
 
     const scorecard = computeScorecard(financialYears);
-    const reportMarkdown = buildReportMarkdown(issuerName, agentFinancials, scorecard, agentEvents);
+    const reportMarkdown = buildReportMarkdown(issuerName, agentFinancials, scorecard, agentEvents, resolvedModelId);
 
     return {
         issuerName,
@@ -267,6 +270,6 @@ export async function analyzeIssuer(
         agentFinancials,
         agentLog: agentEvents,
         reportMarkdown,
-        modelId: MODEL_ID,
+        modelId: resolvedModelId,
     };
 }

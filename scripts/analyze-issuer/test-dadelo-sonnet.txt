@@ -1,0 +1,58 @@
+λ npm start -- "Dadelo S.A."
+
+> analyze-issuer@1.0.0 start
+> tsx analyze-issuer.ts Dadelo S.A.
+
+Issuer:  Dadelo S.A.
+Model:   arn:aws:bedrock:eu-west-1:198805281865:inference-profile/global.anthropic.claude-sonnet-4-6
+────────────────────────────────────────────────────────────────────────────────
+
+[iter 1] stockwatch.pl lookup: "Dadelo"
+           Financial data for "DADELO - Dadelo SA" from https://www.stockwatch.pl/gpw/dadelo,notowania,dane-finansowe.aspx:
+
+Data in thousands PLN (annual). Balance sheet rows = Q4 snapshot; P&L/CF rows = annual...
+
+[iter 2] Agent finished.
+
+Tokens:  input=5828  output=949  total=6777
+
+════════════════════════════════════════════════════════════
+
+Company:  Dadelo
+Issuer:   Dadelo S.A.
+Unit:     PLN millions
+
+Year   Revenue     EBIT  Net Profit     Equity  Fin. Debt
+────  ────────  ───────  ──────────  ─────────  ─────────
+2026     143.3      13.6       8.3     148.5     187.2
+2025     444.0      25.2      15.4     140.1     196.2
+2024     280.6      15.1      11.5     117.6      48.5
+2023     189.1       0.3       0.1     106.1       6.8
+2022     117.2       4.4       3.9     106.0       3.8
+
+Notes: Źródło: stockwatch.pl (dane w tys. PLN przeliczone na mln PLN). Rok 2026 zawiera dane częściowe (niepełny rok obrotowy – raport za Q1 2026 lub dane narastające). Dług finansowy = kredyty i pożyczki + zobowiązania z tytułu emisji papierów wartościowych (obligacje) + leasing długoterminowy + leasing krótkoterminowy. Koszty finansowe (interestExpense) odpowiadają pozycji 'Koszty finansowe' z rachunku wyników. Dadelo S.A. to spółka prowadząca sprzedaż rowerów i akcesoriów (ticker GPW: DAD), notowana na rynku głównym GPW oraz emitent obligacji na Catalyst.
+
+Fundamental Scorecard:
+──────────────────────────────────────────────────
+●  Debt Burden
+   ●  D/E                       1.26×
+   ●  Net Debt/EBITDA           11.13×
+●  Debt Service
+   ●  ICR                       4.12×
+●  Liquidity
+   ●  Current Ratio             1.60×
+   ●  Quick Ratio               0.12×
+●  Profitability
+   ●  EBIT Margin               9.5%
+   ●  Net Margin                5.8%
+●  Asset Coverage
+   ●  Asset Coverage Ratio      1.13×
+   ●  Equity Ratio              32.4%
+●  Financial Trend
+   ●  Revenue CAGR              5.2%
+   ●  EBITDA Margin Trend       slope 0.017
+   ●  Net Debt/EBITDA Trend     slope 2.832
+════════════════════════════════════════════════════════════
+
+[DRY RUN] ISSUER_PROFILES_TABLE_NAME not set — skipping DynamoDB write.
+jakub@Rodos /d/Workspace/CatalystViewer/scripts/analyze-issuer (main)

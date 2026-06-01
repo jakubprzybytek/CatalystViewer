@@ -39,3 +39,29 @@ export const issuerProfilesTable = new sst.aws.Dynamo("IssuerProfiles", {
     rangeKey: "recordType",
   },
 });
+
+export const jobsTable = new sst.aws.Dynamo("Jobs", {
+  fields: {
+    listPk: "string",
+    listSk: "number",
+    statusPk: "string",
+    jobId: "string",
+    executionArn: "string",
+  },
+  primaryIndex: {
+    hashKey: "listPk",
+    rangeKey: "listSk",
+  },
+  globalIndexes: {
+    statusPkListSkIndex: {
+      hashKey: "statusPk",
+      rangeKey: "listSk",
+    },
+    jobIdIndex: {
+      hashKey: "jobId",
+    },
+    executionArnIndex: {
+      hashKey: "executionArn",
+    },
+  },
+});

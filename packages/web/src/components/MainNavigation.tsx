@@ -1,12 +1,16 @@
 import { signOut } from 'aws-amplify/auth';
+import { useState } from 'react';
 import Stack from "@mui/material/Stack";
 import AppBar from '@mui/material/AppBar';
 import Slide from '@mui/material/Slide';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
-import Logout from '@mui/icons-material/Logout';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
+import MoreVert from '@mui/icons-material/MoreVert';
 import useScrollTrigger from '@mui/material/useScrollTrigger';
+import { useRouter } from 'next/router';
 
 type HideOnScrollParams = {
   children: React.ReactElement;
@@ -22,10 +26,13 @@ function HideOnScroll({ children }: HideOnScrollParams): React.JSX.Element {
 
 type MainNavigationParams = {
   title: string;
-  children: React.ReactElement;
+  children: React.ReactNode;
 }
 
 export default function MainNavigation({ title, children }: MainNavigationParams): React.JSX.Element {
+  const router = useRouter();
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+
   return (
     <HideOnScroll>
       <AppBar component="nav">
@@ -39,9 +46,18 @@ export default function MainNavigation({ title, children }: MainNavigationParams
             <Stack direction='row' justifyContent={'flex-end'}>
               {children}
               <IconButton color='inherit'
-                onClick={() => signOut()}>
-                <Logout />
+                onClick={(event) => setAnchorEl(event.currentTarget)}>
+                <MoreVert />
               </IconButton>
+              <Menu
+                anchorEl={anchorEl}
+                open={anchorEl !== null}
+                onClose={() => setAnchorEl(null)}
+              >
+                <MenuItem onClick={() => { setAnchorEl(null); router.push('/'); }}>Bonds</MenuItem>
+                <MenuItem onClick={() => { setAnchorEl(null); router.push('/jobs'); }}>Jobs</MenuItem>
+                <MenuItem onClick={() => { setAnchorEl(null); signOut(); }}>Logout</MenuItem>
+              </Menu>
             </Stack>
           </Stack>
         </Toolbar>
