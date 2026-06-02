@@ -1,7 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const sendMock = vi.fn();
-const fromMock = vi.fn(() => ({ send: sendMock }));
+const { sendMock, fromMock } = vi.hoisted(() => {
+  const sendMock = vi.fn();
+  const fromMock = vi.fn(() => ({ send: sendMock }));
+  return { sendMock, fromMock };
+});
 
 vi.mock('@aws-sdk/lib-dynamodb', () => {
   class PutCommand {
