@@ -4,6 +4,7 @@ import Stack from '@mui/material/Stack';
 import Alert from '@mui/material/Alert';
 import AlertTitle from '@mui/material/AlertTitle';
 import CircularProgress from '@mui/material/CircularProgress';
+import IconButton from '@mui/material/IconButton';
 import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import Button from '@mui/material/Button';
@@ -19,31 +20,68 @@ import Accordion from '@mui/material/Accordion';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import AccordionDetails from '@mui/material/AccordionDetails';
 import ExpandMore from '@mui/icons-material/ExpandMore';
+import Refresh from '@mui/icons-material/Refresh';
 import MainNavigation from '@/components/MainNavigation';
 import { getJob, getJobs, type GetJobResult, type JobStatus } from '@/sdk/Jobs';
 
-const ALL_STATUSES: JobStatus[] = ['RUNNING', 'SUCCEEDED', 'FAILED', 'TIMED_OUT'];
+type JobFilter = 'success' | 'failed';
+
+const FAILED_STATUSES: JobStatus[] = ['RUNNING', 'FAILED', 'TIMED_OUT'];
+
+function filterToStatuses(filters: JobFilter[]): JobStatus[] {
+  const statuses: JobStatus[] = [];
+  if (filters.includes('success')) statuses.push('SUCCEEDED');
+  if (filters.includes('failed')) statuses.push(...FAILED_STATUSES);
+  return statuses;
+}
+
+function formatDuration(ms: number): string {
+  const seconds = ms / 1000;
+  if (seconds < 60) {
+    return `${seconds.toFixed(1)} s`;
+  }
+  const minutes = seconds / 60;
+  if (minutes < 60) {
+    return `${minutes.toFixed(1)} min`;
+  }
+  return `${(minutes / 60).toFixed(1)} h`;
+}
 
 function renderJson(value: unknown): string {
   return JSON.stringify(value ?? {}, null, 2);
 }
 
 export default function JobsPage(): React.JSX.Element {
-  const [statuses, setStatuses] = useState<JobStatus[]>([]);
+  const [filters, setFilters] = useState<JobFilter[]>([]);
   const [items, setItems] = useState<GetJobResult[]>([]);
   const [cursor, setCursor] = useState<string | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
   const [selectedJob, setSelectedJob] = useState<GetJobResult | undefined>(undefined);
   const [isDetailLoading, setIsDetailLoading] = useState(false);
+  const [now, setNow] = useState<number>(Date.now());
 
   const title = useMemo(() => `${items.length} jobs`, [items.length]);
+  const hasRunningJobs = useMemo(() => items.some(job => job.status === 'RUNNING'), [items]);
 
-  async function loadFirstPage(nextStatuses: JobStatus[]): Promise<void> {
+  useEffect(() => {
+    if (!hasRunningJobs) return;
+    const interval = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(interval);
+  }, [hasRunningJobs]);
+
+  function getJobDurationMs(job: GetJobResult): number {
+    if (job.status === 'RUNNING') {
+      return now - job.startedAtTs;
+    }
+    return job.durationMs ?? 0;
+  }
+
+  async function loadFirstPage(nextFilters: JobFilter[]): Promise<void> {
     setIsLoading(true);
     setErrorMessage(undefined);
     try {
-      const result = await getJobs({ statuses: nextStatuses, limit: 20 });
+      const result = await getJobs({ statuses: filterToStatuses(nextFilters), limit: 20 });
       setItems(result.jobs);
       setCursor(result.nextCursor);
     } catch (error) {
@@ -62,7 +100,7 @@ export default function JobsPage(): React.JSX.Element {
     setIsLoading(true);
     setErrorMessage(undefined);
     try {
-      const result = await getJobs({ statuses, limit: 20, cursor });
+      const result = await getJobs({ statuses: filterToStatuses(filters), limit: 20, cursor });
       setItems(current => [...current, ...result.jobs]);
       setCursor(result.nextCursor);
     } catch (error) {
@@ -84,31 +122,31 @@ export default function JobsPage(): React.JSX.Element {
   }
 
   useEffect(() => {
-    loadFirstPage(statuses);
+    loadFirstPage(filters);
   }, []);
 
   return (
     <>
       <MainNavigation title={title}>
-        <></>
+        <IconButton color='inherit' onClick={() => loadFirstPage(filters)} disabled={isLoading}>
+          <Refresh />
+        </IconButton>
       </MainNavigation>
       <Box sx={{ height: 48 }} />
-      <Box sx={{ mt: 2, px: 2 }}>
-        <Stack direction='row' spacing={1} sx={{ mb: 2 }}>
+      <Box sx={{ mt: 1, px: 1 }}>
+        <Stack direction='row' spacing={1} sx={{ mb: 1 }}>
           <ToggleButtonGroup
             size='small'
-            value={statuses}
-            onChange={(_event, nextValue: JobStatus[]) => {
-              const nextStatuses = nextValue ?? [];
-              setStatuses(nextStatuses);
-              loadFirstPage(nextStatuses);
+            value={filters}
+            onChange={(_event, nextValue: JobFilter[]) => {
+              const nextFilters = nextValue ?? [];
+              setFilters(nextFilters);
+              loadFirstPage(nextFilters);
             }}
           >
-            {ALL_STATUSES.map(status => (
-              <ToggleButton key={status} value={status}>{status}</ToggleButton>
-            ))}
+            <ToggleButton value='success'>Success</ToggleButton>
+            <ToggleButton value='failed'>Failed</ToggleButton>
           </ToggleButtonGroup>
-          <Button variant='outlined' onClick={() => loadFirstPage(statuses)} disabled={isLoading}>Refresh</Button>
         </Stack>
 
         {isLoading && (
@@ -124,13 +162,13 @@ export default function JobsPage(): React.JSX.Element {
           </Alert>
         )}
 
-        <List sx={{ bgcolor: 'background.paper', borderRadius: 1 }}>
+        <List disablePadding sx={{ width: '100%', bgcolor: 'background.paper', borderRadius: 1 }}>
           {items.map(job => (
-            <ListItem key={job.jobId} disablePadding divider>
-              <ListItemButton onClick={() => openDetails(job.jobId)}>
+            <ListItem key={job.jobId} disablePadding divider sx={{ width: '100%' }}>
+              <ListItemButton onClick={() => openDetails(job.jobId)} sx={{ width: '100%' }}>
                 <ListItemText
                   primary={`${job.workflowType} • ${new Date(job.startedAtTs).toLocaleString()}`}
-                  secondary={`Ended: ${job.endedAt ? new Date(job.endedAtTs ?? 0).toLocaleString() : '—'} • Duration: ${job.durationMs ?? 0}ms`}
+                  secondary={`Duration: ${formatDuration(getJobDurationMs(job))}`}
                 />
                 <Chip label={job.status} color={job.status === 'SUCCEEDED' ? 'success' : job.status === 'RUNNING' ? 'info' : 'error'} size='small' />
               </ListItemButton>
