@@ -48,6 +48,7 @@ export default function JobsPage(): React.JSX.Element {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
   const [selectedJob, setSelectedJob] = useState<GetJobResult | undefined>(undefined);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isDetailLoading, setIsDetailLoading] = useState(false);
   const [now, setNow] = useState<number>(Date.now());
 
@@ -101,6 +102,7 @@ export default function JobsPage(): React.JSX.Element {
   }
 
   async function openDetails(jobId: string): Promise<void> {
+    setIsDetailsOpen(true);
     setIsDetailLoading(true);
     setSelectedJob(undefined);
     try {
@@ -179,11 +181,15 @@ export default function JobsPage(): React.JSX.Element {
       </Box>
 
       <JobDetailsModal
-        open={selectedJob !== undefined || isDetailLoading}
+        open={isDetailsOpen}
         job={selectedJob}
         isLoading={isDetailLoading}
         now={now}
-        onClose={() => setSelectedJob(undefined)}
+        onClose={() => {
+          setIsDetailsOpen(false);
+          setSelectedJob(undefined);
+          setIsDetailLoading(false);
+        }}
       />
     </>
   );
