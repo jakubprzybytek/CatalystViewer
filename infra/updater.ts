@@ -598,6 +598,7 @@ new aws.sfn.StateMachine("FundamentalAnalysisStateMachine", {
               },
             },
           },
+          ResultPath: "$.analysedIssuers",
           Next: "LogJobSucceeded",
           Catch: [{ ErrorEquals: ["States.ALL"], ResultPath: "$.error", Next: "LogJobFailed" }],
         },
