@@ -18,7 +18,7 @@
     "email": "esrun packages/functions/src/emails/testEmail.ts"
   },
   "devDependencies": {
-    "@playwright/test": "^1.59.1",
+    "@playwright/test": "^1.60.0",
     "@tsconfig/node22": "^22.0.0",
     "@types/node": "^22",
     "@types/react": "^19",
