@@ -13,16 +13,10 @@ import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemText from '@mui/material/ListItemText';
 import Chip from '@mui/material/Chip';
-import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
-import DialogContent from '@mui/material/DialogContent';
-import Accordion from '@mui/material/Accordion';
-import AccordionSummary from '@mui/material/AccordionSummary';
-import AccordionDetails from '@mui/material/AccordionDetails';
-import ExpandMore from '@mui/icons-material/ExpandMore';
 import Refresh from '@mui/icons-material/Refresh';
 import MainNavigation from '@/components/MainNavigation';
 import { getJob, getJobs, type GetJobResult, type JobStatus } from '@/sdk/Jobs';
+import JobDetailsModal from '@/components/Jobs/JobDetailsModal';
 
 type JobFilter = 'success' | 'failed';
 
@@ -47,10 +41,6 @@ function formatDuration(ms: number): string {
   return `${(minutes / 60).toFixed(1)} h`;
 }
 
-function renderJson(value: unknown): string {
-  return JSON.stringify(value ?? {}, null, 2);
-}
-
 export default function JobsPage(): React.JSX.Element {
   const [filters, setFilters] = useState<JobFilter[]>([]);
   const [items, setItems] = useState<GetJobResult[]>([]);
@@ -58,17 +48,19 @@ export default function JobsPage(): React.JSX.Element {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
   const [selectedJob, setSelectedJob] = useState<GetJobResult | undefined>(undefined);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isDetailLoading, setIsDetailLoading] = useState(false);
   const [now, setNow] = useState<number>(Date.now());
 
   const title = useMemo(() => `${items.length} jobs`, [items.length]);
   const hasRunningJobs = useMemo(() => items.some(job => job.status === 'RUNNING'), [items]);
+  const isRunningJobSelected = selectedJob?.status === 'RUNNING';
 
   useEffect(() => {
-    if (!hasRunningJobs) return;
+    if (!hasRunningJobs && !isRunningJobSelected) return;
     const interval = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(interval);
-  }, [hasRunningJobs]);
+  }, [hasRunningJobs, isRunningJobSelected]);
 
   function getJobDurationMs(job: GetJobResult): number {
     if (job.status === 'RUNNING') {
@@ -110,6 +102,7 @@ export default function JobsPage(): React.JSX.Element {
   }
 
   async function openDetails(jobId: string): Promise<void> {
+    setIsDetailsOpen(true);
     setIsDetailLoading(true);
     setSelectedJob(undefined);
     try {
@@ -187,47 +180,17 @@ export default function JobsPage(): React.JSX.Element {
         )}
       </Box>
 
-      <Dialog open={selectedJob !== undefined || isDetailLoading} onClose={() => setSelectedJob(undefined)} fullWidth maxWidth='md'>
-        <DialogTitle>Job Details</DialogTitle>
-        <DialogContent>
-          {isDetailLoading && <CircularProgress />}
-          {selectedJob && (
-            <>
-              <Box sx={{ mb: 2 }}>
-                <strong>Workflow:</strong> {selectedJob.workflowType}<br />
-                <strong>Status:</strong> {selectedJob.status}<br />
-                <strong>Execution ARN:</strong> {selectedJob.executionArn}<br />
-                <strong>Started:</strong> {new Date(selectedJob.startedAtTs).toLocaleString()}<br />
-                <strong>Ended:</strong> {selectedJob.endedAtTs ? new Date(selectedJob.endedAtTs).toLocaleString() : '—'}
-              </Box>
-              <Accordion defaultExpanded>
-                <AccordionSummary expandIcon={<ExpandMore />}>
-                  Input Summary
-                </AccordionSummary>
-                <AccordionDetails>
-                  <pre>{renderJson(selectedJob.inputSummary)}</pre>
-                </AccordionDetails>
-              </Accordion>
-              <Accordion>
-                <AccordionSummary expandIcon={<ExpandMore />}>
-                  Output Summary
-                </AccordionSummary>
-                <AccordionDetails>
-                  <pre>{renderJson(selectedJob.outputSummary)}</pre>
-                </AccordionDetails>
-              </Accordion>
-              <Accordion>
-                <AccordionSummary expandIcon={<ExpandMore />}>
-                  Error Summary
-                </AccordionSummary>
-                <AccordionDetails>
-                  <pre>{renderJson(selectedJob.errorSummary)}</pre>
-                </AccordionDetails>
-              </Accordion>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
+      <JobDetailsModal
+        open={isDetailsOpen}
+        job={selectedJob}
+        isLoading={isDetailLoading}
+        now={now}
+        onClose={() => {
+          setIsDetailsOpen(false);
+          setSelectedJob(undefined);
+          setIsDetailLoading(false);
+        }}
+      />
     </>
   );
 }
