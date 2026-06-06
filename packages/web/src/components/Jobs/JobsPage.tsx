@@ -165,12 +165,16 @@ export default function JobsPage(): React.JSX.Element {
         <List disablePadding sx={{ width: '100%', bgcolor: 'background.paper', borderRadius: 1 }}>
           {items.map(job => (
             <ListItem key={job.jobId} disablePadding divider sx={{ width: '100%' }}>
-              <ListItemButton onClick={() => openDetails(job.jobId)} sx={{ width: '100%' }}>
+              <ListItemButton onClick={() => openDetails(job.jobId)} sx={{ width: '100%', py: 0.5 }}>
                 <ListItemText
-                  primary={`${job.workflowType} • ${new Date(job.startedAtTs).toLocaleString()}`}
-                  secondary={`Duration: ${formatDuration(getJobDurationMs(job))}`}
+                  primary={
+                    <Stack direction='row' justifyContent='space-between' alignItems='center'>
+                      <span>{job.workflowType}</span>
+                      <Chip label={job.status} color={job.status === 'SUCCEEDED' ? 'success' : job.status === 'RUNNING' ? 'info' : 'error'} size='small' />
+                    </Stack>
+                  }
+                  secondary={`${new Date(job.startedAtTs).toLocaleString()} · ${formatDuration(getJobDurationMs(job))}`}
                 />
-                <Chip label={job.status} color={job.status === 'SUCCEEDED' ? 'success' : job.status === 'RUNNING' ? 'info' : 'error'} size='small' />
               </ListItemButton>
             </ListItem>
           ))}
