@@ -11,7 +11,7 @@ type UpdateBondsResultLike = {
   bondsUpdated?: number;
   newBonds?: UpdatedBond[];
   bondsDeactivated?: UpdatedBond[];
-  bondsFailed?: string[];
+  bondsFailed?: Record<string, string>;
 };
 
 type ClassifyIssuerResultLike = {
@@ -44,7 +44,8 @@ export function buildBondsOutputSummary(result: UpdateBondsResultLike & { classi
     bondsUpdated: result.bondsUpdated ?? 0,
     newBondsCount: result.newBonds?.length ?? 0,
     bondsDeactivatedCount: result.bondsDeactivated?.length ?? 0,
-    bondsFailedCount: result.bondsFailed?.length ?? 0,
+    bondsFailedCount: Object.keys(result.bondsFailed ?? {}).length,
+    bondsFailed: result.bondsFailed ?? {},
     classifiedIssuersCount: classified,
     failedClassificationsCount: failed,
   };

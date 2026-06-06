@@ -30,7 +30,7 @@ export async function handler(_event: unknown, context: Context): Promise<Update
 
   const bondsQuotes = mapByBondId(bondsQuotesList) as Record<string, CatalystBondQuote>;
 
-  const bondsFailed: string[] = [];
+  const bondsFailed: Record<string, string> = {};
   const bondsStats: CatalystDailyStatisticsBondDetails[] = await getLatestCatalystDailyStatistics();
 
   const storedBondsList: DbBondDetails[] = await bondDetailsTable.getAllActive();
@@ -121,7 +121,7 @@ export async function handler(_event: unknown, context: Context): Promise<Update
       }
     } catch (error: any) {
       const errorReason = error instanceof Error ? error.message : String(error);
-      bondsFailed.push(bondStats.name);
+      bondsFailed[bondStats.name] = errorReason;
       logger.error('Failed to process bond', { bond: bondStats.name, errorReason });
     }
   }
@@ -146,7 +146,7 @@ export async function handler(_event: unknown, context: Context): Promise<Update
     bondsFailed
   };
 
-  logger.info('Update bonds done', { bondsUpdated: result.bondsUpdated, newBonds: result.newBonds.length, bondsDeactivated: result.bondsDeactivated.length, bondsFailed: result.bondsFailed.length });
+  logger.info('Update bonds done', { bondsUpdated: result.bondsUpdated, newBonds: result.newBonds.length, bondsDeactivated: result.bondsDeactivated.length, bondsFailed: Object.keys(result.bondsFailed).length });
 
   return result;
 }

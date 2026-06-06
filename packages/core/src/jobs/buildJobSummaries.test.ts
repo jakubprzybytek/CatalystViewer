@@ -21,7 +21,7 @@ describe('buildJobSummaries', () => {
       bondsUpdated: 5,
       newBonds: [{ name: 'A' }],
       bondsDeactivated: [{ name: 'B' }, { name: 'C' }],
-      bondsFailed: ['X'],
+      bondsFailed: { 'X': 'some error' },
       classificationResults: [{ success: true }, { success: false }, { success: true }],
     });
 
@@ -30,6 +30,7 @@ describe('buildJobSummaries', () => {
       newBondsCount: 1,
       bondsDeactivatedCount: 2,
       bondsFailedCount: 1,
+      bondsFailed: { 'X': 'some error' },
       classifiedIssuersCount: 2,
       failedClassificationsCount: 1,
     });

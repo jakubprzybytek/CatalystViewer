@@ -14,7 +14,7 @@ const updateBondsResult: UpdateBondsResult = {
     issueValue: 1000000
   }],
   bondsDeactivated: [],
-  bondsFailed: ["Bndnd1"]
+  bondsFailed: { "Bndnd1": "Failed to fetch bond information" }
 };
 
 const emailBody = buildEmail(updateBondsResult);

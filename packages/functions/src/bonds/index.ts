@@ -42,7 +42,7 @@ export type UpdateBondsResult = {
     bondsUpdated: number,
     newBonds: UpdatedBond[],
     bondsDeactivated: UpdatedBond[],
-    bondsFailed: string[]
+    bondsFailed: Record<string, string>
 }
 
 export type BondQuotesQueryResult = BondQuote[];
