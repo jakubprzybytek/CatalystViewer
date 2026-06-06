@@ -126,7 +126,7 @@ export default function JobsPage(): React.JSX.Element {
         </IconButton>
       </MainNavigation>
       <Box sx={{ height: 48 }} />
-      <Box sx={{ mt: 1, px: 1 }}>
+      <Box sx={{ mt: 1, px: { xs: 1, sm: 1 } }}>
         <Stack direction='row' spacing={1} sx={{ mb: 1 }}>
           <ToggleButtonGroup
             size='small'
@@ -158,7 +158,7 @@ export default function JobsPage(): React.JSX.Element {
         <List disablePadding sx={{ width: '100%', bgcolor: 'background.paper', borderRadius: 1 }}>
           {items.map(job => (
             <ListItem key={job.jobId} disablePadding divider sx={{ width: '100%' }}>
-              <ListItemButton onClick={() => openDetails(job.jobId)} sx={{ width: '100%', py: 0.5 }}>
+              <ListItemButton onClick={() => openDetails(job.jobId)} sx={{ width: '100%', py: 0.5, px: { xs: 1, sm: 2 } }}>
                 <ListItemText
                   primary={
                     <Stack direction='row' justifyContent='space-between' alignItems='center'>

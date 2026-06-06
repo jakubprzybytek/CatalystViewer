@@ -6,10 +6,6 @@ import IconButton from '@mui/material/IconButton';
 import Divider from '@mui/material/Divider';
 import Link from '@mui/material/Link';
 import CircularProgress from '@mui/material/CircularProgress';
-import Accordion from '@mui/material/Accordion';
-import AccordionSummary from '@mui/material/AccordionSummary';
-import AccordionDetails from '@mui/material/AccordionDetails';
-import ExpandMore from '@mui/icons-material/ExpandMore';
 import CloseIcon from '@mui/icons-material/Close';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
@@ -56,12 +52,10 @@ function toExecutionConsoleUrl(executionArn: string): string | undefined {
   return `https://${region}.console.aws.amazon.com/states/home?region=${region}#/executions/details/${encodedArn}`;
 }
 
-const accordionSx = {
-  m: 0,
-  borderRadius: 0,
-  boxShadow: 'none',
-  '&.Mui-expanded': {
-    m: 0,
+const sectionSx = {
+  py: 1.5,
+  '&:first-of-type': {
+    pt: 0,
   },
 };
 
@@ -80,14 +74,14 @@ export default function JobDetailsModal({ open, job, isLoading, now, onClose }: 
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth='md' fullScreen={isMobile}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', px: 2, py: 1 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', px: { xs: 1, sm: 2 }, py: 1 }}>
         <Typography variant='h6'>Job Details</Typography>
         <IconButton edge='end' aria-label='close job details' onClick={onClose}>
           <CloseIcon />
         </IconButton>
       </Box>
       <Divider />
-      <DialogContent>
+      <DialogContent sx={{ px: { xs: 1, sm: 3 } }}>
         {isLoading && (
           <Box sx={{ textAlign: 'center', py: 3 }}>
             <CircularProgress />
@@ -107,30 +101,20 @@ export default function JobDetailsModal({ open, job, isLoading, now, onClose }: 
               <Typography component='div'><strong>Ended:</strong> {job.endedAtTs ? new Date(job.endedAtTs).toLocaleString() : '—'}</Typography>
               <Typography component='div'><strong>Duration:</strong> {formatDuration(getJobDurationMs(job, now))}</Typography>
             </Box>
-            <Accordion disableGutters square sx={accordionSx}>
-              <AccordionSummary expandIcon={<ExpandMore />}>
-                Input Summary
-              </AccordionSummary>
-              <AccordionDetails>
-                <Box component='pre' sx={preSx}>{renderJson(job.inputSummary)}</Box>
-              </AccordionDetails>
-            </Accordion>
-            <Accordion defaultExpanded disableGutters square sx={accordionSx}>
-              <AccordionSummary expandIcon={<ExpandMore />}>
-                Output Summary
-              </AccordionSummary>
-              <AccordionDetails>
-                <Box component='pre' sx={preSx}>{renderJson(job.outputSummary)}</Box>
-              </AccordionDetails>
-            </Accordion>
-            <Accordion disableGutters square sx={accordionSx}>
-              <AccordionSummary expandIcon={<ExpandMore />}>
-                Error Summary
-              </AccordionSummary>
-              <AccordionDetails>
-                <Box component='pre' sx={preSx}>{renderJson(job.errorSummary)}</Box>
-              </AccordionDetails>
-            </Accordion>
+            <Box sx={sectionSx}>
+              <Typography variant='subtitle2' sx={{ mb: 1 }}>Input Summary</Typography>
+              <Box component='pre' sx={preSx}>{renderJson(job.inputSummary)}</Box>
+            </Box>
+            <Divider />
+            <Box sx={sectionSx}>
+              <Typography variant='subtitle2' sx={{ mb: 1 }}>Output Summary</Typography>
+              <Box component='pre' sx={preSx}>{renderJson(job.outputSummary)}</Box>
+            </Box>
+            <Divider />
+            <Box sx={sectionSx}>
+              <Typography variant='subtitle2' sx={{ mb: 1 }}>Error Summary</Typography>
+              <Box component='pre' sx={preSx}>{renderJson(job.errorSummary)}</Box>
+            </Box>
           </>
         )}
       </DialogContent>
