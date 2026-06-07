@@ -624,7 +624,7 @@ new aws.sfn.StateMachine("FundamentalAnalysisStateMachine", {
           Resource: "arn:aws:states:::lambda:invoke",
           Parameters: {
             FunctionName: sendReportArn,
-            "Payload.$": "$",
+            "Payload.$": "$.analysedIssuers",
           },
           TimeoutSeconds: 30,
           Next: "Done",

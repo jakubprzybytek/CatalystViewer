@@ -31,6 +31,24 @@ function consoleLink(executionArn: string): string {
     return `https://${region}.console.aws.amazon.com/states/home?region=${region}#/executions/details/${encoded}`;
 }
 
+type LambdaErrorCause = {
+    errorType: string;
+    errorMessage: string;
+    trace: string[];
+};
+
+function formatCause(causeStr: string): { html: string; text: string } {
+    try {
+        const cause = JSON.parse(causeStr) as LambdaErrorCause;
+        const traceLines = cause.trace ?? [];
+        const text = `${cause.errorType}: ${cause.errorMessage}\n\n${traceLines.join('\n')}`;
+        const html = `<strong>${cause.errorType}:</strong> ${cause.errorMessage}<br><br><code>${traceLines.join('<br>')}</code>`;
+        return { html, text };
+    } catch {
+        return { html: causeStr, text: causeStr };
+    }
+}
+
 export async function handler(input: SendErrorReportInput): Promise<void> {
     console.log(`SendErrorReport: executionArn=${input.executionArn}, error=${input.error.Error}`);
 
@@ -38,16 +56,18 @@ export async function handler(input: SendErrorReportInput): Promise<void> {
     const stage = process.env.SST_STAGE ?? 'unknown';
     const link = consoleLink(input.executionArn);
 
+    const cause = formatCause(input.error.Cause);
+
     const htmlBody = `
 <h2>Bonds Update Step Function Failed</h2>
 <p><strong>Stage:</strong> ${stage}</p>
 <p><strong>Error:</strong> ${input.error.Error}</p>
 <p><strong>Execution:</strong> <a href="${link}">${input.executionArn}</a></p>
 <p style="color:#888;font-size:0.9em">(Open the link to see which step failed and its full context.)</p>
-<pre style="background:#f5f5f5;padding:12px;border-radius:4px;overflow:auto">${input.error.Cause}</pre>
+<pre style="background:#f5f5f5;padding:12px;border-radius:4px;overflow:auto">${cause.html}</pre>
 `;
 
-    const textBody = `Bonds Update Step Function Failed\n\nStage: ${stage}\nError: ${input.error.Error}\nExecution: ${input.executionArn}\nConsole: ${link}\n\n${input.error.Cause}`;
+    const textBody = `Bonds Update Step Function Failed\n\nStage: ${stage}\nError: ${input.error.Error}\nExecution: ${input.executionArn}\nConsole: ${link}\n\n${cause.text}`;
 
     await sendEmail({
         to: recipientEmails,
