@@ -46,7 +46,7 @@ export async function handler(input: LogJobCompletedInput, context: Context): Pr
     const outputSummary = input.status === 'SUCCEEDED'
       ? input.workflowType === 'BONDS_UPDATER'
         ? buildBondsOutputSummary((input.output ?? {}) as Record<string, unknown>)
-        : buildAnalysisOutputSummary((input.output as { analysedIssuers?: Array<{ success: boolean }> })?.analysedIssuers ?? [])
+        : buildAnalysisOutputSummary((input.output as { analysedIssuers?: Array<{ issuerName: string; success: boolean; error?: unknown }> })?.analysedIssuers ?? [])
       : undefined;
 
     const errorSummary = input.status === 'SUCCEEDED'

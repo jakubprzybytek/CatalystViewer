@@ -42,10 +42,17 @@ describe('buildJobSummaries', () => {
       count: 2,
     });
 
-    expect(buildAnalysisOutputSummary([{ success: true }, { success: false }, { success: true }])).toEqual({
-      selectedIssuersCount: 3,
-      analyzedIssuersCount: 2,
-      failedIssuersCount: 1,
+    expect(buildAnalysisOutputSummary([
+      { issuerName: 'A', success: true },
+      { issuerName: 'B', success: false, error: 'boom' },
+      { issuerName: 'C', success: true },
+      { issuerName: 'D', success: false, error: { cause: 'timeout' } },
+    ])).toEqual({
+      analysedIssuers: ['A', 'C'],
+      failedIssuers: {
+        B: 'boom',
+        D: JSON.stringify({ cause: 'timeout' }),
+      },
     });
   });
 
