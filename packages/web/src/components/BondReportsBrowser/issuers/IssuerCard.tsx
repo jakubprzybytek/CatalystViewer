@@ -8,9 +8,15 @@ import Chip from '@mui/material/Chip';
 import Collapse from '@mui/material/Collapse';
 import IconButton from '@mui/material/IconButton';
 import Button from '@mui/material/Button';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogContentText from '@mui/material/DialogContentText';
+import DialogActions from '@mui/material/DialogActions';
 import ExpandMoreOutlinedIcon from '@mui/icons-material/ExpandMoreOutlined';
 import ExpandLessOutlinedIcon from '@mui/icons-material/ExpandLessOutlined';
 import OpenInNewOutlinedIcon from '@mui/icons-material/OpenInNewOutlined';
+import QueryStatsOutlinedIcon from '@mui/icons-material/QueryStatsOutlined';
 import { CardSectionRow, CardEntry, CardValue } from "@/common/Cards";
 import { ColorCode } from "@/common/ColorCodes";
 import { getInterestConstColorCode, getNominalValueColorCode } from "@/bonds/BondIndicators";
@@ -20,6 +26,7 @@ import { formatCurrency } from "@/common/Formats";
 import IssuerScorecard from './IssuerScorecard';
 import AnalysisReportModal from './AnalysisReportModal';
 import { SignalDot } from './SignalDot';
+import { triggerFundamentalAnalysis } from '@/sdk/Issuers';
 
 export const interestConstPartColors: ColorCode[] = ['green', 'yellow', 'orange', 'red'];
 
@@ -62,10 +69,16 @@ type IssuerCardParam = {
 function IssuerCard({ issuerReport, statistics, isChecked, onIssuerChecked }: IssuerCardParam): React.JSX.Element {
   const [expanded, setExpanded] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const minNominalValueColorCode = getNominalValueColorCode(issuerReport.minNominalValue);
   const interestConstColorCode = getInterestConstColorCode(issuerReport.interestConstAverage, statistics[issuerReport.interestBaseType]);
   const industryColors = issuerReport.industry ? getIndustryColors(issuerReport.industry) : undefined;
+
+  const handleTriggerAnalysis = () => {
+    setConfirmOpen(false);
+    triggerFundamentalAnalysis(issuerReport.name).catch(console.error);
+  };
 
   return (
     <>
@@ -79,17 +92,26 @@ function IssuerCard({ issuerReport, statistics, isChecked, onIssuerChecked }: Is
         }
       }}>
         <CardSectionRow>
-          <Stack direction='row' flexGrow={1} justifyContent='space-between' alignItems='center'>
-              <Typography variant='h6' sx={{ fontWeight: 700, letterSpacing: '-0.01em', color: 'var(--cv-text-primary)' }}>{issuerReport.name}</Typography>
-            <Stack direction='row' alignItems='center' spacing={0.5}>
-              <Checkbox
-                checked={isChecked}
-                onChange={(event: React.ChangeEvent<HTMLInputElement>) => onIssuerChecked(issuerReport.name, event.target.checked)} />
-              {(issuerReport.businessSummary || issuerReport.websiteUrl || issuerReport.scorecard) && (
-                <IconButton size='small' onClick={() => setExpanded(!expanded)}>
-                  {expanded ? <ExpandLessOutlinedIcon /> : <ExpandMoreOutlinedIcon />}
+          <Stack direction='row' flexGrow={1} justifyContent='space-between' alignItems='flex-start'>
+            <Typography variant='h6' sx={{ fontWeight: 700, letterSpacing: '-0.01em', color: 'var(--cv-text-primary)' }}>{issuerReport.name}</Typography>
+            <Stack direction='column' alignItems='flex-end'>
+              <Stack direction='row' alignItems='center' spacing={0.5}>
+                <IconButton size='small' title='Run Fundamental Analysis' onClick={() => setConfirmOpen(true)}>
+                  <QueryStatsOutlinedIcon />
                 </IconButton>
-              )}
+                {(issuerReport.businessSummary || issuerReport.websiteUrl || issuerReport.scorecard) && (
+                  <IconButton size='small' onClick={() => setExpanded(!expanded)}>
+                    {expanded ? <ExpandLessOutlinedIcon /> : <ExpandMoreOutlinedIcon />}
+                  </IconButton>
+                )}
+              </Stack>
+              <Stack direction='row' alignItems='center'>
+                <Checkbox
+                  size='small'
+                  checked={isChecked}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => onIssuerChecked(issuerReport.name, event.target.checked)} />
+                <Typography variant='caption' color='text.secondary'>Selected</Typography>
+              </Stack>
             </Stack>
           </Stack>
         </CardSectionRow>
@@ -207,6 +229,18 @@ function IssuerCard({ issuerReport, statistics, isChecked, onIssuerChecked }: Is
         open={modalOpen}
         onClose={() => setModalOpen(false)}
       />
+      <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)}>
+        <DialogTitle>Run Fundamental Analysis</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Do you want to trigger fundamental analysis for that issuer?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setConfirmOpen(false)}>No</Button>
+          <Button onClick={handleTriggerAnalysis} variant='contained'>Yes</Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 }
