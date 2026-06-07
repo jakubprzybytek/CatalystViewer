@@ -1,4 +1,4 @@
-import { get } from "aws-amplify/api";
+import { get, post } from "aws-amplify/api";
 import { fetchAuthSession } from "aws-amplify/auth";
 import type { FundamentalScorecard } from '@/bonds/fundamentals/scorecard';
 
@@ -70,4 +70,17 @@ export async function getIssuerAnalysis(issuerName: string): Promise<IssuerAnaly
 
   const result = (await response.body.json()) as unknown as IssuerAnalysisQueryResult;
   return { reportMarkdown: result.reportMarkdown, agentLog: result.agentLog ?? [] };
+}
+
+export async function triggerFundamentalAnalysis(issuerName: string): Promise<void> {
+  const session = await fetchAuthSession();
+  await post({
+    apiName: 'api',
+    path: `/api/issuers/${encodeURIComponent(issuerName)}/analysis/trigger`,
+    options: {
+      headers: {
+        Authorization: `******`,
+      },
+    },
+  }).response;
 }

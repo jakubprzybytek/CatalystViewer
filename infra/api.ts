@@ -45,6 +45,23 @@ const getIssuerAnalysisFunction = new sst.aws.Function("GetIssuerAnalysis", {
   link: [issuerProfilesTable],
 });
 
+const fundamentalAnalysisStateMachineArn = $interpolate`arn:aws:states:eu-west-1:198805281865:stateMachine:FundamentalAnalysisStateMachine-${$app.stage}`;
+
+const triggerFundamentalAnalysisFunction = new sst.aws.Function("TriggerFundamentalAnalysis", {
+  handler: "packages/functions/src/issuers/triggerFundamentalAnalysis.handler",
+  memory: "256 MB",
+  timeout: "10 seconds",
+  environment: {
+    FUNDAMENTAL_ANALYSIS_STATE_MACHINE_ARN: fundamentalAnalysisStateMachineArn,
+  },
+  permissions: [
+    {
+      actions: ["states:StartExecution"],
+      resources: [fundamentalAnalysisStateMachineArn],
+    },
+  ],
+});
+
 const getJobsFunction = new sst.aws.Function("GetJobs", {
   handler: "packages/functions/src/jobs/getJobs.handler",
   memory: "256 MB",
@@ -84,6 +101,7 @@ api.route("GET /api/bonds/{bondType}", getBondsFunction.arn, jwtAuth);
 api.route("GET /api/bondQuotes", getBondQuotesFunction.arn, jwtAuth);
 api.route("GET /api/issuers/profiles", getIssuerProfilesFunction.arn, jwtAuth);
 api.route("GET /api/issuers/{name}/analysis", getIssuerAnalysisFunction.arn, jwtAuth);
+api.route("POST /api/issuers/{name}/analysis/trigger", triggerFundamentalAnalysisFunction.arn, jwtAuth);
 api.route("GET /api/jobs", getJobsFunction.arn, jwtAuth);
 api.route("GET /api/jobs/{jobId}", getJobFunction.arn, jwtAuth);
 
