@@ -13,6 +13,7 @@ import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogActions from '@mui/material/DialogActions';
+import Snackbar from '@mui/material/Snackbar';
 import ExpandMoreOutlinedIcon from '@mui/icons-material/ExpandMoreOutlined';
 import ExpandLessOutlinedIcon from '@mui/icons-material/ExpandLessOutlined';
 import OpenInNewOutlinedIcon from '@mui/icons-material/OpenInNewOutlined';
@@ -70,14 +71,20 @@ function IssuerCard({ issuerReport, statistics, isChecked, onIssuerChecked }: Is
   const [expanded, setExpanded] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
 
   const minNominalValueColorCode = getNominalValueColorCode(issuerReport.minNominalValue);
   const interestConstColorCode = getInterestConstColorCode(issuerReport.interestConstAverage, statistics[issuerReport.interestBaseType]);
   const industryColors = issuerReport.industry ? getIndustryColors(issuerReport.industry) : undefined;
 
-  const handleTriggerAnalysis = () => {
+  const handleTriggerAnalysis = async () => {
     setConfirmOpen(false);
-    triggerFundamentalAnalysis(issuerReport.name).catch(console.error);
+    try {
+      await triggerFundamentalAnalysis(issuerReport.name);
+      setSnackbarOpen(true);
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   return (
@@ -133,15 +140,16 @@ function IssuerCard({ issuerReport, statistics, isChecked, onIssuerChecked }: Is
               {issuerReport.scorecard && issuerReport.scorecard.dimensions.length > 0 && (
                 <Chip
                   size='small'
+                  variant='outlined'
                   label={
                     <Stack direction='row' alignItems='center' spacing={0}>
-                      <span>FA:&nbsp;</span>
+                      <QueryStatsOutlinedIcon sx={{ fontSize: '0.85rem', mr: 0.25 }} />
                       {issuerReport.scorecard.dimensions.map((d, i) => (
                         <SignalDot key={i} signal={d.signal} />
                       ))}
                     </Stack>
                   }
-                  sx={{ fontWeight: 400, backgroundColor: 'var(--cv-bg-card-subtle)' }}
+                  sx={{ fontWeight: 400 }}
                 />
               )}
             </Stack>
@@ -241,6 +249,12 @@ function IssuerCard({ issuerReport, statistics, isChecked, onIssuerChecked }: Is
           <Button onClick={handleTriggerAnalysis} variant='contained'>Yes</Button>
         </DialogActions>
       </Dialog>
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={4000}
+        onClose={() => setSnackbarOpen(false)}
+        message='Fundamental analysis workflow started'
+      />
     </>
   );
 }

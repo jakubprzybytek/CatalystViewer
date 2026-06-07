@@ -62,6 +62,30 @@ export default function JobsPage(): React.JSX.Element {
     return () => clearInterval(interval);
   }, [hasRunningJobs, isRunningJobSelected]);
 
+  useEffect(() => {
+    if (!hasRunningJobs) return;
+    const interval = setInterval(async () => {
+      try {
+        const result = await getJobs({ statuses: filterToStatuses(filters), limit: 20 });
+        setItems(result.jobs);
+        setCursor(result.nextCursor);
+      } catch { /* ignore background refresh errors */ }
+    }, 15000);
+    return () => clearInterval(interval);
+  }, [hasRunningJobs, filters]);
+
+  useEffect(() => {
+    if (!isRunningJobSelected || !isDetailsOpen || !selectedJob) return;
+    const jobId = selectedJob.jobId;
+    const interval = setInterval(async () => {
+      try {
+        const result = await getJob(jobId);
+        setSelectedJob(result);
+      } catch { /* ignore background refresh errors */ }
+    }, 15000);
+    return () => clearInterval(interval);
+  }, [isRunningJobSelected, isDetailsOpen, selectedJob?.jobId]);
+
   function getJobDurationMs(job: GetJobResult): number {
     if (job.status === 'RUNNING') {
       return now - job.startedAtTs;
