@@ -24,7 +24,9 @@ type SelectIssuersInputLike = {
 };
 
 type AnalyzeIssuerResultLike = {
+  issuerName: string;
   success: boolean;
+  error?: unknown;
 };
 
 export function buildBondsInputSummary(input: ClassificationConfig & { updateBonds?: boolean }): Record<string, unknown> {
@@ -59,13 +61,27 @@ export function buildAnalysisInputSummary(input: SelectIssuersInputLike): Record
 }
 
 export function buildAnalysisOutputSummary(results: AnalyzeIssuerResultLike[]): Record<string, unknown> {
-  const success = results.filter(r => r.success).length;
-  const failed = results.length - success;
+  const analysedIssuers = results
+    .filter(r => r.success)
+    .map(r => r.issuerName);
+  const failedIssuers = Object.fromEntries(
+    results
+      .filter(r => !r.success)
+      .map(r => [
+        r.issuerName,
+        r.error instanceof Error
+          ? r.error.message
+          : typeof r.error === 'string'
+            ? r.error
+            : r.error === undefined
+              ? 'Unknown error'
+              : JSON.stringify(r.error),
+      ])
+  );
 
   return {
-    selectedIssuersCount: results.length,
-    analyzedIssuersCount: success,
-    failedIssuersCount: failed,
+    analysedIssuers,
+    failedIssuers,
   };
 }
 
