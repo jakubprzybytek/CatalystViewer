@@ -79,7 +79,7 @@ export async function triggerFundamentalAnalysis(issuerName: string): Promise<vo
     path: `/api/issuers/${encodeURIComponent(issuerName)}/analysis/trigger`,
     options: {
       headers: {
-        Authorization: `******`,
+        Authorization: `Bearer ${session.tokens?.accessToken?.toString()}`,
       },
     },
   }).response;
