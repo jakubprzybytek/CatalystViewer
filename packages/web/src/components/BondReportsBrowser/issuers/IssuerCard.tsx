@@ -101,30 +101,21 @@ function IssuerCard({ issuerReport, statistics, isChecked, onIssuerChecked }: Is
         <CardSectionRow>
           <Stack direction='row' flexGrow={1} justifyContent='space-between' alignItems='flex-start'>
             <Typography variant='h6' sx={{ fontWeight: 700, letterSpacing: '-0.01em', color: 'var(--cv-text-primary)' }}>{issuerReport.name}</Typography>
-            <Stack direction='column' alignItems='flex-end'>
-              <Stack direction='row' alignItems='center' spacing={0.5}>
-                <IconButton size='small' title='Run Fundamental Analysis' onClick={() => setConfirmOpen(true)}>
-                  <QueryStatsOutlinedIcon />
+            <Stack direction='row' alignItems='center' spacing={0.5}>
+              <IconButton size='small' title='Run Fundamental Analysis' onClick={() => setConfirmOpen(true)}>
+                <QueryStatsOutlinedIcon />
+              </IconButton>
+              {(issuerReport.businessSummary || issuerReport.websiteUrl || issuerReport.scorecard) && (
+                <IconButton size='small' onClick={() => setExpanded(!expanded)}>
+                  {expanded ? <ExpandLessOutlinedIcon /> : <ExpandMoreOutlinedIcon />}
                 </IconButton>
-                {(issuerReport.businessSummary || issuerReport.websiteUrl || issuerReport.scorecard) && (
-                  <IconButton size='small' onClick={() => setExpanded(!expanded)}>
-                    {expanded ? <ExpandLessOutlinedIcon /> : <ExpandMoreOutlinedIcon />}
-                  </IconButton>
-                )}
-              </Stack>
-              <Stack direction='row' alignItems='center'>
-                <Checkbox
-                  size='small'
-                  checked={isChecked}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => onIssuerChecked(issuerReport.name, event.target.checked)} />
-                <Typography variant='caption' color='text.secondary'>Selected</Typography>
-              </Stack>
+              )}
             </Stack>
           </Stack>
         </CardSectionRow>
-        {(issuerReport.industry && industryColors || issuerReport.scorecard) && (
-          <CardSectionRow>
-            <Stack direction='row' spacing={0.5} sx={{ mt: -1 }} alignItems='center' flexWrap='wrap'>
+        <CardSectionRow>
+          <Stack direction='row' flexGrow={1} justifyContent='space-between' alignItems='center' sx={{ mt: -1 }}>
+            <Stack direction='row' spacing={0.5} alignItems='center' flexWrap='wrap'>
               {issuerReport.industry && industryColors && (
                 <Chip
                   size='small'
@@ -153,8 +144,15 @@ function IssuerCard({ issuerReport, statistics, isChecked, onIssuerChecked }: Is
                 />
               )}
             </Stack>
-          </CardSectionRow>
-        )}
+            <Stack direction='row' alignItems='center'>
+              <Checkbox
+                size='small'
+                checked={isChecked}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) => onIssuerChecked(issuerReport.name, event.target.checked)} />
+              <Typography variant='caption' color='text.secondary'>Selected</Typography>
+            </Stack>
+          </Stack>
+        </CardSectionRow>
         <Collapse in={expanded && !!(issuerReport.businessSummary || issuerReport.websiteUrl || issuerReport.scorecard)}>
           <Box className='expanded-content'>
             <CardSectionRow>
