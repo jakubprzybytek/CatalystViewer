@@ -1,5 +1,8 @@
 import { APIGatewayProxyHandlerV2, APIGatewayProxyEventV2, APIGatewayProxyEventQueryStringParameters } from "aws-lambda";
+import { Logger } from '@aws-lambda-powertools/logger';
 import { gzipSync } from 'zlib';
+
+const logger = new Logger({ serviceName: 'HandlerProxy' });
 
 export function getParam(queryStringParameters: APIGatewayProxyEventQueryStringParameters | undefined, paramName: string): string | undefined {
   if (!!queryStringParameters && paramName in queryStringParameters) {
@@ -40,7 +43,8 @@ export const lambdaHandler = <T>(lambda: LambdaType<T>): APIGatewayProxyHandlerV
         body: gzippedBody.toString('base64'),
       };
     } catch (e) {
-      console.error(e);
+      const message = e instanceof Error ? e.message : String(e);
+      logger.error('Unhandled API lambda error', { message, error: e });
       return {
         statusCode: 500,
         headers: {
@@ -48,7 +52,7 @@ export const lambdaHandler = <T>(lambda: LambdaType<T>): APIGatewayProxyHandlerV
           'Content-Encoding': 'none'
         },
         body: JSON.stringify({
-          message: e
+          message
         }),
       };
     }

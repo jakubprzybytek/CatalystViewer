@@ -1,7 +1,9 @@
 import { SSMClient, GetParameterCommand } from '@aws-sdk/client-ssm';
+import { Logger } from '@aws-lambda-powertools/logger';
 import { sendEmail } from './EmailClient';
 
 const RECIPIENTS_PARAM_NAME = '/catalyst-viewer/notifications/recipients';
+const logger = new Logger({ serviceName: 'SendErrorReport' });
 
 type SendErrorReportInput = {
     error: {
@@ -50,7 +52,10 @@ function formatCause(causeStr: string): { html: string; text: string } {
 }
 
 export async function handler(input: SendErrorReportInput): Promise<void> {
-    console.log(`SendErrorReport: executionArn=${input.executionArn}, error=${input.error.Error}`);
+    logger.info('Sending error report', {
+        executionArn: input.executionArn,
+        error: input.error.Error,
+    });
 
     const recipientEmails = await getNotificationRecipientEmails();
     const stage = process.env.SST_STAGE ?? 'unknown';
@@ -76,5 +81,5 @@ export async function handler(input: SendErrorReportInput): Promise<void> {
         textBody,
     });
 
-    console.log(`SendErrorReport: email sent to ${recipientEmails.length} recipients`);
+    logger.info('Error report email sent', { recipients: recipientEmails.length });
 }

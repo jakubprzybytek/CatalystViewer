@@ -1,9 +1,9 @@
 import { InterestPeriod, InterestType, ObligacjeBondInformation } from ".";
 import assert from 'assert';
 
-const BOND_NAME_REGEX = /<h1>(\w+)<\/h1>/;
+const BOND_NAME_REGEX = /<h1>([^<]+)<\/h1>/;
 const ISSUER_REGEX = /"nazwa-emitenta">(.+)<\/a>/;
-const MARKET_REGEX = /<th>Rynek:<\/th>\s+<td>(.+)<\/td>/;
+const MARKET_REGEX = /<th>Rynek:<\/th>\s*<td>(.+?)<\/td>/;
 const NOMINAL_VALUE_REGEX = /<th>Wartość nominalna:<\/th>\s+<td>(.+) \w{3}<\/td>/;
 const ISSUE_VALUE_REGEX = /<th>Wartość emisji w obrocie:<\/th>\s+<td>(.+) \w{3}<\/td>/;
 const INTEREST_TYPE_REGEX = /<th>Typ oprocentowania:<\/th>\s+<td>(.+)<\/td>/;
@@ -71,6 +71,7 @@ export function parseInterestType(interestType: string): InterestType {
 }
 
 export function parseObligacjeBondInformationPage(markup: string): ObligacjeBondInformation {
+    const name = firstGroup(markup, BOND_NAME_REGEX);
     const interestType = firstGroup(markup, INTEREST_TYPE_REGEX).replaceAll('  ', ' ');
     const interestTypeParsed = parseInterestType(interestType);
 
@@ -78,8 +79,12 @@ export function parseObligacjeBondInformationPage(markup: string): ObligacjeBond
     const interestRightsDays = unique(firstGroups(firstGroup(markup, INTEREST_RIGHTS_DAYS_REGEX), DAY_REGEX));
     const interestPayoffDays = unique(firstGroups(firstGroup(markup, INTEREST_PAYOFF_DAYS_REGEX), DAY_REGEX));
 
-    assert(interestFirstDays.length === interestRightsDays.length, `Number of first days: ${interestFirstDays.length} vs number of rights days: ${interestRightsDays.length}`);
-    assert(interestFirstDays.length === interestPayoffDays.length, `Number of first days: ${interestFirstDays.length} vs number of payoff days: ${interestPayoffDays.length}`);
+    assert(interestFirstDays.length === interestRightsDays.length,
+        `[${name}] Number of first days: ${interestFirstDays.length} vs number of rights days: ${interestRightsDays.length}. ` +
+        `firstDays=${JSON.stringify(interestFirstDays)}, rightsDays=${JSON.stringify(interestRightsDays)}`);
+    assert(interestFirstDays.length === interestPayoffDays.length,
+        `[${name}] Number of first days: ${interestFirstDays.length} vs number of payoff days: ${interestPayoffDays.length}. ` +
+        `firstDays=${JSON.stringify(interestFirstDays)}, payoffDays=${JSON.stringify(interestPayoffDays)}`);
 
     const interestPeriods: InterestPeriod[] = [];
     for (var index in interestFirstDays) {
@@ -91,7 +96,7 @@ export function parseObligacjeBondInformationPage(markup: string): ObligacjeBond
     }
 
     return {
-        name: firstGroup(markup, BOND_NAME_REGEX),
+        name,
         issuer: firstGroup(markup, ISSUER_REGEX),
         market: firstGroup(markup, MARKET_REGEX),
         issueValue: Number(firstGroup(markup, ISSUE_VALUE_REGEX).replaceAll(' ', '')),
@@ -100,9 +105,9 @@ export function parseObligacjeBondInformationPage(markup: string): ObligacjeBond
         interestVariable: interestTypeParsed?.variable,
         interestConst: interestTypeParsed?.const,
         currency: firstGroup(markup, CURRENCY_REGEX),
-        interestFirstDays: unique(firstGroups(firstGroup(markup, INTEREST_FIRST_DAYS_REGEX), DAY_REGEX)),
-        interestRightsDays: unique(firstGroups(firstGroup(markup, INTEREST_RIGHTS_DAYS_REGEX), DAY_REGEX)),
-        interestPayoffDays: unique(firstGroups(firstGroup(markup, INTEREST_PAYOFF_DAYS_REGEX), DAY_REGEX)),
+        interestFirstDays,
+        interestRightsDays,
+        interestPayoffDays,
         interestPeriods
     };
 };
