@@ -138,6 +138,7 @@ function signalDot(signal: Signal): string {
         case 'yellow': return '\x1b[33m●\x1b[0m';
         case 'red':    return '\x1b[31m●\x1b[0m';
         case 'na':     return '\x1b[90m○\x1b[0m';
+        default:       throw new Error(`Unknown signal: ${signal}`);
     }
 }
 
