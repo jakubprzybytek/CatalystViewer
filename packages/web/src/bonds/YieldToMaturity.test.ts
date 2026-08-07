@@ -24,12 +24,15 @@ const bondCurrentValues: BondCurrentValues = {
   interestFirstDay: 0, // not needed
   interestRecordDay: 0, // not needed
   interestPayableDay: 0, // not needed
+  interestProgress: 0, // not needed
+  pastInterestPeriods: 0, // not needed
+  futureInterestPeriods: 0, // not needed
 
   interestRate: 10,
   accuredInterest: 20,
   periodInterest: 0, // not needed
 
-  interestProgress: 0 // not needed
+  tradingDaysRatio: 0 // not needed
 };
 
 describe("YieldToMatorityCalculator", () => {
