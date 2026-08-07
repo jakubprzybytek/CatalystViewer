@@ -26,7 +26,7 @@ function HideOnScroll({ children }: HideOnScrollParams): React.JSX.Element {
 
 type MainNavigationParams = {
   title: string;
-  children: React.ReactNode;
+  children?: React.ReactNode;
 }
 
 export default function MainNavigation({ title, children }: MainNavigationParams): React.JSX.Element {
@@ -56,6 +56,7 @@ export default function MainNavigation({ title, children }: MainNavigationParams
               >
                 <MenuItem onClick={() => { setAnchorEl(null); router.push('/'); }}>Bonds</MenuItem>
                 <MenuItem onClick={() => { setAnchorEl(null); router.push('/jobs'); }}>Jobs</MenuItem>
+                <MenuItem onClick={() => { setAnchorEl(null); router.push('/tools'); }}>Tools</MenuItem>
                 <MenuItem onClick={() => { setAnchorEl(null); signOut(); }}>Logout</MenuItem>
               </Menu>
             </Stack>

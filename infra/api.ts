@@ -76,6 +76,15 @@ const getJobFunction = new sst.aws.Function("GetJob", {
   link: [jobsTable],
 });
 
+const getCatalystDailyStatsFunction = new sst.aws.Function("GetCatalystDailyStats", {
+  handler: "packages/functions/src/bonds/getCatalystDailyStats.handler",
+  memory: "256 MB",
+  timeout: "60 seconds",
+  environment: {
+    TEMP_FOLDER: "/tmp",
+  },
+});
+
 export const api = new sst.aws.ApiGatewayV2("Api");
 
 const cognitoAuthorizer = api.addAuthorizer({
@@ -104,6 +113,7 @@ api.route("GET /api/issuers/{name}/analysis", getIssuerAnalysisFunction.arn, jwt
 api.route("POST /api/issuers/{name}/analysis/trigger", triggerFundamentalAnalysisFunction.arn, jwtAuth);
 api.route("GET /api/jobs", getJobsFunction.arn, jwtAuth);
 api.route("GET /api/jobs/{jobId}", getJobFunction.arn, jwtAuth);
+api.route("GET /api/tools/dailyStats", getCatalystDailyStatsFunction.arn, jwtAuth);
 
 export const userPoolId = USER_POOL_ID;
 export const userPoolClientId = USER_POOL_CLIENT_ID;
