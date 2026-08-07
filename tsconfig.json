@@ -1,6 +1,6 @@
 {
   "extends": "@tsconfig/node22/tsconfig.json",
-  "exclude": ["packages"],
+  "exclude": ["packages", "scripts"],
   "compilerOptions": {
     "module": "esnext",
     "moduleResolution": "bundler"
