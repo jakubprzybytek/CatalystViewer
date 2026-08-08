@@ -1,12 +1,14 @@
 import { get } from "aws-amplify/api";
 import { fetchAuthSession } from "aws-amplify/auth";
 import { BondDetails, BondCurrentValues } from '@core/bonds';
+import { ObligacjeBondInformation } from '@core/bonds/obligacjepl';
 import { BondReportsQueryResult, BondReport, BondQuotesQueryResult, BondQuote } from '@catalyst-viewer/functions/bonds';
 import { CatalystDailyStatsResult } from '@catalyst-viewer/functions/bonds/getCatalystDailyStats';
 
 export type { BondReport, BondDetails, BondCurrentValues, BondReportsQueryResult };
 export type { BondQuote, BondQuotesQueryResult };
 export type { CatalystDailyStatsResult };
+export type { ObligacjeBondInformation };
 
 export async function getBondReports(bondType?: string): Promise<BondReportsQueryResult> {
   const path = '/api/bonds' + (bondType ? `/${bondType}` : '');
@@ -50,4 +52,18 @@ export async function getCatalystDailyStats(): Promise<CatalystDailyStatsResult>
     },
   }).response;
   return (await response.body.json()) as unknown as CatalystDailyStatsResult;
+}
+
+export async function getBondInformation(bondName: string): Promise<ObligacjeBondInformation> {
+  const session = await fetchAuthSession();
+  const response = await get({
+    apiName: 'api',
+    path: `/api/tools/bondInformation?bond=${encodeURIComponent(bondName.trim())}`,
+    options: {
+      headers: {
+        Authorization: `Bearer ${session.tokens?.accessToken?.toString()}`,
+      },
+    },
+  }).response;
+  return (await response.body.json()) as unknown as ObligacjeBondInformation;
 }
