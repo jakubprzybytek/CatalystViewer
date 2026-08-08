@@ -47,6 +47,8 @@ export async function downloadLatestCatalystDailyStatisticsFile(): Promise<strin
         }
 
         const url = `https://gpwcatalyst.pl/pub/CATALYST/statystyki/statystyki_dzienne/${fileName}`;
+        console.log(`Downloading Catalyst daily statistics file: ${url}`);
+
         const downloaded = await tryDownloadCatalystFile(url, localFileName);
         if (downloaded) {
             return localFileName;

@@ -25,13 +25,23 @@ export function readCatalystDailyStatisticsXlsFile(fileName: string): CatalystDa
             }
 
             // row that defines specific bond
+            const maturityDay = row['A' as keyof typeof row] as string | undefined;
+            if (maturityDay === undefined || maturityDay === null || maturityDay === '') {
+                console.log('Skipping bond with empty maturity day', {
+                    isin: row['H' as keyof typeof row],
+                    name: row['I' as keyof typeof row],
+                    type: bondType || 'n/a',
+                });
+                continue;
+            }
+
             const bondDetails: CatalystDailyStatisticsBondDetails = {
                 name: row['I' as keyof typeof row] as string,
                 isin: row['H' as keyof typeof row] as string,
                 type: bondType || 'n/a',
                 market: row['E' as keyof typeof row] as string,
                 nominalValue: row['D' as keyof typeof row] as number,
-                maturityDay: parseUTCDate(row['A' as keyof typeof row] as string),
+                maturityDay: parseUTCDate(maturityDay),
                 currentInterestRate: row['B' as keyof typeof row] as number,
                 accuredInterest: row['C' as keyof typeof row] as number,
                 tradingCurrency: row['K' as keyof typeof row] as string,
