@@ -66,7 +66,7 @@ export class BondStatisticsTable {
   }
 
   async get(bondId: string, year: number, month: number): Promise<DbBondStatistics | undefined> {
-    console.log(`DbBondStatistics: Fetching statistics for: ${bondId} | ${year}-${month}`);
+    console.log(`DbBondStatistics: Reading statistics for: ${bondId} | ${year}-${month}`);
 
     const result = await this.dynamoDBDocumentClient.send(new GetCommand({
       TableName: this.tableName,

@@ -5,6 +5,17 @@ import { queryAll, scanAll } from '../utils';
 
 function DbBondDetailsToPutRequest(dbBondDetails: DbBondDetails) {
   const { type, status, maturityDay, ...rest } = dbBondDetails;
+  if (!(maturityDay instanceof Date) || Number.isNaN(maturityDay.getTime())) {
+    console.error('Invalid DbBondDetails maturityDay', {
+      isin: dbBondDetails.isin,
+      name: dbBondDetails.name,
+      market: dbBondDetails.market,
+      issuer: dbBondDetails.issuer,
+      maturityDay,
+    });
+    throw new RangeError(`Invalid maturityDay for bond ${dbBondDetails.isin}`);
+  }
+
   return {
     PutRequest: {
       Item: {
