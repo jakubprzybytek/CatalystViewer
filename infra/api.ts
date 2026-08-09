@@ -62,6 +62,23 @@ const triggerFundamentalAnalysisFunction = new sst.aws.Function("TriggerFundamen
   ],
 });
 
+const bondsUpdaterStateMachineArn = $interpolate`arn:aws:states:eu-west-1:198805281865:stateMachine:BondsUpdaterStateMachine-${$app.stage}`;
+
+const triggerBondsUpdaterFunction = new sst.aws.Function("TriggerBondsUpdater", {
+  handler: "packages/functions/src/bonds/triggerBondsUpdater.handler",
+  memory: "256 MB",
+  timeout: "10 seconds",
+  environment: {
+    BONDS_UPDATER_STATE_MACHINE_ARN: bondsUpdaterStateMachineArn,
+  },
+  permissions: [
+    {
+      actions: ["states:StartExecution"],
+      resources: [bondsUpdaterStateMachineArn],
+    },
+  ],
+});
+
 const getJobsFunction = new sst.aws.Function("GetJobs", {
   handler: "packages/functions/src/jobs/getJobs.handler",
   memory: "256 MB",
@@ -121,6 +138,7 @@ api.route("GET /api/jobs", getJobsFunction.arn, jwtAuth);
 api.route("GET /api/jobs/{jobId}", getJobFunction.arn, jwtAuth);
 api.route("GET /api/tools/dailyStats", getCatalystDailyStatsFunction.arn, jwtAuth);
 api.route("GET /api/tools/bondInformation", getBondInformationFunction.arn, jwtAuth);
+api.route("POST /api/tools/bondsUpdater", triggerBondsUpdaterFunction.arn, jwtAuth);
 
 export const userPoolId = USER_POOL_ID;
 export const userPoolClientId = USER_POOL_CLIENT_ID;

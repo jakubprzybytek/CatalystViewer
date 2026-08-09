@@ -1,4 +1,4 @@
-import { get } from "aws-amplify/api";
+import { get, post } from "aws-amplify/api";
 import { fetchAuthSession } from "aws-amplify/auth";
 import { BondDetails, BondCurrentValues } from '@core/bonds';
 import { ObligacjeBondInformation } from '@core/bonds/obligacjepl';
@@ -66,4 +66,24 @@ export async function getBondInformation(bondName: string): Promise<ObligacjeBon
     },
   }).response;
   return (await response.body.json()) as unknown as ObligacjeBondInformation;
+}
+
+export type BondsUpdaterInput = {
+  updateBonds: boolean;
+  classificationsCap: number;
+  forceClassification: boolean;
+};
+
+export async function triggerBondsUpdater(input: BondsUpdaterInput): Promise<void> {
+  const session = await fetchAuthSession();
+  await post({
+    apiName: 'api',
+    path: '/api/tools/bondsUpdater',
+    options: {
+      headers: {
+        Authorization: `Bearer ${session.tokens?.accessToken?.toString()}`,
+      },
+      body: input,
+    },
+  }).response;
 }
