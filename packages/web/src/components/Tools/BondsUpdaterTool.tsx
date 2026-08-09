@@ -5,6 +5,7 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
 import FormControlLabel from '@mui/material/FormControlLabel';
+import Link from '@mui/material/Link';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Switch from '@mui/material/Switch';
@@ -39,6 +40,9 @@ export default function BondsUpdaterTool(): React.JSX.Element {
   return (
     <Paper sx={{ p: 2, mb: 2 }}>
       <Typography variant='h6' sx={{ mb: 1 }}>Bonds Updater</Typography>
+      <Typography variant='body2' sx={{ mb: 2 }}>
+        <Link href='/jobs' underline='hover'>Jobs</Link>
+      </Typography>
       <Box component='form' onSubmit={startBondsUpdater} noValidate>
         <Stack spacing={1} sx={{ maxWidth: 420 }}>
           <FormControlLabel
