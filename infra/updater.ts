@@ -390,6 +390,7 @@ const stateMachine = new aws.sfn.StateMachine("BondsUpdaterStateMachine", {
                     "Payload.$": "$.Payload",
                   },
                   TimeoutSeconds: 30,
+                  ResultPath: null,
                   End: true,
                 },
                 "Skip": {
