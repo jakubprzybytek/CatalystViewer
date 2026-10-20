@@ -40,7 +40,7 @@ During deployment to `int`, the Bonds Update workflow is automatically triggered
 
 Bonds are time-bound instruments — they have an issue date and a maturity date, and the system computes live values relative to the current date at several points:
 
-- `CatalystDownload.ts` — resolves the XLS filename from yesterday's date (`catalyst_YYYYMMDD.xls`)
+- `CatalystDownload.ts` — resolves the daily statistics filename from the previous trading day (`catalyst_YYYYMMDD.xlsx`, falling back to `.xls`)
 - `updateBondReports.ts` — defines the 30-day liquidity window and writes `year`/`month` partition keys into `BondStatistics`
 - `getBondReports.ts` — computes `daysToMaturity` and finds the current interest period by scanning `interestPayoffDayTss` for a value `>= today`
 - `getBondQuotes.ts` — queries the 30-day quote history window (must align with what `updateBondReports` wrote)

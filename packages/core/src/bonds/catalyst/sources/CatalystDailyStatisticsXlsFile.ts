@@ -16,8 +16,8 @@ export function readCatalystDailyStatisticsXlsFile(fileName: string): CatalystDa
     for (let row of rows) {
         if (row !== null && typeof row === 'object') {
 
-            // row that defines bond type for rows below it
-            if (!('B' in row)) {
+            // row that defines bond type for rows below it (the only rows without an ISIN)
+            if (!('H' in row)) {
                 bondType = (row['A' as keyof typeof row] as string).split('/')[1].replace('  ', ' ');
                 console.log(`Parsing bonds: ${bondType}`);
 
@@ -25,27 +25,29 @@ export function readCatalystDailyStatisticsXlsFile(fileName: string): CatalystDa
             }
 
             // row that defines specific bond
-            const maturityDay = row['A' as keyof typeof row] as string | undefined;
+            // .xlsx files omit empty cells (.xls had them as ''), so default to '' to keep the same output
+            const cells = { A: '', B: '', ...row } as Record<string, unknown>;
+            const maturityDay = cells['A'] as string | undefined;
             if (maturityDay === undefined || maturityDay === null || maturityDay === '') {
                 console.log('Skipping bond with empty maturity day', {
-                    isin: row['H' as keyof typeof row],
-                    name: row['I' as keyof typeof row],
+                    isin: cells['H'],
+                    name: cells['I'],
                     type: bondType || 'n/a',
                 });
                 continue;
             }
 
             const bondDetails: CatalystDailyStatisticsBondDetails = {
-                name: row['I' as keyof typeof row] as string,
-                isin: row['H' as keyof typeof row] as string,
+                name: cells['I'] as string,
+                isin: cells['H'] as string,
                 type: bondType || 'n/a',
-                market: row['E' as keyof typeof row] as string,
-                nominalValue: row['D' as keyof typeof row] as number,
+                market: cells['E'] as string,
+                nominalValue: cells['D'] as number,
                 maturityDay: parseUTCDate(maturityDay),
-                currentInterestRate: row['B' as keyof typeof row] as number,
-                accuredInterest: row['C' as keyof typeof row] as number,
-                tradingCurrency: row['K' as keyof typeof row] as string,
-                closingPrice: row['L' as keyof typeof row] as number
+                currentInterestRate: cells['B'] as number,
+                accuredInterest: cells['C'] as number,
+                tradingCurrency: cells['K'] as string,
+                closingPrice: cells['L'] as number
             }
             bonds.push(bondDetails);
         }

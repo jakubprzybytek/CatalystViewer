@@ -4,7 +4,13 @@ import { subDays, isWeekend, format } from 'date-fns';
 
 const MAX_LOOKBACK_DAYS = 7;
 
-async function tryDownloadCatalystFile(url: string, fileNameToSave: string): Promise<boolean> {
+// GPW switched from .xls to .xlsx on 2026-10-05; keep .xls as a fallback for older files.
+const FILE_FORMATS = [
+    { extension: 'xlsx', contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' },
+    { extension: 'xls', contentType: 'application/vnd.ms-excel' },
+];
+
+async function tryDownloadCatalystFile(url: string, fileNameToSave: string, expectedContentType: string): Promise<boolean> {
     const response = await axios({
         method: 'GET',
         url: url,
@@ -15,7 +21,7 @@ async function tryDownloadCatalystFile(url: string, fileNameToSave: string): Pro
         responseType: 'arraybuffer'
     }).catch(() => null);
 
-    if (!response || response.status !== 200 || response.headers['content-type'] !== 'application/vnd.ms-excel') {
+    if (!response || response.status !== 200 || response.headers['content-type'] !== expectedContentType) {
         return false;
     }
 
@@ -39,19 +45,21 @@ export async function downloadLatestCatalystDailyStatisticsFile(): Promise<strin
     let reportDay = previousTradingDay(new Date());
 
     for (let attempt = 0; attempt < MAX_LOOKBACK_DAYS; attempt++) {
-        const fileName = `catalyst_${format(reportDay, 'yyyyMMdd')}.xls`;
-        const localFileName = `${process.env.TEMP_FOLDER}/${fileName}`;
+        for (const { extension, contentType } of FILE_FORMATS) {
+            const fileName = `catalyst_${format(reportDay, 'yyyyMMdd')}.${extension}`;
+            const localFileName = `${process.env.TEMP_FOLDER}/${fileName}`;
 
-        if (existsSync(localFileName)) {
-            return localFileName;
-        }
+            if (existsSync(localFileName)) {
+                return localFileName;
+            }
 
-        const url = `https://gpwcatalyst.pl/pub/CATALYST/statystyki/statystyki_dzienne/${fileName}`;
-        console.log(`Downloading Catalyst daily statistics file: ${url}`);
+            const url = `https://gpwcatalyst.pl/pub/CATALYST/statystyki/statystyki_dzienne/${fileName}`;
+            console.log(`Downloading Catalyst daily statistics file: ${url}`);
 
-        const downloaded = await tryDownloadCatalystFile(url, localFileName);
-        if (downloaded) {
-            return localFileName;
+            const downloaded = await tryDownloadCatalystFile(url, localFileName, contentType);
+            if (downloaded) {
+                return localFileName;
+            }
         }
 
         reportDay = previousTradingDay(reportDay);
