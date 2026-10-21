@@ -2,8 +2,7 @@ import { describe, it, expect } from "vitest";
 import { parseObligacjeBondInformationPage, parseInterestType } from "./ObligacjeBondInformationPage";
 
 describe("ObligacjeBondInformationPage", () => {
-    it("should parse", () => {
-        const markup = `<div class="headline">
+    const markup = `<div class="headline">
     <div class="title">
         <h1>KRU0827</h1>
     </div>
@@ -96,6 +95,7 @@ describe("ObligacjeBondInformationPage", () => {
         </div>
         <div class="note-3"><a href="/pl/emitent/kruk-s-a" class="btn-7 btn-7a btn-7-1">INFORMACJE POWIĄZANE Z EMITENTEM</a></div>`;
 
+    it("should parse", () => {
         const bondInformation = parseObligacjeBondInformationPage(markup);
         expect(bondInformation).toEqual({
             name: 'KRU0827',
@@ -213,6 +213,15 @@ describe("ObligacjeBondInformationPage", () => {
                 payoffDay: '2027-08-12'
             }]
         });
+    });
+
+    it("should parse empty market as empty string", () => {
+        const markupWithEmptyMarket = markup.replace(/(<th>Rynek:<\/th>\s*<td>)GPW RR(<\/td>)/, '$1$2');
+        expect(markupWithEmptyMarket).not.toEqual(markup);
+
+        const bondInformation = parseObligacjeBondInformationPage(markupWithEmptyMarket);
+        expect(bondInformation.market).toEqual('');
+        expect(bondInformation.name).toEqual('KRU0827');
     });
 });
 

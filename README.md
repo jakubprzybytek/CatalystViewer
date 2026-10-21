@@ -84,3 +84,7 @@ Run (integration `int` environment):
 ```bash
 npm run test:smoke:int
 ```
+
+### Roadmap
+
+- **Lenient interest schedule parsing (obligacje.pl).** New bonds are skipped when obligacje.pl lists a different number of interest period first days, rights days and payoff days (e.g. extra trailing rights day, duplicate first day). Pair periods by payoff day and match the nearest first/rights day instead of requiring equal-length lists. Currently affects ACH0427, ALR0628, KR20229, PEOH130 and PS0130 (PS0130's rights days are unusable at the source).

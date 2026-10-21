@@ -3,7 +3,8 @@ import assert from 'assert';
 
 const BOND_NAME_REGEX = /<h1>([^<]+)<\/h1>/;
 const ISSUER_REGEX = /"nazwa-emitenta">(.+)<\/a>/;
-const MARKET_REGEX = /<th>Rynek:<\/th>\s*<td>(.+?)<\/td>/;
+// obligacje.pl leaves the market empty for some bonds; it's informational only (the updater uses GPW's market)
+const MARKET_REGEX = /<th>Rynek:<\/th>\s*<td>(.*?)<\/td>/;
 const NOMINAL_VALUE_REGEX = /<th>Wartość nominalna:<\/th>\s+<td>(.+) \w{3}<\/td>/;
 const ISSUE_VALUE_REGEX = /<th>Wartość emisji w obrocie:<\/th>\s+<td>(.+) \w{3}<\/td>/;
 const INTEREST_TYPE_REGEX = /<th>Typ oprocentowania:<\/th>\s+<td>(.+)<\/td>/;
