@@ -17,7 +17,7 @@ Testing details (fixtures, reference date, test layers) are in [testing.md](test
 | Auth | Shared Cognito pool `AlbedoUserPool` (`eu-west-1_IVai0KEAA`). All stages use the same generic client `Albedo2Webapp`, hardcoded in `infra/api.ts`. |
 | Data | Live data (bonds, quotes history, issuer profiles, user profiles, jobs) lives in `int` tables. `removal` is `remove` for every stage except one named `production` (which doesn't exist), so removing `int` would delete the live data. |
 | Domain | `int.catalyst.albedoonline.com`. |
-| AWS access from CI | Long-lived access keys in GitHub secrets (most likely IAM user `GitHubActionsUser`). The account already has a GitHub OIDC provider and OIDC roles for other repos, but none for CatalystViewer. |
+| AWS access from CI | Long-lived access keys in GitHub secrets (most likely IAM user `GitHubActionsUser`) — replaced by the OIDC role in phase 0. The account already has a GitHub OIDC provider and OIDC roles for other repos, but none for CatalystViewer. |
 
 ---
 
@@ -144,7 +144,7 @@ Each phase is shippable on its own; the app keeps working after every one.
 3. ✅ Per-stage Cognito app client `catalyst-viewer-<stage>-web`, created by SST on the shared pool; its id feeds the API authorizer and the web app. Same auth flows and token lifetimes as `Albedo2Webapp`.
 4. ✅ Point-in-time recovery: nothing to do. SST enables it on every table by default (all `int` tables have it).
 5. ✅ The Bonds Updater schedule follows `scheduleEnabled` (only `int` for now, see phase 2).
-6. ⏳ Create the `GitHub-CatalystViewer` OIDC role and policy (manual, commands in [GitHub setup](#github-setup)), then switch `ci-int.yml` to `role-to-assume`.
+6. ✅ `GitHub-CatalystViewer` OIDC role and policy created (commands in [GitHub setup](#github-setup)); `ci-int.yml` uses `role-to-assume`. The access key secrets are still in the repo until the pipeline is replaced (phase 3).
 
 Deploying this to `int` gives `int` its own client `catalyst-viewer-int-web`. Users just log in again (same accounts).
 
