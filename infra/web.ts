@@ -1,13 +1,11 @@
 import { api, userPoolId, userPoolClientId } from "./api";
-
-// const customDomainPrefix = $app.stage === "int" ? "" : $app.stage + ".";
-const customDomainPrefix = $app.stage + ".";
+import { siteDomain } from "./stage";
 
 const site = new sst.aws.Nextjs("Site", {
   path: "packages/web",
   openNextVersion: "3.10.2",
   domain: {
-    name: customDomainPrefix + "catalyst.albedoonline.com",
+    name: siteDomain,
     dns: sst.aws.dns({ zone: "Z041419132FCBY6ZLLXL2" }),
   },
   environment: {

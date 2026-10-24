@@ -1,7 +1,20 @@
 import { profilesTable, bondDetailsTable, bondStatisticsTable, issuerProfilesTable, jobsTable } from "./storage";
 
+// Shared, manually managed pool (AlbedoUserPool) used by several apps. Each stage gets its own app client.
 const USER_POOL_ID = "eu-west-1_IVai0KEAA";
-const USER_POOL_CLIENT_ID = "3qt6td581r3qqsk23tgv9r5duh";
+
+const userPoolClient = new aws.cognito.UserPoolClient("WebClient", {
+  name: `catalyst-viewer-${$app.stage}-web`,
+  userPoolId: USER_POOL_ID,
+  explicitAuthFlows: ["ALLOW_CUSTOM_AUTH", "ALLOW_REFRESH_TOKEN_AUTH", "ALLOW_USER_SRP_AUTH"],
+  generateSecret: false,
+  preventUserExistenceErrors: "ENABLED",
+  enableTokenRevocation: true,
+  accessTokenValidity: 60,
+  idTokenValidity: 60,
+  refreshTokenValidity: 30,
+  tokenValidityUnits: { accessToken: "minutes", idToken: "minutes", refreshToken: "days" },
+});
 
 const getProfileFunction = new sst.aws.Function("GetProfile", {
   handler: "packages/functions/src/profile/getProfile.handler",
@@ -114,7 +127,7 @@ const cognitoAuthorizer = api.addAuthorizer({
   name: "cognitoAuthorizer",
   jwt: {
     issuer: `https://cognito-idp.eu-west-1.amazonaws.com/${USER_POOL_ID}`,
-    audiences: [USER_POOL_CLIENT_ID],
+    audiences: [userPoolClient.id],
   },
 });
 
@@ -141,4 +154,4 @@ api.route("GET /api/tools/bondInformation", getBondInformationFunction.arn, jwtA
 api.route("POST /api/tools/bondsUpdater", triggerBondsUpdaterFunction.arn, jwtAuth);
 
 export const userPoolId = USER_POOL_ID;
-export const userPoolClientId = USER_POOL_CLIENT_ID;
+export const userPoolClientId = userPoolClient.id;

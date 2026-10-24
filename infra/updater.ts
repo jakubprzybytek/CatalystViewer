@@ -1,3 +1,4 @@
+import { scheduleEnabled } from "./stage";
 import { bondDetailsTable, bondStatisticsTable, issuerProfilesTable, jobsTable } from "./storage";
 
 const bondsUpdaterFunction = new sst.aws.Function("BondsUpdater", {
@@ -672,8 +673,8 @@ new aws.sfn.StateMachine("FundamentalAnalysisStateMachine", {
   ),
 });
 
-// Schedule rule - only in non-dev stages
-if (!$dev) {
+// Schedule rule - only in stages that run on live data (see infra/stage.ts)
+if (scheduleEnabled) {
   const schedulerRole = new aws.iam.Role("BondsUpdaterSchedulerRole", {
     assumeRolePolicy: JSON.stringify({
       Version: "2012-10-17",

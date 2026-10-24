@@ -4,7 +4,8 @@ export default $config({
   app(input) {
     return {
       name: "catalyst-viewer",
-      removal: input?.stage === "production" ? "retain" : "remove",
+      removal: input?.stage === "prod" ? "retain" : "remove",
+      protect: input?.stage === "prod",
       home: "aws",
       providers: {
         aws: {
