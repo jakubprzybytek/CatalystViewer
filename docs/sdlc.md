@@ -11,7 +11,7 @@ Testing details (fixtures, reference date, test layers) are in [testing.md](test
 | | |
 |---|---|
 | Stages | `int` is the only live stage and acts as production. `dev`, `codespace`, `staralliancepirx` exist in AWS but are idle (last deployed May–June 2026, never ran the updater). |
-| Workflow | `.github/workflows/ci-int.yml`: on push to `main` → unit tests → deploy `int` → smoke tests. |
+| Workflow | `.github/workflows/delivery.yml` (formerly `ci-int.yml`): on push to `main` → unit tests → deploy `int` → smoke tests. |
 | Releases | No versions or tags. Every merge to `main` goes straight to the live stage. |
 | PRs | No checks run on pull requests. `main` is not protected. |
 | Auth | Shared Cognito pool `AlbedoUserPool` (`eu-west-1_IVai0KEAA`). All stages use the same generic client `Albedo2Webapp`, hardcoded in `infra/api.ts`. |
@@ -144,13 +144,13 @@ Each phase is shippable on its own; the app keeps working after every one.
 3. ✅ Per-stage Cognito app client `catalyst-viewer-<stage>-web`, created by SST on the shared pool; its id feeds the API authorizer and the web app. Same auth flows and token lifetimes as `Albedo2Webapp`.
 4. ✅ Point-in-time recovery: nothing to do. SST enables it on every table by default (all `int` tables have it).
 5. ✅ The Bonds Updater schedule follows `scheduleEnabled` (only `int` for now, see phase 2).
-6. ✅ `GitHub-CatalystViewer` OIDC role and policy created (commands in [GitHub setup](#github-setup)); `ci-int.yml` uses `role-to-assume`. The access key secrets are still in the repo until the pipeline is replaced (phase 3).
+6. ✅ `GitHub-CatalystViewer` OIDC role and policy created (commands in [GitHub setup](#github-setup)); workflows use `role-to-assume`. The access key secrets are still in the repo until the pipeline is replaced (phase 3).
 
 Deploying this to `int` gives `int` its own client `catalyst-viewer-int-web`. Users just log in again (same accounts).
 
 ### Phase 1 — Create prod (parallel run)
 
-1. Deploy `prod` once from a workstation (or a manual workflow run): `sst deploy --stage prod`.
+1. Deploy `prod` once with the manual **Deploy Prod** workflow (`deploy-prod.yml`) run from `main`. It runs `sst deploy --stage prod` and the smoke tests against prod.
 2. Check the site at `catalyst.albedoonline.com`, log in with an existing account.
 3. Prod's schedule is **not** enabled yet (`prod` is not in `SCHEDULED_STAGES` in `infra/stage.ts`) so it doesn't double-run the updater.
 
@@ -166,7 +166,7 @@ Deploying this to `int` gives `int` its own client `catalyst-viewer-int-web`. Us
 
 ### Phase 3 — Pipeline
 
-1. Replace `ci-int.yml` with `delivery.yml` (unit tests → int → tests → tag → prod → smoke) and add `deploy-prod.yml` (manual tag deploy).
+1. Extend `delivery.yml` to the full chain (unit tests → int → tests → tag → prod → smoke). `deploy-prod.yml` (manual deploy) already exists from phase 1.
 2. Add the PR workflow (unit tests + typecheck) and turn on branch protection for `main`.
 3. Remove the AWS access key secrets from the repo (workflows use the OIDC role since phase 0).
 4. Do one test release end to end (a trivial `fix:` commit) and one rollback via `deploy-prod.yml`.

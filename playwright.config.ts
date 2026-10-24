@@ -2,7 +2,8 @@ import { defineConfig, devices } from '@playwright/test';
 
 const stage = process.env.STAGE;
 const stageUrls: Record<string, string> = {
-  'int': 'https://int.catalyst.albedoonline.com'
+  'int': 'https://int.catalyst.albedoonline.com',
+  'prod': 'https://catalyst.albedoonline.com',
 };
 const baseURL = process.env.PLAYWRIGHT_TEST_BASE_URL || (stage && stageUrls[stage]) || 'http://localhost:3000';
 

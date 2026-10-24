@@ -1,4 +1,4 @@
-name: CI Main Int
+name: Delivery
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 concurrency: 
-  group: main-int
+  group: delivery
   cancel-in-progress: false
 
 permissions:

@@ -13,7 +13,7 @@ Secrets are managed in **two ways** depending on environment:
 
 ### Deployed environments (GitHub Actions)
 - Secrets are stored as **GitHub repository secrets** (Settings → Secrets and variables → Actions).
-- The CI workflow (`ci-int.yml`) injects them as environment variables on the deploy step:
+- The CI workflow (`delivery.yml`) injects them as environment variables on the deploy step:
   ```yaml
   - name: Run Serverless Stack deploy
     run: npm run deploy -- --stage ${STAGE}
@@ -35,7 +35,7 @@ Secrets are managed in **two ways** depending on environment:
 ### Checklist when adding a new secret
 1. Add to `.env.local.example` with a placeholder and comment.
 2. Add to the Lambda's `environment:` block in the relevant `infra/*.ts` file.
-3. Add to the `sst deploy` step env in `.github/workflows/ci-int.yml`.
+3. Add to the `sst deploy` step env in `.github/workflows/delivery.yml`.
 4. Document in the GitHub repo secrets (Settings → Secrets) — add a note in the PR description.
 
 ## Package Structure
