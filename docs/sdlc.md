@@ -150,9 +150,9 @@ Deploying this to `int` gives `int` its own client `catalyst-viewer-int-web`. Us
 
 ### Phase 1 — Create prod (parallel run)
 
-1. Deploy `prod` once with the manual **Deploy Prod** workflow (`deploy-prod.yml`) run from `main`. It runs `sst deploy --stage prod` and the smoke tests against prod.
-2. Check the site at `catalyst.albedoonline.com`, log in with an existing account.
-3. Prod's schedule is **not** enabled yet (`prod` is not in `SCHEDULED_STAGES` in `infra/stage.ts`) so it doesn't double-run the updater.
+1. ✅ Deployed `prod` with the manual **Deploy Prod** workflow (`deploy-prod.yml`) from `main`, with the "Data is displayed" smoke test skipped (prod starts empty). The zone still had the ACM validation CNAME from an earlier deployment of the bare domain, so prod's DNS uses `override: true` to take it over.
+2. ✅ `catalyst.albedoonline.com` is up; Cognito client `catalyst-viewer-prod-web`; login works (smoke tests).
+3. ✅ Prod's schedule is **not** enabled (`prod` is not in `SCHEDULED_STAGES` in `infra/stage.ts`), so the updater doesn't double-run.
 
 ### Phase 2 — Data copy and cutover
 
