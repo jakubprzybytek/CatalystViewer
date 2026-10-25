@@ -27,7 +27,7 @@ Testing details (fixtures, reference date, test layers) are in [testing.md](test
 
 ```
 pull request
-  └─ unit tests + typecheck                          (required check)
+  └─ unit tests + typecheck                          (informational, not required)
 
 merge to main
   └─ unit tests + typecheck
@@ -124,7 +124,7 @@ Stage-specific behaviour is chosen in one place (an `infra/stage.ts` config: `is
 
 **GitHub environments** (`int`, `prod`) are deferred. They would add per-stage secrets, scoping the AWS role to an environment instead of a branch/tag, deployment rules (e.g. prod only from `v*` tags, optional approval) and a deployment history view. They can be added later without changing the pipeline shape.
 
-**Branch protection on `main`**: PR required, "unit tests + typecheck" check required.
+**No branch protection on `main`**: changes are pushed directly to `main`; the delivery pipeline is the gate. `pr.yml` still runs checks if a pull request is opened.
 
 ### Monitoring prod
 
@@ -144,6 +144,7 @@ Stage-specific behaviour is chosen in one place (an `infra/stage.ts` config: `is
 | 5 | Old stages | Remove `codespace` and `staralliancepirx`. Keep `dev` as the personal development stage. |
 | 6 | Email recipients | Same SSM parameter for prod; `int` doesn't send. |
 | 7 | Copy prod data back to `int`/dev? | No — `int` uses fixtures only. |
+| 8 | Branch protection / required PRs on `main`? | No. Direct pushes to `main`; the pipeline is the gate. |
 
 ## Migration plan
 
@@ -178,7 +179,7 @@ Deploying this to `int` gives `int` its own client `catalyst-viewer-int-web`. Us
 ### Phase 3 — Pipeline
 
 1. ✅ `delivery.yml` runs the full chain (checks → int → smoke → tag → prod → smoke), built from the reusable `checks.yml` and `deploy-stage.yml`. `deploy-prod.yml` deploys a given tag.
-2. ✅ PR workflow `pr.yml` (unit tests + typecheck). ⏳ Branch protection for `main`.
+2. ✅ PR workflow `pr.yml` (unit tests + typecheck). No branch protection (decision 8).
 3. ⏳ Remove the `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` repo secrets (no workflow references them since phase 0): `gh secret delete AWS_ACCESS_KEY_ID && gh secret delete AWS_SECRET_ACCESS_KEY`.
 4. ✅ First pipeline release `v1.0.1` on 2026-10-25 (checks → int → tag → prod, ~6 min). `deploy-prod.yml` tested by redeploying `v1.0.1`; a non-existent tag is rejected before deploying.
 
