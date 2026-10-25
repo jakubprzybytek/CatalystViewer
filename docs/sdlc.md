@@ -30,9 +30,9 @@ pull request
   └─ unit tests + typecheck                          (required check)
 
 merge to main
-  └─ unit tests
+  └─ unit tests + typecheck
      └─ deploy int
-        └─ integration tests + E2E tests against int
+        └─ smoke tests against int (integration + E2E tests from phase 4)
            └─ create tag vX.Y.Z
               └─ deploy prod from the tag
                  └─ smoke tests against prod
@@ -40,9 +40,21 @@ merge to main
 manual: "Deploy tag to prod" (rollback / redeploy any existing tag)
 ```
 
-- One workflow (`.github/workflows/delivery.yml`) runs the whole chain as dependent jobs. The prod job checks out the tag created by the previous job.
+- Workflows in `.github/workflows/`:
+
+  | File | Trigger | What it does |
+  |---|---|---|
+  | `delivery.yml` | push to `main`, manual | checks → deploy int → tag → deploy prod |
+  | `pr.yml` | pull request to `main` | checks |
+  | `deploy-prod.yml` | manual, `tag` input | deploy an existing `vX.Y.Z` tag to prod (rollback / redeploy) |
+  | `checks.yml` | reused | unit tests (`npm test`) and typecheck (`npm run typecheck`: infra + all packages) |
+  | `deploy-stage.yml` | reused | deploy one stage via the OIDC role, then its smoke tests |
+
+- `delivery.yml` runs the whole chain as dependent jobs. The prod job checks out the tag created by the previous job.
   - Reason: a tag pushed by CI with the default `GITHUB_TOKEN` does not trigger other workflows, so a separate `on: push: tags` workflow would never start.
-- Runs are queued, never cancelled (`concurrency: delivery`, `cancel-in-progress: false`), so `int` is never shared between two runs and prod deploys stay in order.
+- Runs are queued, never cancelled (`concurrency: delivery`, `cancel-in-progress: false`), so `int` is never shared between two runs and prod deploys stay in order. GitHub keeps only one *pending* run per group: if several pushes land while a run is in progress, only the newest waits (it contains all the changes).
+- Each stage deploy also has its own lock (`deploy-int`, `deploy-prod`), so a manual prod deploy can't overlap with the pipeline's.
+- A failed prod job leaves the tag in place; re-run the job, or deploy the tag with `deploy-prod.yml`. Re-running the pipeline on an already tagged commit reuses its tag.
 - If any step before tagging fails, nothing reaches prod. `int` stays on the failing version until the next merge fixes it.
 - A separate manual workflow (`deploy-prod.yml`, `workflow_dispatch` with a `tag` input) deploys any existing tag to prod. This is the rollback path.
 
@@ -51,7 +63,7 @@ manual: "Deploy tag to prod" (rollback / redeploy any existing tag)
 - Semantic versions as git tags only: `v1.0.0`, `v1.0.1`, … No version commits to `main`; `package.json` version stays unused.
 - Next version is computed from the latest tag and the commit messages since it (conventional commits):
   - `feat:` → minor, `!` / `BREAKING CHANGE` → major, anything else → patch.
-- A GitHub Release is created for each tag with the commit list as notes.
+- No GitHub Releases for now, just tags.
 - First tag: `v1.0.0` at the moment prod goes live.
 
 ### Stages
@@ -165,10 +177,10 @@ Deploying this to `int` gives `int` its own client `catalyst-viewer-int-web`. Us
 
 ### Phase 3 — Pipeline
 
-1. Extend `delivery.yml` to the full chain (unit tests → int → tests → tag → prod → smoke). `deploy-prod.yml` (manual deploy) already exists from phase 1.
-2. Add the PR workflow (unit tests + typecheck) and turn on branch protection for `main`.
-3. Remove the AWS access key secrets from the repo (workflows use the OIDC role since phase 0).
-4. Do one test release end to end (a trivial `fix:` commit) and one rollback via `deploy-prod.yml`.
+1. ✅ `delivery.yml` runs the full chain (checks → int → smoke → tag → prod → smoke), built from the reusable `checks.yml` and `deploy-stage.yml`. `deploy-prod.yml` deploys a given tag.
+2. ✅ PR workflow `pr.yml` (unit tests + typecheck). ⏳ Branch protection for `main`.
+3. ⏳ Remove the AWS access key secrets from the repo (workflows use the OIDC role since phase 0).
+4. ⏳ One release end to end (`v1.0.1`) and one rollback via `deploy-prod.yml`.
 
 ### Phase 4 — `int` becomes the test environment
 

@@ -1,0 +1,73 @@
+name: Deploy Stage
+
+# Deploys one SST stage and runs the smoke tests against it.
+# Reused by the delivery pipeline (int, prod) and the manual prod deploy.
+on:
+  workflow_call:
+    inputs:
+      stage:
+        description: SST stage (int or prod)
+        type: string
+        required: true
+      ref:
+        description: Git ref to deploy (branch, tag or SHA); defaults to the triggering commit
+        type: string
+        default: ""
+
+permissions:
+  id-token: write   # OIDC token for the AWS role
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    name: Deploy ${{ inputs.stage }}
+
+    # One deploy per stage at a time, also across workflows (pipeline and manual prod deploy).
+    concurrency:
+      group: deploy-${{ inputs.stage }}
+      cancel-in-progress: false
+
+    env:
+      STAGE: ${{ inputs.stage }}
+      AWS_DEFAULT_REGION: eu-west-1
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.ref }}
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - uses: bahmutov/npm-install@v1.12.1
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6.1.0
+        with:
+          role-to-assume: arn:aws:iam::198805281865:role/GitHub-CatalystViewer
+          aws-region: ${{ env.AWS_DEFAULT_REGION }}
+
+      - name: Run Serverless Stack deploy
+        run: npm run deploy -- --stage ${STAGE}
+        env:
+          TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run smoke tests
+        run: npm run test:smoke:${STAGE}
+        env:
+          TEST_USERNAME: ${{ vars.TEST_USERNAME }}
+          TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: playwright-report-${{ inputs.stage }}
+          path: playwright-report/
+          retention-days: 10
