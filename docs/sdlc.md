@@ -160,8 +160,8 @@ Deploying this to `int` gives `int` its own client `catalyst-viewer-int-web`. Us
 2. ✅ Copied with [`scripts/copy-stage-data`](../scripts/copy-stage-data/README.md) (`--from int --to prod --live`): `Profiles` 1, `BondDetails` 1617, `BondStatistics` 13453, `IssuerProfiles` 258 items. `Jobs` (history) and `SiteRevalidation` are not copied.
 3. ✅ Exact item counts match per table; sampled items are identical in both stages.
 4. ✅ Schedule moved to prod (`SCHEDULED_STAGES = ["prod"]` in `infra/stage.ts`); `int` has no schedule. A manual Bonds Updater run on prod succeeded on 2026-10-25 (1051 bonds updated, 1 new).
-5. Tell users the new address. Optionally point `int.catalyst.albedoonline.com` users to it (a banner) until phase 4.
-6. Tag the commit deployed to prod as `v1.0.0`.
+5. Tell users the new address (no banner on `int`).
+6. ✅ Tagged `v1.0.0` on `5d6708d`, the commit deployed to prod.
 
 ### Phase 3 — Pipeline
 
