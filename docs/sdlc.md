@@ -179,8 +179,8 @@ Deploying this to `int` gives `int` its own client `catalyst-viewer-int-web`. Us
 
 1. ✅ `delivery.yml` runs the full chain (checks → int → smoke → tag → prod → smoke), built from the reusable `checks.yml` and `deploy-stage.yml`. `deploy-prod.yml` deploys a given tag.
 2. ✅ PR workflow `pr.yml` (unit tests + typecheck). ⏳ Branch protection for `main`.
-3. ⏳ Remove the AWS access key secrets from the repo (workflows use the OIDC role since phase 0).
-4. ⏳ One release end to end (`v1.0.1`) and one rollback via `deploy-prod.yml`.
+3. ⏳ Remove the `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` repo secrets (no workflow references them since phase 0): `gh secret delete AWS_ACCESS_KEY_ID && gh secret delete AWS_SECRET_ACCESS_KEY`.
+4. ✅ First pipeline release `v1.0.1` on 2026-10-25 (checks → int → tag → prod, ~6 min). `deploy-prod.yml` tested by redeploying `v1.0.1`; a non-existent tag is rejected before deploying.
 
 ### Phase 4 — `int` becomes the test environment
 
