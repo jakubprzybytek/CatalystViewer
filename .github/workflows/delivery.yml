@@ -5,6 +5,10 @@ name: Delivery
 on:
   push:
     branches: [ main ]
+    # Docs-only pushes don't release. A push that also changes anything else runs normally.
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
   workflow_dispatch:
 
 # Runs queue up instead of overlapping, so int is never shared and prod deploys stay in order.

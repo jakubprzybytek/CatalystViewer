@@ -44,7 +44,7 @@ manual: "Deploy tag to prod" (rollback / redeploy any existing tag)
 
   | File | Trigger | What it does |
   |---|---|---|
-  | `delivery.yml` | push to `main`, manual | checks → deploy int → tag → deploy prod |
+  | `delivery.yml` | push to `main` (except docs-only: `docs/**`, `**/*.md`), manual | checks → deploy int → tag → deploy prod |
   | `pr.yml` | pull request to `main` | checks |
   | `deploy-prod.yml` | manual, `tag` input | deploy an existing `vX.Y.Z` tag to prod (rollback / redeploy) |
   | `checks.yml` | reused | unit tests (`npm test`) and typecheck (`npm run typecheck`: infra + all packages) |
