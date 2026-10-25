@@ -156,10 +156,9 @@ Deploying this to `int` gives `int` its own client `catalyst-viewer-int-web`. Us
 
 ### Phase 2 — Data copy and cutover
 
-1. Disable the `int` Bonds Updater schedule (stops writes to `int`).
-2. Run a copy script (`scripts/copy-stage-data`) that scans each `int` table and batch-writes into the matching `prod` table:
-   `Profiles`, `BondDetails`, `BondStatistics`, `IssuerProfiles` (~22 MB total). `Jobs` (history) and `SiteRevalidation` are not copied.
-3. Verify item counts match per table; spot-check a few bonds and a user profile in the prod UI.
+1. ✅ No writes to `int` during the copy: done on Sunday 2026-10-25 (the schedule only runs on weekdays) with no executions running.
+2. ✅ Copied with [`scripts/copy-stage-data`](../scripts/copy-stage-data/README.md) (`--from int --to prod --live`): `Profiles` 1, `BondDetails` 1617, `BondStatistics` 13453, `IssuerProfiles` 258 items. `Jobs` (history) and `SiteRevalidation` are not copied.
+3. ✅ Exact item counts match per table; sampled items are identical in both stages.
 4. Move the schedule to prod (`SCHEDULED_STAGES = ["prod"]` in `infra/stage.ts`); trigger one Bonds Updater run on prod and confirm it succeeds.
 5. Tell users the new address. Optionally point `int.catalyst.albedoonline.com` users to it (a banner) until phase 4.
 6. Tag the commit deployed to prod as `v1.0.0`.
