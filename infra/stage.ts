@@ -5,9 +5,8 @@ const stage = $app.stage;
 
 export const isProd = stage === "prod";
 
-// Bonds Updater schedule. During migration (docs/sdlc.md) it runs on int until data is copied to prod,
-// then moves to prod.
-const SCHEDULED_STAGES = ["int"];
+// Bonds Updater schedule runs only where live data lives (see docs/sdlc.md).
+const SCHEDULED_STAGES = ["prod"];
 export const scheduleEnabled = !$dev && SCHEDULED_STAGES.includes(stage);
 
 // prod lives at the bare domain, other stages under a prefix.

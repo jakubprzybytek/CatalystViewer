@@ -64,7 +64,7 @@ manual: "Deploy tag to prod" (rollback / redeploy any existing tag)
 | Data | Live, kept forever | Fixture snapshot, reseeded on every deploy | Developer's choice |
 | Sources (GPW, obligacje.pl) | Live | Fixture files (see testing.md) | Live or fixture |
 | Clock | Real time | Fixed reference date | Real time |
-| Bonds Updater schedule | On (weekdays 9:00, 12:00, 15:00 UTC) | Off; run once by the pipeline after seeding | Off |
+| Bonds Updater schedule | On (weekdays 9:00, 12:00, 15:00 UTC) | Off (since phase 2); later run once by the pipeline after seeding | Off |
 | AI (Bedrock, Tavily) | On | Stubbed | Stubbed by default |
 | Emails (SES) | Sent to recipients | Logged only | Logged only |
 | `removal` / protection | `retain` + `protect` | `remove` | `remove` |
