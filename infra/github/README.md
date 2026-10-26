@@ -27,6 +27,7 @@ The app is a Next.js site on CloudFront, an API Gateway (HTTP API) with Lambda h
 - `ApiGateway`: API Gateway in eu-west-1.
 - `Queues`, `Tables`: SQS queues and DynamoDB tables `catalyst-viewer-*`.
 - `StateMachines`: `BondsUpdaterStateMachine-*` and `FundamentalAnalysisStateMachine-*`.
+- `StateMachineValidation`: `states:ValidateStateMachineDefinition`, which the Pulumi AWS provider calls on every definition change. It isn't tied to a state machine, so it's scoped to `stateMachine:*` (added 2026-10-26).
 - `Schedules`: `BondsUpdaterSchedule-*` (any group).
 - `Auth`: the app's client on the shared Cognito user pool.
 - `Edge`: CloudFront (distribution, function, cache policy, KeyValueStore), ACM and Route 53. Account-wide; these services can't be scoped usefully.
@@ -36,7 +37,7 @@ The app is a Next.js site on CloudFront, an API Gateway (HTTP API) with Lambda h
 ## Deviations from the standard
 
 - **Some resources don't start with `catalyst-viewer-`**, so the policy lists their name patterns too:
-  - the workflows in `infra/updater.ts` and `infra/analysis.ts`: state machines `BondsUpdaterStateMachine-<stage>` and `FundamentalAnalysisStateMachine-<stage>` (names kept from before they moved to `sst.aws.StepFunctions`), their roles `BondsUpdaterWorkflowRole-*` and `FundamentalAnalysisWorkflowRole-*`, the schedule `BondsUpdaterSchedule-*` and its role `BondsUpdaterSchedulerRole-*`;
+  - the workflows in `infra/updater.ts` and `infra/analysis.ts`: state machines `BondsUpdaterStateMachine-<stage>` and `FundamentalAnalysisStateMachine-<stage>` (names kept from before they moved to `sst.aws.StepFunctions`; their roles are `catalyst-viewer-<stage>-…WorkflowRole-*`), the schedule `BondsUpdaterSchedule-*` and its role `BondsUpdaterSchedulerRole-*`;
   - the Next.js site's revalidation subscriber, which SST names `SiteRevalidationEventsSubscriber…` (function) and `<stage>-SiteRevalidationEventsSubscriber…` (role).
 
   No other app in the account uses these names. Giving them a `catalyst-viewer-` name would replace the resources, so it isn't done.

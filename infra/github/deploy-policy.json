@@ -89,6 +89,12 @@
       ]
     },
     {
+      "Sid": "StateMachineValidation",
+      "Effect": "Allow",
+      "Action": ["states:ValidateStateMachineDefinition"],
+      "Resource": "arn:aws:states:eu-west-1:ACCOUNT_ID:stateMachine:*"
+    },
+    {
       "Sid": "Schedules",
       "Effect": "Allow",
       "Action": ["scheduler:*"],
