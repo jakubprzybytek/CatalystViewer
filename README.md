@@ -89,3 +89,5 @@ npm run test:smoke:int
 
 - **Lenient interest schedule parsing (obligacje.pl).** New bonds are skipped when obligacje.pl lists a different number of interest period first days, rights days and payoff days (e.g. extra trailing rights day, duplicate first day). Pair periods by payoff day and match the nearest first/rights day instead of requiring equal-length lists. Currently affects ACH0427, ALR0628, KR20229, PEOH130 and PS0130 (PS0130's rights days are unusable at the source).
 - **Shorter error report email header.** The header section of the Bonds Updater error report email takes too much space; make it more compact. (Done for the update report: title and stage dropped, stage in the subject outside prod.)
+- **Update AI model.** Issuer classification and fundamental analysis run on Claude Sonnet 4.6 (and Haiku 4.5 as an option), set in `packages/core/src/ai/models.ts`. Move to a current model.
+- **Alternative investment for each ROI.** For each of a bond's ROI figures, show an alternative investment to compare it with.
