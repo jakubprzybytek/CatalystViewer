@@ -1,8 +1,10 @@
 ### Development
 
+Stages, local development, tests and delivery: [docs/development.md](docs/development.md), per the [sst-delivery standard](https://github.com/jakubprzybytek/agent-playbook/blob/main/skills/sst-delivery/STANDARD.md).
+
 #### Local environment
 ```
-npm run dev
+npm run dev -- --stage dev
 ```
 
 ### Catalyst CLI

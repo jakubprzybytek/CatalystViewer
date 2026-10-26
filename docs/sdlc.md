@@ -1,6 +1,6 @@
 # Software Development Life Cycle
 
-How code gets from a commit to production. This document describes the **desired setup** and the **migration plan** from the current one.
+How CatalystViewer got to continuous delivery: the **desired setup** for this app and the **migration plan**. The general rules (stages, tests, pipeline, versions, test users) are the [sst-delivery standard](https://github.com/jakubprzybytek/agent-playbook/blob/main/skills/sst-delivery/STANDARD.md); how to develop and ship today, and where the app still deviates, is in [development.md](development.md).
 
 Testing details (fixtures, reference date, test layers) are in [testing.md](testing.md).
 
@@ -23,48 +23,9 @@ Testing details (fixtures, reference date, test layers) are in [testing.md](test
 
 ## Desired setup
 
-### Pipeline
+### Pipeline and versions
 
-```
-pull request
-  └─ unit tests + typecheck                          (informational, not required)
-
-merge to main
-  └─ unit tests + typecheck
-     └─ deploy int
-        └─ smoke tests against int (integration + E2E tests from phase 4)
-           └─ create tag vX.Y.Z
-              └─ deploy prod from the tag
-                 └─ smoke tests against prod
-
-manual: "Deploy tag to prod" (rollback / redeploy any existing tag)
-```
-
-- Workflows in `.github/workflows/`:
-
-  | File | Trigger | What it does |
-  |---|---|---|
-  | `delivery.yml` | push to `main` (except docs-only: `docs/**`, `**/*.md`), manual | checks → deploy int → tag → deploy prod |
-  | `pr.yml` | pull request to `main` | checks |
-  | `deploy-prod.yml` | manual, `tag` input | deploy an existing `vX.Y.Z` tag to prod (rollback / redeploy) |
-  | `checks.yml` | reused | unit tests (`npm test`) and typecheck (`npm run typecheck`: infra + all packages) |
-  | `deploy-stage.yml` | reused | deploy one stage via the OIDC role, then its smoke tests |
-
-- `delivery.yml` runs the whole chain as dependent jobs. The prod job checks out the tag created by the previous job.
-  - Reason: a tag pushed by CI with the default `GITHUB_TOKEN` does not trigger other workflows, so a separate `on: push: tags` workflow would never start.
-- Runs are queued, never cancelled (`concurrency: delivery`, `cancel-in-progress: false`), so `int` is never shared between two runs and prod deploys stay in order. GitHub keeps only one *pending* run per group: if several pushes land while a run is in progress, only the newest waits (it contains all the changes).
-- Each stage deploy also has its own lock (`deploy-int`, `deploy-prod`), so a manual prod deploy can't overlap with the pipeline's.
-- A failed prod job leaves the tag in place; re-run the job, or deploy the tag with `deploy-prod.yml`. Re-running the pipeline on an already tagged commit reuses its tag.
-- If any step before tagging fails, nothing reaches prod. `int` stays on the failing version until the next merge fixes it.
-- A separate manual workflow (`deploy-prod.yml`, `workflow_dispatch` with a `tag` input) deploys any existing tag to prod. This is the rollback path.
-
-### Versioning
-
-- Semantic versions as git tags only: `v1.0.0`, `v1.0.1`, … No version commits to `main`; `package.json` version stays unused.
-- Next version is computed from the latest tag and the commit messages since it (conventional commits):
-  - `feat:` → minor, `!` / `BREAKING CHANGE` → major, anything else → patch.
-- No GitHub Releases for now, just tags.
-- First tag: `v1.0.0` at the moment prod goes live.
+Per the standard; the workflows as built and the remaining deviations are in [development.md](development.md#delivery).
 
 ### Stages
 
@@ -92,7 +53,7 @@ Stage-specific behaviour is chosen in one place (an `infra/stage.ts` config: `is
 - The API authorizer accepts only its own stage's client id, so an `int` token can't call the prod API.
 - The pool id stays a constant; the client id comes from the SST resource, not a hardcoded value.
 - `Albedo2Webapp` is left untouched (it may be used elsewhere) — Catalyst just stops using it.
-- Test account: one dedicated user in the pool (credentials in repository secrets) used by E2E and smoke tests.
+- Test account: the dedicated user `catalyst-viewer-test@albedoonline.com` in a test-only group, password as an SST secret (the standard's test users; phase 6).
 
 ### GitHub setup
 
@@ -116,7 +77,7 @@ Stage-specific behaviour is chosen in one place (an `infra/stage.ts` config: `is
 | # | Decision | Outcome |
 |---|---|---|
 | 1 | Manual approval before prod deploy? | No — fully automatic. A GitHub environment rule can be added later if needed. |
-| 2 | Version bump rule | Conventional commits (`feat:` minor, `!` major, else patch). |
+| 2 | Version bump rule | ~~Conventional commits~~ Superseded by the standard: releases only go forward (`v1.N` + 1; phase 6). |
 | 3 | What `int` tests until fixture mode exists | Smoke tests only, against whatever data `int` has (interim until migration phase 4). |
 | 4 | Copy `Jobs` history to prod? | No. Prod starts with an empty jobs log. |
 | 5 | Old stages | Remove `codespace` and `staralliancepirx`. Keep `dev` as the personal development stage. |
@@ -175,6 +136,13 @@ Until this phase is done, the `int` gate is smoke tests on top of whatever data 
 1. Remove the idle stages: `sst remove --stage codespace` and `sst remove --stage staralliancepirx`. `dev` stays.
 2. Add the live source canary on prod.
 3. Update `README.md` and `docs/testing.md` to match.
+
+### Phase 6 — Align with the sst-delivery standard
+
+1. One `cd.yml` from the [template](https://github.com/jakubprzybytek/agent-playbook/blob/main/skills/sst-delivery/templates/cd.yml), replacing `delivery.yml`, `deploy-prod.yml`, `deploy-stage.yml` and `checks.yml` (`pr.yml` may stay).
+2. Forward-only versions: tag the commit currently on prod `v1.N` (the latest `v1.0.x` patch number + 1) before the first run, then `v1.N` + 1 per release.
+3. Test user `catalyst-viewer-test@albedoonline.com` (group `catalyst-viewer-test`, accepted off prod only; the API checks the group); password as the SST secret `TestUserPassword` of `dev` and `int`; tests read it through `sst shell`. Then delete the `TEST_PASSWORD` secret and the `TEST_USERNAME` variable, and change the password of the account used until now.
+4. No logged-in tests on prod: after the prod deploy, only checks that need no login. Upload Playwright reports only on failure.
 
 ### Risks
 
