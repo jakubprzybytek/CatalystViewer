@@ -15,7 +15,6 @@ on:
         default: ""
 
 permissions:
-  id-token: write   # OIDC token for the AWS role
   contents: read
 
 jobs:
@@ -23,6 +22,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     name: Deploy ${{ inputs.stage }}
+    permissions:
+      contents: read
+      id-token: write   # OIDC → AWS (infra/github/README.md); only on jobs that deploy
 
     # One deploy per stage at a time, also across workflows (pipeline and manual prod deploy).
     concurrency:
@@ -31,7 +33,6 @@ jobs:
 
     env:
       STAGE: ${{ inputs.stage }}
-      AWS_DEFAULT_REGION: eu-west-1
 
     steps:
       - uses: actions/checkout@v6
@@ -45,10 +46,12 @@ jobs:
       - uses: bahmutov/npm-install@v1.12.1
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v6.1.0
+        uses: aws-actions/configure-aws-credentials@v6
         with:
-          role-to-assume: arn:aws:iam::198805281865:role/GitHub-CatalystViewer
-          aws-region: ${{ env.AWS_DEFAULT_REGION }}
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/GitHub-CatalystViewer
+          aws-region: ${{ vars.AWS_REGION }}
+          role-session-name: gh-catalystviewer-${{ github.run_id }}
+          mask-aws-account-id: true
 
       - name: Run Serverless Stack deploy
         run: npm run deploy -- --stage ${STAGE}

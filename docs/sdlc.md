@@ -96,33 +96,11 @@ Stage-specific behaviour is chosen in one place (an `infra/stage.ts` config: `is
 
 ### GitHub setup
 
-**AWS access via OIDC** instead of long-lived access keys:
-
-- The account already has the GitHub OIDC provider (`token.actions.githubusercontent.com`) and per-repo roles for other apps (`GitHub-PortfolioTracker`, `GitHub-AstroWeather`, …), each with the shared `SST-Deployment` policy plus an app-specific `<App>-Deployment` policy.
-- CatalystViewer gets the same: role `GitHub-CatalystViewer` with `SST-Deployment` + `CatalystViewer-Deployment`. Definitions are in the repo:
-  - [`infra/iam/github-oidc-trust.json`](../infra/iam/github-oidc-trust.json) — only this repo's `main` branch and `v*` tags can assume the role.
-  - [`infra/iam/catalyst-viewer-deployment-policy.json`](../infra/iam/catalyst-viewer-deployment-policy.json) — modelled on `PortfolioTracker-Deployment`, plus Step Functions and the `catalyst-viewer/*` SSM parameters.
-- They are created by hand (CI runs with this role, so it can't create it):
-
-  ```bash
-  aws iam create-policy --policy-name CatalystViewer-Deployment \
-    --policy-document file://infra/iam/catalyst-viewer-deployment-policy.json
-  aws iam create-role --role-name GitHub-CatalystViewer \
-    --assume-role-policy-document file://infra/iam/github-oidc-trust.json
-  aws iam attach-role-policy --role-name GitHub-CatalystViewer \
-    --policy-arn arn:aws:iam::198805281865:policy/SST-Deployment
-  aws iam attach-role-policy --role-name GitHub-CatalystViewer \
-    --policy-arn arn:aws:iam::198805281865:policy/CatalystViewer-Deployment
-  ```
-
-  To change permissions later, edit the JSON and run
-  `aws iam create-policy-version --policy-arn arn:aws:iam::198805281865:policy/CatalystViewer-Deployment --policy-document file://infra/iam/catalyst-viewer-deployment-policy.json --set-as-default`.
-- Workflows use `aws-actions/configure-aws-credentials` with `role-to-assume: arn:aws:iam::198805281865:role/GitHub-CatalystViewer` and `permissions: id-token: write`.
-- Once it works, delete the `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` repo secrets. Only deactivate the `GitHubActionsUser` keys after checking no other repo uses them (that user is in the `Administrators` group).
+**AWS access via OIDC**, no access keys: the workflows assume the role `GitHub-CatalystViewer` (policies `SST-Deployment` + `CatalystViewer-Deployment`), following the [aws-github-deploy standard](https://github.com/jakubprzybytek/agent-playbook/blob/main/skills/aws-github-deploy/STANDARD.md). The role, its policy and how to change them are described in [`infra/github/README.md`](../infra/github/README.md); the policy is [`infra/github/deploy-policy.json`](../infra/github/deploy-policy.json). The role ARN is built from the repository secret `AWS_ACCOUNT_ID`, the region comes from the variable `AWS_REGION`.
 
 **Secrets and variables** stay at repository level (test user, Tavily key).
 
-**GitHub environments** (`int`, `prod`) are deferred. They would add per-stage secrets, scoping the AWS role to an environment instead of a branch/tag, deployment rules (e.g. prod only from `v*` tags, optional approval) and a deployment history view. They can be added later without changing the pipeline shape.
+**GitHub environments** are not used (the standard has no environments or branch rules): any branch or tag of this repo can assume the role, and only the deploy jobs get an OIDC token. Pull request jobs never do.
 
 **No branch protection on `main`**: changes are pushed directly to `main`; the delivery pipeline is the gate. `pr.yml` still runs checks if a pull request is opened.
 
@@ -157,7 +135,7 @@ Each phase is shippable on its own; the app keeps working after every one.
 3. ✅ Per-stage Cognito app client `catalyst-viewer-<stage>-web`, created by SST on the shared pool; its id feeds the API authorizer and the web app. Same auth flows and token lifetimes as `Albedo2Webapp`.
 4. ✅ Point-in-time recovery: nothing to do. SST enables it on every table by default (all `int` tables have it).
 5. ✅ The Bonds Updater schedule follows `scheduleEnabled` (only `int` for now, see phase 2).
-6. ✅ `GitHub-CatalystViewer` OIDC role and policy created (commands in [GitHub setup](#github-setup)); workflows use `role-to-assume`. The access key secrets are still in the repo until the pipeline is replaced (phase 3).
+6. ✅ `GitHub-CatalystViewer` OIDC role and policy ([GitHub setup](#github-setup)); workflows use `role-to-assume`. No access keys in the repo.
 
 Deploying this to `int` gives `int` its own client `catalyst-viewer-int-web`. Users just log in again (same accounts).
 

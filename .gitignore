@@ -21,3 +21,6 @@ playwright/.cache/
 
 *.xls
 .superpowers/
+
+# AWS IAM documents with the account number
+infra/github/private/

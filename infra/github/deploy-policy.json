@@ -1,0 +1,146 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "Identity",
+      "Effect": "Allow",
+      "Action": ["sts:GetCallerIdentity"],
+      "Resource": "*"
+    },
+    {
+      "Sid": "SstState",
+      "Effect": "Allow",
+      "Action": ["ssm:GetParameter", "ssm:GetParameters", "ssm:PutParameter", "ssm:DeleteParameter"],
+      "Resource": "arn:aws:ssm:*:ACCOUNT_ID:parameter/sst/*"
+    },
+    {
+      "Sid": "NotificationRecipients",
+      "Effect": "Allow",
+      "Action": ["ssm:GetParameter"],
+      "Resource": "arn:aws:ssm:eu-west-1:ACCOUNT_ID:parameter/catalyst-viewer/*"
+    },
+    {
+      "Sid": "Buckets",
+      "Effect": "Allow",
+      "Action": ["s3:*"],
+      "Resource": [
+        "arn:aws:s3:::catalyst-viewer-*",
+        "arn:aws:s3:::catalyst-viewer-*/*",
+        "arn:aws:s3:::sst-asset-*",
+        "arn:aws:s3:::sst-asset-*/*"
+      ]
+    },
+    {
+      "Sid": "Functions",
+      "Effect": "Allow",
+      "Action": ["lambda:*"],
+      "Resource": [
+        "arn:aws:lambda:eu-west-1:ACCOUNT_ID:function:catalyst-viewer-*",
+        "arn:aws:lambda:eu-west-1:ACCOUNT_ID:function:SiteRevalidationEventsSubscriber*",
+        "arn:aws:lambda:eu-west-1:ACCOUNT_ID:event-source-mapping:*"
+      ]
+    },
+    {
+      "Sid": "EventSourceMappingsCreate",
+      "Effect": "Allow",
+      "Action": ["lambda:CreateEventSourceMapping", "lambda:ListEventSourceMappings"],
+      "Resource": "*"
+    },
+    {
+      "Sid": "Logs",
+      "Effect": "Allow",
+      "Action": ["logs:*"],
+      "Resource": "arn:aws:logs:eu-west-1:ACCOUNT_ID:log-group:*"
+    },
+    {
+      "Sid": "ApiAccessLogDelivery",
+      "Effect": "Allow",
+      "Action": [
+        "logs:CreateLogDelivery", "logs:GetLogDelivery", "logs:UpdateLogDelivery",
+        "logs:DeleteLogDelivery", "logs:ListLogDeliveries"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "ApiGateway",
+      "Effect": "Allow",
+      "Action": ["apigateway:*"],
+      "Resource": "arn:aws:apigateway:eu-west-1::/*"
+    },
+    {
+      "Sid": "Queues",
+      "Effect": "Allow",
+      "Action": ["sqs:*"],
+      "Resource": "arn:aws:sqs:eu-west-1:ACCOUNT_ID:catalyst-viewer-*"
+    },
+    {
+      "Sid": "Tables",
+      "Effect": "Allow",
+      "Action": ["dynamodb:*"],
+      "Resource": "arn:aws:dynamodb:eu-west-1:ACCOUNT_ID:table/catalyst-viewer-*"
+    },
+    {
+      "Sid": "StateMachines",
+      "Effect": "Allow",
+      "Action": ["states:*"],
+      "Resource": [
+        "arn:aws:states:eu-west-1:ACCOUNT_ID:stateMachine:BondsUpdaterStateMachine-*",
+        "arn:aws:states:eu-west-1:ACCOUNT_ID:stateMachine:FundamentalAnalysisStateMachine-*"
+      ]
+    },
+    {
+      "Sid": "Schedules",
+      "Effect": "Allow",
+      "Action": ["scheduler:*"],
+      "Resource": "arn:aws:scheduler:eu-west-1:ACCOUNT_ID:schedule/*/BondsUpdaterSchedule-*"
+    },
+    {
+      "Sid": "Auth",
+      "Effect": "Allow",
+      "Action": [
+        "cognito-idp:DescribeUserPool", "cognito-idp:GetUserPoolMfaConfig", "cognito-idp:ListTagsForResource",
+        "cognito-idp:CreateUserPoolClient", "cognito-idp:DescribeUserPoolClient",
+        "cognito-idp:UpdateUserPoolClient", "cognito-idp:DeleteUserPoolClient"
+      ],
+      "Resource": "arn:aws:cognito-idp:eu-west-1:ACCOUNT_ID:userpool/eu-west-1_IVai0KEAA"
+    },
+    {
+      "Sid": "Edge",
+      "Effect": "Allow",
+      "Action": ["cloudfront:*", "cloudfront-keyvaluestore:*", "acm:*", "route53:*"],
+      "Resource": "*"
+    },
+    {
+      "Sid": "Roles",
+      "Effect": "Allow",
+      "Action": [
+        "iam:CreateRole", "iam:DeleteRole", "iam:GetRole", "iam:UpdateRole", "iam:UpdateAssumeRolePolicy",
+        "iam:PutRolePolicy", "iam:DeleteRolePolicy", "iam:GetRolePolicy", "iam:ListRolePolicies",
+        "iam:AttachRolePolicy", "iam:DetachRolePolicy", "iam:ListAttachedRolePolicies",
+        "iam:ListInstanceProfilesForRole", "iam:TagRole", "iam:UntagRole", "iam:ListRoleTags"
+      ],
+      "Resource": [
+        "arn:aws:iam::ACCOUNT_ID:role/catalyst-viewer-*",
+        "arn:aws:iam::ACCOUNT_ID:role/*-SiteRevalidationEventsSubscriber*",
+        "arn:aws:iam::ACCOUNT_ID:role/BondsUpdater*",
+        "arn:aws:iam::ACCOUNT_ID:role/FundamentalAnalysis*"
+      ]
+    },
+    {
+      "Sid": "PassRoles",
+      "Effect": "Allow",
+      "Action": ["iam:PassRole"],
+      "Resource": [
+        "arn:aws:iam::ACCOUNT_ID:role/catalyst-viewer-*",
+        "arn:aws:iam::ACCOUNT_ID:role/*-SiteRevalidationEventsSubscriber*",
+        "arn:aws:iam::ACCOUNT_ID:role/BondsUpdater*",
+        "arn:aws:iam::ACCOUNT_ID:role/FundamentalAnalysis*"
+      ],
+      "Condition": {
+        "StringEquals": {
+          "iam:PassedToService": ["lambda.amazonaws.com", "states.amazonaws.com", "scheduler.amazonaws.com"]
+        }
+      }
+    }
+  ]
+}
