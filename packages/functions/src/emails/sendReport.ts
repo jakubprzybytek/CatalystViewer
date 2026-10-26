@@ -4,6 +4,8 @@ import { Logger } from '@aws-lambda-powertools/logger';
 import templateSource from './reportNotification.pug';
 import { SSMClient, GetParameterCommand, GetParameterCommandInput } from '@aws-sdk/client-ssm';
 import { sendEmail, SendEmailParams } from './EmailClient';
+import { htmlToText } from './htmlToText';
+import { reportSubject } from './reportSubject';
 import { SendReportInput, ClassifiedIssuerResult, FailedIssuerResult } from '../issuers';
 import { UpdatedBond } from '../bonds';
 import { formatCurrency, formatCompactCurrency } from '@core/common/Formats';
@@ -56,10 +58,11 @@ export async function handler(input: SendReportInput, context: Context): Promise
 
     logger.info('Sending report', { newBonds: input.newBonds.length, bondsDeactivated: input.bondsDeactivated.length, classifiedIssuers: classifiedIssuers.length, failedIssuers: failedIssuers.length });
 
+    const subject = reportSubject(process.env.SST_STAGE ?? 'unknown');
     const template = compile(templateSource, { pretty: true });
     const emailBody = template({
+        subject,
         dateTime: new Date(),
-        stage: process.env.SST_STAGE ?? 'unknown',
         newBonds: input.newBonds.map(formatBond),
         bondsDeactivated: input.bondsDeactivated.map(formatBond),
         classifiedIssuers,
@@ -68,9 +71,9 @@ export async function handler(input: SendReportInput, context: Context): Promise
 
     const params: SendEmailParams = {
         to: await getNotificationRecipientEmails(),
-        subject: 'Catalyst Update Report',
+        subject,
         htmlBody: emailBody,
-        textBody: emailBody,
+        textBody: htmlToText(emailBody),
     };
 
     return {
