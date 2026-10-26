@@ -20,8 +20,20 @@ const bondId = (bond: DbBondDetails | CatalystBondQuote | CatalystDailyStatistic
 const mapByBondId = (list: Array<DbBondDetails | CatalystBondQuote>): Record<string, DbBondDetails | CatalystBondQuote> =>
   list.reduce((map: Record<string, DbBondDetails | CatalystBondQuote>, curr) => ({ ...map, [bondId(curr)]: curr }), {});
 
-export async function handler(_event: unknown, context: Context): Promise<UpdateBondsResult> {
+// Bonds Updater execution input; { updateBonds: false } only classifies issuers.
+export type UpdateBondsInput = {
+  updateBonds?: boolean;
+};
+
+export const SKIPPED_UPDATE_RESULT: UpdateBondsResult = { bondsUpdated: 0, newBonds: [], bondsDeactivated: [], bondsFailed: {} };
+
+export async function handler(input: UpdateBondsInput | undefined, context: Context): Promise<UpdateBondsResult> {
   logger.addContext(context);
+
+  if (input?.updateBonds === false) {
+    logger.info('Bonds update skipped (updateBonds: false)');
+    return SKIPPED_UPDATE_RESULT;
+  }
 
   const bondDetailsTable = new BondDetailsTable(dynamoDbClient, Resource.BondDetails.name);
 

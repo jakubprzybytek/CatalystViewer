@@ -36,7 +36,7 @@ The app is a Next.js site on CloudFront, an API Gateway (HTTP API) with Lambda h
 ## Deviations from the standard
 
 - **Some resources don't start with `catalyst-viewer-`**, so the policy lists their name patterns too:
-  - raw Pulumi resources in `infra/updater.ts`: roles `BondsUpdaterSfnRole-*`, `BondsUpdaterSchedulerRole-*`, `FundamentalAnalysisSfnRole-*`, state machines `BondsUpdaterStateMachine-<stage>` and `FundamentalAnalysisStateMachine-<stage>`, schedule `BondsUpdaterSchedule-*`;
+  - the workflows in `infra/updater.ts` and `infra/analysis.ts`: state machines `BondsUpdaterStateMachine-<stage>` and `FundamentalAnalysisStateMachine-<stage>` (names kept from before they moved to `sst.aws.StepFunctions`), their roles `BondsUpdaterWorkflowRole-*` and `FundamentalAnalysisWorkflowRole-*`, the schedule `BondsUpdaterSchedule-*` and its role `BondsUpdaterSchedulerRole-*`;
   - the Next.js site's revalidation subscriber, which SST names `SiteRevalidationEventsSubscriber…` (function) and `<stage>-SiteRevalidationEventsSubscriber…` (role).
 
   No other app in the account uses these names. Giving them a `catalyst-viewer-` name would replace the resources, so it isn't done.

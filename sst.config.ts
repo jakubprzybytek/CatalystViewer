@@ -18,6 +18,7 @@ export default $config({
     await import("./infra/storage");
     await import("./infra/api");
     await import("./infra/updater");
+    await import("./infra/analysis");
     await import("./infra/web");
   },
 });
