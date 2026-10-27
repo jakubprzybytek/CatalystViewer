@@ -1,11 +1,13 @@
 import { defineConfig, devices } from '@playwright/test';
+import { Resource } from 'sst';
 
-const stage = process.env.STAGE;
+// Run inside `sst shell --stage <stage>`; the stage picks the site. PLAYWRIGHT_TEST_BASE_URL overrides it (e.g. localhost).
 const stageUrls: Record<string, string> = {
-  'int': 'https://int.catalyst.albedoonline.com',
-  'prod': 'https://catalyst.albedoonline.com',
+  dev: 'https://dev.catalyst.albedoonline.com',
+  int: 'https://int.catalyst.albedoonline.com',
 };
-const baseURL = process.env.PLAYWRIGHT_TEST_BASE_URL || (stage && stageUrls[stage]) || 'http://localhost:3000';
+const baseURL = process.env.PLAYWRIGHT_TEST_BASE_URL || stageUrls[Resource.App.stage];
+if (!baseURL) throw new Error(`No site for stage ${Resource.App.stage}`);
 
 export default defineConfig({
   testDir: './tests/smoke',
@@ -13,10 +15,10 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
-  reporter: process.env.CI ? [['github'], ['html']] : 'html',
+  reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : 'html',
   use: {
     baseURL,
-    trace: 'on-first-retry',
+    trace: 'off',
   },
   projects: [
     {

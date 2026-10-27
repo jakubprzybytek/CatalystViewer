@@ -12,7 +12,9 @@ This app is developed and delivered per the [sst-delivery standard](https://gith
 
 Stage flags (`isProd`, `scheduleEnabled`, `siteDomain`) are in `infra/stage.ts`. `prod` has `removal: retain` and `protect`.
 
-**Auth:** the shared, manually managed Cognito pool `AlbedoUserPool` (`eu-west-1_IVai0KEAA`), users shared with other Albedo apps. Each stage has its own app client `catalyst-viewer-<stage>-web`, created by SST in `infra/api.ts`; the API authorizer accepts only its own stage's client.
+**Auth:** the shared, manually managed Cognito pool `AlbedoUserPool` (`eu-west-1_IVai0KEAA`), users shared with other Albedo apps. Each stage has its own app client `catalyst-viewer-<stage>-web`, created by SST in `infra/api.ts`; the API authorizer accepts only its own stage's client. Every API handler (through `lambdaHandler` in `packages/functions/src/HandlerProxy.ts`) also requires a Cognito group: `catalyst-viewer` (real users) on every stage, `catalyst-viewer-test` (the test user) everywhere except prod (`accessGroups` in `infra/stage.ts`). Someone who should use the app is added to `catalyst-viewer` by hand.
+
+**Test user:** `catalyst-viewer-test@albedoonline.com`, password in the SST secret `TestUserPassword` of `dev` and `int`; tests read both through `sst shell` (`Resource.TestUser`, `Resource.TestUserPassword`). Rotation: [the standard's test-user template](https://github.com/jakubprzybytek/agent-playbook/blob/main/skills/sst-delivery/templates/test-user.md).
 
 ## Run locally
 
@@ -30,7 +32,7 @@ Stop `sst dev` when you're done: it holds `dev`'s lock and blocks every deploy t
 | Type check | `npm run typecheck` (infra and all packages) |
 | Unit (Vitest) | `npm test` |
 | Integration (API), E2E | not yet (see deviations) |
-| Smoke (Playwright) | `npm run test:smoke:int`; locally `npm run test:smoke` with `.env.local` |
+| Smoke (Playwright) | `npm run test:smoke:int` (int), `npm run test:smoke` (dev); run inside `sst shell`, as the test user |
 
 ## Delivery
 
@@ -52,6 +54,5 @@ Ask before pushing changes that touch data, resources holding data, access or co
   2. fixture mode and the reference date exist, and `cd.yml` reseeds `int` after each deploy;
   3. integration and E2E tests run in `cd.yml` (inside `sst shell`), replacing the smoke tests;
   4. the live data is cleared from the `int` tables.
-- **Test login uses a real account.** The smoke tests on `int` log in through the GitHub variable `TEST_USERNAME` and secret `TEST_PASSWORD`; the API checks no Cognito group. Ends with the standard's test user: `catalyst-viewer-test@albedoonline.com` in group `catalyst-viewer-test`, real users in group `catalyst-viewer`, the API accepting only `catalyst-viewer` on prod, the password as SST secret `TestUserPassword` of `dev` and `int`. Then the `TEST_*` secret and variable are deleted and the old account's password is changed.
 - **Extra stages** `codespace` and `staralliancepirx` are still deployed (idle since mid-2026). Ends with `sst remove --stage codespace` and `sst remove --stage staralliancepirx`.
 - **The version is not shown in the app.** `APP_VERSION` is passed to `sst deploy` but not used yet.

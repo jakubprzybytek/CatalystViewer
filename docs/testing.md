@@ -106,21 +106,11 @@ These tests assume the backend is already deployed and that a base set of bond d
 
 ### How to run smoke tests
 
-**Locally / Custom URL:**
-Create an `.env.local` file in the repository root:
-```env
-TEST_USERNAME=your_test_username_here
-TEST_PASSWORD=your_test_password_here
-# Optional: override the base URL (defaults to http://localhost:3000)
-# PLAYWRIGHT_TEST_BASE_URL=https://my-preview.url
-```
-Then run:
+The tests run inside `sst shell` and log in as the test user `catalyst-viewer-test@albedoonline.com` (group `catalyst-viewer-test`, accepted only off prod), reading `Resource.TestUser.email` and `Resource.TestUserPassword.value`. They refuse to run against prod. Traces are off, because the login test types the password.
+
 ```bash
-npm run test:smoke
+npm run test:smoke       # dev
+npm run test:smoke:int   # int (the pipeline runs this)
 ```
 
-**Against Integration (`int`) environment:**
-```bash
-npm run test:smoke:int
-```
-*(This sets `STAGE=int` to automatically resolve the integration URL).*
+To test a local site, set `PLAYWRIGHT_TEST_BASE_URL=http://localhost:3000` (the test user still comes from the stage).

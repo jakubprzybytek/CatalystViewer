@@ -9,6 +9,7 @@ vi.mock('@core/bonds/obligacjepl', () => ({
   getBondInformation: getBondInformationMock,
 }));
 
+import { apiEvent } from '../testEvents';
 import { handler } from './getBondInformation';
 
 function parseBody(response: { body: string; isBase64Encoded?: boolean }): unknown {
@@ -25,7 +26,7 @@ describe('getBondInformation handler', () => {
 
   it('returns 400 when bond is missing or blank', async () => {
     for (const queryStringParameters of [undefined, {}, { bond: '   ' }]) {
-      const response = await handler({ queryStringParameters } as never, {} as never, undefined as never) as { statusCode: number; body: string; isBase64Encoded?: boolean };
+      const response = await handler(apiEvent({ queryStringParameters }), {} as never, undefined as never) as { statusCode: number; body: string; isBase64Encoded?: boolean };
 
       expect(response.statusCode).toBe(400);
       expect(parseBody(response)).toEqual({ message: "Mandatory parameter is missing: 'bond'" });
@@ -52,7 +53,7 @@ describe('getBondInformation handler', () => {
     };
     getBondInformationMock.mockResolvedValue(bondInformation);
 
-    const response = await handler({ queryStringParameters: { bond: ' IPT0627 ' } } as never, {} as never, undefined as never) as { statusCode: number; body: string; isBase64Encoded?: boolean };
+    const response = await handler(apiEvent({ queryStringParameters: { bond: ' IPT0627 ' } }), {} as never, undefined as never) as { statusCode: number; body: string; isBase64Encoded?: boolean };
 
     expect(response.statusCode).toBe(200);
     expect(parseBody(response)).toEqual(bondInformation);

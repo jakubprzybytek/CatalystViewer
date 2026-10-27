@@ -82,12 +82,10 @@ jobs:
           TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
 
       # Smoke tests until the integration and E2E tests exist (docs/development.md, deviations).
+      # Inside sst shell: they log in as the test user (Resource.TestUser, TestUserPassword).
       - run: npx playwright install --with-deps chromium
       - name: Smoke tests
         run: npm run test:smoke:int
-        env:
-          TEST_USERNAME: ${{ vars.TEST_USERNAME }}
-          TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
 
       - uses: actions/upload-artifact@v7
         if: failure()

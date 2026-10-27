@@ -11,8 +11,8 @@
     "console": "sst console",
     "typecheck": "sst install && tsc --noEmit && tsc --noEmit -p packages/core && tsc --noEmit -p packages/functions && tsc --noEmit -p packages/web",
     "test": "vitest run",
-    "test:smoke": "node --env-file=.env.local node_modules/@playwright/test/cli.js test",
-    "test:smoke:int": "STAGE=int node_modules/@playwright/test/cli.js test",
+    "test:smoke": "sst shell --stage dev -- playwright test",
+    "test:smoke:int": "sst shell --stage int -- playwright test",
     "quote": "esrun packages/core/src/bonds/catalyst/catalyst.ts quote",
     "classify-issuer": "esrun packages/core/src/issuers/cli.ts"
   },

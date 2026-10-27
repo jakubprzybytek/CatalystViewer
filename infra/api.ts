@@ -1,4 +1,5 @@
 import { profilesTable, bondDetailsTable, bondStatisticsTable, issuerProfilesTable, jobsTable } from "./storage";
+import { accessGroups, isProd, TEST_USER } from "./stage";
 
 // Shared, manually managed pool (AlbedoUserPool) used by several apps. Each stage gets its own app client.
 const USER_POOL_ID = "eu-west-1_IVai0KEAA";
@@ -16,42 +17,53 @@ const userPoolClient = new aws.cognito.UserPoolClient("WebClient", {
   tokenValidityUnits: { accessToken: "minutes", idToken: "minutes", refreshToken: "days" },
 });
 
-const getProfileFunction = new sst.aws.Function("GetProfile", {
+// Test user (docs/development.md): read by the smoke tests through `sst shell`. Not on prod, where its group is rejected.
+if (!isProd) {
+  new sst.Secret("TestUserPassword");
+  new sst.Linkable("TestUser", { properties: { email: TEST_USER } });
+}
+
+// API functions: the handler wrapper (HandlerProxy) lets in only users in one of ACCESS_GROUPS.
+type ApiFunctionArgs = Omit<sst.aws.FunctionArgs, "environment"> & { environment?: Record<string, $util.Input<string>> };
+const apiFunction = (name: string, args: ApiFunctionArgs) =>
+  new sst.aws.Function(name, { ...args, environment: { ...args.environment, ACCESS_GROUPS: accessGroups.join(",") } });
+
+const getProfileFunction = apiFunction("GetProfile", {
   handler: "packages/functions/src/profile/getProfile.handler",
   memory: "256 MB",
   timeout: "10 seconds",
   link: [profilesTable],
 });
 
-const updateProfileFunction = new sst.aws.Function("UpdateProfile", {
+const updateProfileFunction = apiFunction("UpdateProfile", {
   handler: "packages/functions/src/profile/updateProfile.handler",
   memory: "256 MB",
   timeout: "10 seconds",
   link: [profilesTable],
 });
 
-const getBondsFunction = new sst.aws.Function("GetBonds", {
+const getBondsFunction = apiFunction("GetBonds", {
   handler: "packages/functions/src/bonds/getBondReports.handler",
   memory: "256 MB",
   timeout: "60 seconds",
   link: [bondDetailsTable],
 });
 
-const getBondQuotesFunction = new sst.aws.Function("GetBondQuotes", {
+const getBondQuotesFunction = apiFunction("GetBondQuotes", {
   handler: "packages/functions/src/bonds/getBondQuotes.handler",
   memory: "256 MB",
   timeout: "10 seconds",
   link: [bondStatisticsTable],
 });
 
-const getIssuerProfilesFunction = new sst.aws.Function("GetIssuerProfiles", {
+const getIssuerProfilesFunction = apiFunction("GetIssuerProfiles", {
   handler: "packages/functions/src/issuers/getIssuerProfiles.handler",
   memory: "256 MB",
   timeout: "10 seconds",
   link: [issuerProfilesTable],
 });
 
-const getIssuerAnalysisFunction = new sst.aws.Function("GetIssuerAnalysis", {
+const getIssuerAnalysisFunction = apiFunction("GetIssuerAnalysis", {
   handler: "packages/functions/src/issuers/getIssuerAnalysis.handler",
   memory: "256 MB",
   timeout: "10 seconds",
@@ -60,7 +72,7 @@ const getIssuerAnalysisFunction = new sst.aws.Function("GetIssuerAnalysis", {
 
 const fundamentalAnalysisStateMachineArn = $interpolate`arn:aws:states:eu-west-1:198805281865:stateMachine:FundamentalAnalysisStateMachine-${$app.stage}`;
 
-const triggerFundamentalAnalysisFunction = new sst.aws.Function("TriggerFundamentalAnalysis", {
+const triggerFundamentalAnalysisFunction = apiFunction("TriggerFundamentalAnalysis", {
   handler: "packages/functions/src/issuers/triggerFundamentalAnalysis.handler",
   memory: "256 MB",
   timeout: "10 seconds",
@@ -77,7 +89,7 @@ const triggerFundamentalAnalysisFunction = new sst.aws.Function("TriggerFundamen
 
 const bondsUpdaterStateMachineArn = $interpolate`arn:aws:states:eu-west-1:198805281865:stateMachine:BondsUpdaterStateMachine-${$app.stage}`;
 
-const triggerBondsUpdaterFunction = new sst.aws.Function("TriggerBondsUpdater", {
+const triggerBondsUpdaterFunction = apiFunction("TriggerBondsUpdater", {
   handler: "packages/functions/src/bonds/triggerBondsUpdater.handler",
   memory: "256 MB",
   timeout: "10 seconds",
@@ -92,21 +104,21 @@ const triggerBondsUpdaterFunction = new sst.aws.Function("TriggerBondsUpdater", 
   ],
 });
 
-const getJobsFunction = new sst.aws.Function("GetJobs", {
+const getJobsFunction = apiFunction("GetJobs", {
   handler: "packages/functions/src/jobs/getJobs.handler",
   memory: "256 MB",
   timeout: "10 seconds",
   link: [jobsTable],
 });
 
-const getJobFunction = new sst.aws.Function("GetJob", {
+const getJobFunction = apiFunction("GetJob", {
   handler: "packages/functions/src/jobs/getJob.handler",
   memory: "256 MB",
   timeout: "10 seconds",
   link: [jobsTable],
 });
 
-const getCatalystDailyStatsFunction = new sst.aws.Function("GetCatalystDailyStats", {
+const getCatalystDailyStatsFunction = apiFunction("GetCatalystDailyStats", {
   handler: "packages/functions/src/bonds/getCatalystDailyStats.handler",
   memory: "256 MB",
   timeout: "60 seconds",
@@ -115,7 +127,7 @@ const getCatalystDailyStatsFunction = new sst.aws.Function("GetCatalystDailyStat
   },
 });
 
-const getBondInformationFunction = new sst.aws.Function("GetBondInformation", {
+const getBondInformationFunction = apiFunction("GetBondInformation", {
   handler: "packages/functions/src/bonds/getBondInformation.handler",
   memory: "256 MB",
   timeout: "60 seconds",

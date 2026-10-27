@@ -75,16 +75,12 @@ Preparation:
 ```bash
 npx playwright install chromium
 ```
-2. Copy `.env.local.example` to `.env.local` and fill in smoke-test credentials.
+2. The tests log in as the test user `catalyst-viewer-test@albedoonline.com`; they get its password through `sst shell` (SST secret `TestUserPassword`), so you need AWS credentials, no `.env` file.
 
-Run (local/custom URL):
+Run:
 ```bash
-npm run test:smoke
-```
-
-Run (integration `int` environment):
-```bash
-npm run test:smoke:int
+npm run test:smoke       # against dev
+npm run test:smoke:int   # against int
 ```
 
 ### Roadmap

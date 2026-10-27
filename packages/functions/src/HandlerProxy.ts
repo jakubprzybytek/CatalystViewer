@@ -1,6 +1,7 @@
-import { APIGatewayProxyHandlerV2, APIGatewayProxyEventV2, APIGatewayProxyEventQueryStringParameters } from "aws-lambda";
+import { APIGatewayProxyHandlerV2, APIGatewayProxyEventV2, APIGatewayProxyEventQueryStringParameters, APIGatewayProxyStructuredResultV2 } from "aws-lambda";
 import { Logger } from '@aws-lambda-powertools/logger';
 import { gzipSync } from 'zlib';
+import { groupsOf, hasAccess } from './access';
 
 const logger = new Logger({ serviceName: 'HandlerProxy' });
 
@@ -28,7 +29,18 @@ export const Success = <T>(data: T): LambdaResponse<T> => ({ data: data, statusC
 export const Failure = (message: string, statusCode: number = 400): LambdaResponse<ErrorResponse> => ({ data: { message }, statusCode });
 
 export const lambdaHandler = <T>(lambda: LambdaType<T>): APIGatewayProxyHandlerV2 => {
-  return async function (event: APIGatewayProxyEventV2) {
+  return async function (event: APIGatewayProxyEventV2): Promise<APIGatewayProxyStructuredResultV2> {
+    const claims = (event as { requestContext?: { authorizer?: { jwt?: { claims?: Record<string, unknown> } } } })
+      .requestContext?.authorizer?.jwt?.claims;
+    if (!hasAccess(claims)) {
+      logger.warn('Access denied: user is in none of the accepted groups', { groups: groupsOf(claims), sub: claims?.sub });
+      return {
+        statusCode: 403,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: 'This account has no access to Catalyst Viewer' }),
+      };
+    }
+
     try {
       const response = await lambda(event);
       const body = JSON.stringify(response.data);

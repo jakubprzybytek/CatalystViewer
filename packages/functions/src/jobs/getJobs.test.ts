@@ -17,6 +17,7 @@ vi.mock('@core/storage/jobs', () => ({
   })),
 }));
 
+import { apiEvent } from '../testEvents';
 import { handler } from './getJobs';
 
 function parseBody(response: { body: string; isBase64Encoded?: boolean }): unknown {
@@ -32,10 +33,17 @@ describe('getJobs handler', () => {
     listNewestByStatusMock.mockReset();
   });
 
+  it('rejects a user outside the accepted groups with 403', async () => {
+    const response = await handler(apiEvent({ queryStringParameters: {} }, '[portfolio-tracker catalyst-viewer-test]'), {} as never, undefined as never) as { statusCode: number };
+
+    expect(response.statusCode).toBe(403);
+    expect(listNewestMock).not.toHaveBeenCalled();
+  });
+
   it('returns newest jobs without filter', async () => {
     listNewestMock.mockResolvedValue({ jobs: [{ jobId: '1' }], nextCursor: { listSk: 123 } });
 
-    const response = await handler({ queryStringParameters: {} } as never, {} as never, undefined as never) as { statusCode: number; body: string; isBase64Encoded?: boolean };
+    const response = await handler(apiEvent({ queryStringParameters: {} }), {} as never, undefined as never) as { statusCode: number; body: string; isBase64Encoded?: boolean };
 
     expect(response.statusCode).toBe(200);
     expect(parseBody(response as never)).toEqual({ jobs: [{ jobId: '1' }], nextCursor: '123' });
@@ -43,7 +51,7 @@ describe('getJobs handler', () => {
   });
 
   it('validates unsupported statuses', async () => {
-    const response = await handler({ queryStringParameters: { statuses: 'BAD' } } as never, {} as never, undefined as never) as { statusCode: number; body: string; isBase64Encoded?: boolean };
+    const response = await handler(apiEvent({ queryStringParameters: { statuses: 'BAD' } }), {} as never, undefined as never) as { statusCode: number; body: string; isBase64Encoded?: boolean };
 
     expect(response.statusCode).toBe(400);
     expect(parseBody(response as never)).toEqual({ message: 'Unsupported statuses: BAD' });
@@ -52,7 +60,7 @@ describe('getJobs handler', () => {
   it('queries status-specific list for single status', async () => {
     listNewestByStatusMock.mockResolvedValue({ jobs: [{ jobId: '2' }], nextCursor: undefined });
 
-    const response = await handler({ queryStringParameters: { statuses: 'FAILED', limit: '10' } } as never, {} as never, undefined as never) as { statusCode: number; body: string; isBase64Encoded?: boolean };
+    const response = await handler(apiEvent({ queryStringParameters: { statuses: 'FAILED', limit: '10' } }), {} as never, undefined as never) as { statusCode: number; body: string; isBase64Encoded?: boolean };
 
     expect(response.statusCode).toBe(200);
     expect(parseBody(response as never)).toEqual({ jobs: [{ jobId: '2' }] });

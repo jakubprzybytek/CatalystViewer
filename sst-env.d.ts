@@ -102,6 +102,14 @@ declare module "sst" {
       "type": "sst.aws.Nextjs"
       "url": string
     }
+    "TestUser": {
+      "email": string
+      "type": "sst.sst.Linkable"
+    }
+    "TestUserPassword": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
     "UpdateProfile": {
       "name": string
       "type": "sst.aws.Function"

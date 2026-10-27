@@ -15,6 +15,7 @@ vi.mock('@core/storage/jobs', () => ({
   })),
 }));
 
+import { apiEvent } from '../testEvents';
 import { handler } from './getJob';
 
 function parseBody(response: { body: string; isBase64Encoded?: boolean }): unknown {
@@ -30,7 +31,7 @@ describe('getJob handler', () => {
   });
 
   it('returns 404 for missing job id', async () => {
-    const response = await handler({ pathParameters: {} } as never, {} as never, undefined as never) as { statusCode: number; body: string; isBase64Encoded?: boolean };
+    const response = await handler(apiEvent({ pathParameters: {} }), {} as never, undefined as never) as { statusCode: number; body: string; isBase64Encoded?: boolean };
 
     expect(response.statusCode).toBe(404);
     expect(parseBody(response as never)).toEqual({ message: 'Not found' });
@@ -39,7 +40,7 @@ describe('getJob handler', () => {
   it('returns 404 when job is not found', async () => {
     getByJobIdMock.mockResolvedValue(undefined);
 
-    const response = await handler({ pathParameters: { jobId: 'j-1' } } as never, {} as never, undefined as never) as { statusCode: number; body: string; isBase64Encoded?: boolean };
+    const response = await handler(apiEvent({ pathParameters: { jobId: 'j-1' } }), {} as never, undefined as never) as { statusCode: number; body: string; isBase64Encoded?: boolean };
 
     expect(response.statusCode).toBe(404);
     expect(parseBody(response as never)).toEqual({ message: 'Not found' });
@@ -49,7 +50,7 @@ describe('getJob handler', () => {
   it('returns job details when found', async () => {
     getByJobIdMock.mockResolvedValue({ jobId: 'j-2', status: 'SUCCEEDED' });
 
-    const response = await handler({ pathParameters: { jobId: 'j-2' } } as never, {} as never, undefined as never) as { statusCode: number; body: string; isBase64Encoded?: boolean };
+    const response = await handler(apiEvent({ pathParameters: { jobId: 'j-2' } }), {} as never, undefined as never) as { statusCode: number; body: string; isBase64Encoded?: boolean };
 
     expect(response.statusCode).toBe(200);
     expect(parseBody(response as never)).toEqual({ jobId: 'j-2', status: 'SUCCEEDED' });
