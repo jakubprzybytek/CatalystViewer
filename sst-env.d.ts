@@ -26,6 +26,10 @@ declare module "sst" {
       "name": string
       "type": "sst.aws.Function"
     }
+    "BondsUpdaterWorkflow": {
+      "arn": string
+      "type": "sst.aws.StepFunctions"
+    }
     "ClassifyIssuer": {
       "name": string
       "type": "sst.aws.Function"
@@ -103,6 +107,7 @@ declare module "sst" {
       "url": string
     }
     "TestUser": {
+      "clientId": string
       "email": string
       "type": "sst.sst.Linkable"
     }

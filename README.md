@@ -68,19 +68,15 @@ Run:
 npm run test
 ```
 
-#### Smoke Tests
+#### Integration and E2E Tests
 
-Preparation:
-1. Install Playwright browser binaries (first time only):
-```bash
-npx playwright install chromium
-```
-2. The tests log in as the test user `catalyst-viewer-test@albedoonline.com`; they get its password through `sst shell` (SST secret `TestUserPassword`), so you need AWS credentials, no `.env` file.
+They run against `int`, which runs on fixture data (sources, reference date, stubbed AI and email; see [docs/testing.md](docs/testing.md)), and log in as the test user `catalyst-viewer-test@albedoonline.com`, whose password they get through `sst shell`. You need AWS credentials, no `.env` file.
 
-Run:
 ```bash
-npm run test:smoke       # against dev
-npm run test:smoke:int   # against int
+npx playwright install chromium                          # first time only
+npx sst shell --stage int -- npm run seed                # reset int to the fixtures, run the Bonds Updater
+npx sst shell --stage int -- npm run test:integration    # API
+npx sst shell --stage int -- npm run test:e2e            # site
 ```
 
 ### Roadmap

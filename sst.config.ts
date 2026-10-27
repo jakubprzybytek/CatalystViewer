@@ -15,6 +15,12 @@ export default $config({
     };
   },
   async run() {
+    // Stage settings for every function (AI and email stubs, reference date), see infra/stage.ts.
+    const { functionEnvironment } = await import("./infra/stage");
+    $transform(sst.aws.Function, (args) => {
+      args.environment = $output(args.environment ?? {}).apply((env) => ({ ...env, ...functionEnvironment }));
+    });
+
     await import("./infra/storage");
     await import("./infra/api");
     await import("./infra/updater");

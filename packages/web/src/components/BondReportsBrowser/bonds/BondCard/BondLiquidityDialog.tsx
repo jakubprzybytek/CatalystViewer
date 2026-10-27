@@ -17,6 +17,7 @@ import { format, isAfter, isBefore, sub } from "date-fns";
 import { BondQuote, getBondQuotes, BondReport } from "@/sdk";
 import { getAsks, getBids, getClosePrices } from "@/bonds/statistics";
 import { formatDate } from "@/common/Formats";
+import { today } from "@/common/Clock";
 import { min, max } from "simple-statistics";
 
 const TWELVE_HOURS = 12 * 60 * 60 * 1000;
@@ -93,7 +94,7 @@ export default function BondLiquidityDialog({ bondReport: { details, currentValu
     turnover: quote.turnover
   }));
 
-  const now = new Date();
+  const now = today();
   const xAsisDomain = [sub(now, { days: 30 }).setHours(0, 0, 0, 0), now.setHours(23, 59, 59, 999)];
 
   const allDataValues = getBids(quotes).concat(getAsks(quotes).concat(getClosePrices(quotes)));

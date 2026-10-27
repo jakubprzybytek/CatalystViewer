@@ -26,7 +26,7 @@ The app is a Next.js site on CloudFront, an API Gateway (HTTP API) with Lambda h
 - `Logs`, `ApiAccessLogDelivery`: CloudWatch log groups in eu-west-1; log deliveries for the API's access logs (`Resource: "*"` only).
 - `ApiGateway`: API Gateway in eu-west-1.
 - `Queues`, `Tables`: SQS queues and DynamoDB tables `catalyst-viewer-*`.
-- `StateMachines`: `BondsUpdaterStateMachine-*` and `FundamentalAnalysisStateMachine-*`.
+- `StateMachines`: `BondsUpdaterStateMachine-*` and `FundamentalAnalysisStateMachine-*`, and the Bonds Updater's executions, which the pipeline's seed step starts on int and waits for (`states:DescribeExecution` checks the execution ARN; added 2026-10-27).
 - `StateMachineValidation`: `states:ValidateStateMachineDefinition`, which the Pulumi AWS provider calls on every definition change. It isn't tied to a state machine, so it's scoped to `stateMachine:*` (added 2026-10-26).
 - `Schedules`: `BondsUpdaterSchedule-*` (any group).
 - `Auth`: the app's client on the shared Cognito user pool.

@@ -85,7 +85,8 @@
       "Action": ["states:*"],
       "Resource": [
         "arn:aws:states:eu-west-1:ACCOUNT_ID:stateMachine:BondsUpdaterStateMachine-*",
-        "arn:aws:states:eu-west-1:ACCOUNT_ID:stateMachine:FundamentalAnalysisStateMachine-*"
+        "arn:aws:states:eu-west-1:ACCOUNT_ID:stateMachine:FundamentalAnalysisStateMachine-*",
+        "arn:aws:states:eu-west-1:ACCOUNT_ID:execution:BondsUpdaterStateMachine-*:*"
       ]
     },
     {

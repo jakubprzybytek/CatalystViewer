@@ -7,10 +7,10 @@ This app is developed and delivered per the [continuous-delivery standard](https
 | Stage | URL | Data |
 |---|---|---|
 | `dev` | https://dev.catalyst.albedoonline.com, or localhost with `npm run dev` | developer's choice |
-| `int` | https://int.catalyst.albedoonline.com | a copy of live data from before the prod cutover (see deviations) |
+| `int` | https://int.catalyst.albedoonline.com | fixtures, reset by the pipeline before the tests; fixture sources, fixed reference date ([testing.md](testing.md)) |
 | `prod` | https://catalyst.albedoonline.com | real data; the Bonds Updater schedule runs only here |
 
-Stage flags (`isProd`, `scheduleEnabled`, `siteDomain`) are in `infra/stage.ts`. `prod` has `removal: retain` and `protect`.
+Stage flags are in `infra/stage.ts`: `isProd`, `scheduleEnabled` (prod only), `useFixtures` and `referenceDate` (int), the AI and email stubs (every stage but prod), `siteDomain`. `prod` has `removal: retain` and `protect`.
 
 **Auth:** the shared, manually managed Cognito pool `AlbedoUserPool` (`eu-west-1_IVai0KEAA`), users shared with other Albedo apps. Each stage has its own app client `catalyst-viewer-<stage>-web`, created by SST in `infra/api.ts`; the API authorizer accepts only its own stage's client. Every API handler (through `lambdaHandler` in `packages/functions/src/HandlerProxy.ts`) also requires a Cognito group: `catalyst-viewer` (real users) on every stage, `catalyst-viewer-test` (the test user) everywhere except prod (`accessGroups` in `infra/stage.ts`). Someone who should use the app is added to `catalyst-viewer` by hand.
 
@@ -31,14 +31,17 @@ Stop `sst dev` when you're done: it holds `dev`'s lock and blocks every deploy t
 |---|---|
 | Type check | `npm run typecheck` (infra and all packages) |
 | Unit (Vitest) | `npm test` |
-| Integration (API), E2E | not yet (see deviations) |
-| Smoke (Playwright) | `npm run test:smoke:int` (int), `npm run test:smoke` (dev); run inside `sst shell`, as the test user |
+| Seed a test stage | `npx sst shell --stage int -- npm run seed` (int or dev) |
+| Integration (API) | `npx sst shell --stage int -- npm run test:integration` |
+| E2E (Playwright) | `npx sst shell --stage int -- npm run test:e2e` |
+
+Integration and E2E tests expect the seeded fixtures and log in as the test user; details in [testing.md](testing.md).
 
 ## Delivery
 
 | File | Trigger | What it does |
 |---|---|---|
-| `.github/workflows/continuous-delivery.yaml` | push to `main` (except `docs/**`, `**/*.md`), manual | checks → deploy int → smoke tests → tag `v1.N` → deploy prod from the tag → site and API answer (no login) |
+| `.github/workflows/continuous-delivery.yaml` | push to `main` (except `docs/**`, `**/*.md`), manual | checks → deploy int → seed → integration and E2E tests → tag `v1.N` → deploy prod from the tag → site and API answer (no login) |
 | `.github/workflows/pr.yml` | pull request | checks |
 
 - Rollback or redeploy: `gh workflow run continuous-delivery.yaml -f tag=v1.5` (also accepts the older `v1.0.0`–`v1.1.2` tags).
@@ -49,10 +52,5 @@ Ask before pushing changes that touch data, resources holding data, access or co
 
 ## Deviations
 
-- **`int` is not yet a test stage.** It still has the live data copied before the prod cutover (2026-10-25), downloads from the live sources (GPW, obligacje.pl), and calls the real AI and email services when the updater is run by hand (it has no schedule). The pipeline's gate is the smoke tests. Ends when, as planned in [testing.md](testing.md):
-  1. AI (Bedrock, Tavily) and email are stubbed on `int`;
-  2. fixture mode and the reference date exist, and `continuous-delivery.yaml` reseeds `int` after each deploy;
-  3. integration and E2E tests run in `continuous-delivery.yaml` (inside `sst shell`), replacing the smoke tests;
-  4. the live data is cleared from the `int` tables.
 - **Extra stages** `codespace` and `staralliancepirx` are still deployed (idle since mid-2026). Ends with `sst remove --stage codespace` and `sst remove --stage staralliancepirx`.
 - **The version is not shown in the app.** `APP_VERSION` is passed to `sst deploy` but not used yet.

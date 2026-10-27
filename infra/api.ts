@@ -7,7 +7,8 @@ const USER_POOL_ID = "eu-west-1_IVai0KEAA";
 const userPoolClient = new aws.cognito.UserPoolClient("WebClient", {
   name: `catalyst-viewer-${$app.stage}-web`,
   userPoolId: USER_POOL_ID,
-  explicitAuthFlows: ["ALLOW_CUSTOM_AUTH", "ALLOW_REFRESH_TOKEN_AUTH", "ALLOW_USER_SRP_AUTH"],
+  // Plain-password sign-in (API tests without a browser) only off prod.
+  explicitAuthFlows: ["ALLOW_CUSTOM_AUTH", "ALLOW_REFRESH_TOKEN_AUTH", "ALLOW_USER_SRP_AUTH", ...(isProd ? [] : ["ALLOW_USER_PASSWORD_AUTH"])],
   generateSecret: false,
   preventUserExistenceErrors: "ENABLED",
   enableTokenRevocation: true,
@@ -20,7 +21,7 @@ const userPoolClient = new aws.cognito.UserPoolClient("WebClient", {
 // Test user (docs/development.md): read by the smoke tests through `sst shell`. Not on prod, where its group is rejected.
 if (!isProd) {
   new sst.Secret("TestUserPassword");
-  new sst.Linkable("TestUser", { properties: { email: TEST_USER } });
+  new sst.Linkable("TestUser", { properties: { email: TEST_USER, clientId: userPoolClient.id } });
 }
 
 // API functions: the handler wrapper (HandlerProxy) lets in only users in one of ACCESS_GROUPS.

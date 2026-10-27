@@ -1,3 +1,4 @@
+import { today as clockToday } from '../common/Clock';
 import { BondDetails, BondCurrentValues } from '@/sdk/Bonds';
 
 export type YieldToMaturityReport = {
@@ -37,7 +38,7 @@ export class YieldToMaturityCalculator {
     this.commisionRate = commisionRate;
   }
 
-  forPrice(price: number, taxRate: number, today: Date = new Date()): YieldToMaturityReport {
+  forPrice(price: number, taxRate: number, today: Date = clockToday()): YieldToMaturityReport {
     const nominalPrice = this.bondDetails.nominalValue * price / 100;
     const buyingPrice = nominalPrice + this.bondCurrentValues.accuredInterest;
     const buyingCommision = buyingPrice * this.commisionRate;

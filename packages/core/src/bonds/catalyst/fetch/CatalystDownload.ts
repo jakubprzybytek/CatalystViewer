@@ -1,6 +1,8 @@
 import axios from 'axios';
 import { writeFileSync, existsSync } from 'fs';
 import { subDays, isWeekend, format } from 'date-fns';
+import { now } from '../../../common/Clock';
+import { fixturePath, sourceFixturesDir } from '../../../common/Fixtures';
 
 const MAX_LOOKBACK_DAYS = 7;
 
@@ -38,15 +40,25 @@ function previousTradingDay(date: Date): Date {
 }
 
 export async function downloadLatestCatalystDailyStatisticsFile(): Promise<string> {
-    if (process.env.TEMP_FOLDER === undefined) {
+    const fixtures = sourceFixturesDir();
+    if (fixtures === undefined && process.env.TEMP_FOLDER === undefined) {
         throw new Error('Temp folder is not defined');
     }
 
-    let reportDay = previousTradingDay(new Date());
+    let reportDay = previousTradingDay(now());
 
     for (let attempt = 0; attempt < MAX_LOOKBACK_DAYS; attempt++) {
         for (const { extension, contentType } of FILE_FORMATS) {
             const fileName = `catalyst_${format(reportDay, 'yyyyMMdd')}.${extension}`;
+
+            if (fixtures !== undefined) {
+                const fixtureFile = fixturePath(fixtures, 'gpwcatalyst', fileName);
+                if (existsSync(fixtureFile)) {
+                    console.log(`Reading source fixture: gpwcatalyst/${fileName}`);
+                    return fixtureFile;
+                }
+                continue;
+            }
             const localFileName = `${process.env.TEMP_FOLDER}/${fileName}`;
 
             if (existsSync(localFileName)) {

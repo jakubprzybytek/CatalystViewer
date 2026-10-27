@@ -2,6 +2,7 @@ import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { Logger } from '@aws-lambda-powertools/logger';
 import { Resource } from 'sst';
 import { differenceInDays } from 'date-fns';
+import { now } from '@core';
 import { lambdaHandler, Success } from "../HandlerProxy";
 import { BondDetails, BondCurrentValues } from '@core/bonds';
 import { BondDetailsTable } from '@core/storage/bondDetails';
@@ -28,7 +29,7 @@ export const handler = lambdaHandler<BondReportsQueryResult>(async event => {
     logger.debug('Using cached bond types', { count: cachedBondTypes.length });
   }
 
-  const today = new Date().getTime();
+  const today = now().getTime();
 
   const bondReports = dbBonds.map(dbBond => {
     const details: BondDetails = {

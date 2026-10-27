@@ -243,6 +243,16 @@ export async function analyzeIssuer(
 
     const agentFinancials = parseAgentFinancials(rawAnswer);
 
+    return toAnalysisResult(issuerName, agentFinancials, agentEvents, resolvedModelId);
+}
+
+// Scorecard and report from the agent's financials; shared with the stub (IssuerStubs.ts).
+export function toAnalysisResult(
+    issuerName: string,
+    agentFinancials: AgentFinancials,
+    agentEvents: AgentEvent[],
+    resolvedModelId: string,
+): IssuerAnalysisResult {
     const financialYears = agentFinancials.years.map(y => ({
         issuerName,
         year: y.year,

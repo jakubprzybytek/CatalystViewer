@@ -1,0 +1,2 @@
+# Fixtures are stored byte for byte: the parsers must read them exactly as captured (docs/testing.md).
+tests/fixtures/** -text

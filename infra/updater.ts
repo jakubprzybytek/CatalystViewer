@@ -10,7 +10,7 @@ import {
   logJobSucceeded,
   sendErrorReport,
 } from "./jobs";
-import { scheduleEnabled } from "./stage";
+import { scheduleEnabled, useFixtures } from "./stage";
 import { bondDetailsTable, bondStatisticsTable, issuerProfilesTable } from "./storage";
 
 const SF = sst.aws.StepFunctions;
@@ -23,7 +23,10 @@ const bondsUpdaterFunction = new sst.aws.Function("BondsUpdater", {
   timeout: "10 minutes",
   environment: {
     TEMP_FOLDER: $dev ? "." : "/tmp",
+    // int: read the bundled fixture files instead of gpwcatalyst.pl and obligacje.pl (core/common/Fixtures.ts)
+    ...(useFixtures ? { SOURCE_FIXTURES: $dev ? "tests/fixtures/sources" : "fixtures" } : {}),
   },
+  copyFiles: useFixtures ? [{ from: "tests/fixtures/sources", to: "fixtures" }] : undefined,
   link: [bondDetailsTable, bondStatisticsTable],
 });
 

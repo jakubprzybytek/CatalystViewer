@@ -5,6 +5,7 @@ import { Logger } from '@aws-lambda-powertools/logger';
 import { Resource } from 'sst';
 import { IssuerProfilesTable } from '@core/storage/issuerProfiles';
 import { classifyIssuer, MODEL_ID } from '@core/ai/issuers';
+import { aiStubbed, STUB_MODEL_ID, stubClassification } from '@core/ai/issuers/IssuerStubs';
 import { TavilyClient } from '@core/ai/tools/tavily/TavilyClient';
 import { ClassifyIssuerInput, ClassifyIssuerResult } from '.';
 
@@ -27,7 +28,9 @@ export async function handler(input: ClassifyIssuerInput, context: Context): Pro
 
     const issuerProfilesTable = new IssuerProfilesTable(dynamoDbClient, Resource.IssuerProfiles.name);
 
-    const classification = await classifyIssuer(bedrockClient, tavilyClient, issuerName);
+    const stubbed = aiStubbed();
+    const classification = stubbed ? stubClassification(issuerName) : await classifyIssuer(bedrockClient, tavilyClient, issuerName);
+    const modelId = stubbed ? STUB_MODEL_ID : MODEL_ID;
 
     const now = new Date();
     await issuerProfilesTable.storeProfile({
@@ -38,7 +41,7 @@ export async function handler(input: ClassifyIssuerInput, context: Context): Pro
         websiteUrl: classification.websiteUrl,
         classifiedAt: now.toISOString(),
         classifiedAtTs: now.getTime(),
-        modelId: MODEL_ID,
+        modelId,
     });
 
     const result: ClassifyIssuerResult = {
@@ -47,7 +50,7 @@ export async function handler(input: ClassifyIssuerInput, context: Context): Pro
         industry: classification.industry,
         businessSummary: classification.businessSummary,
         websiteUrl: classification.websiteUrl,
-        modelId: MODEL_ID,
+        modelId,
     };
 
     logger.info('Issuer classified', { issuerName, industry: classification.industry });

@@ -4,7 +4,7 @@ import { Logger } from '@aws-lambda-powertools/logger';
 import { Resource } from 'sst';
 import { differenceInBusinessDays, getTime, sub } from 'date-fns';
 import { average } from 'simple-statistics'
-import { parseUTCDate } from '@core';
+import { now as clockNow, parseUTCDate } from '@core';
 import { getSpread, getTurnover } from '@core/bonds/statistics';
 import { CatalystBondQuote, CatalystDailyStatisticsBondDetails, getCurrentCatalystBondsQuotes, getLatestCatalystDailyStatistics } from '@core/bonds/catalyst';
 import { getBondInformation } from '@core/bonds/obligacjepl';
@@ -48,7 +48,7 @@ export async function handler(input: UpdateBondsInput | undefined, context: Cont
   const storedBondsList: DbBondDetails[] = await bondDetailsTable.getAllActive();
   const storedBonds = mapByBondId(storedBondsList) as Record<string, DbBondDetails>;
 
-  const now = new Date();
+  const now = clockNow();
   const liquidityStatisticsEndDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
   const liquidityStatisticsStartDate = sub(liquidityStatisticsEndDate, { days: 30, hours: 23, minutes: 59, seconds: 59 });
   logger.info('Time range for liquidity computations', { start: liquidityStatisticsStartDate.toISOString(), end: liquidityStatisticsEndDate.toISOString() });
@@ -177,7 +177,7 @@ function toUpdatedBond(dbBond: DbBondDetails): UpdatedBond {
 }
 
 async function storeBondQuotes(bondsQuotesList: CatalystBondQuote[]): Promise<void> {
-  const now = new Date();
+  const now = clockNow();
   const bondStatisticsTable = new BondStatisticsTable(dynamoDbClient, Resource.BondStatistics.name);
 
   const bondStatistics: DbBondStatistics[] = bondsQuotesList
@@ -196,7 +196,7 @@ async function storeBondQuotes(bondsQuotesList: CatalystBondQuote[]): Promise<vo
 }
 
 export function toBondStatistics(quote: CatalystBondQuote): DbBondStatistics {
-  const now = new Date();
+  const now = clockNow();
   const isTransactionToday = quote.lastDateTime !== undefined && quote.lastDateTime.indexOf(':') > -1;
   return {
     name: quote.name,

@@ -5,6 +5,7 @@ import { Logger } from '@aws-lambda-powertools/logger';
 import { Resource } from 'sst';
 import { TavilyClient } from '@core/ai/tools/tavily/TavilyClient';
 import { analyzeIssuer } from '@core/ai/issuers/IssuerAnalysis';
+import { aiStubbed, stubAnalysis } from '@core/ai/issuers/IssuerStubs';
 import { IssuerProfilesTable } from '@core/storage/issuerProfiles';
 import { AnalyzeIssuerInput, AnalyzeIssuerResult } from '.';
 
@@ -13,19 +14,21 @@ const logger = new Logger({ serviceName: 'AnalyzeIssuer' });
 const bedrockClient = new BedrockRuntimeClient({});
 const dynamoDBClient = new DynamoDBClient({});
 
-export async function handler(input: AnalyzeIssuerInput, context: Context): Promise<AnalyzeIssuerResult> {
-    logger.addContext(context);
-    logger.info('Starting analysis', { issuerName: input.issuerName });
-
+async function analyzeWithAgent(issuerName: string) {
     const tavilyApiKey = process.env.TAVILY_API_KEY;
     if (!tavilyApiKey) {
         throw new Error('TAVILY_API_KEY environment variable is not set');
     }
+    return analyzeIssuer({ bedrockClient, tavilyClient: new TavilyClient(tavilyApiKey) }, issuerName);
+}
 
-    const tavilyClient = new TavilyClient(tavilyApiKey);
+export async function handler(input: AnalyzeIssuerInput, context: Context): Promise<AnalyzeIssuerResult> {
+    logger.addContext(context);
+    logger.info('Starting analysis', { issuerName: input.issuerName });
+
     const issuerProfilesTable = new IssuerProfilesTable(dynamoDBClient, Resource.IssuerProfiles.name);
 
-    const result = await analyzeIssuer({ bedrockClient, tavilyClient }, input.issuerName);
+    const result = aiStubbed() ? stubAnalysis(input.issuerName) : await analyzeWithAgent(input.issuerName);
 
     const now = new Date();
     await issuerProfilesTable.storeAnalysis({

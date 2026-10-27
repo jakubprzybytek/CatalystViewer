@@ -1,116 +1,62 @@
 # Testing
 
-## Unit Tests
+| Kind | Where | Runs against | Command |
+|---|---|---|---|
+| Type check | everything | the code | `npm run typecheck` |
+| Unit (Vitest) | `packages/*/src/**/*.test.ts` | the code | `npm test` |
+| Integration (Vitest) | `tests/integration/` | the API of a test stage | `npx sst shell --stage int -- npm run test:integration` |
+| E2E (Playwright) | `tests/e2e/` | the site of a test stage | `npx sst shell --stage int -- npm run test:e2e` |
 
-Unit tests are written with [Vitest](https://vitest.dev/) and live alongside the source files they test, using the `.test.ts` suffix.
+The pipeline (`continuous-delivery.yaml`) runs the type check and unit tests, deploys `int`, seeds it, then runs the integration and E2E tests; only then is the release tagged and deployed to prod. Nothing logs in to prod.
 
-**Run all unit tests:**
-```bash
-npm run test
-```
+## The test stage: `int` on fixtures
 
-This runs `vitest run` from the workspace root and picks up all `*.test.ts` files across all packages (`packages/core`, `packages/web`, etc.).
+`int` never touches the live sites or paid services, and always holds the same data, so the tests get the same results on any day:
 
-### What is covered
+| | `int` | how |
+|---|---|---|
+| Sources (gpwcatalyst.pl, obligacje.pl) | saved files in `tests/fixtures/sources/` | `SOURCE_FIXTURES`, bundled with the Bonds Updater Lambda (`infra/updater.ts`, `packages/core/src/common/Fixtures.ts`) |
+| Date | the fixtures' reference date, `2026-10-27 12:00 UTC` | `REFERENCE_DATE` for the functions, `NEXT_PUBLIC_REFERENCE_DATE` for the site (`common/Clock.ts` in core and web) |
+| Data | reset before the tests | `npm run seed` (`scripts/seed-int/seed-int.ts`) |
+| AI (Bedrock, Tavily) | stubbed: fixed classification and analysis | `AI_MODE=stub` (`packages/core/src/ai/issuers/IssuerStubs.ts`) |
+| Emails | logged, not sent | `EMAIL_MODE=log` (`packages/functions/src/emails/EmailClient.ts`) |
+| Bonds Updater schedule | off (prod only) | `scheduleEnabled` |
 
-| Package | Test files |
-|---------|-----------|
-| `packages/core` | Bond quote page parsers, bond information page parsers |
-| `packages/web` | Array utilities, number/date formatters, yield-to-maturity calculations |
+The flags are set in `infra/stage.ts`: fixtures and the reference date on `int`, AI and email stubs on every stage but `prod` (so `dev` too).
 
----
+### Seeding
 
-## Integration Tests
+`npx sst shell --stage int -- npm run seed` (refuses any stage but `int` and `dev`):
 
-> **Not yet implemented.** The design below describes the intended approach. No fixture files, no `int` environment, and no test code exist yet.
+1. empties the app's tables (bonds, quote history, issuer profiles, jobs, user profiles);
+2. writes `tests/fixtures/db/*.json` (raw DynamoDB items);
+3. runs the Bonds Updater state machine on the fixture sources and waits for it (`--no-update` skips this).
 
-Integration tests will run against a dedicated `int` environment with **stable, fixture-based data** — no live internet fetching. This makes the tests deterministic and repeatable regardless of what the real Catalyst/Obligacje.pl sites serve at any given time.
+After it, `int` has what one updater run on the fixtures produces: a job record, updated prices and interest, the new bonds, the deactivated bond, and the new issuer classified by the stubbed AI.
 
-### How the fixture data works
+### The fixtures
 
-The `int` environment runs the **Bonds Update workflow** (AWS Step Function) in a *test mode*. In test mode the workflow's data-fetching steps read from **local fixture files** (Excel spreadsheets, HTML pages) stored on disk instead of downloading them from the internet. This guarantees the exact same bond data is loaded every time the workflow runs.
+`tests/fixtures/metadata.json` lists the reference date and the bonds:
 
-Fixture files are committed to the repository under `tests/fixtures/` and cover a representative, stable snapshot of bonds and issuers.
+- **updated** (seeded and in the sources): corporate WIBOR, fixed and EUR bonds, treasury, BGK, EIB, municipal and mortgage covered bonds;
+- **new** (in the sources only): created from their obligacje.pl pages; one issuer, art.Locum, has no profile, so the workflow classifies it;
+- **deactivated** (seeded only): no longer in the daily statistics.
 
-### Deployment trigger
+The sources are the live pages and the daily statistics file of the capture day, trimmed to these bonds; the seed data is those bonds' records and 30 days of quote history from prod. Expected values in the tests are the fixtures' values at the reference date.
 
-During deployment to `int`, the Bonds Update workflow is automatically triggered in test mode. By the time the deployment completes, the database is populated with the fixture data and the environment is ready to test against.
+**Refreshing** (when the source formats change, or the chosen bonds mature): `npx esrun scripts/capture-fixtures/capture-fixtures.ts` downloads the live sources, reads the bonds from prod (read only) and rewrites `tests/fixtures/`. Edit the bond lists at the top of the script first if needed. Then run the seed and the tests against `int` and update the expected values. The script checks that the trimmed files parse to the same bonds as the originals.
 
-### The date-sensitivity problem
+Live source changes are caught by the prod updater (its failure email) and later by a live source canary (README roadmap), not by `int`.
 
-Bonds are time-bound instruments — they have an issue date and a maturity date, and the system computes live values relative to the current date at several points:
+## Logging in
 
-- `CatalystDownload.ts` — resolves the daily statistics filename from the previous trading day (`catalyst_YYYYMMDD.xlsx`, falling back to `.xls`)
-- `updateBondReports.ts` — defines the 30-day liquidity window and writes `year`/`month` partition keys into `BondStatistics`
-- `getBondReports.ts` — computes `daysToMaturity` and finds the current interest period by scanning `interestPayoffDayTss` for a value `>= today`
-- `getBondQuotes.ts` — queries the 30-day quote history window (must align with what `updateBondReports` wrote)
+Integration and E2E tests log in as the test user `catalyst-viewer-test@albedoonline.com` (group `catalyst-viewer-test`, accepted only off prod); `sst shell` gives them `Resource.TestUser` and `Resource.TestUserPassword`. Both refuse to run against prod.
 
-If fixtures contain bonds with fixed maturity dates, they will eventually mature. When that happens, `getBondReports` cannot find a current interest period (`interestPeriodIndex === -1`), causing a runtime crash — not just incorrect display values.
+- Integration tests sign in with the plain-password flow (`USER_PASSWORD_AUTH`), which only the non-prod app clients allow, and call the API with the access token, like the site.
+- E2E tests sign in once in `tests/e2e/global-setup.ts` (not traced) and reuse the session (`storageState`). Traces are kept for failed tests only, and the pipeline uploads Playwright results only on failure.
 
-**Three approaches to address this:**
+To run the E2E tests against a local site: `PLAYWRIGHT_TEST_BASE_URL=http://localhost:3000` (the test user still comes from the stage).
 
-**Option A — Inject a reference date (recommended).** A `REFERENCE_DATE` environment variable (e.g. `"2024-11-01"`) is stored alongside the fixture files. All four `new Date()` call sites above read this variable in test mode and fall back to `new Date()` in production. This requires:
-- A `getReferenceDate()` helper in `packages/core` that reads `process.env.REFERENCE_DATE`
-- Passing `REFERENCE_DATE` as an environment variable to the `BondsUpdater` and `GetBondReports` Lambda functions when deployed to `int`
-- Storing `REFERENCE_DATE` in a sidecar file next to the fixtures (e.g. `tests/fixtures/metadata.json`) so tests and assertions know what date the data represents
+## Unit tests
 
-This approach has zero ongoing maintenance. Fixtures remain a genuine frozen snapshot, and parser regression coverage is fully preserved — if the real sites change their HTML structure, the fixture will fail to parse and the failure is caught.
-
-**Option B — Periodic fixture refresh.** A script or CI scheduled job re-downloads real fixtures and commits them. A sidecar file records the capture date. Bonds in the fixtures are always currently active because they were just captured.
-
-Downside: someone must run the refresh before bonds mature; CI degrades silently until the next run; real-site structure changes may go unnoticed.
-
-**Option C — Generate fixtures dynamically before each test run.** Fixture files are produced from templates with dates relative to the current date, so they never expire.
-
-Downside: the generators must emit correct HTML and a valid XLS binary, and they must stay in sync with the real sites' markup. More critically, the generators would produce exactly the HTML the parsers are written to consume — a real-site change that would break production becomes invisible because tests still pass. Parser regression coverage is lost entirely.
-
-### Test layers
-
-Two layers of tests run against the `int` environment:
-
-1. **API integration tests** — call the backend API directly (without a browser) and assert on the shape and content of the responses. These live in `tests/integration/` and use [Vitest](https://vitest.dev/).
-2. **E2E tests** — drive a real browser with [Playwright](https://playwright.dev/) and verify that the UI correctly fetches and renders data. These live in `tests/e2e/` and share infrastructure with the existing smoke tests.
-
-### How to run integration tests
-
-**Against Integration (`int`) environment:**
-```bash
-npm run test:integration:int
-```
-
-**Against a custom URL:**
-Create an `.env.local` file in the repository root and set the API base URL, then run:
-```bash
-npm run test:integration
-```
-
-### How to run E2E tests
-
-```bash
-npm run test:e2e:int
-```
-
----
-
-## Smoke Tests
-
-Smoke tests live in `/tests/smoke` and use [Playwright](https://playwright.dev/).
-
-The goal is a small set of tests that verify the application is working from a user's perspective:
-
-1. **App is up** — open the URL and confirm the page loads.
-2. **Login works** — authenticate with a test account via the Amplify/Cognito login flow.
-3. **Data is displayed** — assert that bond data is fetched and rendered in the UI.
-
-These tests assume the backend is already deployed and that a base set of bond data is present in the database. They do not seed or tear down any data.
-
-### How to run smoke tests
-
-The tests run inside `sst shell` and log in as the test user `catalyst-viewer-test@albedoonline.com` (group `catalyst-viewer-test`, accepted only off prod), reading `Resource.TestUser.email` and `Resource.TestUserPassword.value`. They refuse to run against prod. Traces are off, because the login test types the password.
-
-```bash
-npm run test:smoke       # dev
-npm run test:smoke:int   # int (the pipeline runs this)
-```
-
-To test a local site, set `PLAYWRIGHT_TEST_BASE_URL=http://localhost:3000` (the test user still comes from the stage).
+Vitest, next to the code (`*.test.ts`); `npm test` runs all packages. Covered: the source parsers, the API access check, the handlers' request handling, the report email, job summaries, yield to maturity, the fundamental scorecard and formatting helpers.

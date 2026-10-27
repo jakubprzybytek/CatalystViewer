@@ -3,3 +3,4 @@ export function parseUTCDate(dateString: string): Date {
 }
 
 export * from './jobs';
+export { now } from './common/Clock';

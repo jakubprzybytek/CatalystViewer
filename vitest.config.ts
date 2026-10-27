@@ -8,6 +8,7 @@ export default defineConfig({
     },
   },
   test: {
-    exclude: [...configDefaults.exclude, 'tests/smoke/**'],
+    // tests/ holds the integration and E2E tests, which run against a deployed stage
+    exclude: [...configDefaults.exclude, 'tests/**'],
   },
 });

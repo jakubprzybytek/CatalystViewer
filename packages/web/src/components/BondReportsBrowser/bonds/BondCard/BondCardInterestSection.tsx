@@ -6,6 +6,7 @@ import { formatCurrency, formatDate } from '@/common/Formats';
 import { CardEntry, CardValue } from '@/common/Cards/CardEntry';
 import { CardSectionRow } from '@/common/Cards/CardSectionRow';
 import { ColorCode } from '@/common/ColorCodes';
+import { today } from '@/common/Clock';
 import InterestProgressBar from './InterestProgressBar';
 
 type BondCardInterestSectionParam = {
@@ -15,7 +16,7 @@ type BondCardInterestSectionParam = {
 }
 
 export default function BondCardInterestSection({ details, currentValues, expanded }: BondCardInterestSectionParam): React.JSX.Element {
-  const interestBarColor = new Date().getTime() >= currentValues.interestRecordDay ? 'success' : 'error';
+  const interestBarColor = today().getTime() >= currentValues.interestRecordDay ? 'success' : 'error';
   const accuredInterestColorCode: ColorCode = currentValues.accuredInterest == 0 ? 'green' : 'none';
 
   return (

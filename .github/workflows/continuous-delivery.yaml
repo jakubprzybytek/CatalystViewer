@@ -1,5 +1,5 @@
 # Continuous delivery per agent-playbook/continuous-delivery (docs/development.md lists the deviations).
-# Every push to main: checks -> deploy int -> smoke tests -> tag the next release v1.N -> deploy prod from the tag.
+# Every push to main: checks -> deploy int -> seed int (fixtures) -> integration + E2E tests -> tag the next release v1.N -> deploy prod from the tag.
 # Manual run with `tag`: deploy that existing tag to prod (rollback / redeploy).
 # AWS access: OIDC role GitHub-CatalystViewer (infra/github/README.md).
 
@@ -81,11 +81,17 @@ jobs:
           APP_VERSION: ${{ steps.version.outputs.version }}
           TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
 
-      # Smoke tests until the integration and E2E tests exist (docs/development.md, deviations).
-      # Inside sst shell: they log in as the test user (Resource.TestUser, TestUserPassword).
+      # int runs on fixtures (docs/testing.md): reset its tables to tests/fixtures/db and run the Bonds Updater
+      # on the fixture sources, so every run tests the same data.
+      - name: Seed int
+        run: npx sst shell --stage int -- npm run seed
+
+      # Inside sst shell: the tests log in as the test user (Resource.TestUser, TestUserPassword).
+      - name: Integration tests
+        run: npx sst shell --stage int -- npm run test:integration
       - run: npx playwright install --with-deps chromium
-      - name: Smoke tests
-        run: npm run test:smoke:int
+      - name: E2E tests
+        run: npx sst shell --stage int -- npm run test:e2e
 
       - uses: actions/upload-artifact@v7
         if: failure()

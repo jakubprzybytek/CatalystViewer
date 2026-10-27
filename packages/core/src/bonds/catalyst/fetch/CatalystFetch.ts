@@ -1,6 +1,12 @@
 import axios, { AxiosError } from 'axios';
+import { readFixtureText, sourceFixturesDir } from '../../../common/Fixtures';
 
 export async function fetchBondsQuotes(path: string): Promise<string> {
+    const fixtures = sourceFixturesDir();
+    if (fixtures) {
+        return readFixtureText(fixtures, 'gpwcatalyst', `${path.replace(/^\//, '')}.html`);
+    }
+
     const url = `https://gpwcatalyst.pl${path}`;
 
     console.log(`Fetching: ${url}`);

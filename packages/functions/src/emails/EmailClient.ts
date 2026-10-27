@@ -9,7 +9,15 @@ export type SendEmailParams = {
 
 const client = new SESClient({});
 
+// EMAIL_MODE=log (every stage but prod, infra/stage.ts): log the email instead of sending it.
+export const emailsLoggedOnly = (): boolean => process.env.EMAIL_MODE === 'log';
+
 export async function sendEmail(params: SendEmailParams): Promise<boolean> {
+    if (emailsLoggedOnly()) {
+        console.log(JSON.stringify({ message: 'Email not sent (EMAIL_MODE=log)', subject: params.subject, recipients: params.to.length, textBody: params.textBody }));
+        return true;
+    }
+
     const input = {
         "Destination": {
           "ToAddresses": params.to
