@@ -1,5 +1,5 @@
 // Copies DynamoDB data from one SST stage to another (e.g. int -> prod).
-// See README.md next to this file and docs/sdlc.md (migration phase 2).
+// See README.md next to this file.
 
 import {
   BatchWriteItemCommand,
@@ -13,7 +13,7 @@ import {
 const REGION = "eu-west-1";
 const APP = "catalyst-viewer";
 
-// Jobs (history) and SiteRevalidation (Next.js cache) are not copied, see docs/sdlc.md.
+// Jobs (history) and SiteRevalidation (Next.js cache) are not copied.
 const DEFAULT_TABLES = ["Profiles", "BondDetails", "BondStatistics", "IssuerProfiles"];
 
 const BATCH_SIZE = 25;

@@ -19,6 +19,8 @@ export default $config({
     await import("./infra/api");
     await import("./infra/updater");
     await import("./infra/analysis");
-    await import("./infra/web");
+    const { outputs } = await import("./infra/web");
+    // siteUrl, apiUrl: printed after a deploy and written to .sst/outputs.json (used by cd.yml's prod checks)
+    return outputs;
   },
 });

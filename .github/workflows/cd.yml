@@ -1,0 +1,156 @@
+# Continuous delivery per agent-playbook/sst-delivery (docs/development.md lists the deviations).
+# Every push to main: checks -> deploy int -> smoke tests -> tag the next release v1.N -> deploy prod from the tag.
+# Manual run with `tag`: deploy that existing tag to prod (rollback / redeploy).
+# AWS access: OIDC role GitHub-CatalystViewer (infra/github/README.md).
+
+name: CD
+
+on:
+  push:
+    branches: [main]
+    paths-ignore: ["**/*.md", "docs/**"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing release tag to deploy to prod (e.g. v1.5). Empty = full pipeline from main.
+        type: string
+        default: ""
+      major:
+        description: Release main as the next leading number, v(M+1).0 (full pipeline; ignored with tag).
+        type: boolean
+        default: false
+
+concurrency:
+  group: cd
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  int:
+    name: Deploy int + test + tag
+    if: inputs.tag == ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write # push the release tag
+      id-token: write # OIDC -> AWS
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0 # tags and history for the next version
+
+      # Releases only go forward: the latest vM.N tag + 1 (v1.2 -> v1.3). Older vX.Y.Z tags are ignored.
+      # The `major` input releases v(M+1).0 instead. A commit that already has a tag (a re-run) keeps it.
+      - id: version
+        env:
+          MAJOR: ${{ inputs.major || false }}
+        run: |
+          tags() { git tag "$@" --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+$' | head -n1 || true; }
+          current=$(tags --points-at HEAD)
+          if [ -n "$current" ]; then echo "version=$current" >> "$GITHUB_OUTPUT"; echo "HEAD already tagged $current"; exit 0; fi
+          last=$(tags)
+          m=${last%%.*}; m=${m#v}; n=${last#*.}
+          if [ -z "$last" ]; then version=v0.1
+          elif [ "$MAJOR" = "true" ]; then version="v$(( m + 1 )).0"
+          else version="v$m.$(( n + 1 ))"; fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "${last:-none} -> $version"
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/GitHub-CatalystViewer
+          aws-region: ${{ vars.AWS_REGION }}
+          role-session-name: gh-catalystviewer-${{ github.run_id }}
+          mask-aws-account-id: true
+
+      - name: Deploy int
+        run: npx sst deploy --stage int
+        env:
+          APP_VERSION: ${{ steps.version.outputs.version }}
+          TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
+
+      # Smoke tests until the integration and E2E tests exist (docs/development.md, deviations).
+      - run: npx playwright install --with-deps chromium
+      - name: Smoke tests
+        run: npm run test:smoke:int
+        env:
+          TEST_USERNAME: ${{ vars.TEST_USERNAME }}
+          TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
+
+      - uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: playwright-results-int
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 3
+
+      - name: Tag ${{ steps.version.outputs.version }}
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          if git rev-parse -q --verify "refs/tags/$VERSION" > /dev/null; then echo "$VERSION already tagged"; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$VERSION" -m "Release $VERSION"
+          git push origin "$VERSION"
+
+  prod:
+    name: Deploy prod
+    needs: int
+    # Runs after a green int job, or alone for a manual run with a tag.
+    if: always() && (needs.int.result == 'success' || (needs.int.result == 'skipped' && inputs.tag != ''))
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      id-token: write # OIDC -> AWS
+    env:
+      VERSION: ${{ inputs.tag != '' && inputs.tag || needs.int.outputs.version }}
+    steps:
+      # vM.N releases, plus the older v1.0.0 - v1.1.2 tags for a rollback.
+      - name: Check the tag
+        run: '[[ "$VERSION" =~ ^v[0-9]+\.[0-9]+(\.[0-9]+)?$ ]] || { echo "Not a release tag: $VERSION"; exit 1; }'
+      - uses: actions/checkout@v6
+        with:
+          ref: refs/tags/${{ env.VERSION }}
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/GitHub-CatalystViewer
+          aws-region: ${{ vars.AWS_REGION }}
+          role-session-name: gh-catalystviewer-${{ github.run_id }}
+          mask-aws-account-id: true
+      - name: Deploy prod
+        run: npx sst deploy --stage prod
+        env:
+          APP_VERSION: ${{ env.VERSION }}
+          TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
+
+      # No login on prod: only check that the site and the API answer.
+      - name: Site answers
+        run: curl -fsS -o /dev/null -w '%{http_code}\n' "$(jq -r '.siteUrl' .sst/outputs.json)"
+      - name: API answers
+        run: |
+          # Every route needs a login; an unauthenticated call must get 401 from the authorizer.
+          api=$(jq -r '.apiUrl' .sst/outputs.json)
+          code=$(curl -s -o /dev/null -w '%{http_code}' "$api/api/bonds")
+          echo "GET /api/bonds without a token: $code"
+          [ "$code" = "401" ]

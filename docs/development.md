@@ -1,16 +1,18 @@
 # Development
 
-This app is developed and delivered per the [sst-delivery standard](https://github.com/jakubprzybytek/agent-playbook/blob/main/skills/sst-delivery/STANDARD.md): develop on `dev`, every push to `main` goes through `int` to `prod`. The standard has the general rules (stages, tests, the CD pipeline, versions, when a push needs a yes first, test users); this file holds what is specific to CatalystViewer. How the app got here, and what is still planned, is in [sdlc.md](sdlc.md); testing details (fixtures, reference date) in [testing.md](testing.md).
+This app is developed and delivered per the [sst-delivery standard](https://github.com/jakubprzybytek/agent-playbook/blob/main/skills/sst-delivery/STANDARD.md): develop on `dev`, every push to `main` goes through `int` to `prod`. The standard has the general rules (stages, tests, the CD pipeline, versions, when a push needs a yes first, test users); this file holds what is specific to CatalystViewer and where it still deviates. Testing details (fixtures, reference date) are in [testing.md](testing.md); deploying from GitHub (OIDC role, policy) in [infra/github/README.md](../infra/github/README.md).
 
 ## Stages
 
 | Stage | URL | Data |
 |---|---|---|
 | `dev` | https://dev.catalyst.albedoonline.com, or localhost with `npm run dev` | developer's choice |
-| `int` | https://int.catalyst.albedoonline.com | whatever `int` has (fixtures from [sdlc.md](sdlc.md) phase 4) |
+| `int` | https://int.catalyst.albedoonline.com | a copy of live data from before the prod cutover (see deviations) |
 | `prod` | https://catalyst.albedoonline.com | real data; the Bonds Updater schedule runs only here |
 
-Stage flags (`isProd`, `scheduleEnabled`, `siteDomain`) are in `infra/stage.ts`.
+Stage flags (`isProd`, `scheduleEnabled`, `siteDomain`) are in `infra/stage.ts`. `prod` has `removal: retain` and `protect`.
+
+**Auth:** the shared, manually managed Cognito pool `AlbedoUserPool` (`eu-west-1_IVai0KEAA`), users shared with other Albedo apps. Each stage has its own app client `catalyst-viewer-<stage>-web`, created by SST in `infra/api.ts`; the API authorizer accepts only its own stage's client.
 
 ## Run locally
 
@@ -27,30 +29,29 @@ Stop `sst dev` when you're done: it holds `dev`'s lock and blocks every deploy t
 |---|---|
 | Type check | `npm run typecheck` (infra and all packages) |
 | Unit (Vitest) | `npm test` |
-| Integration (API) | not yet: planned in [testing.md](testing.md), [sdlc.md](sdlc.md) phase 4 |
+| Integration (API), E2E | not yet (see deviations) |
 | Smoke (Playwright) | `npm run test:smoke:int`; locally `npm run test:smoke` with `.env.local` |
 
 ## Delivery
 
-Workflows in `.github/workflows/`:
-
 | File | Trigger | What it does |
 |---|---|---|
-| `delivery.yml` | push to `main` (except `docs/**`, `**/*.md`), manual | checks → deploy int + smoke tests → tag → deploy prod from the tag + smoke tests |
-| `deploy-prod.yml` | manual, `tag` input | deploy an existing tag to prod (rollback / redeploy) |
-| `pr.yml` | pull request | checks |
-| `checks.yml` | reused | unit tests and typecheck |
-| `deploy-stage.yml` | reused | deploy one stage via the OIDC role, then its smoke tests |
+| `.github/workflows/cd.yml` | push to `main` (except `docs/**`, `**/*.md`), manual | checks → deploy int → smoke tests → tag `v1.N` → deploy prod from the tag → site and API answer (no login) |
+| `.github/workflows/pr.yml` | pull request | checks |
 
-Each stage deploy has its own lock (`deploy-int`, `deploy-prod`), so a manual prod deploy can't overlap with the pipeline's.
+- Rollback or redeploy: `gh workflow run cd.yml -f tag=v1.5` (also accepts the older `v1.0.0`–`v1.1.2` tags).
+- Releases are `v1.N`, forward only. Until 2026-10-26 they were `vX.Y.Z` from conventional commits (`v1.0.0`–`v1.1.2`); `v1.2` was tagged on the commit prod ran then (`8a7b159`, same as `v1.1.2`), and `cd.yml` continues from there.
+- `TAVILY_API_KEY` (web search for the AI steps) is a GitHub secret, passed to `sst deploy` as an environment variable.
 
 Ask before pushing changes that touch data, resources holding data, access or cost ([the standard, section 5](https://github.com/jakubprzybytek/agent-playbook/blob/main/skills/sst-delivery/STANDARD.md#5-when-a-push-needs-a-yes-first)). For this app that includes changes to the Bonds Updater schedule, the state machines, and the AI (Bedrock, Tavily) calls.
 
 ## Deviations
 
-Until the app is aligned with the standard ([sdlc.md](sdlc.md), phase 6):
-
-- **Five workflow files** instead of one `cd.yml`.
-- **Versions** are `vX.Y.Z` from conventional commits. Next: continue as `v1.N`, forward only.
-- **The `int` gate is smoke tests only**: integration and E2E tests on fixtures come with phase 4.
-- **Test login:** the smoke tests log in as a real account through the GitHub secret `TEST_PASSWORD` and the variable `TEST_USERNAME`, and they also run logged in against prod. Target: the test user `catalyst-viewer-test@albedoonline.com` with its password as an SST secret, and no logged-in tests on prod.
+- **`int` is not yet a test stage.** It still has the live data copied before the prod cutover (2026-10-25), downloads from the live sources (GPW, obligacje.pl), and calls the real AI and email services when the updater is run by hand (it has no schedule). The pipeline's gate is the smoke tests. Ends when, as planned in [testing.md](testing.md):
+  1. AI (Bedrock, Tavily) and email are stubbed on `int`;
+  2. fixture mode and the reference date exist, and `cd.yml` reseeds `int` after each deploy;
+  3. integration and E2E tests run in `cd.yml` (inside `sst shell`), replacing the smoke tests;
+  4. the live data is cleared from the `int` tables.
+- **Test login uses a real account.** The smoke tests on `int` log in through the GitHub variable `TEST_USERNAME` and secret `TEST_PASSWORD`; the API checks no Cognito group. Ends with the standard's test user: `catalyst-viewer-test@albedoonline.com` in group `catalyst-viewer-test`, real users in group `catalyst-viewer`, the API accepting only `catalyst-viewer` on prod, the password as SST secret `TestUserPassword` of `dev` and `int`. Then the `TEST_*` secret and variable are deleted and the old account's password is changed.
+- **Extra stages** `codespace` and `staralliancepirx` are still deployed (idle since mid-2026). Ends with `sst remove --stage codespace` and `sst remove --stage staralliancepirx`.
+- **The version is not shown in the app.** `APP_VERSION` is passed to `sst deploy` but not used yet.

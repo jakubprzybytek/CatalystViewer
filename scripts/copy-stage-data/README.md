@@ -1,6 +1,6 @@
 # Copy stage data
 
-Copies DynamoDB tables from one SST stage to another, e.g. `int` → `prod` (see `docs/sdlc.md`, migration phase 2).
+Copies DynamoDB tables from one SST stage to another, e.g. `int` → `prod` (used for the prod cutover on 2026-10-25).
 
 - Finds the tables by stage (`catalyst-viewer-<stage>-<Name>Table-*`).
 - Copies items as raw DynamoDB attribute values, so nothing is converted on the way.

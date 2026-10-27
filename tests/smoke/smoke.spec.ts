@@ -6,9 +6,6 @@ test.describe.serial('Smoke Tests', () => {
 
   // Create a single browser page to share across these tests
   test.beforeAll(async ({ browser }) => {
-    const isPasswordSet = !!process.env.TEST_PASSWORD;
-    console.log(`Smoke test config - Username: ${process.env.TEST_USERNAME || '<not set>'}, Password set: ${isPasswordSet}`);
-    
     page = await browser.newPage();
   });
 
@@ -31,6 +28,7 @@ test.describe.serial('Smoke Tests', () => {
     const password = process.env.TEST_PASSWORD as string;
 
     test.skip(!username || !password, 'TEST_USERNAME and TEST_PASSWORD environment variables are required for this test.');
+    if (process.env.STAGE === 'prod') throw new Error('No logged-in tests against prod');
 
     // We are already at '/' from the previous test.
 
