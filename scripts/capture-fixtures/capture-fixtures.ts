@@ -239,8 +239,11 @@ async function main() {
     const records = await queryAll(issuerProfilesTable, "issuerName", issuer);
     const profile = records.find((r) => r.recordType.S === "#PROFILE");
     const latestAnalysis = records.filter((r) => r.recordType.S!.startsWith("#ANALYSIS#")).sort((a, b) => b.recordType.S!.localeCompare(a.recordType.S!))[0];
+    // The summary record the profiles API reads (scorecard of the latest analysis).
+    const latestSummary = records.find((r) => r.recordType.S === "#LATEST_ANALYSIS");
     if (profile) issuerProfiles.push(profile);
     if (latestAnalysis) issuerProfiles.push(latestAnalysis);
+    if (latestSummary) issuerProfiles.push(latestSummary);
   }
 
   const sortKey = (item: Item) => JSON.stringify([item["name#market"]?.S, item["year#month"]?.S, item.issuerName?.S, item.recordType?.S]);

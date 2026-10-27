@@ -75,7 +75,7 @@ describe("bonds after the updater ran on the fixtures", async () => {
 
 describe("bond quotes", () => {
   it("returns the 30 days of quotes before the reference date, including the updater's", async () => {
-    const { status, body } = await api<{ date: number }[]>("/api/bondQuotes?name=ALE0630&market=GPW%20ASO");
+    const { status, body } = await api<{ date: number }[]>("/api/bondQuotes?bond=ALE0630&market=GPW%20ASO");
     expect(status).toBe(200);
     expect(body.length).toBeGreaterThan(5);
     const days = body.map((q) => new Date(q.date).toISOString().substring(0, 10));

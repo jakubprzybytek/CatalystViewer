@@ -4,6 +4,8 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
   test: {
     include: ['tests/integration/**/*.test.ts'],
+    // Threads share the process environment; forked workers on Windows lose sst shell's SST_RESOURCE_* variables.
+    pool: 'threads',
     testTimeout: 30_000,
     hookTimeout: 30_000,
   },
