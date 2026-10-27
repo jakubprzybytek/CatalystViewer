@@ -1,9 +1,15 @@
 import { api, userPoolId, userPoolClientId } from "./api";
 import { isProd, referenceDate, siteDomain } from "./stage";
 
+const openNextVersion = "3.10.2";
+
 const site = new sst.aws.Nextjs("Site", {
   path: "packages/web",
-  openNextVersion: "3.10.2",
+  openNextVersion,
+  // Deploys from Windows: replace the package symlinks Next.js leaves in the build (scripts/site-build/windows-links.mjs).
+  ...(process.platform === "win32"
+    ? { buildCommand: `npx --yes @opennextjs/aws@${openNextVersion} build &&node ../../scripts/site-build/windows-links.mjs` }
+    : {}),
   domain: {
     name: siteDomain,
     // prod takes over records left in the zone by an earlier deployment of the bare domain (e.g. ACM validation CNAME)
