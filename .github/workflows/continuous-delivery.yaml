@@ -1,9 +1,9 @@
-# Continuous delivery per agent-playbook/sst-delivery (docs/development.md lists the deviations).
+# Continuous delivery per agent-playbook/continuous-delivery (docs/development.md lists the deviations).
 # Every push to main: checks -> deploy int -> smoke tests -> tag the next release v1.N -> deploy prod from the tag.
 # Manual run with `tag`: deploy that existing tag to prod (rollback / redeploy).
 # AWS access: OIDC role GitHub-CatalystViewer (infra/github/README.md).
 
-name: CD
+name: Continuous Delivery
 
 on:
   push:

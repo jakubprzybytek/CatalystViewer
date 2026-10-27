@@ -38,11 +38,11 @@ Stop `sst dev` when you're done: it holds `dev`'s lock and blocks every deploy t
 
 | File | Trigger | What it does |
 |---|---|---|
-| `.github/workflows/cd.yml` | push to `main` (except `docs/**`, `**/*.md`), manual | checks → deploy int → smoke tests → tag `v1.N` → deploy prod from the tag → site and API answer (no login) |
+| `.github/workflows/continuous-delivery.yaml` | push to `main` (except `docs/**`, `**/*.md`), manual | checks → deploy int → smoke tests → tag `v1.N` → deploy prod from the tag → site and API answer (no login) |
 | `.github/workflows/pr.yml` | pull request | checks |
 
-- Rollback or redeploy: `gh workflow run cd.yml -f tag=v1.5` (also accepts the older `v1.0.0`–`v1.1.2` tags).
-- Releases are `v1.N`, forward only. Until 2026-10-26 they were `vX.Y.Z` from conventional commits (`v1.0.0`–`v1.1.2`); `v1.2` was tagged on the commit prod ran then (`8a7b159`, same as `v1.1.2`), and `cd.yml` continues from there.
+- Rollback or redeploy: `gh workflow run continuous-delivery.yaml -f tag=v1.5` (also accepts the older `v1.0.0`–`v1.1.2` tags).
+- Releases are `v1.N`, forward only. Until 2026-10-26 they were `vX.Y.Z` from conventional commits (`v1.0.0`–`v1.1.2`); `v1.2` was tagged on the commit prod ran then (`8a7b159`, same as `v1.1.2`), and `continuous-delivery.yaml` continues from there.
 - `TAVILY_API_KEY` (web search for the AI steps) is a GitHub secret, passed to `sst deploy` as an environment variable.
 
 Ask before pushing changes that touch data, resources holding data, access or cost ([the standard, section 5](https://github.com/jakubprzybytek/agent-playbook/blob/main/skills/continuous-delivery/STANDARD.md#5-when-a-push-needs-a-yes-first)). For this app that includes changes to the Bonds Updater schedule, the state machines, and the AI (Bedrock, Tavily) calls.
@@ -51,8 +51,8 @@ Ask before pushing changes that touch data, resources holding data, access or co
 
 - **`int` is not yet a test stage.** It still has the live data copied before the prod cutover (2026-10-25), downloads from the live sources (GPW, obligacje.pl), and calls the real AI and email services when the updater is run by hand (it has no schedule). The pipeline's gate is the smoke tests. Ends when, as planned in [testing.md](testing.md):
   1. AI (Bedrock, Tavily) and email are stubbed on `int`;
-  2. fixture mode and the reference date exist, and `cd.yml` reseeds `int` after each deploy;
-  3. integration and E2E tests run in `cd.yml` (inside `sst shell`), replacing the smoke tests;
+  2. fixture mode and the reference date exist, and `continuous-delivery.yaml` reseeds `int` after each deploy;
+  3. integration and E2E tests run in `continuous-delivery.yaml` (inside `sst shell`), replacing the smoke tests;
   4. the live data is cleared from the `int` tables.
 - **Extra stages** `codespace` and `staralliancepirx` are still deployed (idle since mid-2026). Ends with `sst remove --stage codespace` and `sst remove --stage staralliancepirx`.
 - **The version is not shown in the app.** `APP_VERSION` is passed to `sst deploy` but not used yet.

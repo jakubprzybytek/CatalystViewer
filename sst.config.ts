@@ -20,7 +20,7 @@ export default $config({
     await import("./infra/updater");
     await import("./infra/analysis");
     const { outputs } = await import("./infra/web");
-    // siteUrl, apiUrl: printed after a deploy and written to .sst/outputs.json (used by cd.yml's prod checks)
+    // siteUrl, apiUrl: printed after a deploy and written to .sst/outputs.json (used by continuous-delivery.yaml's prod checks)
     return outputs;
   },
 });

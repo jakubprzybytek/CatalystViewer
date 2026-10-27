@@ -1,6 +1,6 @@
 name: Pull Request
 
-# Checks only; delivery is cd.yml on main. No AWS access here.
+# Checks only; delivery is continuous-delivery.yaml on main. No AWS access here.
 on:
   pull_request:
     branches: [main]
