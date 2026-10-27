@@ -7,7 +7,6 @@ function Tools(): React.JSX.Element {
     <>
       <Head>
         <title>Catalyst Viewer - Tools</title>
-        <link rel='icon' href='/favicon.ico' />
       </Head>
       <ToolsPage />
     </>

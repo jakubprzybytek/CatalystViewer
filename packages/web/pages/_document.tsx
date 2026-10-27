@@ -4,9 +4,10 @@ export default function Document() {
   return (
     <Html>
       <Head>
+        {/* The .ico for browsers without SVG icons; the SVG last, so browsers that support it use it (it adapts to dark tabs). */}
+        <link rel="icon" href="/favicon.ico" sizes="48x48" />
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-        <link rel="icon" type="image/x-icon" href="/favicon.ico" />
-        <link rel="shortcut icon" href="/favicon.ico" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
       </Head>
       <body>
         <Main />

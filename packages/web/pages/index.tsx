@@ -56,7 +56,6 @@ const Bonds = () => {
     <>
       <Head>
         <title>Catalyst Viewer</title>
-        <link rel="icon" href="/favicon.ico" />
       </Head>
       {settingsCollection && (
         <>

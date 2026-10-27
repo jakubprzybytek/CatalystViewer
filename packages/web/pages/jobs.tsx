@@ -7,7 +7,6 @@ function Jobs(): React.JSX.Element {
     <>
       <Head>
         <title>Catalyst Viewer - Jobs</title>
-        <link rel='icon' href='/favicon.ico' />
       </Head>
       <JobsPage />
     </>
