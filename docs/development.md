@@ -44,13 +44,12 @@ Integration and E2E tests expect the seeded fixtures and log in as the test user
 | `.github/workflows/continuous-delivery.yaml` | push to `main` (except `docs/**`, `**/*.md`), manual | checks → deploy int → seed → integration and E2E tests → tag `v1.N` → deploy prod from the tag → site and API answer (no login) |
 | `.github/workflows/pr.yml` | pull request | checks |
 
-- Rollback or redeploy: `gh workflow run continuous-delivery.yaml -f tag=v1.5` (also accepts the older `v1.0.0`–`v1.1.2` tags).
-- Releases are `v1.N`, forward only. Until 2026-10-26 they were `vX.Y.Z` from conventional commits (`v1.0.0`–`v1.1.2`); `v1.2` was tagged on the commit prod ran then (`8a7b159`, same as `v1.1.2`), and `continuous-delivery.yaml` continues from there.
+- Rollback or redeploy: run Continuous Delivery manually from the release tag ("Use workflow from"; `gh workflow run continuous-delivery.yaml --ref v1.6`). It deploys the tag to int, seeds it, runs the tests, then deploys it to prod, without a new version. Works for `v1.5` and later; `v1.0.0`–`v1.4` predate `continuous-delivery.yaml` and can't be rolled back this way.
+- Releases are `v1.N`, forward only, shown in the app's menu (top right, "Version …"; `local` for a deploy from a machine). Until 2026-10-26 they were `vX.Y.Z` from conventional commits (`v1.0.0`–`v1.1.2`); `v1.2` was tagged on the commit prod ran then (`8a7b159`, same as `v1.1.2`), and `continuous-delivery.yaml` continues from there.
 - `TAVILY_API_KEY` (web search for the AI steps) is a GitHub secret, passed to `sst deploy` as an environment variable.
 
 Ask before pushing changes that touch data, resources holding data, access or cost ([the standard, section 5](https://github.com/jakubprzybytek/agent-playbook/blob/main/skills/continuous-delivery/STANDARD.md#5-when-a-push-needs-a-yes-first)). For this app that includes changes to the Bonds Updater schedule, the state machines, and the AI (Bedrock, Tavily) calls.
 
 ## Deviations
 
-- **Extra stages** `codespace` and `staralliancepirx` are still deployed (idle since mid-2026). Ends with `sst remove --stage codespace` and `sst remove --stage staralliancepirx`.
-- **The version is not shown in the app.** `APP_VERSION` is passed to `sst deploy` but not used yet.
+- **No working site from a Windows deploy.** `npm run deploy` from Windows builds the site, but the deployed site fails (500): Next.js links some packages (e.g. `aws-amplify-<hash>`) with symlinks to the absolute `D:\…` path, which don't exist on Lambda. The API, Lambdas and workflows deploy fine. On Windows, use `npm run dev -- --stage dev` for the site, or deploy dev from Linux (WSL, a codespace). Ends when OpenNext/Next.js package these links on Windows.

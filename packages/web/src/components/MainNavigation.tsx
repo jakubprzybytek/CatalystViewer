@@ -45,7 +45,7 @@ export default function MainNavigation({ title, children }: MainNavigationParams
             </Stack>
             <Stack direction='row' justifyContent={'flex-end'}>
               {children}
-              <IconButton color='inherit'
+              <IconButton color='inherit' aria-label='Menu'
                 onClick={(event) => setAnchorEl(event.currentTarget)}>
                 <MoreVert />
               </IconButton>
@@ -58,6 +58,9 @@ export default function MainNavigation({ title, children }: MainNavigationParams
                 <MenuItem onClick={() => { setAnchorEl(null); router.push('/jobs'); }}>Jobs</MenuItem>
                 <MenuItem onClick={() => { setAnchorEl(null); router.push('/tools'); }}>Tools</MenuItem>
                 <MenuItem onClick={() => { setAnchorEl(null); signOut(); }}>Logout</MenuItem>
+                <MenuItem disabled dense data-testid='app-version'>
+                  Version {process.env.NEXT_PUBLIC_APP_VERSION ?? 'local'}
+                </MenuItem>
               </Menu>
             </Stack>
           </Stack>

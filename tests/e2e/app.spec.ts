@@ -13,6 +13,15 @@ test('issuers view lists the issuers of the fixture bonds', async ({ page }) => 
   await expect(cards.filter({ hasText: 'art.Locum S.A.' })).toHaveCount(1);
 });
 
+test('menu shows the deployed version', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Menu' }).click();
+
+  // The pipeline passes the version it deployed; a local run only checks that one is shown.
+  const expected = process.env.APP_VERSION;
+  await expect(page.getByTestId('app-version')).toHaveText(expected ? `Version ${expected}` : /^Version \S+$/);
+});
+
 test('bonds view lists the updated and the new bonds, not the deactivated one', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'Bonds' }).click();

@@ -1,6 +1,8 @@
 # Continuous delivery per agent-playbook/continuous-delivery (docs/development.md lists the deviations).
-# Every push to main: checks -> deploy int -> seed int (fixtures) -> integration + E2E tests -> tag the next release v1.N -> deploy prod from the tag.
-# Manual run with `tag`: deploy that existing tag to prod (rollback / redeploy).
+# From main (every push, or a manual run with main selected): checks -> deploy int -> seed int (fixtures)
+#   -> integration + E2E tests -> tag the next release v1.N -> deploy prod from the tag.
+# From any other branch or tag (manual run, "Use workflow from"): the same checks, int deploy, seed and tests, then prod,
+#   all from that ref, without a new version or tag (rollback: pick the release tag, v1.5 or later).
 # AWS access: OIDC role GitHub-CatalystViewer (infra/github/README.md).
 
 name: Continuous Delivery
@@ -11,12 +13,8 @@ on:
     paths-ignore: ["**/*.md", "docs/**"]
   workflow_dispatch:
     inputs:
-      tag:
-        description: Existing release tag to deploy to prod (e.g. v1.5). Empty = full pipeline from main.
-        type: string
-        default: ""
       major:
-        description: Release main as the next leading number, v(M+1).0 (full pipeline; ignored with tag).
+        description: Bump major version number and release as v(N+1).0
         type: boolean
         default: false
 
@@ -29,8 +27,7 @@ permissions:
 
 jobs:
   int:
-    name: Deploy int + test + tag
-    if: inputs.tag == ''
+    name: Deploy int + test
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -38,18 +35,26 @@ jobs:
       id-token: write # OIDC -> AWS
     outputs:
       version: ${{ steps.version.outputs.version }}
+      release: ${{ steps.version.outputs.release }}
     steps:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0 # tags and history for the next version
 
-      # Releases only go forward: the latest vM.N tag + 1 (v1.2 -> v1.3). Older vX.Y.Z tags are ignored.
+      # From main, releases only go forward: the latest vM.N tag + 1 (v1.2 -> v1.3). Older vX.Y.Z tags are ignored.
       # The `major` input releases v(M+1).0 instead. A commit that already has a tag (a re-run) keeps it.
+      # From another ref: no new version; the app shows the tag name, or <branch>-<short sha>.
       - id: version
         env:
           MAJOR: ${{ inputs.major || false }}
         run: |
           tags() { git tag "$@" --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+$' | head -n1 || true; }
+          if [ "$GITHUB_REF" != refs/heads/main ]; then
+            if [ "$GITHUB_REF_TYPE" = tag ]; then version="$GITHUB_REF_NAME"; else version="${GITHUB_REF_NAME//\//-}-${GITHUB_SHA::7}"; fi
+            echo "version=$version" >> "$GITHUB_OUTPUT"; echo "release=false" >> "$GITHUB_OUTPUT"
+            echo "Deploying $GITHUB_REF as $version, no release"; exit 0
+          fi
+          echo "release=true" >> "$GITHUB_OUTPUT"
           current=$(tags --points-at HEAD)
           if [ -n "$current" ]; then echo "version=$current" >> "$GITHUB_OUTPUT"; echo "HEAD already tagged $current"; exit 0; fi
           last=$(tags)
@@ -92,6 +97,8 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - name: E2E tests
         run: npx sst shell --stage int -- npm run test:e2e
+        env:
+          APP_VERSION: ${{ steps.version.outputs.version }} # the menu must show it
 
       - uses: actions/upload-artifact@v7
         if: failure()
@@ -103,6 +110,7 @@ jobs:
           retention-days: 3
 
       - name: Tag ${{ steps.version.outputs.version }}
+        if: steps.version.outputs.release == 'true'
         env:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
@@ -115,22 +123,18 @@ jobs:
   prod:
     name: Deploy prod
     needs: int
-    # Runs after a green int job, or alone for a manual run with a tag.
-    if: always() && (needs.int.result == 'success' || (needs.int.result == 'skipped' && inputs.tag != ''))
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
       contents: read
       id-token: write # OIDC -> AWS
     env:
-      VERSION: ${{ inputs.tag != '' && inputs.tag || needs.int.outputs.version }}
+      VERSION: ${{ needs.int.outputs.version }}
     steps:
-      # vM.N releases, plus the older v1.0.0 - v1.1.2 tags for a rollback.
-      - name: Check the tag
-        run: '[[ "$VERSION" =~ ^v[0-9]+\.[0-9]+(\.[0-9]+)?$ ]] || { echo "Not a release tag: $VERSION"; exit 1; }'
+      # A release deploys from its tag; any other ref from the commit int was tested on.
       - uses: actions/checkout@v6
         with:
-          ref: refs/tags/${{ env.VERSION }}
+          ref: ${{ needs.int.outputs.release == 'true' && format('refs/tags/{0}', needs.int.outputs.version) || github.sha }}
       - uses: actions/setup-node@v6
         with:
           node-version: 24

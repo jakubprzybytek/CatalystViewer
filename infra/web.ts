@@ -14,6 +14,8 @@ const site = new sst.aws.Nextjs("Site", {
     NEXT_PUBLIC_API_URL: api.url,
     NEXT_PUBLIC_USER_POOL_ID: userPoolId,
     NEXT_PUBLIC_USER_POOL_CLIENT_ID: userPoolClientId,
+    // the release (vM.N) or <ref>-<sha> the pipeline deploys; "local" for deploys from a machine
+    NEXT_PUBLIC_APP_VERSION: process.env.APP_VERSION || "local",
     // int: yields and interest progress at the fixtures' reference date (packages/web/src/common/Clock.ts)
     ...(referenceDate ? { NEXT_PUBLIC_REFERENCE_DATE: referenceDate } : {}),
   },
