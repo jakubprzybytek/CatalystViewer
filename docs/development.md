@@ -42,7 +42,8 @@ Integration and E2E tests expect the seeded fixtures and log in as the test user
 | File | Trigger | What it does |
 |---|---|---|
 | `.github/workflows/continuous-delivery.yaml` | push to `main` (except `docs/**`, `**/*.md`), manual | checks → deploy int → seed → integration and E2E tests → tag `v1.N` → deploy prod from the tag → site and API answer (no login) |
-| `.github/workflows/pr.yml` | pull request | checks |
+| `.github/workflows/pull-request-checks.yaml` | pull request (Dependabot's too) | typecheck, unit tests, site build; no AWS access |
+| `.github/dependabot.yml` | weekly (npm), monthly (actions) | version update PRs; security update PRs come from the repo setting ([dependabot standard](https://github.com/jakubprzybytek/agent-playbook/blob/main/skills/dependabot/STANDARD.md)) |
 
 - Rollback or redeploy: run Continuous Delivery manually from the release tag ("Use workflow from"; `gh workflow run continuous-delivery.yaml --ref v1.6`). It deploys the tag to int, seeds it, runs the tests, then deploys it to prod, without a new version. Works for `v1.5` and later; `v1.0.0`–`v1.4` predate `continuous-delivery.yaml` and can't be rolled back this way.
 - Releases are `v1.N`, forward only, shown in the app's menu (top right, "Version …"; `local` for a deploy from a machine). Until 2026-10-26 they were `vX.Y.Z` from conventional commits (`v1.0.0`–`v1.1.2`); `v1.2` was tagged on the commit prod ran then (`8a7b159`, same as `v1.1.2`), and `continuous-delivery.yaml` continues from there.
