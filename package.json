@@ -37,6 +37,9 @@
     "react": "^19",
     "react-dom": "^19",
     "@types/react": "^19",
-    "@types/react-dom": "^19"
+    "@types/react-dom": "^19",
+    "esrun": {
+      "esbuild": "^0.25.0"
+    }
   }
 }
