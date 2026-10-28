@@ -8,7 +8,7 @@ const userPoolClient = new aws.cognito.UserPoolClient("WebClient", {
   name: `catalyst-viewer-${$app.stage}-web`,
   userPoolId: USER_POOL_ID,
   // Plain-password sign-in (API tests without a browser) only off prod.
-  explicitAuthFlows: ["ALLOW_CUSTOM_AUTH", "ALLOW_REFRESH_TOKEN_AUTH", "ALLOW_USER_SRP_AUTH", ...(isProd ? [] : ["ALLOW_USER_PASSWORD_AUTH"])],
+  explicitAuthFlows: ["ALLOW_REFRESH_TOKEN_AUTH", "ALLOW_USER_SRP_AUTH", ...(isProd ? [] : ["ALLOW_USER_PASSWORD_AUTH"])],
   generateSecret: false,
   preventUserExistenceErrors: "ENABLED",
   enableTokenRevocation: true,
