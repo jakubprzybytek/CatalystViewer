@@ -11,10 +11,13 @@ vi.mock('sst', () => ({
 }));
 
 vi.mock('@core/storage/jobs', () => ({
-  JobsTable: vi.fn().mockImplementation(() => ({
-    listNewest: listNewestMock,
-    listNewestByStatus: listNewestByStatusMock,
-  })),
+  // a function, not an arrow: vitest 4 mocks called with `new` must be constructible
+  JobsTable: vi.fn(function () {
+    return {
+      listNewest: listNewestMock,
+      listNewestByStatus: listNewestByStatusMock,
+    };
+  }),
 }));
 
 import { apiEvent } from '../testEvents';

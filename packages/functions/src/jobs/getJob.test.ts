@@ -10,9 +10,12 @@ vi.mock('sst', () => ({
 }));
 
 vi.mock('@core/storage/jobs', () => ({
-  JobsTable: vi.fn().mockImplementation(() => ({
-    getByJobId: getByJobIdMock,
-  })),
+  // a function, not an arrow: vitest 4 mocks called with `new` must be constructible
+  JobsTable: vi.fn(function () {
+    return {
+      getByJobId: getByJobIdMock,
+    };
+  }),
 }));
 
 import { apiEvent } from '../testEvents';
