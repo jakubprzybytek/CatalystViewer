@@ -7,8 +7,8 @@
     "start": "tsx analyze-issuer.ts"
   },
   "dependencies": {
-    "@aws-sdk/client-bedrock-runtime": "3.896.0",
-    "@aws-sdk/client-dynamodb": "^3.896.0",
+    "@aws-sdk/client-bedrock-runtime": "3.1158.0",
+    "@aws-sdk/client-dynamodb": "^3.1158.0",
     "dotenv": "16.5.0"
   },
   "devDependencies": {
