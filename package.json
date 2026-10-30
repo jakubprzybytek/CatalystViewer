@@ -19,12 +19,12 @@
     "analyze-issuer": "esrun --send-code-mode=temporaryFile --node-env-file-if-exists=.env.local packages/core/src/ai/issuers/cli.ts analyze"
   },
   "devDependencies": {
-    "@playwright/test": "^1.60.0",
-    "@tsconfig/node22": "^22.0.0",
+    "@playwright/test": "^1.64.1",
+    "@tsconfig/node22": "^22.0.6",
     "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "sst": "4.9.0",
+    "sst": "4.17.2",
     "typescript": "5.8.3",
     "vitest": "^4.1.12"
   },
