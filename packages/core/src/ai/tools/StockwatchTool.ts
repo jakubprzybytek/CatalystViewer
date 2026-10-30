@@ -33,7 +33,8 @@ const API_HEADERS: Record<string, string> = {
 export class StockwatchTool implements AgentTool {
     readonly name = 'stockwatch_financials';
     readonly description =
-        "Preferred tool for structured financial data of Polish companies listed on GPW. " +
+        // stockwatch.pl refuses connections from AWS (prod logs since June 2026: timeouts, HTTP 500/403), so it's the fallback.
+        "Fallback for structured financial data of Polish companies listed on GPW, when biznesradar_financials fails. " +
         "Fetches multi-year annual P&L (revenue, gross profit, EBIT, EBITDA, net income, operating CF) " +
         "and balance sheet (assets, equity, liabilities, cash, inventory) from stockwatch.pl. " +
         "Data is aggregated to annual figures in thousands PLN. " +
@@ -93,7 +94,7 @@ async function fetchPage(url: string): Promise<string> {
     return response.text();
 }
 
-function extractTableText(html: string): string {
+export function extractTableText(html: string): string {
     // Target the financial data section specifically
     const sectionStart = html.indexOf('id="FinancialData_Async_Table"');
     if (sectionStart === -1) return '';
@@ -175,9 +176,12 @@ function extractTableText(html: string): string {
 
     if (rows.length === 0) return '';
 
-    // Group period indices by year
+    // Group period indices by year. Only complete years (all four quarters) are kept:
+    // summing a part-year and calling it a year makes the scorecard rate e.g. Q1 alone.
     const yearSet = new Set(periods.map(p => p.split(' ')[1]));
-    const yearList = Array.from(yearSet).sort();
+    const yearList = Array.from(yearSet).sort().filter(year =>
+        ['Q1', 'Q2', 'Q3', 'Q4'].every(q => periods.includes(`${q} ${year}`)));
+    if (yearList.length === 0) return '';
 
     const yearPeriodIndices: Record<string, number[]> = {};
     for (const year of yearList) {
@@ -225,7 +229,7 @@ function extractTableText(html: string): string {
     });
 
     return [
-        'Data in thousands PLN (annual). Balance sheet rows = Q4 snapshot; P&L/CF rows = annual sum.',
+        'Data in thousands PLN (annual). Balance sheet rows = Q4 snapshot; P&L/CF rows = annual sum. Complete years only: years without all four quarters are left out.',
         '',
         headerLine,
         separatorLine,

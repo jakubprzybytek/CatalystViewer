@@ -4,8 +4,9 @@ import { WebSearchTool } from '../tools/WebSearchTool';
 import { StockwatchTool } from '../tools/StockwatchTool';
 import { BiznesradarTool } from '../tools/BiznesradarTool';
 import { TavilyClient } from '../tools/tavily/TavilyClient';
-import { MODEL_IDS } from '../models';
-import { computeScorecard, type FundamentalScorecard, type Signal } from '../../bonds/fundamentals/scorecard';
+import { DEFAULT_MODEL_ALIAS, resolveModelId } from '../models';
+import { now } from '../../common/Clock';
+import { scorecardFromReportedYears, type FundamentalScorecard, type Signal } from '../../bonds/fundamentals/scorecard';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -51,25 +52,28 @@ export type IssuerAnalysisResult = {
 
 // ─── Task prompt ──────────────────────────────────────────────────────────────
 
-function buildTaskPrompt(issuerName: string): string {
+// today: the model doesn't know the date, so without it it guesses which year is "current"
+// (it once skipped a complete 2025 in October 2026). Exported for tests.
+export function buildTaskPrompt(issuerName: string, today: Date): string {
     return `Jesteś analitykiem finansowym badającym polskie spółki emitujące obligacje na rynku Catalyst.
 
 Twoim zadaniem jest zebranie pełnych danych finansowych (rachunek zysków i strat oraz bilans) dla podanej spółki.
 
 Nazwa spółki: "${issuerName}"
+Dzisiejsza data: ${today.toISOString().slice(0, 10)}
 
 Podana nazwa to zarejestrowana nazwa prawna (np. "P4 Sp. z o.o." to podmiot prawny stojący za siecią komórkową Play).
 
 Instrukcje:
 1. Zidentyfikuj spółkę lub markę kryjącą się za tą nazwą prawną.
-2. Użyj narzędzia stockwatch_financials z popularną nazwą lub tickerem GPW — to jest Twoje główne źródło danych (zwraca roczny rachunek zysków i strat oraz bilans za wiele lat w jednym wywołaniu).
-3. Jeśli stockwatch nie znajdzie spółki, spróbuj biznesradar_financials.
+2. Użyj narzędzia biznesradar_financials z popularną nazwą lub tickerem GPW — to jest Twoje główne źródło danych (zwraca roczny rachunek zysków i strat oraz bilans za wiele lat w jednym wywołaniu).
+3. Jeśli biznesradar nie znajdzie spółki lub zwróci błąd, spróbuj stockwatch_financials.
 4. Tylko jeśli oba powyższe zawiodą, uzupełnij brakujące dane przez web_search (Bankier.pl, raporty roczne spółki).
-4. Zbierz następujące dane dla maksymalnie 5 ostatnich lat:
+5. Zbierz następujące dane dla maksymalnie 5 ostatnich PEŁNYCH lat obrotowych, zaczynając od najnowszego roku, za który dostępne są dane za cały rok (licząc od dzisiejszej daty). Pomiń tylko lata z danymi za część roku (np. za Q1 lub narastająco za półrocze), w tym trwający rok obrotowy:
    - Rachunek zysków i strat: Przychody (revenue), EBIT, Amortyzacja (depreciation), Koszty odsetkowe (interestExpense), Zysk netto (netProfit)
    - Bilans: Aktywa ogółem (totalAssets), Wartości niematerialne (intangibleAssets), Kapitał własny (equity), Dług finansowy (financialDebt), Gotówka (cash), Aktywa obrotowe (currentAssets), Zapasy (inventory), Zobowiązania krótkoterminowe (currentLiabilities)
-5. Uwaga: oba narzędzia finansowe zwracają wartości w tysiącach PLN — podziel przez 1000 aby uzyskać miliony. Jeśli spółka raportuje w innej walucie, zaznacz to w polu currency.
-6. Ogranicz się do maksymalnie 5 wywołań narzędzi. Wstaw null dla brakujących wartości.
+6. Uwaga: oba narzędzia finansowe zwracają wartości w tysiącach PLN — podziel przez 1000 aby uzyskać miliony. Jeśli spółka raportuje w innej walucie, zaznacz to w polu currency.
+7. Ogranicz się do maksymalnie 5 wywołań narzędzi. Wstaw null dla brakujących wartości.
 
 Odpowiedz WYŁĄCZNIE obiektem JSON — bez markdown, bez wyjaśnień:
 {
@@ -226,7 +230,7 @@ export async function analyzeIssuer(
     onEvent?: (event: AgentEvent) => void,
 ): Promise<IssuerAnalysisResult> {
     const { bedrockClient, tavilyClient } = deps;
-    const resolvedModelId = deps.modelId ?? MODEL_IDS.sonnet_4_6;
+    const resolvedModelId = deps.modelId ?? resolveModelId(DEFAULT_MODEL_ALIAS);
 
     const webSearchTool = new WebSearchTool(tavilyClient);
     const stockwatchTool = new StockwatchTool();
@@ -234,7 +238,7 @@ export async function analyzeIssuer(
     const agentLoop = new AgentLoop(bedrockClient, resolvedModelId, [biznesradarTool, stockwatchTool, webSearchTool], 10);
 
     const agentEvents: AgentEvent[] = [];
-    const rawAnswer = await agentLoop.run(buildTaskPrompt(issuerName), (event) => {
+    const rawAnswer = await agentLoop.run(buildTaskPrompt(issuerName, now()), (event) => {
         agentEvents.push(event);
         if (onEvent) {
             onEvent(event);
@@ -253,25 +257,7 @@ export function toAnalysisResult(
     agentEvents: AgentEvent[],
     resolvedModelId: string,
 ): IssuerAnalysisResult {
-    const financialYears = agentFinancials.years.map(y => ({
-        issuerName,
-        year: y.year,
-        revenue: y.revenue ?? undefined,
-        ebit: y.ebit ?? undefined,
-        depreciation: y.depreciation ?? undefined,
-        interestExpense: y.interestExpense ?? undefined,
-        netProfit: y.netProfit ?? undefined,
-        totalAssets: y.totalAssets ?? undefined,
-        intangibleAssets: y.intangibleAssets ?? undefined,
-        equity: y.equity ?? undefined,
-        financialDebt: y.financialDebt ?? undefined,
-        cash: y.cash ?? undefined,
-        currentAssets: y.currentAssets ?? undefined,
-        inventory: y.inventory ?? undefined,
-        currentLiabilities: y.currentLiabilities ?? undefined,
-    }));
-
-    const scorecard = computeScorecard(financialYears);
+    const scorecard = scorecardFromReportedYears(issuerName, agentFinancials.years);
     const reportMarkdown = buildReportMarkdown(issuerName, agentFinancials, scorecard, agentEvents, resolvedModelId);
 
     return {

@@ -43,7 +43,7 @@ export class BiznesradarTool implements AgentTool {
         'Returns yearly tables (up to 8 years) with revenue, EBIT, EBITDA, interest expense, net income, ' +
         'total assets, intangibles, equity, current assets, inventory, and cash. ' +
         'All values are in thousands PLN. Use the company\'s common name, brand, or WSE ticker. ' +
-        'This is the preferred tool for structured financial data — use it before web_search.';
+        'This is the preferred tool for structured financial data — use it before stockwatch_financials and web_search.';
 
     readonly inputSchema: Record<string, unknown> = {
         type: 'object',
