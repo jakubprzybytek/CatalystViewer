@@ -9,7 +9,8 @@ npm run dev -- --stage dev
 
 ### Catalyst CLI
 * `npm run quote -- FPC0631` - Get a quote for a bond
-* `npm run classify-issuer -- "Kruk S.A."` - Classify an issuer using AI (displays result)
+* `npm run classify-issuer -- "Kruk S.A."` - Classify an issuer using AI (displays result, stores nothing)
+* `npm run analyze-issuer -- "Kruk S.A."` - Run the fundamental analysis using AI (displays result, stores nothing); see [docs/development.md](docs/development.md#testing-the-ai-features-locally)
 
 ### Bonds Update Workflow
 

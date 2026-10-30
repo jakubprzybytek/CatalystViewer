@@ -37,6 +37,42 @@ Stop `sst dev` when you're done: it holds `dev`'s lock and blocks every deploy t
 
 Integration and E2E tests expect the seeded fixtures and log in as the test user; details in [testing.md](testing.md).
 
+## Testing the AI features locally
+
+The two AI features, **issuer classification** (industry, summary, website) and **fundamental analysis** (financials and scorecard), run on Bedrock and Tavily only on `prod`; on `dev` and `int` they're stubbed (`AI_MODE=stub`, [testing.md](testing.md)). Deploying a change to them therefore shows nothing. Run them on your machine instead:
+
+```sh
+npm run classify-issuer -- "Kruk S.A."
+npm run analyze-issuer -- "Dadelo S.A."
+npm run analyze-issuer -- "Dadelo S.A." --model haiku_4.5 --out before.json
+```
+
+| Option | Meaning |
+|---|---|
+| `--model haiku_4.5` / `sonnet_4.6` / `sonnet_5.5` | model for the analysis (default: `DEFAULT_MODEL_ALIAS` in `packages/core/src/ai/models.ts`, now `sonnet_4.6`, the same as on prod; `sonnet_5.5` is listed but not yet enabled for the AWS account); classification always uses the default |
+| `--out <file.json>` | save the full result: the fields the app stores as the `#ANALYSIS` record (financials, scorecard, agent log, report) |
+
+**Same code as the app.** The CLI (`packages/core/src/ai/issuers/cli.ts`) and the Lambdas (`packages/functions/src/issuers/classifyIssuer.ts`, `analyzeIssuer.ts`) call the same entry points, `runClassification` and `runAnalysis` in `packages/core/src/ai/issuers/IssuerAI.ts`. Prompts, tools (Stockwatch, Biznesradar, web search), parsing, scorecard and report are shared. Only the edges differ: the CLI prints the result and stores nothing, while the Lambdas write it to the `IssuerProfiles` table. Keep it that way: a new AI feature, or a new step in one of these, goes behind `IssuerAI.ts` so it can be run locally too.
+
+**What it needs:**
+- AWS credentials for the app's account with `bedrock:InvokeModel` (the model ARNs in `packages/core/src/ai/models.ts` are inference profiles in that account, `eu-west-1`; the region defaults to `eu-west-1` when `AWS_REGION` isn't set);
+- `TAVILY_API_KEY` (from https://app.tavily.com; the GitHub secret of the same name can't be read back) in `.env.local` at the repo root (git-ignored; template: `.env.local.example`) or exported in the shell, which wins over the file. The npm scripts load the file with Node's `--env-file-if-exists`. Without the key the command stops before any paid call.
+
+**Cost.** Without `AI_MODE=stub`, every run is a real, paid call to Bedrock and Tavily. An analysis is an agent loop of up to 10 model calls, plus tool calls. The command prints the tokens used at the end. Use `--model haiku_4.5` while iterating on plumbing, and Sonnet to judge the result.
+
+**Free dry run.** `AI_MODE=stub npm run analyze-issuer -- "X"` goes through the same entry point with the stub answers. That's useful for checking the CLI and the scorecard and report formatting without paying.
+
+**Feedback loop for a change to the AI features:**
+
+1. Pick one or two issuers that show the problem (e.g. Dadelo, whose Stockwatch page had a part-year 2026) and save a baseline: `npm run analyze-issuer -- "Dadelo S.A." --out before.json` (on the unchanged code).
+2. Change the code. Cover the deterministic parts with unit tests (parsers such as `StockwatchTool.test.ts`, scorecard rules in `scorecard.test.ts`, `npm test`).
+3. Run again with `--out after.json` and compare, e.g. `diff <(jq .agentFinancials before.json) <(jq .agentFinancials after.json)` and the same for `.scorecard`.
+4. Push to `main` (AI changes need a yes first, see [Delivery](#delivery)). `int` runs only the stubs, so the local run in step 3 is the check of the real AI behaviour.
+
+Changes to the scorecard rules alone don't need a new analysis: the issuer list recomputes scorecards from the stored figures (`currentScorecard` in `packages/functions/src/issuers/getIssuerProfiles.ts`).
+
+The CLI runs through `esrun --send-code-mode=temporaryFile` (see `package.json`): the bundled code is too large to pass on the command line (`spawn E2BIG`).
+
 ## Delivery
 
 | File | Trigger | What it does |

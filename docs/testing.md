@@ -18,7 +18,7 @@ The pipeline (`continuous-delivery.yaml`) runs the type check and unit tests, de
 | Sources (gpwcatalyst.pl, obligacje.pl) | saved files in `tests/fixtures/sources/` | `SOURCE_FIXTURES`, bundled with the Bonds Updater Lambda (`infra/updater.ts`, `packages/core/src/common/Fixtures.ts`) |
 | Date | the fixtures' reference date, `2026-10-27 12:00 UTC` | `REFERENCE_DATE` for the functions, `NEXT_PUBLIC_REFERENCE_DATE` for the site (`common/Clock.ts` in core and web) |
 | Data | reset before the tests | `npm run seed` (`scripts/seed-int/seed-int.ts`) |
-| AI (Bedrock, Tavily) | stubbed: fixed classification and analysis | `AI_MODE=stub` (`packages/core/src/ai/issuers/IssuerStubs.ts`) |
+| AI (Bedrock, Tavily) | stubbed: fixed classification and analysis; to run the real AI, see [development.md](development.md#testing-the-ai-features-locally) | `AI_MODE=stub` (`packages/core/src/ai/issuers/IssuerStubs.ts`) |
 | Emails | logged, not sent | `EMAIL_MODE=log` (`packages/functions/src/emails/EmailClient.ts`) |
 | Bonds Updater schedule | off (prod only) | `scheduleEnabled` |
 

@@ -1,10 +1,11 @@
 import { BedrockRuntimeClient } from '@aws-sdk/client-bedrock-runtime';
 import { AgentLoop } from '../agent/AgentLoop';
+import type { AgentEvent } from '../agent/Tool';
 import { WebSearchTool } from '../tools/WebSearchTool';
 import { TavilyClient } from '../tools/tavily/TavilyClient';
-import { MODEL_IDS } from '../models';
+import { DEFAULT_MODEL_ALIAS, resolveModelId } from '../models';
 
-export const MODEL_ID = MODEL_IDS.sonnet_4_6;
+export const MODEL_ID = resolveModelId(DEFAULT_MODEL_ALIAS);
 
 export const INDUSTRY_LABELS = [
     'Developer',
@@ -90,11 +91,12 @@ export async function classifyIssuer(
     bedrockClient: BedrockRuntimeClient,
     tavilyClient: TavilyClient,
     issuerName: string,
+    onEvent?: (event: AgentEvent) => void,
 ): Promise<ClassificationResponse> {
     const webSearchTool = new WebSearchTool(tavilyClient);
     const agentLoop = new AgentLoop(bedrockClient, MODEL_ID, [webSearchTool]);
 
-    const rawText = await agentLoop.run(buildPrompt(issuerName));
+    const rawText = await agentLoop.run(buildPrompt(issuerName), onEvent);
 
     return parseClassificationResponse(rawText);
 }

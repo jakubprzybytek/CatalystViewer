@@ -15,7 +15,8 @@
     "test:e2e": "playwright test",
     "seed": "esrun scripts/seed-int/seed-int.ts",
     "quote": "esrun packages/core/src/bonds/catalyst/catalyst.ts quote",
-    "classify-issuer": "esrun packages/core/src/issuers/cli.ts"
+    "classify-issuer": "esrun --send-code-mode=temporaryFile --node-env-file-if-exists=.env.local packages/core/src/ai/issuers/cli.ts classify",
+    "analyze-issuer": "esrun --send-code-mode=temporaryFile --node-env-file-if-exists=.env.local packages/core/src/ai/issuers/cli.ts analyze"
   },
   "devDependencies": {
     "@playwright/test": "^1.60.0",
