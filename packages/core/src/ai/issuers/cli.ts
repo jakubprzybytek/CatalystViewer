@@ -2,7 +2,7 @@
 // Nothing is stored. Usage and costs: docs/development.md, "Testing the AI features locally".
 //
 //   npm run classify-issuer -- "Kruk S.A."
-//   npm run analyze-issuer -- "Dadelo S.A." [--model haiku_4.5|sonnet_4.6|sonnet_5.5] [--out <file.json>]
+//   npm run analyze-issuer -- "Dadelo S.A." [--model haiku_4.5|sonnet_4.6|opus_4.6|sonnet_5.5] [--out <file.json>]
 import { writeFileSync } from 'node:fs';
 import type { AgentEvent } from '../agent/Tool';
 import { MODEL_ALIASES, resolveModelId, type ModelAlias } from '../models';

@@ -49,7 +49,7 @@ npm run analyze-issuer -- "Dadelo S.A." --model haiku_4.5 --out before.json
 
 | Option | Meaning |
 |---|---|
-| `--model haiku_4.5` / `sonnet_4.6` / `sonnet_5.5` | model for the analysis (default: `DEFAULT_MODEL_ALIAS` in `packages/core/src/ai/models.ts`, now `sonnet_4.6`, the same as on prod; `sonnet_5.5` is listed but not yet enabled for the AWS account); classification always uses the default |
+| `--model haiku_4.5` / `sonnet_4.6` / `opus_4.6` / `sonnet_5.5` | model for the analysis (default: `DEFAULT_MODEL_ALIAS` in `packages/core/src/ai/models.ts`, now `sonnet_4.6`, the same as on prod; `opus_4.6` is the strongest model the AWS account has quota for; `sonnet_5.5` is listed but its Bedrock quota is 0 for the account, as for every model from Opus 4.7 on, and an increase request was closed without a change on 2026-10-30); classification always uses the default |
 | `--out <file.json>` | save the full result: the fields the app stores as the `#ANALYSIS` record (financials, scorecard, agent log, report) |
 
 **Same code as the app.** The CLI (`packages/core/src/ai/issuers/cli.ts`) and the Lambdas (`packages/functions/src/issuers/classifyIssuer.ts`, `analyzeIssuer.ts`) call the same entry points, `runClassification` and `runAnalysis` in `packages/core/src/ai/issuers/IssuerAI.ts`. Prompts, tools (Stockwatch, Biznesradar, web search), parsing, scorecard and report are shared. Only the edges differ: the CLI prints the result and stores nothing, while the Lambdas write it to the `IssuerProfiles` table. Keep it that way: a new AI feature, or a new step in one of these, goes behind `IssuerAI.ts` so it can be run locally too.
