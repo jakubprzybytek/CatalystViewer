@@ -17,7 +17,8 @@ permissions:
 jobs:
   checks:
     name: Typecheck, unit tests, build
-    runs-on: ubuntu-latest
+    # Pinned: ubuntu-latest moved to 26.04 (Oct 2026), which Playwright 1.60 can't install browsers on.
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7

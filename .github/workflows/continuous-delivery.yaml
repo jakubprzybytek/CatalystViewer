@@ -28,7 +28,8 @@ permissions:
 jobs:
   int:
     name: Deploy int + test
-    runs-on: ubuntu-latest
+    # Pinned: ubuntu-latest moved to 26.04 (Oct 2026), which Playwright 1.60 can't install browsers on.
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     permissions:
       contents: write # push the release tag
@@ -127,7 +128,8 @@ jobs:
   prod:
     name: Deploy prod
     needs: int
-    runs-on: ubuntu-latest
+    # Pinned: ubuntu-latest moved to 26.04 (Oct 2026), which Playwright 1.60 can't install browsers on.
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     permissions:
       contents: read
