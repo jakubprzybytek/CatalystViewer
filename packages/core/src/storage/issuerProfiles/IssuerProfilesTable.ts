@@ -110,7 +110,7 @@ export class IssuerProfilesTable {
             TableName: this.tableName,
             FilterExpression: 'recordType = :rt',
             ExpressionAttributeValues: { ':rt': '#LATEST_ANALYSIS' },
-            ProjectionExpression: 'issuerName, performedAt, performedAtTs, scorecard',
+            ProjectionExpression: 'issuerName, performedAt, performedAtTs, scorecard, agentFinancials',
         });
 
         const result = await scanAll(this.dynamoDBDocumentClient, scanCommand);

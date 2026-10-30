@@ -253,6 +253,40 @@ describe('computeScorecard', () => {
     });
   });
 
+  describe('Dimension 6 — Financial Trend signal with missing data', () => {
+    const trendOf = (years: FinancialYearData[]) =>
+      computeScorecard(years).dimensions.find(d => d.name === 'Financial Trend')!;
+
+    it('is n/a when no trend metric can be computed', () => {
+      // Arche S.A. (stored analysis): 3 years, but revenue missing for the oldest and no debt/D&A
+      const trend = trendOf([
+        { issuerName: 'Arche', year: 2024, revenue: 743.93, ebit: 136.22, netProfit: 95.77, equity: 699.6 },
+        { issuerName: 'Arche', year: 2023, revenue: 731.04, equity: 604.43 },
+        { issuerName: 'Arche', year: 2022 },
+      ]);
+      expect(trend.metrics.every(m => m.signal === 'na')).toBe(true);
+      expect(trend.signal).toBe('na');
+    });
+
+    it('is not green on a single available metric', () => {
+      // Anwim S.A. (stored analysis): only revenue CAGR available (5.1% → green)
+      const trend = trendOf([
+        { issuerName: 'Anwim', year: 2024, revenue: 13395.3 },
+        { issuerName: 'Anwim', year: 2023, revenue: 10707.0 },
+        { issuerName: 'Anwim', year: 2022, revenue: 12121.4 },
+      ]);
+      expect(trend.metrics.find(m => m.name === 'Revenue CAGR')!.signal).toBe('green');
+      expect(trend.signal).toBe('yellow');
+    });
+
+    it('is green when all available metrics are green and there are at least two', () => {
+      const withoutDebt = exampleA.map(({ financialDebt: _debt, ...y }) => y);
+      const trend = trendOf(withoutDebt);
+      expect(trend.metrics.filter(m => m.signal !== 'na')).toHaveLength(2);
+      expect(trend.signal).toBe('green');
+    });
+  });
+
   describe('overall scorecard', () => {
     it('Polmech has no red dimensions', () => {
       const sc = computeScorecard(exampleA);

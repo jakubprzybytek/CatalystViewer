@@ -294,10 +294,16 @@ function computeTrend(years: FinancialYearData[]): DimensionResult {
   };
 
   const metrics = [revCagrMetric, ebitdaMarginMetric, ndEbitdaTrendMetric];
-  // Trend signal: green if all green, red if ≥2 red, yellow otherwise
-  const redCount = metrics.filter(m => m.signal === 'red').length;
-  const greenCount = metrics.filter(m => m.signal === 'green').length;
-  const trendSignal: Signal = redCount >= 2 ? 'red' : greenCount === metrics.length ? 'green' : 'yellow';
+  // Trend signal, over the metrics that could be computed: n/a if none, red if ≥2 red,
+  // green if all are green and there are at least two of them, yellow otherwise.
+  const available = metrics.filter(m => m.signal !== 'na');
+  const redCount = available.filter(m => m.signal === 'red').length;
+  const greenCount = available.filter(m => m.signal === 'green').length;
+  const trendSignal: Signal =
+    available.length === 0 ? 'na'
+    : redCount >= 2 ? 'red'
+    : greenCount === available.length && available.length >= 2 ? 'green'
+    : 'yellow';
 
   return { name: 'Financial Trend', signal: trendSignal, metrics };
 }
@@ -334,4 +340,22 @@ export function computeScorecard(years: FinancialYearData[]): FundamentalScoreca
   ];
 
   return { dimensions };
+}
+
+// Scorecard from figures as the analysis agent reports them (null = not found).
+// Stored analyses keep these figures, so scorecards can be recomputed when the rules change.
+export type ReportedYear = { year: number } & {
+  [K in Exclude<keyof FinancialYearData, 'issuerName' | 'year'>]?: number | null;
+};
+
+export function scorecardFromReportedYears(issuerName: string, years: ReportedYear[]): FundamentalScorecard {
+  return computeScorecard(years.map(y => {
+    const data: FinancialYearData = { issuerName, year: y.year };
+    for (const [key, value] of Object.entries(y)) {
+      if (key !== 'year' && typeof value === 'number') {
+        (data as Record<string, unknown>)[key] = value;
+      }
+    }
+    return data;
+  }));
 }

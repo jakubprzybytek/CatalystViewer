@@ -28,6 +28,7 @@ import IssuerScorecard from './IssuerScorecard';
 import AnalysisReportModal from './AnalysisReportModal';
 import { SignalDot } from './SignalDot';
 import { triggerFundamentalAnalysis } from '@/sdk/Issuers';
+import { isInFundamentalScope } from '@/bonds/fundamentals/scorecard';
 
 export const interestConstPartColors: ColorCode[] = ['green', 'yellow', 'orange', 'red'];
 
@@ -102,9 +103,11 @@ function IssuerCard({ issuerReport, statistics, isChecked, onIssuerChecked }: Is
           <Stack direction='row' flexGrow={1} justifyContent='space-between' alignItems='flex-start'>
             <Typography variant='h6' sx={{ fontWeight: 700, letterSpacing: '-0.01em', color: 'var(--cv-text-primary)' }}>{issuerReport.name}</Typography>
             <Stack direction='row' alignItems='center' spacing={0.5}>
-              <IconButton size='small' title='Run Fundamental Analysis' onClick={() => setConfirmOpen(true)}>
-                <QueryStatsOutlinedIcon />
-              </IconButton>
+              {isInFundamentalScope(issuerReport.industry) && (
+                <IconButton size='small' title='Run Fundamental Analysis' onClick={() => setConfirmOpen(true)}>
+                  <QueryStatsOutlinedIcon />
+                </IconButton>
+              )}
               {(issuerReport.businessSummary || issuerReport.websiteUrl || issuerReport.scorecard) && (
                 <IconButton size='small' onClick={() => setExpanded(!expanded)}>
                   {expanded ? <ExpandLessOutlinedIcon /> : <ExpandMoreOutlinedIcon />}

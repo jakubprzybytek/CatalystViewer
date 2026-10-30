@@ -104,6 +104,17 @@ describe("issuers", async () => {
     expect(profile("Allegro.eu SA")?.industry).toBeTruthy();
     expect(profile("Allegro.eu SA")?.scorecard).toBeDefined();
   });
+
+  it("returns no scorecard for out-of-scope (financial) issuers", () => {
+    expect(profile("Best S.A.")?.industry).toBe("Finance");
+    expect(profile("Best S.A.")?.scorecard).toBeUndefined();
+  });
+
+  it("recomputes stored scorecards with the current rules", () => {
+    // Arche's seeded analysis was stored with a 'yellow' trend from no data
+    const scorecard = profile("Arche S.A.")?.scorecard as { dimensions: { name: string; signal: string }[] } | undefined;
+    expect(scorecard?.dimensions.find((d) => d.name === "Financial Trend")?.signal).toBe("na");
+  });
 });
 
 describe("jobs", () => {

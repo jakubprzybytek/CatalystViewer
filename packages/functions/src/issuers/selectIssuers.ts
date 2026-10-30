@@ -4,6 +4,7 @@ import { Logger } from '@aws-lambda-powertools/logger';
 import { Resource } from 'sst';
 import { BondDetailsTable } from '@core/storage/bondDetails';
 import { IssuerProfilesTable } from '@core/storage/issuerProfiles';
+import { isInFundamentalScope } from '@core/bonds/fundamentals/scope';
 import { SelectIssuersInput, SelectIssuersResult } from '.';
 
 const logger = new Logger({ serviceName: 'SelectIssuers' });
@@ -12,25 +13,34 @@ const dynamoDBClient = new DynamoDBClient({});
 export async function handler(input: SelectIssuersInput, context: Context): Promise<SelectIssuersResult> {
     logger.addContext(context);
 
+    const bondDetailsTable = new BondDetailsTable(dynamoDBClient, Resource.BondDetails.name);
+    const issuerProfilesTable = new IssuerProfilesTable(dynamoDBClient, Resource.IssuerProfiles.name);
+
+    // Financial and municipal issuers are out of the scorecard's scope (see scope.ts).
+    const profiles = await issuerProfilesTable.getProfiles();
+    const industryByIssuer = new Map(profiles.map(p => [p.issuerName, p.industry]));
+    const inScope = (issuerName: string) => isInFundamentalScope(industryByIssuer.get(issuerName));
+
     // Short-circuit: if specific issuers were provided, use them directly
     if (input.issuers && input.issuers.length > 0) {
-        logger.info('Using provided issuer list', { count: input.issuers.length });
-        return { selectedIssuers: input.issuers };
+        const selectedIssuers = input.issuers.filter(inScope);
+        logger.info('Using provided issuer list', {
+            count: selectedIssuers.length,
+            skippedOutOfScope: input.issuers.filter(i => !inScope(i)),
+        });
+        return { selectedIssuers };
     }
 
     const count = input.count ?? 2;
     logger.info('Selecting issuers by staleness', { count });
-
-    const bondDetailsTable = new BondDetailsTable(dynamoDBClient, Resource.BondDetails.name);
-    const issuerProfilesTable = new IssuerProfilesTable(dynamoDBClient, Resource.IssuerProfiles.name);
 
     const [activeBonds, latestAnalyses] = await Promise.all([
         bondDetailsTable.getActive('Corporate bonds'),
         issuerProfilesTable.getAllLatestAnalyses(),
     ]);
 
-    const uniqueIssuers = [...new Set(activeBonds.map(b => b.issuer))];
-    logger.info('Corporate bond issuers found', { total: uniqueIssuers.length });
+    const uniqueIssuers = [...new Set(activeBonds.map(b => b.issuer))].filter(inScope);
+    logger.info('Corporate bond issuers in scope', { total: uniqueIssuers.length });
 
     const sorted = uniqueIssuers
         .map(issuerName => ({ issuerName, performedAtTs: latestAnalyses.get(issuerName) ?? 0 }))

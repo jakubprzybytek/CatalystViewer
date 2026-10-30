@@ -30,4 +30,5 @@ export type DbIssuerAnalysisSummary = {
     performedAt: string;
     performedAtTs: number;
     scorecard?: FundamentalScorecard;
+    agentFinancials?: unknown;
 };
