@@ -81,6 +81,52 @@ describe('parseEsef', () => {
         expect(filing.notes).toContain('Debt: no current borrowing lines in the calculation tree, standard IFRS concepts used');
     });
 
+    describe('balance sheet in order of liquidity (financial companies)', () => {
+        // No current or non-current liabilities: debt lines sit directly under total liabilities.
+        const fact = (name: string, ctx: string, v: string) =>
+            `<ix:nonFraction name="${name}" contextRef="${ctx}" unitRef="PLN" decimals="-3" scale="3" format="ixt:num-dot-decimal">${v}</ix:nonFraction>`;
+        const ctx = (id: string, period: string) =>
+            `<xbrli:context id="${id}"><xbrli:entity><xbrli:identifier scheme="http://standards.iso.org/iso/17442">259400FINANSOWA00001</xbrli:identifier></xbrli:entity><xbrli:period>${period}</xbrli:period></xbrli:context>`;
+        const report = `<html xmlns="http://www.w3.org/1999/xhtml" xmlns:ix="http://www.xbrl.org/2013/inlineXBRL" xmlns:xbrli="http://www.xbrl.org/2003/instance" xmlns:iso4217="http://www.xbrl.org/2003/iso4217"><body>
+<ix:header><ix:resources>${ctx('D', '<xbrli:startDate>2025-01-01</xbrli:startDate><xbrli:endDate>2025-12-31</xbrli:endDate>')}${ctx('I', '<xbrli:instant>2025-12-31</xbrli:instant>')}
+<xbrli:unit id="PLN"><xbrli:measure>iso4217:PLN</xbrli:measure></xbrli:unit></ix:resources></ix:header>
+${fact('ifrs-full:ProfitLoss', 'D', '1,000')}${fact('ifrs-full:Assets', 'I', '13,000')}${fact('ifrs-full:EquityAndLiabilities', 'I', '13,000')}
+${fact('ifrs-full:Equity', 'I', '5,300')}${fact('ifrs-full:Liabilities', 'I', '7,700')}${fact('ifrs-full:TradeAndOtherPayables', 'I', '400')}
+${fact('ifrs-full:LoansReceived', 'I', '3,700')}${fact('ifrs-full:DebtInstrumentsIssuedAtAmortisedCost', 'I', '3,500')}${fact('ifrs-full:LeaseLiabilities', 'I', '100')}
+</body></html>`;
+        const debtOf = (filing: ReturnType<typeof parseEsef>) => [value(filing, 0, 'financialDebt'), value(filing, 0, 'bonds')];
+
+        it('takes the debt lines under total liabilities from the calculation tree', () => {
+            const cal = `<link:linkbase xmlns:link="http://www.xbrl.org/2003/linkbase" xmlns:xlink="http://www.w3.org/1999/xlink"><link:calculationLink>
+<link:loc xlink:label="p" xlink:href="x.xsd#ifrs-full_Liabilities"/>
+${['TradeAndOtherPayables', 'LoansReceived', 'DebtInstrumentsIssuedAtAmortisedCost', 'LeaseLiabilities'].map((c, i) =>
+                `<link:loc xlink:label="c${i}" xlink:href="x.xsd#ifrs-full_${c}"/><link:calculationArc xlink:from="p" xlink:to="c${i}" weight="1"/>`).join('')}
+</link:calculationLink></link:linkbase>`;
+            const filing = parseEsef(openEsef(makeZip({ 'p/reports/r.xhtml': report, 'p/x/r_cal.xml': cal })));
+            expect(debtOf(filing)).toEqual([
+                { value: 7_300_000, source: ['ifrs-full:LoansReceived', 'ifrs-full:DebtInstrumentsIssuedAtAmortisedCost', 'ifrs-full:LeaseLiabilities'] },
+                { value: 3_500_000, source: ['ifrs-full:DebtInstrumentsIssuedAtAmortisedCost'] },
+            ]);
+            expect(filing.notes).toContain('Debt: balance sheet in order of liquidity (no current and non-current liabilities), debt lines under total liabilities');
+            expect(filing.checks).toEqual([]);
+        });
+
+        it('takes a single line of financial liabilities at amortised cost as a last resort', () => {
+            const oneLine = report
+                .replace(/<ix:nonFraction name="ifrs-full:(LoansReceived|LeaseLiabilities)"[^>]*>[^<]*<\/ix:nonFraction>/g, '')
+                .replace('ifrs-full:DebtInstrumentsIssuedAtAmortisedCost" contextRef="I" unitRef="PLN" decimals="-3" scale="3" format="ixt:num-dot-decimal">3,500',
+                    'ifrs-full:FinancialLiabilitiesAtAmortisedCost" contextRef="I" unitRef="PLN" decimals="-3" scale="3" format="ixt:num-dot-decimal">7,300');
+            const filing = parseEsef(openEsef(Buffer.from(oneLine)));
+            expect(debtOf(filing)).toEqual([{ value: 7_300_000, source: ['ifrs-full:FinancialLiabilitiesAtAmortisedCost'] }, undefined]);
+            expect(filing.notes).toContain('Debt: one line of financial liabilities at amortised cost (credits, loans, bonds and leases together; may hold other financial liabilities), so no bond split');
+        });
+
+        it('falls back to the standard unsplit concepts without a package', () => {
+            const filing = parseEsef(openEsef(Buffer.from(report)));
+            expect(debtOf(filing)[0]).toEqual({ value: 7_300_000, source: ['ifrs-full:DebtInstrumentsIssuedAtAmortisedCost', 'ifrs-full:LoansReceived', 'ifrs-full:LeaseLiabilities'] });
+        });
+    });
+
     it('flags a balance sheet that does not add up', () => {
         const broken = Buffer.from(esefReport.toString('utf-8').replace(
             '<ix:nonFraction name="ifrs-full:EquityAndLiabilities" contextRef="I2025" unitRef="PLN" decimals="-3" scale="3" format="ixt:num-dot-decimal">100,000',

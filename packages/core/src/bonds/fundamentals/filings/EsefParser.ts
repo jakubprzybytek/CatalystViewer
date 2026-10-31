@@ -180,7 +180,7 @@ const ifrs = (name: string) => `ifrs-full:${name}`;
 // Borrowings, bonds, notes, loans, leases; not interest payable, trade or other payables, provisions.
 const DEBT_NAME = /borrowing|loan|bond|notesanddebentures|debenture|leaseliabilit|financelease|debt|kredyt|pozycz|pożycz|obligac|leasing|weksl/i;
 const NOT_DEBT_NAME = /interest(payable)?$|payable|provision|deferred|tax|trade|grant|employee|derivative|receivable|guarantee/i;
-const BOND_NAME = /bond|notesanddebentures|debenture|obligac/i;
+const BOND_NAME = /bond|notesanddebentures|debenture|debtinstrumentsissued|obligac/i;
 
 // Standard IFRS debt concepts, used without a calculation tree (bare .xhtml): one per line, most
 // specific first; a parent is only used when none of its parts is tagged.
@@ -199,6 +199,18 @@ const FALLBACK_DEBT: { noncurrent: string[][]; current: string[][] } = {
         [ifrs('CurrentLeaseLiabilities'), ifrs('CurrentFinanceLeaseLiabilities')],
     ],
 };
+
+// For a balance sheet in order of liquidity (financial companies): debt lines without a current or
+// non-current split, directly under total liabilities.
+const FALLBACK_DEBT_UNSPLIT: string[][] = [
+    [ifrs('Borrowings')],
+    [ifrs('BondsIssued'), ifrs('NotesAndDebenturesIssued'), ifrs('DebtInstrumentsIssued'), ifrs('DebtInstrumentsIssuedAtAmortisedCost')],
+    [ifrs('LoansReceived')],
+    [ifrs('LeaseLiabilities'), ifrs('FinanceLeaseLiabilities')],
+];
+// Last resort for such a balance sheet: some filers tag their one "credits, loans, bonds and leases"
+// line with this wider concept. It may also hold other financial liabilities.
+const UNSPLIT_WIDE_DEBT = ifrs('FinancialLiabilitiesAtAmortisedCost');
 
 // ─── Entry point ────────────────────────────────────────────────────────────────
 
@@ -313,18 +325,29 @@ export function parseEsef(input: EsefInput): ParsedFiling {
         (taxonomy?.children.get(parent) ?? []).flatMap(c =>
             depth < 3 && taxonomy?.children.has(c.concept) && !isDebt(c.concept) ? lines(c.concept, depth + 1) : [c.concept]);
     // Per side (non-current, current): the calculation tree's debt lines, or the standard concepts
-    // when the filer's tree doesn't cover that side.
-    const sides = (['noncurrent', 'current'] as const).map(side => {
-        const parent = ifrs(side === 'noncurrent' ? 'NoncurrentLiabilities' : 'CurrentLiabilities');
-        const fromCalc = taxonomy?.children.has(parent) ? lines(parent).filter(isDebt) : [];
-        return { side, fromCalc, fallback: FALLBACK_DEBT[side] };
-    });
+    // when the filer's tree doesn't cover that side. A balance sheet in order of liquidity has no
+    // sides: its debt lines are taken from under total liabilities.
+    const hasConcept = (concept: string) => facts.some(f => f.concept === concept);
+    const unsplit = !hasConcept(ifrs('CurrentLiabilities')) && !hasConcept(ifrs('NoncurrentLiabilities'));
+    const sides = unsplit
+        ? [{ side: 'unsplit' as const, fromCalc: taxonomy?.children.has(ifrs('Liabilities')) ? lines(ifrs('Liabilities')).filter(isDebt) : [], fallback: FALLBACK_DEBT_UNSPLIT }]
+        : (['noncurrent', 'current'] as const).map(side => {
+            const parent = ifrs(side === 'noncurrent' ? 'NoncurrentLiabilities' : 'CurrentLiabilities');
+            const fromCalc = taxonomy?.children.has(parent) ? lines(parent).filter(isDebt) : [];
+            return { side, fromCalc, fallback: FALLBACK_DEBT[side] };
+        });
     const notes: string[] = [];
+    if (unsplit) notes.push('Debt: balance sheet in order of liquidity (no current and non-current liabilities), debt lines under total liabilities');
 
+    let wideDebtUsed = false;
     const debtFor = (p: { start: string; end: string }): { all?: SourcedFigure; bonds?: SourcedFigure } => {
         const chosen = sides.flatMap(s => s.fromCalc.length > 0
             ? s.fromCalc
             : s.fallback.map(g => g.find(c => value(c, p) !== undefined)).filter((c): c is string => !!c));
+        if (chosen.length === 0 && unsplit && value(UNSPLIT_WIDE_DEBT, p) !== undefined) {
+            wideDebtUsed = true;
+            return { all: sourced([UNSPLIT_WIDE_DEBT], p) };
+        }
         if (chosen.length === 0) return {};
         const bondLines = chosen.filter(isBond);
         return { all: sourced(chosen, p) ?? { value: 0, source: chosen }, bonds: bondLines.length ? sourced(bondLines, p) ?? { value: 0, source: bondLines } : undefined };
@@ -405,10 +428,12 @@ export function parseEsef(input: EsefInput): ParsedFiling {
     if (filingPeriods.some(p => p.figures.interestExpense?.source[0] === ifrs('FinanceCosts'))) {
         notes.push('Interest: no interest expense tagged, finance costs used');
     }
-    if (!taxonomy) {
+    if (wideDebtUsed) {
+        notes.push('Debt: one line of financial liabilities at amortised cost (credits, loans, bonds and leases together; may hold other financial liabilities), so no bond split');
+    } else if (!taxonomy) {
         notes.push('Debt: report without its package, standard IFRS debt concepts only (filer-specific lines are missed)');
     } else {
-        for (const s of sides) if (s.fromCalc.length === 0) notes.push(`Debt: no ${s.side} borrowing lines in the calculation tree, standard IFRS concepts used`);
+        for (const s of sides) if (s.fromCalc.length === 0) notes.push(`Debt: no ${s.side === 'unsplit' ? '' : `${s.side} `}borrowing lines in the calculation tree, standard IFRS concepts used`);
     }
     if (filingPeriods.some(p => p.figures.revenue && !p.figures.revenue.source.some(c => c === ifrs('Revenue') || c === ifrs('RevenueFromContractsWithCustomers')))) {
         notes.push('Revenue: no total tagged, sum of revenue lines');
