@@ -76,15 +76,33 @@ Every extracted item comes with a quote, and code checks that a quoted number ap
 
 - **Rules per sector**, driven by the existing industry classification:
   - *Developer:* net debt / inventory, cash plus buyer-deposit (escrow) accounts against debt due in 12–24 months, pre-sales, equity ratio; no quick ratio.
-  - *Finance* (debt collectors, leasing, factoring): equity / assets, cash-based EBITDA, collections coverage, funding mix.
+  - *Finance* (debt collectors, leasing, factoring): equity / assets, cash-based EBITDA, collections coverage, funding mix. See [Finance subcategories](#finance-subcategories).
   - *Holding companies:* single-company vs group; the holding's bondholders rank behind the subsidiaries' creditors, so that is flagged.
   - *Municipal, state, banks:* excluded or handled separately.
+- **Finance subcategories.** See the subsection below.
 - **Cash flow:** operating cash flow, free cash flow, operating cash flow / debt, capital expenditure.
 - **Upcoming bond maturities vs cash.** `BondDetails` already holds each issuer's bonds, amounts and maturity dates. Bonds due in 12/24 months vs cash + expected operating cash flow = refinancing risk.
 - **Trailing 12 months** instead of "latest year", so quarterly data doesn't break the ratios.
 - **Data confidence** as a separate output ("8/14 inputs, single-company accounts, FY2024"). Thin data is shown as thin, not coloured green.
 - **Calibration** against historical Catalyst defaults (GetBack 2018 and others), and comparison with Polish bankruptcy-prediction models (Mączyńska, Hołda, Gajdka–Stos). The sample is small: this is calibration, not machine learning.
 - **Versioned methodology:** each analysis stores its inputs and methodology version; scorecards are recomputed from stored facts when rules change.
+
+#### Finance subcategories
+
+*Added 2026-10-31.* `Finance` is one industry today, and all of it is out of scope. On 2026-10-31 prod had 32 Finance issuers of two kinds:
+
+- **Non-bank lenders (~12)**, where a scorecard helps a bondholder: debt collectors (Kruk, Best, Kredyt Inkaso, Vindexus, Indos, Best FIZ Wierzytelności, Grupa Corpus Iuris), leasing and factoring (Vehis, Internetowy Fundusz Leasingowy, AOW Faktoring), lending (PragmaGO) and investment firms (MCI). Catalyst's largest default, GetBack (2018), was a debt collector.
+- **Banks, mortgage banks, insurers, state and public institutions (~20)**: PKO BP, mBank, the mortgage banks, cooperative banks, PZU, the State Treasury, BGK, PFR, the EIB. Regulated or state-backed; they stay without a scorecard.
+
+The operating-company scorecard misleads for lenders: borrowing is their business, so Net Debt/EBITDA is always high; revenue isn't a meaningful figure (income is interest on portfolios and revaluations); operating cash flow is negative while they grow, because portfolio purchases are operating outflows. Kruk's card showed Debt Burden red for these reasons.
+
+Plan:
+
+1. **Subcategories** on the issuer profile, below `Finance`: debt collector; leasing, factoring and lending; investment firm or fund; bank; insurer; state or public institution. Start with a reviewed mapping of the current issuers (no AI calls), then teach the classification prompt to pick a subcategory for new issuers. Only the first three are in fundamental scope.
+2. **Finance scorecard v1, from figures the filings already give:** equity / assets, debt / equity, interest cover (operating profit / interest), return on equity, bonds as a share of debt (refinancing risk). The ESEF parser reads debt from balance sheets in order of liquidity (no current and non-current split), as financial companies file them.
+3. **Debt collector cash measures:** cash collections from portfolios, cash EBITDA (collections minus costs), net debt / cash EBITDA, portfolio purchases vs collections. These are in filer-specific lines and notes: a per-issuer concept mapping or AI extraction with quotes (section 2).
+4. **Maturities and liquidity:** bonds due in 12 months (from `BondDetails`) against cash and undrawn credit lines.
+5. **Calibration** against GetBack 2018 and other Catalyst defaults of financial issuers, before the colours are trusted.
 
 ### 4. Fundamentals combined with market data
 
@@ -136,7 +154,7 @@ Every extracted item comes with a quote, and code checks that a quoted number ap
 |---|---|---|
 | 0 | Fix part-year scoring and the false-yellow trend rating; stop scoring financial and municipal issuers; start the test set | Wrong scorecards are live today |
 | 1 | Test KRS access → issuer KRS numbers → filings ingested in code with sources → S3 + new tables | Everything else depends on numbers we can trust |
-| 2 | Developer and Finance rules, cash flow, maturities vs cash from our bond data, data confidence | Most valuable analysis, cheap once data is solid |
+| 2 | Developer and Finance rules (Finance subcategories first), cash flow, maturities vs cash from our bond data, data confidence | Most valuable analysis, cheap once data is solid |
 | 3 | Issuer page, risk-vs-yield chart, peer ranking | Where users see the value |
 | 4 | Re-run on new reports, alerts, portfolio watchlist, calibration on defaults | Turns a report into monitoring |
 
@@ -147,7 +165,7 @@ Implemented 2026-10-30:
 - **Filings downloaded by hand** from rdf-przegladarka.ms.gov.pl (XML), imported with `npm run import-filing` (docs/development.md, "Importing filed statements").
 - **Parser** (`packages/core/src/bonds/fundamentals/filings/FilingParser.ts`): Ministry of Finance structures JednostkaInna and SkonsolidowanaJednostkaInna, in złoty or thousands, schema versions 1-2 and 2-0E (the line codes are the same), both income statement variants, both cash flow methods. Every figure keeps the statement lines it came from. Consistency checks: assets = equity and liabilities, assets = fixed + current, net profit in the income statement = in the balance sheet.
 - **Financial debt** = loans, bonds, other financial liabilities (incl. leases) and bills of exchange owed to third parties, long- and short-term. Liabilities to related parties aren't itemised in the filing and are left out.
-- **IFRS reporters** (added 2026-10-31): ESEF report packages (`EsefParser.ts`: IFRS taxonomy tags; debt lines from the filer's calculation tree, extension concepts classified by anchor or label) and untagged IFRS statements as XHTML (`IfrsTextParser.ts`: line labels, accepted only when the balance sheet ties). Tried on the ESEF packages of 11 app issuers from filings.xbrl.org (Dom Development, Archicom, Develia, Atal, Dekpol, Marvipol, Unibep, Cavatina, Echo Investment, PCC Rokita, Cognor; FY2022–2023): all parse with the checks passing; Dom Development's figures match stockwatch.pl. The ESEF LEI is turned into the KRS number through GLEIF.
+- **IFRS reporters** (added 2026-10-31): ESEF report packages (`EsefParser.ts`: IFRS taxonomy tags; debt lines from the filer's calculation tree, extension concepts classified by anchor or label) and untagged IFRS statements as XHTML (`IfrsTextParser.ts`: line labels, accepted only when the balance sheet ties). Balance sheets in order of liquidity (financial companies) are read too: debt lines under total liabilities, checked on Kruk's FY2023–2025 reports. Tried on the ESEF packages of 11 app issuers from filings.xbrl.org (Dom Development, Archicom, Develia, Atal, Dekpol, Marvipol, Unibep, Cavatina, Echo Investment, PCC Rokita, Cognor; FY2022–2023): all parse with the checks passing; Dom Development's figures match stockwatch.pl. The ESEF LEI is turned into the KRS number through GLEIF.
 - **Storage:** original files in the `Filings` S3 bucket; one row per fiscal year and scope (single company / group) in the `IssuerFinancials` table, keyed by KRS number (`LEI:<lei>` for companies registered abroad), with the app's issuer name. Each filing also fills the previous year from its comparative column, until that year's own filing is imported.
 - **Matching:** by company name (legal form ignored), or `--issuer`; the KRS number is checked against the KRS register API. The KRS number is kept on the financials rows, not on the issuer profile (classification rewrites the profile).
 - **Scorecard:** the issuer list uses the filed figures when an issuer has any (group accounts first, full years only), else the AI-collected ones; the issuer card says which.
