@@ -1,4 +1,4 @@
-import { profilesTable, bondDetailsTable, bondStatisticsTable, issuerProfilesTable, jobsTable } from "./storage";
+import { profilesTable, bondDetailsTable, bondStatisticsTable, issuerProfilesTable, issuerFinancialsTable, jobsTable } from "./storage";
 import { accessGroups, isProd, TEST_USER } from "./stage";
 
 // Shared, manually managed pool (AlbedoUserPool) used by several apps. Each stage gets its own app client.
@@ -61,7 +61,7 @@ const getIssuerProfilesFunction = apiFunction("GetIssuerProfiles", {
   handler: "packages/functions/src/issuers/getIssuerProfiles.handler",
   memory: "256 MB",
   timeout: "10 seconds",
-  link: [issuerProfilesTable],
+  link: [issuerProfilesTable, issuerFinancialsTable],
 });
 
 const getIssuerAnalysisFunction = apiFunction("GetIssuerAnalysis", {

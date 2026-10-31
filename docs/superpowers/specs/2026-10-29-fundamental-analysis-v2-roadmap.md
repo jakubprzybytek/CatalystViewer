@@ -1,7 +1,7 @@
 # Fundamental Analysis v2: Audit and Roadmap
 
 **Date:** 2026-10-29
-**Status:** Proposal. Phase 0 implemented (2026-10-29).
+**Status:** Proposal. Phase 0 implemented (2026-10-29). Phase 1 started (2026-10-30): filings are imported by hand, see [Phase 1 scope](#phase-1-scope); IFRS reporters added 2026-10-31.
 **Builds on:** [2026-05-11-fundamental-analysis-design.md](2026-05-11-fundamental-analysis-design.md)
 
 ---
@@ -57,6 +57,8 @@ The direction proposed here: **get the numbers deterministically from official f
 - Every number records its source document, period, scope (group or single company) and accounting standard.
 
 **Risk to check first:** automated access to the KRS repository (captcha, rate limits). Test on 5 issuers before building on it.
+
+**Result (2026-10-30):** no automated access. The repository has no public API, and its browser (rdf-przegladarka.ms.gov.pl) is behind Imperva bot protection. The KRS register API (api-krs.ms.gov.pl: name, NIP, REGON for a KRS number) is open. Options were a paid API (MGBI, Transparent Data), asking the Ministry of Justice, or downloading by hand; phase 1 goes with downloading by hand.
 
 ### 2. A different job for the LLM
 
@@ -137,6 +139,20 @@ Every extracted item comes with a quote, and code checks that a quoted number ap
 | 2 | Developer and Finance rules, cash flow, maturities vs cash from our bond data, data confidence | Most valuable analysis, cheap once data is solid |
 | 3 | Issuer page, risk-vs-yield chart, peer ranking | Where users see the value |
 | 4 | Re-run on new reports, alerts, portfolio watchlist, calibration on defaults | Turns a report into monitoring |
+
+### Phase 1 scope
+
+Implemented 2026-10-30:
+
+- **Filings downloaded by hand** from rdf-przegladarka.ms.gov.pl (XML), imported with `npm run import-filing` (docs/development.md, "Importing filed statements").
+- **Parser** (`packages/core/src/bonds/fundamentals/filings/FilingParser.ts`): Ministry of Finance structures JednostkaInna and SkonsolidowanaJednostkaInna, in złoty or thousands, schema versions 1-2 and 2-0E (the line codes are the same), both income statement variants, both cash flow methods. Every figure keeps the statement lines it came from. Consistency checks: assets = equity and liabilities, assets = fixed + current, net profit in the income statement = in the balance sheet.
+- **Financial debt** = loans, bonds, other financial liabilities (incl. leases) and bills of exchange owed to third parties, long- and short-term. Liabilities to related parties aren't itemised in the filing and are left out.
+- **IFRS reporters** (added 2026-10-31): ESEF report packages (`EsefParser.ts`: IFRS taxonomy tags; debt lines from the filer's calculation tree, extension concepts classified by anchor or label) and untagged IFRS statements as XHTML (`IfrsTextParser.ts`: line labels, accepted only when the balance sheet ties). Tried on the ESEF packages of 11 app issuers from filings.xbrl.org (Dom Development, Archicom, Develia, Atal, Dekpol, Marvipol, Unibep, Cavatina, Echo Investment, PCC Rokita, Cognor; FY2022–2023): all parse with the checks passing; Dom Development's figures match stockwatch.pl. The ESEF LEI is turned into the KRS number through GLEIF.
+- **Storage:** original files in the `Filings` S3 bucket; one row per fiscal year and scope (single company / group) in the `IssuerFinancials` table, keyed by KRS number (`LEI:<lei>` for companies registered abroad), with the app's issuer name. Each filing also fills the previous year from its comparative column, until that year's own filing is imported.
+- **Matching:** by company name (legal form ignored), or `--issuer`; the KRS number is checked against the KRS register API. The KRS number is kept on the financials rows, not on the issuer profile (classification rewrites the profile).
+- **Scorecard:** the issuer list uses the filed figures when an issuer has any (group accounts first, full years only), else the AI-collected ones; the issuer card says which.
+
+Not yet: small/micro entity structures (JednostkaMala, JednostkaMikro); PDF statements; a web upload; an issuer page keyed by KRS number; the test set of hand-checked answers (needs filings downloaded by a person).
 
 ### Phase 0 scope
 

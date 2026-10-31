@@ -5,6 +5,12 @@ import type { FundamentalScorecard } from '@/bonds/fundamentals/scorecard';
 const ISSUER_PROFILES_PATH = '/api/issuers/profiles';
 const ISSUER_ANALYSIS_PATH = (name: string) => `/api/issuers/${encodeURIComponent(name)}/analysis`;
 
+// Where the scorecard's figures come from: the issuer's filed statements (KRS XML, ESEF or IFRS report)
+// or the AI analysis.
+export type FinancialsSource =
+  | { kind: 'filing'; format?: 'krs-xml' | 'esef' | 'ifrs-text'; scope: 'single' | 'group'; latestPeriodEnd: string; years: number }
+  | { kind: 'ai'; performedAt: string };
+
 export type IssuerProfile = {
   issuerName: string;
   industry: string;
@@ -12,6 +18,7 @@ export type IssuerProfile = {
   websiteUrl?: string;
   classifiedAtTs?: number;
   scorecard?: FundamentalScorecard;
+  financialsSource?: FinancialsSource;
   performedAt?: string;
 };
 

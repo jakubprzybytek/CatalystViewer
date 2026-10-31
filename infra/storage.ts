@@ -65,3 +65,19 @@ export const jobsTable = new sst.aws.Dynamo("Jobs", {
     },
   },
 });
+
+// Issuers' financials read from their filed annual statements (KRS XML, ESEF, IFRS reports), one row
+// per company, fiscal year and scope; see packages/core/src/storage/issuerFinancials. Filled by `npm run import-filing`.
+export const issuerFinancialsTable = new sst.aws.Dynamo("IssuerFinancials", {
+  fields: {
+    entityId: "string",
+    period: "string",
+  },
+  primaryIndex: {
+    hashKey: "entityId",
+    rangeKey: "period",
+  },
+});
+
+// Original filing documents (XML, ESEF zip, XHTML), keyed filings/<entityId>/<periodEnd>-<scope>-<sha256 prefix>.<ext>. Private.
+export const filingsBucket = new sst.aws.Bucket("Filings");

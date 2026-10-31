@@ -38,11 +38,27 @@ declare module "sst" {
       "name": string
       "type": "sst.aws.Function"
     }
+    "Filings": {
+      "name": string
+      "type": "sst.aws.Bucket"
+    }
+    "FundamentalAnalysisWorkflow": {
+      "arn": string
+      "type": "sst.aws.StepFunctions"
+    }
+    "GetBondInformation": {
+      "name": string
+      "type": "sst.aws.Function"
+    }
     "GetBondQuotes": {
       "name": string
       "type": "sst.aws.Function"
     }
     "GetBonds": {
+      "name": string
+      "type": "sst.aws.Function"
+    }
+    "GetCatalystDailyStats": {
       "name": string
       "type": "sst.aws.Function"
     }
@@ -65,6 +81,10 @@ declare module "sst" {
     "GetProfile": {
       "name": string
       "type": "sst.aws.Function"
+    }
+    "IssuerFinancials": {
+      "name": string
+      "type": "sst.aws.Dynamo"
     }
     "IssuerProfiles": {
       "name": string
@@ -114,6 +134,14 @@ declare module "sst" {
     "TestUserPassword": {
       "type": "sst.sst.Secret"
       "value": string
+    }
+    "TriggerBondsUpdater": {
+      "name": string
+      "type": "sst.aws.Function"
+    }
+    "TriggerFundamentalAnalysis": {
+      "name": string
+      "type": "sst.aws.Function"
     }
     "UpdateProfile": {
       "name": string

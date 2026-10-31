@@ -8,6 +8,7 @@ import { BondReport } from '@/sdk/Bonds';
 import { IssuerProfile } from '@/sdk/Issuers';
 import { removeElement } from '@/common/Arrays';
 import type { FundamentalScorecard } from '@/bonds/fundamentals/scorecard';
+import type { FinancialsSource } from '@/sdk/Issuers';
 
 export type IssuerReport = {
   name: string;
@@ -24,6 +25,7 @@ export type IssuerReport = {
   websiteUrl?: string;
   classifiedAtTs?: number;
   scorecard?: FundamentalScorecard;
+  financialsSource?: FinancialsSource;
   performedAt?: string;
 }
 
@@ -96,6 +98,7 @@ export default function IssuersList({ bondReports, issuerProfiles, statistics, f
           websiteUrl: issuerProfile?.websiteUrl,
           classifiedAtTs: issuerProfile?.classifiedAtTs,
           scorecard: issuerProfile?.scorecard,
+          financialsSource: issuerProfile?.financialsSource,
           performedAt: issuerProfile?.performedAt,
         });
       });

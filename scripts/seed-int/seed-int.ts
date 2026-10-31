@@ -3,7 +3,7 @@
 //
 //   npx sst shell --stage int -- npx esrun scripts/seed-int/seed-int.ts
 //
-// 1. empties the app's tables (bonds, quotes history, issuers, jobs, user profiles);
+// 1. empties the app's tables (bonds, quotes history, issuers, issuer financials, jobs, user profiles);
 // 2. writes tests/fixtures/db/<Table>.json (raw DynamoDB items);
 // 3. starts the Bonds Updater (Resource.BondsUpdaterWorkflow) and waits for it to succeed (skip with --no-update).
 // See docs/testing.md.
@@ -28,10 +28,11 @@ const UPDATER_TIMEOUT_MS = 10 * 60 * 1000;
 type Item = Record<string, AttributeValue>;
 
 // Linked table resources and their key attributes (infra/storage.ts).
-const TABLES: { name: "BondDetails" | "BondStatistics" | "IssuerProfiles" | "Jobs" | "Profiles"; keys: string[] }[] = [
+const TABLES: { name: "BondDetails" | "BondStatistics" | "IssuerProfiles" | "IssuerFinancials" | "Jobs" | "Profiles"; keys: string[] }[] = [
   { name: "BondDetails", keys: ["bondType", "name#market"] },
   { name: "BondStatistics", keys: ["name#market", "year#month"] },
   { name: "IssuerProfiles", keys: ["issuerName", "recordType"] },
+  { name: "IssuerFinancials", keys: ["entityId", "period"] },
   { name: "Jobs", keys: ["listPk", "listSk"] },
   { name: "Profiles", keys: ["userName"] },
 ];

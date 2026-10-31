@@ -73,6 +73,49 @@ Changes to the scorecard rules alone don't need a new analysis: the issuer list 
 
 The CLI runs through `esrun --send-code-mode=temporaryFile` (see `package.json`): the bundled code is too large to pass on the command line (`spawn E2BIG`).
 
+## Importing filed statements (KRS)
+
+The scorecard uses an issuer's own annual statements instead of the AI-collected figures whenever the issuer has any: they're read in code, every figure keeps the statement lines or XBRL concepts it came from, and the statement is checked for consistency. Three formats, detected from the file:
+
+| Format | Who files it | Where to get it | Read by |
+|---|---|---|---|
+| KRS XML (`.xml`) | companies under the Polish accounting act, most unlisted issuers | https://rdf-przegladarka.ms.gov.pl: search by KRS number, download the XML of *Roczne sprawozdanie finansowe* (and *Skonsolidowane …* for groups); signed files are fine | `FilingParser.ts`: fixed line codes |
+| ESEF (`.zip`, or `.xhtml` with inline XBRL) | listed companies reporting under IFRS; the consolidated statements are tagged | the issuer's investor relations site, or the KRS financial documents browser (the report package zip). Older years (2020–2023): https://filings.xbrl.org | `EsefParser.ts`: IFRS taxonomy tags |
+| IFRS text (`.xhtml`, `.html`) | listed companies' separate (single-company) statements, which are not tagged | as ESEF, the `…-1-pl.xhtml` report | `IfrsTextParser.ts`: line labels, best effort |
+
+The KRS repository has no API and blocks automated downloads, so files are downloaded by hand. Prefer the ESEF package (the zip) over the bare `.xhtml`: it carries the filer's calculation tree, anchors and labels, which are needed to find debt lines the filer tagged with its own concepts. Then import into a stage:
+
+```sh
+npm run import-filing -- --dry-run statement.xml report.zip                     # parse only, no stage: check the figures
+npx sst shell --stage dev -- npm run import-filing -- --dry-run report.zip         # also match the issuer and check the registers, write nothing
+npx sst shell --stage prod -- npm run import-filing -- statement.xml group.xml report.zip
+npx sst shell --stage prod -- npm run import-filing -- statement.xml --issuer "Dadelo S.A."
+npx sst shell --stage prod -- npm run import-filing -- separate.xhtml --krs 0000031483
+```
+
+| Option | Meaning |
+|---|---|
+| `--issuer "<name>"` | the issuer's name as in the app, when the company name in the filing doesn't match one (legal forms are ignored: "DADELO SPÓŁKA AKCYJNA" matches "Dadelo S.A."); one file at a time |
+| `--krs <number>` | the company's KRS number, when the filing doesn't give one (IFRS text); one file at a time |
+| `--dry-run` | everything but the writes |
+| `--force` | store a filing whose consistency checks failed, or one of a second company for the same issuer |
+
+What happens:
+
+- **Company:** KRS XML and IFRS text carry the KRS number; ESEF carries the LEI, and the KRS number comes from the LEI register (GLEIF, registration authority RA000484). The KRS number is checked against the KRS register API; a different registered name is a warning (companies get renamed). A company registered abroad (e.g. Allegro.eu, Luxembourg) is stored under `LEI:<lei>`.
+- **Issuer:** matched by the filing's company name or the registered name (legal forms ignored), or by `--issuer`. A second company for the same issuer is refused without `--force`.
+- **Storage:** the original file goes to the `Filings` bucket (`filings/<entityId>/…`), one row per fiscal year to `IssuerFinancials` (key: entity id = KRS number or `LEI:<lei>`, `<period end>#single|group`). A filing has two columns, its own year and the previous one; the previous year is stored too, unless that year's own filing is already there. Importing the same file again overwrites the same rows.
+- **Scorecard:** the issuer list scores the issuer from these rows: group accounts if there are any, otherwise single-company ones, full years only, at most five; unless its AI analysis has a later fiscal year, which then stays (an old filing doesn't replace newer figures). The issuer card names the source.
+
+How figures are derived where the format leaves a choice (the importer prints these as notes):
+
+- **Financial debt:** KRS XML: loans, bonds, other financial liabilities (incl. leases) and bills of exchange owed to third parties. ESEF: the borrowing, bond, loan and lease lines that the filer's calculation tree sums into current and non-current liabilities; the filer's own concepts count when anchored to an IFRS debt concept or labelled as one; standard IFRS concepts for a side the tree doesn't cover, or without the package. IFRS text: balance sheet lines labelled as loans, borrowings, bonds, debt securities or leases, not interest payable.
+- **Interest:** ESEF filers rarely tag interest expense; finance costs are used then.
+- **Revenue:** an ESEF report without a revenue total gets the sum of its revenue lines.
+- **Checks:** assets = equity and liabilities, assets = current + non-current (KRS XML and ESEF), net profit in the income statement = in the balance sheet (KRS XML). IFRS text is accepted only when total assets tie to total equity and liabilities; check its figures against the document all the same.
+
+Not supported: small and micro entities (`JednostkaMala`, `JednostkaMikro`), banks and insurers, PDF files (convert them or use the XHTML). Code: `packages/core/src/bonds/fundamentals/filings/`, `scripts/import-filing/`.
+
 ## Delivery
 
 | File | Trigger | What it does |

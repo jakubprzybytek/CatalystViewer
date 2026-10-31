@@ -16,7 +16,8 @@
     "seed": "esrun scripts/seed-int/seed-int.ts",
     "quote": "esrun packages/core/src/bonds/catalyst/catalyst.ts quote",
     "classify-issuer": "esrun --send-code-mode=temporaryFile --node-env-file-if-exists=.env.local packages/core/src/ai/issuers/cli.ts classify",
-    "analyze-issuer": "esrun --send-code-mode=temporaryFile --node-env-file-if-exists=.env.local packages/core/src/ai/issuers/cli.ts analyze"
+    "analyze-issuer": "esrun --send-code-mode=temporaryFile --node-env-file-if-exists=.env.local packages/core/src/ai/issuers/cli.ts analyze",
+    "import-filing": "esrun --send-code-mode=temporaryFile scripts/import-filing/import-filing.ts"
   },
   "devDependencies": {
     "@playwright/test": "^1.60.0",

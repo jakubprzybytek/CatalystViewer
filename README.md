@@ -11,6 +11,7 @@ npm run dev -- --stage dev
 * `npm run quote -- FPC0631` - Get a quote for a bond
 * `npm run classify-issuer -- "Kruk S.A."` - Classify an issuer using AI (displays result, stores nothing)
 * `npm run analyze-issuer -- "Kruk S.A."` - Run the fundamental analysis using AI (displays result, stores nothing); see [docs/development.md](docs/development.md#testing-the-ai-features-locally)
+* `npx sst shell --stage prod -- npm run import-filing -- <file>` - Import an issuer's annual statement (KRS XML, ESEF report package, or IFRS XHTML); its figures replace the AI-collected ones in the scorecard; see [docs/development.md](docs/development.md#importing-filed-statements-krs)
 
 ### Bonds Update Workflow
 

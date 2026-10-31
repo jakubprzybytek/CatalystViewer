@@ -28,6 +28,12 @@ import IssuerScorecard from './IssuerScorecard';
 import AnalysisReportModal from './AnalysisReportModal';
 import { SignalDot } from './SignalDot';
 import { triggerFundamentalAnalysis } from '@/sdk/Issuers';
+
+const FILING_SOURCE = {
+  'krs-xml': 'filed statements (KRS)',
+  'esef': 'the annual report (ESEF, IFRS)',
+  'ifrs-text': 'the annual report (IFRS)',
+} as const;
 import { isInFundamentalScope } from '@/bonds/fundamentals/scorecard';
 
 export const interestConstPartColors: ColorCode[] = ['green', 'yellow', 'orange', 'red'];
@@ -186,6 +192,12 @@ function IssuerCard({ issuerReport, statistics, isChecked, onIssuerChecked }: Is
                 <CardSectionRow>
                   <IssuerScorecard scorecard={issuerReport.scorecard} />
                 </CardSectionRow>
+                {issuerReport.financialsSource?.kind === 'filing' && (
+                  <Typography component='span' className='tiny-text'>
+                    Figures from {FILING_SOURCE[issuerReport.financialsSource.format ?? 'krs-xml']}, {issuerReport.financialsSource.scope === 'group' ? 'group accounts' : 'single-company accounts'}, fiscal year ending {issuerReport.financialsSource.latestPeriodEnd}
+                    {issuerReport.financialsSource.years > 1 ? ` and ${issuerReport.financialsSource.years - 1} earlier` : ''}
+                  </Typography>
+                )}
                 {issuerReport.performedAt && (
                   <>
                     <Box sx={{ display: 'flex', justifyContent: 'flex-end', pr: '8px', mt: 0.5 }}>
