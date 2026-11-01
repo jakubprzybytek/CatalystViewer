@@ -66,6 +66,10 @@ declare module "sst" {
       "name": string
       "type": "sst.aws.Function"
     }
+    "GetIssuerFinancials": {
+      "name": string
+      "type": "sst.aws.Function"
+    }
     "GetIssuerProfiles": {
       "name": string
       "type": "sst.aws.Function"
