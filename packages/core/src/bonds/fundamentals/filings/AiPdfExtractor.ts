@@ -138,7 +138,7 @@ export function bedrockTranscriber(client: BedrockRuntimeClient, modelId: string
 
 // ─── 3. Verification and figures ────────────────────────────────────────────────
 
-const DASH = /^[-–—]$/;
+const DASH = /^[-–—]?$/;   // a dash or an empty cell: nothing in that column
 
 export function parsePrinted(printed: string): number | undefined {
     const t = printed.trim();

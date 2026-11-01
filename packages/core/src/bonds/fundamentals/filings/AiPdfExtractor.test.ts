@@ -9,7 +9,7 @@ const millions = (filing: ReturnType<typeof transcriptToFiling>, column: number)
     Object.fromEntries(Object.entries(filing.periods[column].figures).map(([k, v]) => [k, v!.value / 1e6]));
 
 describe('parsePrinted', () => {
-    it.each([['1 000,0', 1000], ['(1 792,2)', -1792.2], ['-', 0], ['–', 0], ['-35,3', -35.3], ['12', 12], ['n/a', undefined], ['2025-12', undefined]])('%s → %s', (printed, value) => {
+    it.each([['1 000,0', 1000], ['(1 792,2)', -1792.2], ['-', 0], ['', 0], ['–', 0], ['-35,3', -35.3], ['12', 12], ['n/a', undefined], ['2025-12', undefined]])('%s → %s', (printed, value) => {
         expect(parsePrinted(printed)).toBe(value);
     });
 });
