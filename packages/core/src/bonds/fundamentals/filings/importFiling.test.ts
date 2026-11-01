@@ -5,6 +5,8 @@ import type { S3Client } from '@aws-sdk/client-s3';
 import type { DbIssuerFinancialsRecord, IssuerFinancialsTable } from '../../../storage/issuerFinancials';
 import { importFiling, ImportFilingError, normalizeCompanyName, readFiling, type ImportFilingDeps, type LeiRecord } from './importFiling';
 import { esefPackage } from './fixtures/esefPackage';
+import { makePdf } from './fixtures/makePdf';
+import { reportPages, transcript } from './fixtures/pdfReport';
 
 const xml = readFileSync(path.join(__dirname, 'fixtures', 'single-comparative-pln.xml'));
 const ifrsText = readFileSync(path.join(__dirname, 'fixtures', 'ifrs-text-single.xhtml'));
@@ -140,6 +142,36 @@ describe('importFiling', () => {
             const { deps } = fakes([], undefined, { legalName: 'INNA SPÓŁKA SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ', registeredAs: 'B1', jurisdiction: 'LU' });
             deps.issuerNames = ['Inna Spółka Sp. z o.o.', 'Someone Else S.A.'];
             expect((await importFiling(deps, esefPackage, { dryRun: true })).issuerName).toBe('Inna Spółka Sp. z o.o.');
+        });
+    });
+
+    describe('PDF', () => {
+        const pdf = makePdf(reportPages);
+
+        it('is read by the model, checked, and stored with how it was read', async () => {
+            const { deps, rows, uploads } = fakes([], 'TESTOWA GROUP SPÓŁKA AKCYJNA');
+            deps.issuerNames = ['Testowa Group S.A.'];
+            deps.transcribe = async () => ({ input: transcript, model: 'test-model' });
+            const result = await importFiling(deps, pdf);
+            expect(result).toMatchObject({ issuerName: 'Testowa Group S.A.', entityId: '0000123456', warnings: [] });
+            expect(uploads).toEqual([{ key: expect.stringMatching(/^filings\/0000123456\/2025-12-31-group-[0-9a-f]{12}\.pdf$/), contentType: 'application/pdf' }]);
+            expect(rows.get('0000123456|2025-12-31#group')).toMatchObject({
+                filing: { format: 'ai-pdf', extraction: { model: 'test-model', promptVersion: 'pdf-statements-1', pages: [2, 3, 4, 5] } },
+            });
+        });
+
+        it('needs a model', async () => {
+            const { deps } = fakes();
+            await expect(importFiling(deps, pdf, { dryRun: true })).rejects.toThrow(/no model configured/);
+        });
+
+        it("doesn't call the model for a PDF that names no company number", async () => {
+            const { deps } = fakes();
+            let called = false;
+            deps.transcribe = async () => { called = true; return { input: transcript, model: 'test-model' }; };
+            const anonymous = makePdf(reportPages.map(lines => lines.filter(l => !/KRS/.test(l))));
+            await expect(importFiling(deps, anonymous, { dryRun: true })).rejects.toThrow(/pass --krs/);
+            expect(called).toBe(false);
         });
     });
 

@@ -1,0 +1,282 @@
+// Reads the primary statements from a PDF annual report with a model, verified in code.
+//
+//   1. Code finds the statement pages (heading near the top, mostly table lines) and sends only those.
+//   2. The model copies every statement line through a tool with a fixed schema: label as printed,
+//      page, the amount per fiscal-year column exactly as printed, and the standard item it is.
+//      It doesn't compute, convert or round anything.
+//   3. Code turns printed amounts into numbers and checks them: every amount appears on its page,
+//      total assets = total equity and liabilities, the key totals are there. Figures are summed from
+//      the classified lines here, not by the model.
+//
+// For reports with no structure to parse: PDFs of unlisted IFRS reporters, foreign issuers, and
+// issuers whose website only has the PDF.
+import { BedrockRuntimeClient, ConverseCommand } from '@aws-sdk/client-bedrock-runtime';
+import { UnsupportedFilingError, type FilingExtraction, type FilingField, type FilingPeriod, type ParsedFiling, type SourcedFigure } from './FilingParser';
+import type { PdfPage } from './pdfText';
+
+export const PROMPT_VERSION = 'pdf-statements-1';
+
+// ─── 1. Statement pages ─────────────────────────────────────────────────────────
+
+type Statement = 'balance' | 'income' | 'cashFlow';
+
+const fold = (s: string) => s.toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '').replace(/ł/g, 'l');
+
+const HEADINGS: Record<Statement, RegExp> = {
+    balance: /(sprawozdanie z sytuacji finansowej|^.{0,40}\bbilans\b|statement of financial position|balance sheet)/,
+    income: /(rachunek zyskow i strat|sprawozdanie z wyniku|statement of profit or loss|income statement)/,
+    cashFlow: /(sprawozdanie z przeplywow pienieznych|rachunek przeplywow pienieznych|statement of cash flows|cash flow statement)/,
+};
+const AMOUNT = /\(?-?\d{1,3}(?:[ . ]\d{3})*(?:,\d+)?\)?/g;
+const MIN_TABLE_LINES = 12;
+const isContents = (page: PdfPage) => page.lines.some(l => /\.{6,}/.test(l));
+const tableLines = (page: PdfPage) => page.lines.filter(l => (l.match(AMOUNT) ?? []).length >= 2).length;
+
+// For each statement: the first page (past the table of contents) whose heading is near the top and
+// which is mostly a table, and the page after it (statements often run over two pages).
+export function findStatementPages(pages: PdfPage[]): number[] {
+    const chosen = new Set<number>();
+    for (const re of Object.values(HEADINGS)) {
+        const hit = pages.find(p => !isContents(p)
+            && p.lines.slice(0, 12).some(l => l.length < 120 && re.test(fold(l)))
+            && tableLines(p) >= MIN_TABLE_LINES);
+        if (!hit) continue;
+        chosen.add(hit.page);
+        if (pages.some(p => p.page === hit.page + 1)) chosen.add(hit.page + 1);
+    }
+    return [...chosen].sort((a, b) => a - b);
+}
+
+// ─── 2. Transcription ───────────────────────────────────────────────────────────
+
+export const LINE_FIELDS = [
+    'revenue', 'ebit', 'depreciation', 'interestExpense', 'financeCosts', 'netProfit',
+    'totalAssets', 'noncurrentAssets', 'currentAssets', 'inventory', 'cash', 'intangibleAssets', 'goodwill',
+    'equity', 'minorityInterests', 'totalLiabilities', 'noncurrentLiabilities', 'currentLiabilities', 'totalEquityAndLiabilities',
+    'debtBankLoans', 'debtBonds', 'debtLeases', 'debtMixed', 'debtOther', 'operatingCashFlow', 'capex', 'other',
+] as const;
+export type LineField = typeof LINE_FIELDS[number];
+
+export type Transcript = {
+    companyName: string;
+    scope: 'group' | 'single';
+    currency: string;
+    unit: 1 | 1000 | 1000000;
+    columns: { id: string; periodStart?: string; periodEnd: string }[];
+    lines: { statement: Statement; page: number; label: string; field: LineField; values: { column: string; printed: string }[] }[];
+};
+
+export const STATEMENTS_TOOL = {
+    name: 'record_statements',
+    description: 'Record the primary financial statements exactly as printed.',
+    inputSchema: {
+        type: 'object',
+        required: ['companyName', 'scope', 'currency', 'unit', 'columns', 'lines'],
+        properties: {
+            companyName: { type: 'string' },
+            scope: { enum: ['group', 'single'], description: 'group = consolidated statements' },
+            currency: { type: 'string', description: 'ISO code, e.g. PLN' },
+            unit: { enum: [1, 1000, 1000000], description: 'multiplier of the printed amounts (thousands = 1000, millions = 1000000)' },
+            columns: {
+                type: 'array', description: 'the fiscal-year columns, current year first; ignore quarter columns',
+                items: { type: 'object', required: ['id', 'periodEnd'], properties: { id: { type: 'string' }, periodStart: { type: 'string', description: 'YYYY-MM-DD' }, periodEnd: { type: 'string', description: 'YYYY-MM-DD' } } },
+            },
+            lines: {
+                type: 'array',
+                items: {
+                    type: 'object', required: ['statement', 'page', 'label', 'field', 'values'],
+                    properties: {
+                        statement: { enum: ['balance', 'income', 'cashFlow'] },
+                        page: { type: 'integer' },
+                        label: { type: 'string', description: 'the line label as printed (joined if wrapped)' },
+                        field: { enum: LINE_FIELDS, description: 'the standard item this line is, or other' },
+                        values: {
+                            type: 'array',
+                            items: { type: 'object', required: ['column', 'printed'], properties: { column: { type: 'string' }, printed: { type: 'string', description: 'the amount exactly as printed, e.g. "(1 792,2)" or "-"' } } },
+                        },
+                    },
+                },
+            },
+        },
+    },
+} as const;
+
+export function statementsPrompt(pages: PdfPage[], chosen: number[]): string {
+    const text = chosen.map(n => `=== Page ${n} ===\n${pages.find(p => p.page === n)!.lines.join('\n')}`).join('\n\n');
+    return `Below are pages of a company's annual financial statements, as text lines (" | " separates table cells).
+Record every line of the statement of financial position, the income statement (profit or loss; not other comprehensive income) and the cash flow statement through the record_statements tool:
+- copy labels and amounts exactly as printed; don't compute, convert or round anything; a note number column is not an amount;
+- columns: the full fiscal years only (if quarters are also shown, skip them);
+- field: classify each line. Totals: totalAssets, totalEquityAndLiabilities, equity (total equity incl. non-controlling interests), etc.
+  Debt lines: debtBankLoans (bank loans, credits, borrowings), debtBonds (bonds, notes, debt securities), debtLeases (lease liabilities), debtMixed (a line combining several kinds, e.g. "financial liabilities" or "loans, borrowings and bonds", when the statement doesn't split them), debtOther (other interest-bearing financing, e.g. loans from related parties); interest payable, trade payables and derivatives are other.
+  depreciation: depreciation and amortisation in the income statement or the cash flow statement. capex: purchases of property, plant and equipment and intangible assets (investing cash flow). interestExpense: interest costs if shown; financeCosts: total finance costs.
+  When a line is a subtotal of lines you also record, still give it its field only if it is the standard total (e.g. currentAssets); otherwise other.
+
+${text}`;
+}
+
+// Sends a prompt with a forced tool call; returns the tool input.
+export type Transcriber = (prompt: string) => Promise<{ input: unknown; model: string; inputTokens?: number; outputTokens?: number }>;
+
+export function bedrockTranscriber(client: BedrockRuntimeClient, modelId: string, model: string): Transcriber {
+    return async prompt => {
+        const response = await client.send(new ConverseCommand({
+            modelId,
+            messages: [{ role: 'user', content: [{ text: prompt }] }],
+            toolConfig: {
+                tools: [{ toolSpec: { name: STATEMENTS_TOOL.name, description: STATEMENTS_TOOL.description, inputSchema: { json: STATEMENTS_TOOL.inputSchema as never } } }],
+                toolChoice: { tool: { name: STATEMENTS_TOOL.name } },
+            },
+            inferenceConfig: { maxTokens: 32000, temperature: 0 },
+        }));
+        const use = response.output?.message?.content?.find(c => c.toolUse)?.toolUse;
+        if (!use) throw new UnsupportedFilingError(`The model didn't record the statements (stop reason ${response.stopReason})`);
+        if (response.stopReason === 'max_tokens') throw new UnsupportedFilingError('The model ran out of output tokens before recording all statement lines');
+        return { input: use.input, model, inputTokens: response.usage?.inputTokens, outputTokens: response.usage?.outputTokens };
+    };
+}
+
+// ─── 3. Verification and figures ────────────────────────────────────────────────
+
+const DASH = /^[-–—]$/;
+
+export function parsePrinted(printed: string): number | undefined {
+    const t = printed.trim();
+    if (DASH.test(t)) return 0;
+    if (!/^\(?[-–]?\s?\d[\d\s. ]*(,\d+)?\)?$/.test(t)) return undefined;
+    const value = Number(t.replace(/[()\s. \-–]/g, '').replace(',', '.'));
+    if (!Number.isFinite(value)) return undefined;
+    return /^\(|^[-–]/.test(t) ? -value : value;
+}
+
+const squash = (s: string) => s.replace(/[\s ]/g, '');
+
+// KRS number printed near "KRS" or "Rejestr Sądowy" anywhere in the report, also without its leading
+// zeros ("numer rejestru KRS 23302"); the court register check confirms it.
+export function findKrs(pages: PdfPage[]): string | undefined {
+    const text = pages.map(p => p.lines.join(' ')).join(' ');
+    const full = text.match(/(?:KRS|Rejestr\w*\s+S\S*dow\w*)[^.]{0,120}?\b(00\d{8})\b/i)?.[1];
+    if (full) return full;
+    const short = text.match(/\bKRS\b[\s:]*(?:nr\.?|numer|no\.?)?\s*(\d{3,10})\b/i)?.[1];
+    return short ? short.padStart(10, '0') : undefined;
+}
+
+// LEI printed in the report: 20 characters, next to "LEI".
+export function findLei(pages: PdfPage[]): string | undefined {
+    const text = pages.map(p => p.lines.join(' ')).join(' ');
+    return text.match(/\b([A-Z0-9]{18}\d{2})\b[\s|]*\(?LEI\)?|\bLEI\b[\s:|]*([A-Z0-9]{18}\d{2})\b/)?.slice(1).find(Boolean);
+}
+
+function yearStart(end: string): string {
+    const d = new Date(`${end}T00:00:00Z`);
+    d.setUTCDate(d.getUTCDate() + 1);
+    d.setUTCFullYear(d.getUTCFullYear() - 1);
+    return d.toISOString().slice(0, 10);
+}
+
+function monthsBetween(start: string, end: string): number {
+    return Math.round((new Date(`${end}T00:00:00Z`).getTime() - new Date(`${start}T00:00:00Z`).getTime()) / 86_400_000 / 30.44);
+}
+
+const round2 = (v: number) => Math.round(v * 100) / 100;
+const fmt = (v: number) => v.toLocaleString('en-US', { maximumFractionDigits: 2 });
+
+export function transcriptToFiling(transcript: Transcript, pages: PdfPage[], extraction: FilingExtraction): ParsedFiling {
+    const t = transcript;
+    if (!t.columns?.length || !t.lines?.length) throw new UnsupportedFilingError('The model found no statement lines');
+    const unit = [1, 1000, 1000000].includes(t.unit) ? t.unit : 1;
+    const checks: string[] = [];
+
+    // Every amount must be on the page the model cites.
+    const pageText = new Map(pages.map(p => [p.page, squash(p.lines.join('|'))]));
+    const numbers = new Map<object, number | undefined>();
+    for (const line of t.lines) {
+        for (const v of line.values) {
+            const value = parsePrinted(v.printed);
+            numbers.set(v, value);
+            if (value === undefined) {
+                checks.push(`p. ${line.page} "${line.label}": "${v.printed}" isn't an amount`);
+            } else if (!DASH.test(v.printed.trim()) && !(pageText.get(line.page) ?? '').includes(squash(v.printed).replace(/^\(|\)$/g, ''))) {
+                checks.push(`p. ${line.page} "${line.label}": ${v.printed} isn't on that page`);
+            }
+        }
+    }
+
+    const notes: string[] = [`Read from the PDF by ${extraction.model} (${extraction.promptVersion}, pages ${extraction.pages.join(', ')}); amounts checked against the page text`];
+    let mixedDebt = false;
+    const periods: FilingPeriod[] = t.columns.slice(0, 2).map((column, i) => {
+        const of = (field: LineField, statement?: Statement) => t.lines
+            .filter(l => l.field === field && (!statement || l.statement === statement))
+            .flatMap(l => l.values.filter(v => v.column === column.id).map(v => ({ line: l, value: numbers.get(v) })))
+            .filter((x): x is { line: Transcript['lines'][number]; value: number } => x.value !== undefined);
+        const figure = (items: { line: Transcript['lines'][number]; value: number }[], abs = false): SourcedFigure | undefined => {
+            if (items.length === 0) return undefined;
+            const total = items.reduce((a, x) => a + x.value, 0) * unit;
+            return { value: round2(abs ? Math.abs(total) : total), source: items.map(x => `p. ${x.line.page}/${x.line.label}`) };
+        };
+        const first = (field: LineField, statement?: Statement, abs = false) => figure(of(field, statement).slice(0, 1), abs);
+
+        const debtItems = (['debtBankLoans', 'debtBonds', 'debtLeases', 'debtMixed', 'debtOther'] as const).flatMap(f => of(f, 'balance'));
+        if (of('debtMixed', 'balance').length && !of('debtBonds', 'balance').length) mixedDebt = true;
+        const figures: Partial<Record<FilingField, SourcedFigure>> = {
+            revenue: first('revenue', 'income'),
+            ebit: first('ebit', 'income'),
+            depreciation: first('depreciation', 'cashFlow', true) ?? first('depreciation', 'income', true),
+            interestExpense: first('interestExpense', 'income', true) ?? first('financeCosts', 'income', true),
+            netProfit: first('netProfit', 'income'),
+            totalAssets: first('totalAssets', 'balance'),
+            intangibleAssets: figure([...of('intangibleAssets', 'balance'), ...of('goodwill', 'balance')]),
+            equity: first('equity', 'balance'),
+            financialDebt: figure(debtItems),
+            bonds: figure(of('debtBonds', 'balance')),
+            cash: first('cash', 'balance'),
+            currentAssets: first('currentAssets', 'balance'),
+            inventory: figure(of('inventory', 'balance')),
+            currentLiabilities: first('currentLiabilities', 'balance'),
+            minorityInterests: first('minorityInterests', 'balance'),
+            operatingCashFlow: first('operatingCashFlow', 'cashFlow'),
+            capex: figure(of('capex', 'cashFlow'), true),
+        };
+        for (const key of Object.keys(figures) as FilingField[]) if (figures[key] === undefined) delete figures[key];
+
+        const end = column.periodEnd;
+        const label = i === 0 ? end : `${end} (comparative)`;
+        const assets = figures.totalAssets?.value;
+        const equityAndLiabilities = figure(of('totalEquityAndLiabilities', 'balance').slice(0, 1))?.value;
+        const tolerance = Math.max(unit, Math.abs(assets ?? 0) * 0.0005);
+        if (assets === undefined) checks.push(`${label}: no total assets`);
+        else if (equityAndLiabilities === undefined) checks.push(`${label}: no total equity and liabilities`);
+        else if (Math.abs(assets - equityAndLiabilities) > tolerance) checks.push(`${label}: total assets ${fmt(assets)} ≠ total equity and liabilities ${fmt(equityAndLiabilities)}`);
+        if (!figures.equity) checks.push(`${label}: no total equity`);
+        if (!figures.netProfit) checks.push(`${label}: no net profit`);
+
+        const start = column.periodStart && /^\d{4}-\d{2}-\d{2}$/.test(column.periodStart) ? column.periodStart : yearStart(end);
+        return { column: i === 0 ? 'current' : 'previous', periodStart: start, periodEnd: end, months: monthsBetween(start, end), figures };
+    });
+    if (mixedDebt) notes.push('Debt: the balance sheet has combined financing lines (e.g. "financial liabilities"), so bonds aren\'t split out');
+
+    return {
+        format: 'ai-pdf',
+        scope: t.scope === 'single' ? 'single' : 'group',
+        companyName: t.companyName ?? '',
+        krs: findKrs(pages),
+        lei: findLei(pages),
+        currency: /^[A-Z]{3}$/.test(t.currency) ? t.currency : 'PLN',
+        schema: `PDF read by ${extraction.model} (${extraction.promptVersion})`,
+        periods,
+        checks,
+        notes,
+        extraction,
+    };
+}
+
+// ─── Entry point ────────────────────────────────────────────────────────────────
+
+export async function extractStatements(pages: PdfPage[], transcribe: Transcriber): Promise<ParsedFiling> {
+    const chosen = findStatementPages(pages);
+    if (chosen.length === 0) throw new UnsupportedFilingError('No financial statement pages found in this PDF (scanned, or not an annual report?)');
+    const answer = await transcribe(statementsPrompt(pages, chosen));
+    return transcriptToFiling(answer.input as Transcript, pages, {
+        model: answer.model, promptVersion: PROMPT_VERSION, pages: chosen, inputTokens: answer.inputTokens, outputTokens: answer.outputTokens,
+    });
+}

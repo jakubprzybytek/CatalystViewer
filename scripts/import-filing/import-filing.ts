@@ -6,11 +6,14 @@
 //   .xml    Polish accounting act statement from the KRS financial documents browser (rdf-przegladarka.ms.gov.pl)
 //   .zip    ESEF report package of a listed company (IFRS, tagged); .xhtml with inline XBRL works too
 //   .xhtml  untagged IFRS statement (e.g. separate statements), read by line labels
+//   .pdf    annual report as PDF: the statement pages are read by a model (Bedrock) and checked in code;
+//           costs one model call (~$0.15 with Sonnet); --model picks another model
 //
 // --issuer   the app's issuer name, when the filing's company name doesn't match one (one file only)
 // --krs      the company's KRS number, when the filing doesn't give one (one file only)
 // --dry-run  parse, match and check, but write nothing
 // --force    store a filing whose consistency checks failed, or a second company for an issuer
+// --model    model alias for PDFs (default: the app's default model), e.g. sonnet_4.6, opus_4.6
 //
 // Without `sst shell` and with --dry-run, it only parses and prints the figures.
 // See docs/development.md and packages/core/src/bonds/fundamentals/filings/importFiling.ts.
@@ -18,11 +21,14 @@
 import { readFileSync } from "fs";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { S3Client } from "@aws-sdk/client-s3";
+import { BedrockRuntimeClient } from "@aws-sdk/client-bedrock-runtime";
+import { DEFAULT_MODEL_ALIAS, MODEL_ALIASES, resolveModelId, type ModelAlias } from "../../packages/core/src/ai/models";
+import { bedrockTranscriber } from "../../packages/core/src/bonds/fundamentals/filings/AiPdfExtractor";
 import { Resource } from "sst";
 import { IssuerProfilesTable } from "../../packages/core/src/storage/issuerProfiles";
 import { IssuerFinancialsTable } from "../../packages/core/src/storage/issuerFinancials";
 import type { FilingField, ParsedFiling } from "../../packages/core/src/bonds/fundamentals/filings/FilingParser";
-import { importFiling, ImportFilingError, readFiling } from "../../packages/core/src/bonds/fundamentals/filings/importFiling";
+import { importFiling, ImportFilingError, readAnyFiling } from "../../packages/core/src/bonds/fundamentals/filings/importFiling";
 
 const REGION = "eu-west-1";
 
@@ -32,18 +38,24 @@ function parseArgs(argv: string[]) {
   let krs: string | undefined;
   let dryRun = false;
   let force = false;
+  let model: ModelAlias = DEFAULT_MODEL_ALIAS;
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     if (arg === "--issuer") issuerName = argv[++i];
     else if (arg === "--krs") krs = argv[++i];
     else if (arg === "--dry-run") dryRun = true;
     else if (arg === "--force") force = true;
+    else if (arg === "--model") {
+      const alias = argv[++i] as ModelAlias;
+      if (!MODEL_ALIASES.includes(alias)) throw new Error(`--model: one of ${MODEL_ALIASES.join(", ")}`);
+      model = alias;
+    }
     else if (arg.startsWith("--")) throw new Error(`Unknown option ${arg}`);
     else files.push(arg);
   }
   if (files.length === 0) throw new Error('Usage: npm run import-filing -- <file>... [--issuer "<name>"] [--krs <number>] [--dry-run] [--force]');
   if ((issuerName || krs) && files.length > 1) throw new Error("--issuer and --krs work with one file at a time");
-  return { files, issuerName, krs, dryRun, force };
+  return { files, issuerName, krs, dryRun, force, model };
 }
 
 const ROWS: [FilingField, string][] = [
@@ -56,6 +68,10 @@ const ROWS: [FilingField, string][] = [
 function printFiling(filing: ParsedFiling): void {
   const id = [filing.krs && `KRS ${filing.krs}`, filing.lei && `LEI ${filing.lei}`].filter(Boolean).join(" · ") || "no KRS/LEI";
   console.log(`  ${filing.companyName} · ${id} · ${filing.scope === "group" ? "group (consolidated)" : "single company"} · ${filing.schema}`);
+  if (filing.extraction) {
+    const e = filing.extraction;
+    console.log(`  Model ${e.model}, pages ${e.pages.join(", ")}, tokens in ${e.inputTokens ?? "?"} / out ${e.outputTokens ?? "?"}`);
+  }
   const head = [`${filing.currency} m`, ...filing.periods.map((p) => `${p.periodEnd}${p.months !== 12 ? ` (${p.months}m)` : ""}`)];
   const lines = ROWS
     .filter(([field]) => filing.periods.some((p) => p.figures[field]))
@@ -78,15 +94,16 @@ function linkedResources() {
 }
 
 async function main() {
-  const { files, issuerName, krs, dryRun, force } = parseArgs(process.argv.slice(2));
+  const { files, issuerName, krs, dryRun, force, model } = parseArgs(process.argv.slice(2));
   const resources = linkedResources();
+  const transcribe = bedrockTranscriber(new BedrockRuntimeClient({ region: REGION }), resolveModelId(model), model);
 
   if (!resources) {
     if (!dryRun) throw new Error("Run inside `sst shell --stage <stage>` to import (or add --dry-run to only parse)");
     for (const file of files) {
       console.log(`\n${file} (parse only, no stage)`);
       try {
-        const { filing } = readFiling(readFileSync(file), file);
+        const { filing } = await readAnyFiling(readFileSync(file), file, transcribe);
         printFiling(filing);
         for (const note of filing.notes ?? []) console.log(`  · ${note}`);
         for (const check of filing.checks) console.log(`  ⚠ ${check}`);
@@ -104,6 +121,7 @@ async function main() {
     financialsTable: new IssuerFinancialsTable(dynamo, resources.issuerFinancials),
     s3: new S3Client({ region: REGION }),
     bucket: resources.filings,
+    transcribe,
   };
 
   let failed = 0;

@@ -28,8 +28,12 @@ export type FilingPeriod = {
     figures: Partial<Record<FilingField, SourcedFigure>>;
 };
 
+// How a PDF was read by a model (AiPdfExtractor)
+export type FilingExtraction = { model: string; promptVersion: string; pages: number[]; inputTokens?: number; outputTokens?: number };
+
 export type ParsedFiling = {
-    format: 'krs-xml' | 'esef' | 'ifrs-text';  // Polish accounting act XML (this file), IFRS inline XBRL (EsefParser), untagged IFRS (IfrsTextParser)
+    // Polish accounting act XML (this file), IFRS inline XBRL (EsefParser), untagged IFRS (IfrsTextParser), PDF read by a model (AiPdfExtractor)
+    format: 'krs-xml' | 'esef' | 'ifrs-text' | 'ai-pdf';
     scope: FilingScope;
     companyName: string;
     krs?: string;
@@ -44,6 +48,7 @@ export type ParsedFiling = {
     periods: FilingPeriod[];         // current year first
     checks: string[];                // failed consistency checks; empty when the filing adds up
     notes?: string[];                // how figures were derived where the filing left a choice
+    extraction?: FilingExtraction;   // ai-pdf: model, prompt version, pages read
 };
 
 type Node = Record<string, unknown>;

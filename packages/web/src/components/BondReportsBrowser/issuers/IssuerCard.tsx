@@ -33,6 +33,7 @@ const FILING_SOURCE = {
   'krs-xml': 'filed statements (KRS)',
   'esef': 'the annual report (ESEF, IFRS)',
   'ifrs-text': 'the annual report (IFRS)',
+  'ai-pdf': 'the annual report (PDF, read by AI and checked)',
 } as const;
 import { isInFundamentalScope } from '@/bonds/fundamentals/scorecard';
 

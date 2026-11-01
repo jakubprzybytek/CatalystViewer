@@ -1,6 +1,6 @@
 export * from './IssuerFinancialsTable';
 
-import type { FilingField, FilingScope, ParsedFiling, SourcedFigure } from '../../bonds/fundamentals/filings/FilingParser';
+import type { FilingExtraction, FilingField, FilingScope, ParsedFiling, SourcedFigure } from '../../bonds/fundamentals/filings/FilingParser';
 
 // One fiscal year of an issuer's financials, read from a filed statement.
 // Key: entityId (PK), period = "<periodEnd>#<scope>" (SK). Each filing gives two years: its own (column
@@ -27,6 +27,7 @@ export type DbIssuerFinancialsRecord = {
         preparedOn?: string;
         checks: string[];         // failed consistency checks of the filing
         notes?: string[];         // how figures were derived where the filing left a choice
+        extraction?: FilingExtraction;  // ai-pdf: model, prompt version, pages read
     };
     importedAt: string;           // ISO 8601
 };

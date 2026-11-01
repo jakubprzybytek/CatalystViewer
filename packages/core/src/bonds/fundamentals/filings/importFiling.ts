@@ -4,6 +4,7 @@
 //   - KRS XML: Polish accounting act statements from the KRS financial documents browser (FilingParser)
 //   - ESEF: IFRS report package (.zip) or inline XBRL report (.xhtml), as listed companies publish (EsefParser)
 //   - IFRS text: an untagged IFRS statement as XHTML/HTML, read by line labels (IfrsTextParser)
+//   - PDF: read by a model and verified in code (AiPdfExtractor); needs `transcribe`
 // Used by `npm run import-filing` (scripts/import-filing); kept here so a web upload can reuse it.
 import { createHash } from 'crypto';
 import axios from 'axios';
@@ -13,6 +14,8 @@ import { parseFiling, type ParsedFiling } from './FilingParser';
 import { looksLikeEsef, openEsef, parseEsef } from './EsefParser';
 import { parseIfrsText } from './IfrsTextParser';
 import { isZip } from './zip';
+import { isPdf, readPdfPages } from './pdfText';
+import { extractStatements, findKrs, findLei, type Transcriber } from './AiPdfExtractor';
 
 export type LeiRecord = { legalName: string; krs?: string; registeredAs?: string; jurisdiction?: string };
 
@@ -23,6 +26,7 @@ export type ImportFilingDeps = {
     bucket: string;
     registerName?: (krs: string) => Promise<string | undefined>;  // default: the KRS register API
     leiRecord?: (lei: string) => Promise<LeiRecord | undefined>;   // default: the GLEIF API
+    transcribe?: Transcriber;                    // model for PDFs (AiPdfExtractor.bedrockTranscriber)
     now?: () => Date;
 };
 
@@ -49,7 +53,7 @@ export class ImportFilingError extends Error {}
 
 // ─── Formats ────────────────────────────────────────────────────────────────────
 
-type FileKind = { extension: 'xml' | 'zip' | 'xhtml'; contentType: string };
+type FileKind = { extension: 'xml' | 'zip' | 'xhtml' | 'pdf'; contentType: string };
 
 // ESEF (zip or inline XBRL), then an HTML document (untagged IFRS), then the KRS XML structures.
 export function readFiling(data: Buffer, fileName = ''): { filing: ParsedFiling; kind: FileKind } {
@@ -66,6 +70,20 @@ export function readFiling(data: Buffer, fileName = ''): { filing: ParsedFiling;
         return { filing: parseIfrsText(data.toString('utf-8')), kind: { extension: 'xhtml', contentType: 'application/xhtml+xml' } };
     }
     return { filing: parseFiling(data.toString('utf-8')), kind: { extension: 'xml', contentType: 'application/xml' } };
+}
+
+// Any supported file; a PDF goes to the model. With `requireIdentity`, a PDF that names no KRS number
+// or LEI (and no `krs` given) is refused before the paid model call.
+export async function readAnyFiling(
+    data: Buffer, fileName = '', transcribe?: Transcriber, opts: { requireIdentity?: boolean; krs?: string } = {},
+): Promise<{ filing: ParsedFiling; kind: FileKind }> {
+    if (!isPdf(data)) return readFiling(data, fileName);
+    if (!transcribe) throw new ImportFilingError('A PDF is read by a model: no model configured');
+    const pages = await readPdfPages(data);
+    if (opts.requireIdentity && !opts.krs && !findKrs(pages) && !findLei(pages)) {
+        throw new ImportFilingError('The PDF names no KRS number or LEI; pass --krs <number>');
+    }
+    return { filing: await extractStatements(pages, transcribe), kind: { extension: 'pdf', contentType: 'application/pdf' } };
 }
 
 // ─── Names ──────────────────────────────────────────────────────────────────────
@@ -199,7 +217,7 @@ function resolveIssuer(identity: Identity, deps: ImportFilingDeps, known: DbIssu
 // ─── Entry point ────────────────────────────────────────────────────────────────
 
 export async function importFiling(deps: ImportFilingDeps, data: Buffer, options: ImportFilingOptions = {}): Promise<ImportFilingResult> {
-    const { filing, kind } = readFiling(data, options.fileName);
+    const { filing, kind } = await readAnyFiling(data, options.fileName, deps.transcribe, { requireIdentity: true, krs: options.krs });
     const warnings: string[] = [];
 
     if (filing.checks.length > 0 && !options.force) {
@@ -239,7 +257,7 @@ export async function importFiling(deps: ImportFilingDeps, data: Buffer, options
         currency: filing.currency,
         figures: p.figures,
         column: p.column,
-        filing: { key: s3Key, sha256, format: filing.format, schema: filing.schema, preparedOn: filing.preparedOn, checks: filing.checks, notes: filing.notes },
+        filing: { key: s3Key, sha256, format: filing.format, schema: filing.schema, preparedOn: filing.preparedOn, checks: filing.checks, notes: filing.notes, extraction: filing.extraction },
         importedAt,
     }));
 

@@ -75,13 +75,14 @@ The CLI runs through `esrun --send-code-mode=temporaryFile` (see `package.json`)
 
 ## Importing filed statements (KRS)
 
-The scorecard uses an issuer's own annual statements instead of the AI-collected figures whenever the issuer has any: they're read in code, every figure keeps the statement lines or XBRL concepts it came from, and the statement is checked for consistency. Three formats, detected from the file:
+The scorecard uses an issuer's own annual statements instead of the AI-collected figures whenever the issuer has any: they're read in code, every figure keeps the statement lines or XBRL concepts it came from, and the statement is checked for consistency. Four formats, detected from the file:
 
 | Format | Who files it | Where to get it | Read by |
 |---|---|---|---|
 | KRS XML (`.xml`) | companies under the Polish accounting act, most unlisted issuers | https://rdf-przegladarka.ms.gov.pl: search by KRS number, download the XML of *Roczne sprawozdanie finansowe* (and *Skonsolidowane …* for groups); signed files are fine | `FilingParser.ts`: fixed line codes |
 | ESEF (`.zip`, or `.xhtml` with inline XBRL) | listed companies reporting under IFRS; the consolidated statements are tagged | the issuer's investor relations site, or the KRS financial documents browser (the report package zip). Older years (2020–2023): https://filings.xbrl.org | `EsefParser.ts`: IFRS taxonomy tags |
-| IFRS text (`.xhtml`, `.html`) | listed companies' separate (single-company) statements, which are not tagged | as ESEF, the `…-1-pl.xhtml` report | `IfrsTextParser.ts`: line labels, best effort |
+| IFRS text (`.xhtml`, `.html`) | listed companies' separate (single-company) statements, which are not tagged | as ESEF, the `…-1-pl.xhtml` report | `IfrsTextParser.ts`: line labels, best effort; not extended further (each layout needs its own patches), use the PDF route |
+| PDF (`.pdf`) | unlisted IFRS reporters (e.g. P4), foreign issuers, issuers whose website only has the PDF | the issuer's investor relations site | `AiPdfExtractor.ts`: a model copies the statement lines, code checks them (below) |
 
 The KRS repository has no API and blocks automated downloads, so files are downloaded by hand. Prefer the ESEF package (the zip) over the bare `.xhtml`: it carries the filer's calculation tree, anchors and labels, which are needed to find debt lines the filer tagged with its own concepts. Then import into a stage:
 
@@ -116,7 +117,15 @@ How figures are derived where the format leaves a choice (the importer prints th
 - **Current assets and liabilities:** ESEF filers with assets held for sale may tag only the totals excluding them; those are used, plus the held-for-sale lines.
 - **Checks:** assets = equity and liabilities, assets = current + non-current (KRS XML and ESEF), net profit in the income statement = in the balance sheet (KRS XML). IFRS text is accepted only when total assets tie to total equity and liabilities; check its figures against the document all the same.
 
-Not supported: small and micro entities (`JednostkaMala`, `JednostkaMikro`), banks and insurers, PDF files (convert them or use the XHTML). Code: `packages/core/src/bonds/fundamentals/filings/`, `scripts/import-filing/`.
+**PDF reports** (`.pdf`, e.g. unlisted IFRS reporters like P4, or an issuer whose website only has the PDF) are read by a model and checked in code (`AiPdfExtractor.ts`):
+
+1. code reads the PDF text (pdfjs-dist) and picks the statement pages: a statement heading near the top of a page that is mostly table lines, plus the next page; the table of contents is skipped;
+2. the model (`--model`, default the app's default model) copies every line of the balance sheet, income statement and cash flow statement through a tool with a fixed schema: label, page, the amount per fiscal-year column exactly as printed, and the standard item it is (revenue, total assets, bonds, bank loans, leases, combined financing, …). It doesn't compute anything;
+3. code turns the printed amounts into numbers and sums the figures; checks: every amount is on its page, total assets = total equity and liabilities, equity and net profit are there. A failed check refuses the import, as for other formats.
+
+One call per report, ~8k tokens in and ~10k out (≈ $0.15 with Sonnet 4.6). The row records the model, prompt version and pages read (`filing.extraction`). The KRS number is taken from the text (also without leading zeros) or the LEI next to "LEI"; a PDF with neither is refused before the model call unless `--krs` is given. Lines that combine loans and bonds ("financial liabilities") count as debt with no bond split.
+
+Not supported: small and micro entities (`JednostkaMala`, `JednostkaMikro`), banks and insurers, scanned PDFs (no text layer). Code: `packages/core/src/bonds/fundamentals/filings/`, `scripts/import-filing/`.
 
 ## Delivery
 

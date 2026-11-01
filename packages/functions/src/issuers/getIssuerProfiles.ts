@@ -22,7 +22,7 @@ export function currentScorecard(summary: DbIssuerAnalysisSummary): FundamentalS
 // Where the scorecard's figures come from: the issuer's filed statements (KRS XML, ESEF or IFRS report)
 // or the AI analysis.
 export type FinancialsSource =
-    | { kind: 'filing'; format: 'krs-xml' | 'esef' | 'ifrs-text'; scope: 'single' | 'group'; latestPeriodEnd: string; years: number }
+    | { kind: 'filing'; format: 'krs-xml' | 'esef' | 'ifrs-text' | 'ai-pdf'; scope: 'single' | 'group'; latestPeriodEnd: string; years: number }
     | { kind: 'ai'; performedAt: string };
 
 // The latest fiscal year in the AI-collected figures, if any.
