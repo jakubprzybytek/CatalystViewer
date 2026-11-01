@@ -127,6 +127,29 @@ ${['TradeAndOtherPayables', 'LoansReceived', 'DebtInstrumentsIssuedAtAmortisedCo
         });
     });
 
+    it('reads current totals excluding held for sale, and a filer depreciation line less impairment', () => {
+        const fact = (name: string, ctx: string, v: string) =>
+            `<ix:nonFraction name="${name}" contextRef="${ctx}" unitRef="PLN" decimals="-5" scale="6" format="ixt:num-comma-decimal">${v}</ix:nonFraction>`;
+        const ctx = (id: string, period: string) =>
+            `<xbrli:context id="${id}"><xbrli:entity><xbrli:identifier scheme="http://standards.iso.org/iso/17442">259400POLSATLIKE0001</xbrli:identifier></xbrli:entity><xbrli:period>${period}</xbrli:period></xbrli:context>`;
+        const report = `<html xmlns="http://www.w3.org/1999/xhtml" xmlns:ix="http://www.xbrl.org/2013/inlineXBRL" xmlns:xbrli="http://www.xbrl.org/2003/instance" xmlns:iso4217="http://www.xbrl.org/2003/iso4217"><body>
+<ix:header><ix:resources>${ctx('D', '<xbrli:startDate>2025-01-01</xbrli:startDate><xbrli:endDate>2025-12-31</xbrli:endDate>')}${ctx('I', '<xbrli:instant>2025-12-31</xbrli:instant>')}
+<xbrli:unit id="PLN"><xbrli:measure>iso4217:PLN</xbrli:measure></xbrli:unit></ix:resources></ix:header>
+${fact('ifrs-full:ProfitLoss', 'D', '2.602,6')}${fact('ifrs-full:Assets', 'I', '35.269,1')}
+${fact('ifrs-full:CurrentAssetsOtherThanAssetsOrDisposalGroupsClassifiedAsHeldForSaleOrAsHeldForDistributionToOwners', 'I', '8.500,0')}
+${fact('ifrs-full:NoncurrentAssetsOrDisposalGroupsClassifiedAsHeldForSale', 'I', '28,3')}
+${fact('ifrs-full:CurrentLiabilitiesOtherThanLiabilitiesIncludedInDisposalGroupsClassifiedAsHeldForSale', 'I', '6.018,9')}
+${fact('cp:DepreciationAmortizationImpairmentAndLiquidation', 'D', '4.433,1')}${fact('ifrs-full:ImpairmentLossRecognisedInProfitOrLossGoodwill', 'D', '2.716,9')}
+</body></html>`;
+        const def = `<link:linkbase xmlns:link="http://www.xbrl.org/2003/linkbase" xmlns:xlink="http://www.w3.org/1999/xlink"><link:definitionLink>
+<link:loc xlink:label="w" xlink:href="x.xsd#ifrs-full_AdjustmentsToReconcileProfitLossOtherThanChangesInWorkingCapital"/><link:loc xlink:label="n" xlink:href="x.xsd#cp_DepreciationAmortizationImpairmentAndLiquidation"/>
+<link:definitionArc xlink:arcrole="http://www.esma.europa.eu/xbrl/esef/arcrole/wider-narrower" xlink:from="w" xlink:to="n"/></link:definitionLink></link:linkbase>`;
+        const filing = parseEsef(openEsef(makeZip({ 'p/reports/r.xhtml': report, 'p/x/r_def.xml': def })));
+        expect(value(filing, 0, 'currentAssets').value).toBe(8_528_300_000);
+        expect(value(filing, 0, 'currentLiabilities').value).toBe(6_018_900_000);
+        expect(value(filing, 0, 'depreciation')).toEqual({ value: 1_716_200_000, source: ['cp:DepreciationAmortizationImpairmentAndLiquidation', '−ifrs-full:ImpairmentLossRecognisedInProfitOrLossGoodwill'] });
+    });
+
     it('flags a balance sheet that does not add up', () => {
         const broken = Buffer.from(esefReport.toString('utf-8').replace(
             '<ix:nonFraction name="ifrs-full:EquityAndLiabilities" contextRef="I2025" unitRef="PLN" decimals="-3" scale="3" format="ixt:num-dot-decimal">100,000',

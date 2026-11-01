@@ -358,6 +358,21 @@ export function parseEsef(input: EsefInput): ParsedFiling {
         /^ifrs-full:RevenueFrom(?!ContractsWithCustomers$)/.test(c) && !/Interest|Dividend|Grant/.test(c)
         || (!c.startsWith('ifrs-full:') && (taxonomy?.anchors.get(c) ?? []).includes(ifrs('Revenue'))));
 
+    // A filer's own cash flow line for depreciation and amortisation (e.g. "depreciation, amortisation,
+    // impairment and liquidation"). When it includes impairment, the tagged impairment losses are taken off.
+    const filerDepreciationConcept = [...new Set(facts.map(f => f.concept))].find(c => !c.startsWith('ifrs-full:')
+        && /deprec/i.test(`${c} ${label(c)}`) && /amorti[sz]/i.test(`${c} ${label(c)}`)
+        && (taxonomy?.anchors.get(c) ?? []).some(a => /^ifrs-full:Adjustments/.test(a)));
+    let depreciationLessImpairment = false;
+    const filerDepreciation = (p: { start: string; end: string }): SourcedFigure | undefined => {
+        if (!filerDepreciationConcept) return undefined;
+        const line = sourced([filerDepreciationConcept], p);
+        if (!line || !/impair/i.test(`${filerDepreciationConcept} ${label(filerDepreciationConcept)}`)) return line;
+        const impairment = sourced([...new Set(facts.map(f => f.concept))].filter(c => /^ifrs-full:ImpairmentLossRecognisedInProfitOrLoss/.test(c)), p);
+        depreciationLessImpairment = true;
+        return impairment ? { value: round2(line.value - impairment.value), source: [...line.source, ...impairment.source.map(c => `−${c}`)] } : line;
+    };
+
     const checks: string[] = [];
     const filingPeriods: FilingPeriod[] = periods.map((p, i) => {
         const debt = debtFor(p);
@@ -370,7 +385,8 @@ export function parseEsef(input: EsefInput): ParsedFiling {
                 ifrs('DepreciationAmortisationAndImpairmentLossReversalOfImpairmentLossRecognisedInProfitOrLoss'),
                 ifrs('AdjustmentsForDepreciationAndAmortisationExpenseAndImpairmentLossReversalOfImpairmentLossRecognisedInProfitOrLoss'),
             ], p) ?? sourced([ifrs('DepreciationExpense'), ifrs('AmortisationExpense')], p)
-                ?? sourced([ifrs('AdjustmentsForDepreciationExpense'), ifrs('AdjustmentsForAmortisationExpense')], p),
+                ?? sourced([ifrs('AdjustmentsForDepreciationExpense'), ifrs('AdjustmentsForAmortisationExpense')], p)
+                ?? filerDepreciation(p),
             interestExpense: firstOf([ifrs('InterestExpense'), ifrs('InterestExpenseOnBorrowings'), ifrs('FinanceCosts')], p),
             netProfit: firstOf([ifrs('ProfitLoss')], p),
             totalAssets: firstOf([ifrs('Assets')], p),
@@ -380,9 +396,11 @@ export function parseEsef(input: EsefInput): ParsedFiling {
             financialDebt: debt.all,
             bonds: debt.bonds,
             cash: firstOf([ifrs('CashAndCashEquivalents')], p),
-            currentAssets: firstOf([ifrs('CurrentAssets')], p),
+            currentAssets: firstOf([ifrs('CurrentAssets')], p)
+                ?? sourced([ifrs('CurrentAssetsOtherThanAssetsOrDisposalGroupsClassifiedAsHeldForSaleOrAsHeldForDistributionToOwners'), ifrs('NoncurrentAssetsOrDisposalGroupsClassifiedAsHeldForSaleOrAsHeldForDistributionToOwners'), ifrs('NoncurrentAssetsOrDisposalGroupsClassifiedAsHeldForSale')].slice(0, value(ifrs('CurrentAssetsOtherThanAssetsOrDisposalGroupsClassifiedAsHeldForSaleOrAsHeldForDistributionToOwners'), p) === undefined ? 0 : 3), p),
             inventory: firstOf([ifrs('Inventories'), ifrs('CurrentInventoriesHeldForSale')], p),
-            currentLiabilities: firstOf([ifrs('CurrentLiabilities')], p),
+            currentLiabilities: firstOf([ifrs('CurrentLiabilities')], p)
+                ?? sourced([ifrs('CurrentLiabilitiesOtherThanLiabilitiesIncludedInDisposalGroupsClassifiedAsHeldForSale'), ifrs('LiabilitiesIncludedInDisposalGroupsClassifiedAsHeldForSale')].slice(0, value(ifrs('CurrentLiabilitiesOtherThanLiabilitiesIncludedInDisposalGroupsClassifiedAsHeldForSale'), p) === undefined ? 0 : 2), p),
             minorityInterests: firstOf([ifrs('NoncontrollingInterests')], p),
             operatingCashFlow: firstOf([ifrs('CashFlowsFromUsedInOperatingActivities')], p),
             capex: firstOf([ifrs('PurchaseOfPropertyPlantAndEquipmentIntangibleAssetsOtherThanGoodwillInvestmentPropertyAndOtherNoncurrentAssets')], p)
@@ -427,6 +445,9 @@ export function parseEsef(input: EsefInput): ParsedFiling {
 
     if (filingPeriods.some(p => p.figures.interestExpense?.source[0] === ifrs('FinanceCosts'))) {
         notes.push('Interest: no interest expense tagged, finance costs used');
+    }
+    if (depreciationLessImpairment) {
+        notes.push('Depreciation: the filer\'s combined depreciation, amortisation and impairment line, less the tagged impairment losses');
     }
     if (wideDebtUsed) {
         notes.push('Debt: one line of financial liabilities at amortised cost (credits, loans, bonds and leases together; may hold other financial liabilities), so no bond split');
