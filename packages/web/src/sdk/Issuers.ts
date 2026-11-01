@@ -79,6 +79,57 @@ export async function getIssuerAnalysis(issuerName: string): Promise<IssuerAnaly
   return { reportMarkdown: result.reportMarkdown, agentLog: result.agentLog ?? [] };
 }
 
+// An issuer's yearly figures from every source (GET /api/issuers/{name}/financials). Amounts in millions.
+export type FinancialField =
+  | 'revenue' | 'ebit' | 'depreciation' | 'interestExpense' | 'netProfit'
+  | 'totalAssets' | 'intangibleAssets' | 'equity' | 'financialDebt' | 'cash'
+  | 'currentAssets' | 'inventory' | 'currentLiabilities'
+  | 'bonds' | 'minorityInterests' | 'operatingCashFlow' | 'capex';
+
+export type FilingFormat = 'krs-xml' | 'esef' | 'ifrs-text' | 'ai-pdf';
+
+export type FiledYear = {
+  periodEnd: string;
+  periodStart: string;
+  months: number;
+  scope: 'single' | 'group';
+  currency: string;
+  column: 'current' | 'previous';
+  format: FilingFormat;
+  schema: string;
+  importedAt: string;
+  checks: string[];
+  notes: string[];
+  extraction?: { model: string; promptVersion: string; pages: number[] };
+  documentKey: string;
+  documentUrl?: string;
+  figures: Partial<Record<FinancialField, { value: number; source: string[] }>>;
+};
+
+export type AiYear = { year: number; figures: Partial<Record<FinancialField, number>> };
+
+export type IssuerFinancials = {
+  issuerName: string;
+  filed: FiledYear[];
+  ai?: { performedAt: string; years: AiYear[] };
+  scorecardSource?: FinancialsSource;
+};
+
+export async function getIssuerFinancials(issuerName: string): Promise<IssuerFinancials> {
+  const session = await fetchAuthSession();
+  const response = await get({
+    apiName: 'api',
+    path: `/api/issuers/${encodeURIComponent(issuerName)}/financials`,
+    options: {
+      headers: {
+        Authorization: `Bearer ${session.tokens?.accessToken?.toString()}`,
+      },
+    },
+  }).response;
+  const result = (await response.body.json()) as unknown as IssuerFinancials;
+  return { ...result, filed: result.filed ?? [] };
+}
+
 export async function triggerFundamentalAnalysis(issuerName: string): Promise<void> {
   const session = await fetchAuthSession();
   await post({

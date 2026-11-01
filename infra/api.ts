@@ -1,4 +1,4 @@
-import { profilesTable, bondDetailsTable, bondStatisticsTable, issuerProfilesTable, issuerFinancialsTable, jobsTable } from "./storage";
+import { profilesTable, bondDetailsTable, bondStatisticsTable, issuerProfilesTable, issuerFinancialsTable, filingsBucket, jobsTable } from "./storage";
 import { accessGroups, isProd, TEST_USER } from "./stage";
 
 // Shared, manually managed pool (AlbedoUserPool) used by several apps. Each stage gets its own app client.
@@ -62,6 +62,14 @@ const getIssuerProfilesFunction = apiFunction("GetIssuerProfiles", {
   memory: "256 MB",
   timeout: "10 seconds",
   link: [issuerProfilesTable, issuerFinancialsTable],
+});
+
+// An issuer's yearly figures from every source, with temporary links to the original filings.
+const getIssuerFinancialsFunction = apiFunction("GetIssuerFinancials", {
+  handler: "packages/functions/src/issuers/getIssuerFinancials.handler",
+  memory: "256 MB",
+  timeout: "10 seconds",
+  link: [issuerProfilesTable, issuerFinancialsTable, filingsBucket],
 });
 
 const getIssuerAnalysisFunction = apiFunction("GetIssuerAnalysis", {
@@ -159,6 +167,7 @@ api.route("GET /api/bonds/{bondType}", getBondsFunction.arn, jwtAuth);
 api.route("GET /api/bondQuotes", getBondQuotesFunction.arn, jwtAuth);
 api.route("GET /api/issuers/profiles", getIssuerProfilesFunction.arn, jwtAuth);
 api.route("GET /api/issuers/{name}/analysis", getIssuerAnalysisFunction.arn, jwtAuth);
+api.route("GET /api/issuers/{name}/financials", getIssuerFinancialsFunction.arn, jwtAuth);
 api.route("POST /api/issuers/{name}/analysis/trigger", triggerFundamentalAnalysisFunction.arn, jwtAuth);
 api.route("GET /api/jobs", getJobsFunction.arn, jwtAuth);
 api.route("GET /api/jobs/{jobId}", getJobFunction.arn, jwtAuth);

@@ -76,6 +76,16 @@ export class IssuerProfilesTable {
         return result.Item as DbIssuerAnalysisRecord | undefined;
     }
 
+    // The latest analysis without its report and agent log (the large parts).
+    async getLatestAnalysisSummary(issuerName: string): Promise<DbIssuerAnalysisSummary | undefined> {
+        const result = await this.dynamoDBDocumentClient.send(new GetCommand({
+            TableName: this.tableName,
+            Key: { issuerName, recordType: '#LATEST_ANALYSIS' },
+            ProjectionExpression: 'issuerName, performedAt, performedAtTs, scorecard, agentFinancials',
+        }));
+        return result.Item as DbIssuerAnalysisSummary | undefined;
+    }
+
     async getAllLatestAnalyses(): Promise<Map<string, number>> {
         console.log('IssuerProfilesTable: Fetching all latest analyses');
 

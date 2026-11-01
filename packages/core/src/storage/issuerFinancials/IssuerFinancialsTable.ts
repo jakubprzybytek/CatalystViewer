@@ -18,6 +18,16 @@ export class IssuerFinancialsTable {
         return (result.Items ?? []) as DbIssuerFinancialsRecord[];
     }
 
+    // One issuer's rows (scan with a filter: the table holds a few rows per issuer).
+    async getByIssuer(issuerName: string): Promise<DbIssuerFinancialsRecord[]> {
+        const result = await scanAll(this.documentClient, new ScanCommand({
+            TableName: this.tableName,
+            FilterExpression: 'issuerName = :issuerName',
+            ExpressionAttributeValues: { ':issuerName': issuerName },
+        }));
+        return (result.Items ?? []) as DbIssuerFinancialsRecord[];
+    }
+
     async getByEntity(entityId: string): Promise<DbIssuerFinancialsRecord[]> {
         const result = await queryAll(this.documentClient, new QueryCommand({
             TableName: this.tableName,

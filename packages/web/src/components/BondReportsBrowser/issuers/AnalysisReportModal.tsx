@@ -16,12 +16,16 @@ import CloseOutlinedIcon from '@mui/icons-material/CloseOutlined';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { getIssuerAnalysis, type AgentEvent } from '@/sdk/Issuers';
+import IssuerFinancialsTable from './IssuerFinancialsTable';
 
 type AnalysisReportModalProps = {
   issuerName: string;
   open: boolean;
   onClose: () => void;
+  hasAnalysis: boolean;   // the AI analysis tabs (report, agent logs)
 };
+
+type TabName = 'financials' | 'report' | 'logs';
 
 function AgentLogs({ events }: { events: AgentEvent[] }): React.JSX.Element {
   if (events.length === 0) {
@@ -97,7 +101,7 @@ function AgentLogs({ events }: { events: AgentEvent[] }): React.JSX.Element {
   );
 }
 
-export default function AnalysisReportModal({ issuerName, open, onClose }: AnalysisReportModalProps): React.JSX.Element {
+export default function AnalysisReportModal({ issuerName, open, onClose, hasAnalysis }: AnalysisReportModalProps): React.JSX.Element {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
@@ -105,15 +109,16 @@ export default function AnalysisReportModal({ issuerName, open, onClose }: Analy
   const [reportMarkdown, setReportMarkdown] = useState<string | null>(null);
   const [agentLog, setAgentLog] = useState<AgentEvent[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState(0);
+  const [activeTab, setActiveTab] = useState<TabName>('financials');
 
   useEffect(() => {
     if (!open) return;
-    setLoading(true);
+    setActiveTab('financials');
     setError(null);
     setReportMarkdown(null);
     setAgentLog([]);
-    setActiveTab(0);
+    if (!hasAnalysis) return;
+    setLoading(true);
     getIssuerAnalysis(issuerName)
       .then(result => {
         setReportMarkdown(result.reportMarkdown);
@@ -121,7 +126,7 @@ export default function AnalysisReportModal({ issuerName, open, onClose }: Analy
       })
       .catch(() => setError('Failed to load report. Please try again.'))
       .finally(() => setLoading(false));
-  }, [open, issuerName]);
+  }, [open, issuerName, hasAnalysis]);
 
   return (
     <Dialog
@@ -138,20 +143,22 @@ export default function AnalysisReportModal({ issuerName, open, onClose }: Analy
           <CloseOutlinedIcon />
         </IconButton>
       </DialogTitle>
-      <Tabs value={activeTab} onChange={(_, v: number) => setActiveTab(v)} sx={{ px: 3, borderBottom: 1, borderColor: 'divider' }}>
-        <Tab label='Report' />
-        <Tab label='Agent Logs' />
+      <Tabs value={activeTab} onChange={(_, v: TabName) => setActiveTab(v)} sx={{ px: 3, borderBottom: 1, borderColor: 'divider' }}>
+        <Tab label='Financials' value='financials' />
+        {hasAnalysis && <Tab label='Report' value='report' />}
+        {hasAnalysis && <Tab label='Agent Logs' value='logs' />}
       </Tabs>
       <DialogContent dividers sx={{ p: { xs: 1.5, sm: 3 } }}>
-        {loading && (
+        {open && activeTab === 'financials' && <IssuerFinancialsTable issuerName={issuerName} />}
+        {activeTab !== 'financials' && loading && (
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
             <CircularProgress />
           </Box>
         )}
-        {error && (
+        {activeTab !== 'financials' && error && (
           <Typography color='error'>{error}</Typography>
         )}
-        {!loading && !error && activeTab === 0 && reportMarkdown !== null && (
+        {!loading && !error && activeTab === 'report' && reportMarkdown !== null && (
           <Box sx={{
             '& h1': { mt: 2, mb: 1, fontSize: { xs: '1.3rem', sm: '1.6rem' } },
             '& h2': { mt: 2, mb: 1, fontSize: { xs: '1.1rem', sm: '1.3rem' } },
@@ -168,7 +175,7 @@ export default function AnalysisReportModal({ issuerName, open, onClose }: Analy
             <Markdown remarkPlugins={[remarkGfm]}>{reportMarkdown}</Markdown>
           </Box>
         )}
-        {!loading && !error && activeTab === 1 && (
+        {!loading && !error && activeTab === 'logs' && (
           <AgentLogs events={agentLog} />
         )}
       </DialogContent>

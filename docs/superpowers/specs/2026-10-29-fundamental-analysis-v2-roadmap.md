@@ -196,6 +196,11 @@ Goal: an **import page in the app** that accepts any report (KRS XML, ESEF `.zip
 5. **Import page:** upload (presigned S3 URL) → parse in a Lambda (AI route for PDFs, with a cost note) → review screen with the figures, checks and notes, side by side with the previous year → confirm to store. A coverage view lists issuers with their latest imported year, format and scope, and those with nothing or an old year, with a link to the issuer's report page or KRS search.
 6. **Per-issuer overrides** for the odd line a parser can't place, reviewed once and stored with the issuer, instead of more general heuristics.
 
+Progress:
+
+- *2026-11-01:* **AI extraction for PDFs** built into the importer (`AiPdfExtractor.ts`, format `ai-pdf`): pdfjs-dist text, statement pages found in code, the model copies the lines through a fixed-schema tool, code checks every amount against its page and the balance sheet totals. Mapping lines to fields turned out to work better in the model (it classifies each line into a fixed list) than by label rules, with code summing and checking. First runs: KGHM (164-page PDF) and P4 (72 pages), all checks passing, ~$0.15 each with Sonnet 4.6; KGHM's figures equal those from its untagged XHTML. Imported to prod with Cyfrowy Polsat (ESEF). P4 shows loans and bonds as one "financial liabilities" line: the bond split needs the notes (section 2).
+- *2026-11-01:* **Financials view**: a Financials tab in the issuer's report window (also for issuers with imported reports and no AI analysis) shows up to six fiscal years: filed figures where a report is imported, otherwise the AI analysis's; the source and a link to the original document per year; the statement lines behind each figure on hover; years where the AI analysis disagrees with the report by more than 2% are marked. API: `GET /api/issuers/{name}/financials`.
+
 ### Phase 0 scope
 
 - `StockwatchTool`: only complete years (four quarters) are emitted. The task prompt asks for complete fiscal years only.

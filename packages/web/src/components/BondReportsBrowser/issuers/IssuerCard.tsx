@@ -199,21 +199,21 @@ function IssuerCard({ issuerReport, statistics, isChecked, onIssuerChecked }: Is
                     {issuerReport.financialsSource.years > 1 ? ` and ${issuerReport.financialsSource.years - 1} earlier` : ''}
                   </Typography>
                 )}
+                {(issuerReport.performedAt || issuerReport.financialsSource?.kind === 'filing') && (
+                  <Box sx={{ display: 'flex', justifyContent: 'flex-end', pr: '8px', mt: 0.5 }}>
+                    <Button
+                      size='small'
+                      variant='outlined'
+                      onClick={() => setModalOpen(true)}
+                    >
+                      {issuerReport.performedAt ? 'Financials & report →' : 'Financials →'}
+                    </Button>
+                  </Box>
+                )}
                 {issuerReport.performedAt && (
-                  <>
-                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', pr: '8px', mt: 0.5 }}>
-                      <Button
-                        size='small'
-                        variant='outlined'
-                        onClick={() => setModalOpen(true)}
-                      >
-                        Full report →
-                      </Button>
-                    </Box>
-                    <Typography component='span' className='tiny-text'>
-                      Analysed on: {new Date(issuerReport.performedAt).toLocaleString('pl-PL')}
-                    </Typography>
-                  </>
+                  <Typography component='span' className='tiny-text'>
+                    Analysed on: {new Date(issuerReport.performedAt).toLocaleString('pl-PL')}
+                  </Typography>
                 )}
               </>
             )}
@@ -250,6 +250,7 @@ function IssuerCard({ issuerReport, statistics, isChecked, onIssuerChecked }: Is
         issuerName={issuerReport.name}
         open={modalOpen}
         onClose={() => setModalOpen(false)}
+        hasAnalysis={!!issuerReport.performedAt}
       />
       <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)}>
         <DialogTitle>Run Fundamental Analysis</DialogTitle>
