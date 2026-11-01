@@ -26,7 +26,7 @@ const fold = (s: string) => s.toLowerCase().normalize('NFD').replace(/\p{Diacrit
 // heading may run over two lines.
 const HEADINGS: Record<Statement, RegExp> = {
     balance: /(sprawozdani\w*(?: \w+){0,2} z sytuacji finansowej|^.{0,40}\bbilans\b|statement of financial position|balance sheet)/,
-    income: /(rachunek zyskow i strat|sprawozdani\w*(?: \w+){0,2} z (?:wyniku|calkowitych dochodow)|statement of (?:profit or loss|comprehensive income)|income statement)/,
+    income: /(rachunek zyskow (?:i|lub) strat|sprawozdani\w*(?: \w+){0,2} z (?:wyniku|calkowitych dochodow)|statement of (?:profit or loss|comprehensive income)|income statement)/,
     cashFlow: /(sprawozdani\w*(?: \w+){0,2} z przeplywow pienieznych|rachunek przeplywow pienieznych|statement of cash flows|cash flow statement)/,
 };
 const AMOUNT = /\(?-?\d{1,3}(?:[ . ]\d{3})*(?:,\d+)?\)?/g;

@@ -44,7 +44,7 @@ describe('findStatementPages', () => {
         const table = Array.from({ length: 14 }, (_, i) => `Pozycja ${i} | 1 000 | 2 000`);
         const pages = [
             { page: 1, lines: ['Wstęp', 'tekst'] },
-            { page: 2, lines: ['MARVIPOL \\ RAPORT ROCZNY | 66', 'SKONSOLIDOWANE ROCZNE SPRAWOZDANIE', 'Z CAŁKOWITYCH DOCHODÓW (TYS. PLN)', ...table] },
+            { page: 2, lines: ['MARVIPOL \\ RAPORT ROCZNY | 66', 'SKONSOLIDOWANY RACHUNEK ZYSKÓW LUB STRAT', ...table] },
             { page: 3, lines: ['MARVIPOL \\ RAPORT ROCZNY | 68', 'SKONSOLIDOWANE ROCZNE SPRAWOZDANIE', 'Z SYTUACJI FINANSOWEJ (TYS. PLN)', ...table] },
             { page: 4, lines: ['MARVIPOL \\ RAPORT ROCZNY | 71', 'SKONSOLIDOWANE ROCZNE SPRAWOZDANIE', 'Z PRZEPŁYWÓW PIENIĘŻNYCH (TYS. PLN)', ...table] },
         ];
