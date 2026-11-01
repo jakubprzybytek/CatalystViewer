@@ -357,6 +357,19 @@ export function parseEsef(input: EsefInput): ParsedFiling {
     const revenueParts = [...new Set(facts.map(f => f.concept))].filter(c =>
         /^ifrs-full:RevenueFrom(?!ContractsWithCustomers$)/.test(c) && !/Interest|Dividend|Grant/.test(c)
         || (!c.startsWith('ifrs-full:') && (taxonomy?.anchors.get(c) ?? []).includes(ifrs('Revenue'))));
+    // Or the filer's income total, when operating profit is income less operating expenses in the
+    // calculation tree (financial companies, e.g. KRUK: interest income on debt portfolios, services, sales).
+    const incomeTotal = (taxonomy?.children.get(ifrs('ProfitLossFromOperatingActivities')) ?? []).find(k => k.weight > 0
+        && !k.concept.startsWith('ifrs-full:')
+        && (taxonomy?.children.get(k.concept) ?? []).some(g => g.weight > 0 && /Revenue|InterestIncome|InterestRevenue/.test(g.concept)))?.concept;
+    let incomeTotalUsed = false;
+    const revenueFor = (p: { start: string; end: string }): SourcedFigure | undefined => {
+        const total = firstOf([ifrs('Revenue'), ifrs('RevenueFromContractsWithCustomers')], p);
+        if (total) return total;
+        const income = incomeTotal ? sourced([incomeTotal], p) : undefined;
+        if (income) { incomeTotalUsed = true; return income; }
+        return sourced(revenueParts, p);
+    };
 
     // A filer's own cash flow line for depreciation and amortisation (e.g. "depreciation, amortisation,
     // impairment and liquidation"). When it includes impairment, the tagged impairment losses are taken off.
@@ -377,7 +390,7 @@ export function parseEsef(input: EsefInput): ParsedFiling {
     const filingPeriods: FilingPeriod[] = periods.map((p, i) => {
         const debt = debtFor(p);
         const figures: FilingPeriod['figures'] = {
-            revenue: firstOf([ifrs('Revenue'), ifrs('RevenueFromContractsWithCustomers')], p) ?? sourced(revenueParts, p),
+            revenue: revenueFor(p),
             ebit: firstOf([ifrs('ProfitLossFromOperatingActivities')], p),
             depreciation: firstOf([
                 ifrs('DepreciationAndAmortisationExpense'),
@@ -456,7 +469,9 @@ export function parseEsef(input: EsefInput): ParsedFiling {
     } else {
         for (const s of sides) if (s.fromCalc.length === 0) notes.push(`Debt: no ${s.side === 'unsplit' ? '' : `${s.side} `}borrowing lines in the calculation tree, standard IFRS concepts used`);
     }
-    if (filingPeriods.some(p => p.figures.revenue && !p.figures.revenue.source.some(c => c === ifrs('Revenue') || c === ifrs('RevenueFromContractsWithCustomers')))) {
+    if (incomeTotalUsed) {
+        notes.push(`Revenue: no revenue total tagged, the filer's operating income total used (${label(incomeTotal!) || incomeTotal})`);
+    } else if (filingPeriods.some(p => p.figures.revenue && !p.figures.revenue.source.some(c => c === ifrs('Revenue') || c === ifrs('RevenueFromContractsWithCustomers')))) {
         notes.push('Revenue: no total tagged, sum of revenue lines');
     }
 

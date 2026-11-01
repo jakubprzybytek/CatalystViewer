@@ -111,6 +111,20 @@ ${['TradeAndOtherPayables', 'LoansReceived', 'DebtInstrumentsIssuedAtAmortisedCo
             expect(filing.checks).toEqual([]);
         });
 
+        it("takes the filer's operating income total as revenue when operating profit is income less expenses", () => {
+            const withIncome = report.replace('</body>', `${fact('ifrs-full:ProfitLossFromOperatingActivities', 'D', '1,500')}${fact('fin:OperatingIncome', 'D', '3,000')}
+${fact('ifrs-full:InterestIncomeForFinancialAssetsMeasuredAtAmortisedCost', 'D', '2,500')}${fact('ifrs-full:RevenueFromRenderingOfServices', 'D', '550')}
+${fact('fin:OtherIncomeCostsFromPortfolios', 'D', '-50')}${fact('ifrs-full:OperatingExpense', 'D', '1,500')}</body>`);
+            const arc = (from: string, to: string, w: number, i: number) => `<link:loc xlink:label="f${i}" xlink:href="x.xsd#${from}"/><link:loc xlink:label="t${i}" xlink:href="x.xsd#${to}"/><link:calculationArc xlink:from="f${i}" xlink:to="t${i}" weight="${w}"/>`;
+            const cal = `<link:linkbase xmlns:link="http://www.xbrl.org/2003/linkbase" xmlns:xlink="http://www.w3.org/1999/xlink"><link:calculationLink>
+${arc('ifrs-full_ProfitLossFromOperatingActivities', 'fin_OperatingIncome', 1, 1)}${arc('ifrs-full_ProfitLossFromOperatingActivities', 'ifrs-full_OperatingExpense', -1, 2)}
+${arc('fin_OperatingIncome', 'ifrs-full_InterestIncomeForFinancialAssetsMeasuredAtAmortisedCost', 1, 3)}${arc('fin_OperatingIncome', 'ifrs-full_RevenueFromRenderingOfServices', 1, 4)}${arc('fin_OperatingIncome', 'fin_OtherIncomeCostsFromPortfolios', 1, 5)}
+</link:calculationLink></link:linkbase>`;
+            const filing = parseEsef(openEsef(makeZip({ 'p/reports/r.xhtml': withIncome, 'p/x/r_cal.xml': cal })));
+            expect(value(filing, 0, 'revenue')).toEqual({ value: 3_000_000, source: ['fin:OperatingIncome'] });
+            expect(filing.notes).toContain("Revenue: no revenue total tagged, the filer's operating income total used (fin:OperatingIncome)");
+        });
+
         it('takes a single line of financial liabilities at amortised cost as a last resort', () => {
             const oneLine = report
                 .replace(/<ix:nonFraction name="ifrs-full:(LoansReceived|LeaseLiabilities)"[^>]*>[^<]*<\/ix:nonFraction>/g, '')
