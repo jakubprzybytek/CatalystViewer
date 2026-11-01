@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { currentScorecard, scorecardWithSource } from './getIssuerProfiles';
+import { currentScorecard, financialsCoverage, scorecardWithSource } from './getIssuerProfiles';
 import type { DbIssuerFinancialsRecord } from '@core/storage/issuerFinancials';
 
 const trendSignal = (scorecard: ReturnType<typeof currentScorecard>) =>
@@ -75,5 +75,15 @@ describe('scorecardWithSource', () => {
 
     it('has no scorecard without either', () => {
         expect(scorecardWithSource('Testowa S.A.', [], undefined)).toEqual({});
+    });
+
+    it('summarises what is collected, whatever the scorecard uses', () => {
+        const previous = { ...filing, period: '2024-12-31#group', scope: 'group' as const, periodEnd: '2024-12-31', importedAt: '2026-11-01T10:00:00.000Z',
+            filing: { ...filing.filing, format: 'esef' as const } };
+        expect(financialsCoverage([filing, previous], analysis)).toEqual({
+            filed: { latestPeriodEnd: '2025-12-31', earliestPeriodEnd: '2024-12-31', years: 2, formats: ['krs-xml', 'esef'], scopes: ['group', 'single'], lastImportedAt: '2026-11-01T10:00:00.000Z' },
+            ai: { performedAt: '2026-10-01T10:00:00.000Z', latestYear: 2024, years: 1 },
+        });
+        expect(financialsCoverage([], undefined)).toEqual({});
     });
 });

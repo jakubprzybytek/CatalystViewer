@@ -53,6 +53,33 @@ export function scorecardWithSource(
     return {};
 }
 
+// What's collected for an issuer, whatever the scorecard uses: imported reports (both scopes, any
+// period length) and the AI analysis's years. For the Financials page.
+export type FinancialsCoverage = {
+    filed?: { latestPeriodEnd: string; earliestPeriodEnd: string; years: number; formats: DbIssuerFinancialsRecord['filing']['format'][]; scopes: ('single' | 'group')[]; lastImportedAt: string };
+    ai?: { performedAt: string; latestYear?: number; years: number };
+};
+
+export function financialsCoverage(filings: DbIssuerFinancialsRecord[], analysis: DbIssuerAnalysisSummary | undefined): FinancialsCoverage {
+    const coverage: FinancialsCoverage = {};
+    if (filings.length) {
+        const ends = filings.map(f => f.periodEnd).sort();
+        coverage.filed = {
+            latestPeriodEnd: ends[ends.length - 1],
+            earliestPeriodEnd: ends[0],
+            years: new Set(ends).size,
+            formats: [...new Set(filings.map(f => f.filing.format ?? 'krs-xml'))],
+            scopes: [...new Set(filings.map(f => f.scope))].sort(),
+            lastImportedAt: filings.map(f => f.importedAt).sort().at(-1)!,
+        };
+    }
+    if (analysis) {
+        const years = (analysis.agentFinancials as { years?: unknown } | undefined)?.years;
+        coverage.ai = { performedAt: analysis.performedAt, latestYear: latestAiYear(analysis), years: Array.isArray(years) ? years.length : 0 };
+    }
+    return coverage;
+}
+
 export const handler = lambdaHandler(async () => {
     const issuerProfilesTable = new IssuerProfilesTable(dynamoDBClient, Resource.IssuerProfiles.name);
     const issuerFinancialsTable = new IssuerFinancialsTable(dynamoDBClient, Resource.IssuerFinancials.name);
@@ -67,12 +94,14 @@ export const handler = lambdaHandler(async () => {
     const filingsByIssuer = Map.groupBy(financials, f => f.issuerName);
 
     const mergedProfiles = issuerProfiles.map(profile => {
-        if (!isInFundamentalScope(profile.industry)) {
-            return { ...profile, scorecard: undefined, performedAt: undefined };
-        }
         const analysis = analysisByIssuer.get(profile.issuerName);
+        const coverage = financialsCoverage(filingsByIssuer.get(profile.issuerName) ?? [], analysis);
+        if (!isInFundamentalScope(profile.industry)) {
+            return { ...profile, scorecard: undefined, performedAt: undefined, financialsCoverage: coverage };
+        }
         return {
             ...profile,
+            financialsCoverage: coverage,
             ...scorecardWithSource(profile.issuerName, filingsByIssuer.get(profile.issuerName) ?? [], analysis),
             performedAt: analysis?.performedAt,
         };

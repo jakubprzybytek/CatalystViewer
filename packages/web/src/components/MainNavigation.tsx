@@ -55,6 +55,7 @@ export default function MainNavigation({ title, children }: MainNavigationParams
                 onClose={() => setAnchorEl(null)}
               >
                 <MenuItem onClick={() => { setAnchorEl(null); router.push('/'); }}>Bonds</MenuItem>
+                <MenuItem onClick={() => { setAnchorEl(null); router.push('/financials'); }}>Financials</MenuItem>
                 <MenuItem onClick={() => { setAnchorEl(null); router.push('/jobs'); }}>Jobs</MenuItem>
                 <MenuItem onClick={() => { setAnchorEl(null); router.push('/tools'); }}>Tools</MenuItem>
                 <MenuItem onClick={() => { setAnchorEl(null); signOut(); }}>Logout</MenuItem>

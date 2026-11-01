@@ -11,6 +11,12 @@ export type FinancialsSource =
   | { kind: 'filing'; format?: 'krs-xml' | 'esef' | 'ifrs-text' | 'ai-pdf'; scope: 'single' | 'group'; latestPeriodEnd: string; years: number }
   | { kind: 'ai'; performedAt: string };
 
+// What's collected for an issuer, whatever the scorecard uses (for the Financials page).
+export type FinancialsCoverage = {
+  filed?: { latestPeriodEnd: string; earliestPeriodEnd: string; years: number; formats: ('krs-xml' | 'esef' | 'ifrs-text' | 'ai-pdf')[]; scopes: ('single' | 'group')[]; lastImportedAt: string };
+  ai?: { performedAt: string; latestYear?: number; years: number };
+};
+
 export type IssuerProfile = {
   issuerName: string;
   industry: string;
@@ -19,6 +25,7 @@ export type IssuerProfile = {
   classifiedAtTs?: number;
   scorecard?: FundamentalScorecard;
   financialsSource?: FinancialsSource;
+  financialsCoverage?: FinancialsCoverage;
   performedAt?: string;
 };
 
