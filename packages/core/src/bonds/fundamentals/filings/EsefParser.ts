@@ -339,11 +339,27 @@ export function parseEsef(input: EsefInput): ParsedFiling {
     const notes: string[] = [];
     if (unsplit) notes.push('Debt: balance sheet in order of liquidity (no current and non-current liabilities), debt lines under total liabilities');
 
+    // Without the package, a side with no standard debt concept gets the filer's own lines by their
+    // name (e.g. erb:NonCurrentBorrowingsAndNonCurrentLeaseLiabilities).
+    const sideOf = (local: string): 'noncurrent' | 'current' | undefined =>
+        /non-?current|longterm|dlugoterm/i.test(local) ? 'noncurrent' : /current|shortterm|krotkoterm/i.test(local) ? 'current' : undefined;
+    const filerConcepts = [...new Set(facts.map(f => f.concept))].filter(c => !c.startsWith('ifrs-full:'));
+    let filerNamedDebtUsed = false;
+    const filerDebtByName = (side: 'noncurrent' | 'current', p: { start: string; end: string }) => filerConcepts.filter(c => {
+        const local = c.split(':')[1] ?? c;
+        return DEBT_NAME.test(local) && !NOT_DEBT_NAME.test(local) && sideOf(local) === side && value(c, p) !== undefined;
+    });
+
     let wideDebtUsed = false;
     const debtFor = (p: { start: string; end: string }): { all?: SourcedFigure; bonds?: SourcedFigure } => {
-        const chosen = sides.flatMap(s => s.fromCalc.length > 0
-            ? s.fromCalc
-            : s.fallback.map(g => g.find(c => value(c, p) !== undefined)).filter((c): c is string => !!c));
+        const chosen = sides.flatMap(s => {
+            if (s.fromCalc.length > 0) return s.fromCalc;
+            const standard = s.fallback.map(g => g.find(c => value(c, p) !== undefined)).filter((c): c is string => !!c);
+            if (standard.length > 0 || taxonomy || s.side === 'unsplit') return standard;
+            const named = filerDebtByName(s.side, p);
+            if (named.length > 0) filerNamedDebtUsed = true;
+            return named;
+        });
         if (chosen.length === 0 && unsplit && value(UNSPLIT_WIDE_DEBT, p) !== undefined) {
             wideDebtUsed = true;
             return { all: sourced([UNSPLIT_WIDE_DEBT], p) };
@@ -411,7 +427,7 @@ export function parseEsef(input: EsefInput): ParsedFiling {
             cash: firstOf([ifrs('CashAndCashEquivalents')], p),
             currentAssets: firstOf([ifrs('CurrentAssets')], p)
                 ?? sourced([ifrs('CurrentAssetsOtherThanAssetsOrDisposalGroupsClassifiedAsHeldForSaleOrAsHeldForDistributionToOwners'), ifrs('NoncurrentAssetsOrDisposalGroupsClassifiedAsHeldForSaleOrAsHeldForDistributionToOwners'), ifrs('NoncurrentAssetsOrDisposalGroupsClassifiedAsHeldForSale')].slice(0, value(ifrs('CurrentAssetsOtherThanAssetsOrDisposalGroupsClassifiedAsHeldForSaleOrAsHeldForDistributionToOwners'), p) === undefined ? 0 : 3), p),
-            inventory: firstOf([ifrs('Inventories'), ifrs('CurrentInventoriesHeldForSale')], p),
+            inventory: firstOf([ifrs('Inventories'), ifrs('InventoriesTotal'), ifrs('CurrentInventoriesHeldForSale')], p),
             currentLiabilities: firstOf([ifrs('CurrentLiabilities')], p)
                 ?? sourced([ifrs('CurrentLiabilitiesOtherThanLiabilitiesIncludedInDisposalGroupsClassifiedAsHeldForSale'), ifrs('LiabilitiesIncludedInDisposalGroupsClassifiedAsHeldForSale')].slice(0, value(ifrs('CurrentLiabilitiesOtherThanLiabilitiesIncludedInDisposalGroupsClassifiedAsHeldForSale'), p) === undefined ? 0 : 2), p),
             minorityInterests: firstOf([ifrs('NoncontrollingInterests')], p),
@@ -464,6 +480,8 @@ export function parseEsef(input: EsefInput): ParsedFiling {
     }
     if (wideDebtUsed) {
         notes.push('Debt: one line of financial liabilities at amortised cost (credits, loans, bonds and leases together; may hold other financial liabilities), so no bond split');
+    } else if (!taxonomy && filerNamedDebtUsed) {
+        notes.push('Debt: report without its package; standard IFRS debt concepts, and the filer\'s own lines recognised by name where a side had none');
     } else if (!taxonomy) {
         notes.push('Debt: report without its package, standard IFRS debt concepts only (filer-specific lines are missed)');
     } else {

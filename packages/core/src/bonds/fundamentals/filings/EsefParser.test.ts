@@ -68,6 +68,21 @@ describe('parseEsef', () => {
         });
     });
 
+    it("reads the filer's own debt lines by name when a report without its package has no standard ones on a side", () => {
+        const report = esefReport.toString('utf-8');
+        const facts = [...report.matchAll(/<ix:nonFraction\b[^>]*name="ifrs-full:(?:CurrentLeaseLiabilities|LongtermBorrowings|NoncurrentPortionOfNoncurrentBondsIssued|NoncurrentLeaseLiabilities)"[^>]*>[^<]*<\/ix:nonFraction>/g)];
+        expect(facts.length).toBeGreaterThan(0);
+        // Rename the standard non-current lines to one filer concept
+        let renamed = report;
+        for (const [i, f] of facts.entries()) {
+            const isNoncurrent = !/CurrentLeaseLiabilities"/.test(f[0]) || /NoncurrentLeaseLiabilities/.test(f[0]);
+            renamed = renamed.replace(f[0], isNoncurrent ? f[0].replace(/name="ifrs-full:\w+"/, `name="testowa:NonCurrentBorrowingsAndLeaseLiabilities${i}"`) : f[0]);
+        }
+        const filing = parseEsef(openEsef(Buffer.from(renamed), 'testowa.xhtml'));
+        expect(value(filing, 0, 'financialDebt').source).toEqual(expect.arrayContaining([expect.stringMatching(/^testowa:NonCurrentBorrowingsAndLeaseLiabilities/), 'ifrs-full:CurrentLeaseLiabilities']));
+        expect(filing.notes).toContain("Debt: report without its package; standard IFRS debt concepts, and the filer's own lines recognised by name where a side had none");
+    });
+
     it('falls back per side when the calculation tree covers only one', () => {
         const report = esefReport.toString('utf-8');
         const partial = makeZip({
@@ -109,6 +124,11 @@ ${['TradeAndOtherPayables', 'LoansReceived', 'DebtInstrumentsIssuedAtAmortisedCo
             ]);
             expect(filing.notes).toContain('Debt: balance sheet in order of liquidity (no current and non-current liabilities), debt lines under total liabilities');
             expect(filing.checks).toEqual([]);
+        });
+
+        it('reads inventories tagged with the newer InventoriesTotal concept', () => {
+            const filing = parseEsef(openEsef(Buffer.from(report.replace('</body>', `${fact('ifrs-full:InventoriesTotal', 'I', '2,200')}</body>`))));
+            expect(value(filing, 0, 'inventory')).toEqual({ value: 2_200_000, source: ['ifrs-full:InventoriesTotal'] });
         });
 
         it("takes the filer's operating income total as revenue when operating profit is income less expenses", () => {

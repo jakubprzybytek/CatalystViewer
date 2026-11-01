@@ -22,27 +22,42 @@ type Statement = 'balance' | 'income' | 'cashFlow';
 
 const fold = (s: string) => s.toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '').replace(/ł/g, 'l');
 
+// "Skonsolidowane roczne sprawozdanie / z sytuacji finansowej": up to two words between, and the
+// heading may run over two lines.
 const HEADINGS: Record<Statement, RegExp> = {
-    balance: /(sprawozdanie z sytuacji finansowej|^.{0,40}\bbilans\b|statement of financial position|balance sheet)/,
-    income: /(rachunek zyskow i strat|sprawozdanie z wyniku|statement of profit or loss|income statement)/,
-    cashFlow: /(sprawozdanie z przeplywow pienieznych|rachunek przeplywow pienieznych|statement of cash flows|cash flow statement)/,
+    balance: /(sprawozdani\w*(?: \w+){0,2} z sytuacji finansowej|^.{0,40}\bbilans\b|statement of financial position|balance sheet)/,
+    income: /(rachunek zyskow i strat|sprawozdani\w*(?: \w+){0,2} z (?:wyniku|calkowitych dochodow)|statement of (?:profit or loss|comprehensive income)|income statement)/,
+    cashFlow: /(sprawozdani\w*(?: \w+){0,2} z przeplywow pienieznych|rachunek przeplywow pienieznych|statement of cash flows|cash flow statement)/,
 };
 const AMOUNT = /\(?-?\d{1,3}(?:[ . ]\d{3})*(?:,\d+)?\)?/g;
 const MIN_TABLE_LINES = 12;
-const isContents = (page: PdfPage) => page.lines.some(l => /\.{6,}/.test(l));
+// A table of contents: dot leaders, a "contents" title, or most lines ending in a page number.
+const isContents = (page: PdfPage) => page.lines.some(l => /\.{6,}/.test(l))
+    || page.lines.slice(0, 5).some(l => /^(spis tresci|table of contents|contents)\b/.test(fold(l.trim())))
+    || page.lines.filter(l => /\|\s*\d{1,3}\s*$/.test(l)).length > page.lines.length * 0.6;
 const tableLines = (page: PdfPage) => page.lines.filter(l => (l.match(AMOUNT) ?? []).length >= 2).length;
 
+// The page's first short lines, each alone and joined with the next.
+const headingLines = (page: PdfPage) => {
+    const top = page.lines.slice(0, 12).filter(l => l.length < 120);
+    return [...top, ...top.slice(0, -1).map((l, i) => `${l} ${top[i + 1]}`)];
+};
+
 // For each statement: the first page (past the table of contents) whose heading is near the top and
-// which is mostly a table, and the page after it (statements often run over two pages).
+// which is mostly a table, and the page after it (statements often run over two pages); also a
+// matching page right after it, with its next page.
 export function findStatementPages(pages: PdfPage[]): number[] {
     const chosen = new Set<number>();
     for (const re of Object.values(HEADINGS)) {
-        const hit = pages.find(p => !isContents(p)
-            && p.lines.slice(0, 12).some(l => l.length < 120 && re.test(fold(l)))
+        const hits = pages.filter(p => !isContents(p)
+            && headingLines(p).some(l => re.test(fold(l)))
             && tableLines(p) >= MIN_TABLE_LINES);
-        if (!hit) continue;
-        chosen.add(hit.page);
-        if (pages.some(p => p.page === hit.page + 1)) chosen.add(hit.page + 1);
+        if (hits.length === 0) continue;
+        // Also a second heading page right after the first (a section title page before the statement)
+        for (const hit of hits.filter(h => h.page - hits[0].page <= 1)) {
+            chosen.add(hit.page);
+            if (pages.some(p => p.page === hit.page + 1)) chosen.add(hit.page + 1);
+        }
     }
     return [...chosen].sort((a, b) => a - b);
 }
@@ -167,6 +182,16 @@ export function findLei(pages: PdfPage[]): string | undefined {
     return text.match(/\b([A-Z0-9]{18}\d{2})\b[\s|]*\(?LEI\)?|\bLEI\b[\s:|]*([A-Z0-9]{18}\d{2})\b/)?.slice(1).find(Boolean);
 }
 
+// "2025-12-31" or "31.12.2025" → "2025-12-31"; anything else is undefined.
+export function isoDate(printed: string | undefined): string | undefined {
+    const t = (printed ?? '').trim();
+    const iso = t.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    const pl = t.match(/^(\d{1,2})[./](\d{1,2})[./](\d{4})$/);
+    const [y, m, d] = iso ? [iso[1], iso[2], iso[3]] : pl ? [pl[3], pl[2].padStart(2, '0'), pl[1].padStart(2, '0')] : [];
+    if (!y || Number.isNaN(new Date(`${y}-${m}-${d}T00:00:00Z`).getTime())) return undefined;
+    return `${y}-${m}-${d}`;
+}
+
 function yearStart(end: string): string {
     const d = new Date(`${end}T00:00:00Z`);
     d.setUTCDate(d.getUTCDate() + 1);
@@ -239,7 +264,8 @@ export function transcriptToFiling(transcript: Transcript, pages: PdfPage[], ext
         };
         for (const key of Object.keys(figures) as FilingField[]) if (figures[key] === undefined) delete figures[key];
 
-        const end = column.periodEnd;
+        const end = isoDate(column.periodEnd);
+        if (!end) throw new UnsupportedFilingError(`The model gave an unreadable date for column ${column.id}: "${column.periodEnd}"`);
         const label = i === 0 ? end : `${end} (comparative)`;
         const assets = figures.totalAssets?.value;
         const equityAndLiabilities = figure(of('totalEquityAndLiabilities', 'balance').slice(0, 1))?.value;
@@ -250,7 +276,7 @@ export function transcriptToFiling(transcript: Transcript, pages: PdfPage[], ext
         if (!figures.equity) checks.push(`${label}: no total equity`);
         if (!figures.netProfit) checks.push(`${label}: no net profit`);
 
-        const start = column.periodStart && /^\d{4}-\d{2}-\d{2}$/.test(column.periodStart) ? column.periodStart : yearStart(end);
+        const start = isoDate(column.periodStart) ?? yearStart(end);
         return { column: i === 0 ? 'current' : 'previous', periodStart: start, periodEnd: end, months: monthsBetween(start, end), figures };
     });
     if (mixedDebt) notes.push('Debt: the balance sheet has combined financing lines (e.g. "financial liabilities"), so bonds aren\'t split out');

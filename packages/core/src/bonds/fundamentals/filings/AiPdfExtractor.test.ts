@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { extractStatements, findKrs, findLei, findStatementPages, parsePrinted, transcriptToFiling, type Transcriber } from './AiPdfExtractor';
+import { extractStatements, findKrs, findLei, findStatementPages, isoDate, parsePrinted, transcriptToFiling, type Transcriber } from './AiPdfExtractor';
 import { isPdf, readPdfPages } from './pdfText';
 import { makePdf } from './fixtures/makePdf';
 import { asPages, reportPages, transcript } from './fixtures/pdfReport';
@@ -11,6 +11,12 @@ const millions = (filing: ReturnType<typeof transcriptToFiling>, column: number)
 describe('parsePrinted', () => {
     it.each([['1 000,0', 1000], ['(1 792,2)', -1792.2], ['-', 0], ['', 0], ['–', 0], ['-35,3', -35.3], ['12', 12], ['n/a', undefined], ['2025-12', undefined]])('%s → %s', (printed, value) => {
         expect(parsePrinted(printed)).toBe(value);
+    });
+});
+
+describe('isoDate', () => {
+    it.each([['2025-12-31', '2025-12-31'], ['31.12.2025', '2025-12-31'], ['1.01.2025', '2025-01-01'], ['2025-13-45', undefined], ['grudzień 2025', undefined], [undefined, undefined]])('%s → %s', (printed, iso) => {
+        expect(isoDate(printed)).toBe(iso);
     });
 });
 
@@ -32,6 +38,29 @@ describe('identifiers in the text', () => {
 describe('findStatementPages', () => {
     it('takes each statement page and the next one, not the contents', () => {
         expect(findStatementPages(asPages(reportPages))).toEqual([2, 3, 4, 5]);
+    });
+
+    it('finds headings with words in between, over two lines, and the comprehensive income statement', () => {
+        const table = Array.from({ length: 14 }, (_, i) => `Pozycja ${i} | 1 000 | 2 000`);
+        const pages = [
+            { page: 1, lines: ['Wstęp', 'tekst'] },
+            { page: 2, lines: ['MARVIPOL \\ RAPORT ROCZNY | 66', 'SKONSOLIDOWANE ROCZNE SPRAWOZDANIE', 'Z CAŁKOWITYCH DOCHODÓW (TYS. PLN)', ...table] },
+            { page: 3, lines: ['MARVIPOL \\ RAPORT ROCZNY | 68', 'SKONSOLIDOWANE ROCZNE SPRAWOZDANIE', 'Z SYTUACJI FINANSOWEJ (TYS. PLN)', ...table] },
+            { page: 4, lines: ['MARVIPOL \\ RAPORT ROCZNY | 71', 'SKONSOLIDOWANE ROCZNE SPRAWOZDANIE', 'Z PRZEPŁYWÓW PIENIĘŻNYCH (TYS. PLN)', ...table] },
+        ];
+        expect(findStatementPages(pages)).toEqual([2, 3, 4]);
+    });
+
+    it('skips a table of contents without dot leaders', () => {
+        const table = Array.from({ length: 14 }, (_, i) => `Pozycja ${i} | 1 000 | 2 000`);
+        const contents = (page: number, title: string[]) => ({ page, lines: [...title, ...Array.from({ length: 14 }, (_, i) => `NOTA ${i} Opis noty | ${10 + i}`)] });
+        const pages = [
+            contents(1, ['Spis treści', '1.1 | Skonsolidowany rachunek zysków i strat | 7', '1.2 | Skonsolidowane sprawozdanie z sytuacji finansowej | 8']),
+            contents(2, ['NOTA 11 Podatek | 66']),
+            { page: 7, lines: ['Skonsolidowany rachunek zysków i strat [tys. PLN]', ...table] },
+            { page: 8, lines: ['Skonsolidowane sprawozdanie', 'z sytuacji finansowej [tys. PLN]', ...table] },
+        ];
+        expect(findStatementPages(pages)).toEqual([7, 8]);
     });
 });
 
