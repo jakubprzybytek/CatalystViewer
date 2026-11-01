@@ -1,7 +1,7 @@
 # Fundamental Analysis v2: Audit and Roadmap
 
 **Date:** 2026-10-29
-**Status:** Proposal. Phase 0 implemented (2026-10-29). Phase 1 started (2026-10-30): filings are imported by hand, see [Phase 1 scope](#phase-1-scope); IFRS reporters added 2026-10-31.
+**Status:** Proposal. Phase 0 implemented (2026-10-29). Phase 1 started (2026-10-30): filings are imported by hand, see [Phase 1 scope](#phase-1-scope); IFRS reporters added 2026-10-31; next: [Phase 1b, report import for every format](#phase-1b-scope-report-import-for-every-format).
 **Builds on:** [2026-05-11-fundamental-analysis-design.md](2026-05-11-fundamental-analysis-design.md)
 
 ---
@@ -137,6 +137,7 @@ Plan:
   - the issuer's bonds with their yields;
   - red flags with quotes;
   - analysis history, with what changed since the last report.
+- **Country of origin on the issuer card** (*added 2026-11-01*): issuers registered abroad (Allegro.eu in Luxembourg, the EIB, foreign SPVs) carry a different legal and insolvency regime, and their filings aren't in the KRS. Country from the KRS (Poland) or the LEI record's legal address (GLEIF), stored with the issuer's identity (phase 1b).
 - **Cross-issuer views:** the risk-vs-yield chart, a sector heatmap, a market-wide maturity calendar.
 - **Agent logs** move to an admin/debug view.
 
@@ -154,6 +155,7 @@ Plan:
 |---|---|---|
 | 0 | Fix part-year scoring and the false-yellow trend rating; stop scoring financial and municipal issuers; start the test set | Wrong scorecards are live today |
 | 1 | Test KRS access → issuer KRS numbers → filings ingested in code with sources → S3 + new tables | Everything else depends on numbers we can trust |
+| 1b | Report corpus from official sources, AI extraction for PDFs verified in code, statement lines stored, issuer identity with country, import page with coverage view | One way in for every format; data shaped for phase 2 |
 | 2 | Developer and Finance rules (Finance subcategories first), cash flow, maturities vs cash from our bond data, data confidence | Most valuable analysis, cheap once data is solid |
 | 3 | Issuer page, risk-vs-yield chart, peer ranking | Where users see the value |
 | 4 | Re-run on new reports, alerts, portfolio watchlist, calibration on defaults | Turns a report into monitoring |
@@ -171,6 +173,28 @@ Implemented 2026-10-30:
 - **Scorecard:** the issuer list uses the filed figures when an issuer has any (group accounts first, full years only), else the AI-collected ones; the issuer card says which.
 
 Not yet: small/micro entity structures (JednostkaMala, JednostkaMikro); PDF statements; a web upload; an issuer page keyed by KRS number; the test set of hand-checked answers (needs filings downloaded by a person).
+
+### Phase 1b scope: report import for every format
+
+*Added 2026-11-01.* Lessons from the first reports (Dom Development, KRUK, Cyfrowy Polsat, KGHM, P4):
+
+- **Structured filings converge.** KRS XML has fixed line codes: no per-company changes. ESEF needed only general IFRS variants (balance sheet in order of liquidity, totals excluding held for sale, filer depreciation lines); each new report teaches less.
+- **Untagged documents don't.** Every untagged report or PDF needed layout-specific patches (KGHM: month-name dates, "Note" references, wrapped labels, units). Those patches were dropped; the text parser isn't extended further.
+- **Coverage:** private issuers file KRS XML, listed issuers ESEF. PDFs remain for unlisted IFRS reporters (P4), foreign issuers (Allegro.eu) and issuers with only a PDF on their website (KGHM's site).
+
+Goal: an **import page in the app** that accepts any report (KRS XML, ESEF `.zip`/`.xbri`/`.xhtml`, untagged XHTML, PDF), shows what is imported per issuer, and stores data in a form the later phases (sector rules, finance scorecard, cash flow, maturities) can use without re-reading documents.
+
+1. **Corpus from official sources.** Keep collecting each corporate issuer's latest annual reports from its website, its ESPI/EBI filings or (downloaded by hand) the KRS repository; record per issuer where the report was found and in which format. Every report is run through the parsers; general fixes go into the ESEF parser, layout-specific ones don't. Hand-checked figures from these reports become the known-answers test set (section 8).
+2. **AI extraction for unstructured reports**, verified in code:
+   - code finds the statement pages (headings, page text); only those pages go to the model (PDF document input of the Bedrock Converse API, or extracted text);
+   - the model fills a fixed schema through a tool call: per line, the label as printed, the page, the value per column, the column dates, unit and currency;
+   - code checks every figure: the number appears on the cited page, the balance sheet ties, subtotals equal their lines, comparative columns match the stored previous year; a figure that fails is rejected, not stored;
+   - mapping lines to fields is code (the same rules as the parsers), so the model only reads;
+   - result: format `ai-pdf` with the model and prompt version, shown as such on the card. Roughly one call per report on 5–10 pages.
+3. **Store statement lines, not only scorecard fields.** Per filing: entity, period, scope, accounting standard (IFRS / Polish GAAP), currency, unit, source document, method (parser or AI with model), checks and review status; and every statement line with its label, value and standard identifier (IFRS concept, KRS position code, or none). Scorecard fields are derived from the lines, so new metrics (finance, developer, cash flow) don't need the documents again.
+4. **Issuer identity:** one record per issuer: KRS number and/or LEI, registered name, country (see section 7), links to its bonds. Fills the issuer → entity mapping instead of name matching on every import.
+5. **Import page:** upload (presigned S3 URL) → parse in a Lambda (AI route for PDFs, with a cost note) → review screen with the figures, checks and notes, side by side with the previous year → confirm to store. A coverage view lists issuers with their latest imported year, format and scope, and those with nothing or an old year, with a link to the issuer's report page or KRS search.
+6. **Per-issuer overrides** for the odd line a parser can't place, reviewed once and stored with the issuer, instead of more general heuristics.
 
 ### Phase 0 scope
 
