@@ -19,7 +19,9 @@ type ReportSectionTitleParam = {
 
 function ReportSectionTitle({ children }: ReportSectionTitleParam): React.JSX.Element {
   return (
-    <Typography variant='subtitle2' pb={1}>{children}</Typography>
+    <Typography variant='subtitle2' sx={{
+      pb: 1
+    }}>{children}</Typography>
   );
 }
 
@@ -41,7 +43,13 @@ function ReportEntry({ caption, style = undefined, children }: ReportEntryParam)
         color,
         lineHeight: '1.5rem'
       }}>{caption}</Typography>
-      <Typography component='span' textAlign='end' sx={{ fontWeight, color }}>{children}</Typography>
+      <Typography
+        component='span'
+        sx={{
+          textAlign: 'end',
+          fontWeight,
+          color
+        }}>{children}</Typography>
     </Stack>
   );
 }

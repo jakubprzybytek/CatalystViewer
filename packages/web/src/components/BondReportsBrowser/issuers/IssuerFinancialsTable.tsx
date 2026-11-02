@@ -70,11 +70,17 @@ function formatValue(value: number | undefined, format?: 'ratio' | 'percent'): s
 function ColumnHeader({ column }: { column: FinancialsColumn }): React.JSX.Element {
   const filed = column.filed;
   return (
-    <Stack alignItems='flex-end' spacing={0.25}>
-      <Typography variant='subtitle2' fontWeight={700}>{column.year}</Typography>
+    <Stack spacing={0.25} sx={{
+      alignItems: 'flex-end'
+    }}>
+      <Typography variant='subtitle2' sx={{
+        fontWeight: 700
+      }}>{column.year}</Typography>
       {filed ? (
         <Tooltip title={`${filed.schema}${filed.column === 'previous' ? ' · comparative column of the next year\'s report' : ''}`}>
-          <Stack direction='row' alignItems='center' spacing={0.25}>
+          <Stack direction='row' spacing={0.25} sx={{
+            alignItems: 'center'
+          }}>
             <Chip size='small' label={`${FORMAT_LABEL[filed.format]}${filed.column === 'previous' ? '*' : ''}`} color='primary' variant='outlined' sx={{ height: 18, fontSize: '0.65rem' }} />
             {filed.documentUrl && (
               <Link href={filed.documentUrl} target='_blank' rel='noreferrer' aria-label='original document' sx={{ display: 'inline-flex' }}>
@@ -117,14 +123,23 @@ function FilingNotes({ data }: { data: IssuerFinancials }): React.JSX.Element | 
 export function FinancialsView({ data }: { data: IssuerFinancials }): React.JSX.Element {
   const columns = useMemo(() => buildColumns(data), [data]);
   if (columns.length === 0) {
-    return <Typography color='text.secondary'>No yearly figures yet: no imported report and no AI analysis.</Typography>;
+    return (
+      <Typography sx={{
+        color: 'text.secondary'
+      }}>No yearly figures yet: no imported report and no AI analysis.</Typography>
+    );
   }
   const currency = data.filed[0]?.currency ?? 'PLN';
   const source = data.scorecardSource;
 
   return (
     <Box>
-      <Typography variant='body2' color='text.secondary' sx={{ mb: 1 }}>
+      <Typography
+        variant='body2'
+        sx={{
+          color: 'text.secondary',
+          mb: 1
+        }}>
         {currency} millions. Imported reports are used where available, otherwise the AI analysis
         {data.ai ? ` of ${new Date(data.ai.performedAt).toLocaleDateString('pl-PL')}` : ''}.
         {source && (source.kind === 'filing'
@@ -183,7 +198,13 @@ export function FinancialsView({ data }: { data: IssuerFinancials }): React.JSX.
           </TableBody>
         </Table>
       </TableContainer>
-      <Typography variant='caption' color='text.secondary' component='div' sx={{ mt: 1 }}>
+      <Typography
+        variant='caption'
+        component='div'
+        sx={{
+          color: 'text.secondary',
+          mt: 1
+        }}>
         * from the comparative column of the next year&apos;s report. Hover a figure for the statement lines it came from; an orange underline marks a year where the AI analysis had a different figure.
       </Typography>
       <FilingNotes data={data} />

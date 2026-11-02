@@ -185,7 +185,12 @@ export default function JobsPage(): React.JSX.Element {
               <ListItemButton onClick={() => openDetails(job.jobId)} sx={{ width: '100%', py: 0.5, px: { xs: 1, sm: 2 } }}>
                 <ListItemText
                   primary={
-                    <Stack direction='row' justifyContent='space-between' alignItems='center'>
+                    <Stack
+                      direction='row'
+                      sx={{
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                      }}>
                       <span>{job.workflowType}</span>
                       <Chip label={job.status} color={job.status === 'SUCCEEDED' ? 'success' : job.status === 'RUNNING' ? 'info' : 'error'} size='small' />
                     </Stack>

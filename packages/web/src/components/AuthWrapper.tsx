@@ -124,7 +124,13 @@ export default function AuthWrapper({ children }: AuthWrapperProps) {
 
   if (authState === 'loading') {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "100vh"
+        }}>
         <CircularProgress />
       </Box>
     );
@@ -135,10 +141,18 @@ export default function AuthWrapper({ children }: AuthWrapperProps) {
   }
 
   return (
-    <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
+    <Box
+      sx={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        minHeight: "100vh"
+      }}>
       <Paper elevation={3} sx={{ p: 4, width: '100%', maxWidth: 400 }}>
         <Stack spacing={3}>
-          <Typography variant="h5" textAlign="center">
+          <Typography variant="h5" sx={{
+            textAlign: "center"
+          }}>
             {authState === 'newPasswordRequired' ? 'Set New Password'
               : authState === 'signUp' ? 'Create Account'
               : authState === 'confirmSignUp' ? 'Confirm Account'
@@ -174,7 +188,9 @@ export default function AuthWrapper({ children }: AuthWrapperProps) {
                 >
                   {submitting ? <CircularProgress size={24} /> : 'Sign In'}
                 </Button>
-                <Typography variant="body2" textAlign="center">
+                <Typography variant="body2" sx={{
+                  textAlign: "center"
+                }}>
                   No account?{' '}
                   <Link component="button" type="button" onClick={() => { setError(null); setAuthState('signUp'); }}>
                     Create one
@@ -221,7 +237,9 @@ export default function AuthWrapper({ children }: AuthWrapperProps) {
                 >
                   {submitting ? <CircularProgress size={24} /> : 'Create Account'}
                 </Button>
-                <Typography variant="body2" textAlign="center">
+                <Typography variant="body2" sx={{
+                  textAlign: "center"
+                }}>
                   Already have an account?{' '}
                   <Link component="button" type="button" onClick={() => { setError(null); setAuthState('signedOut'); }}>
                     Sign in

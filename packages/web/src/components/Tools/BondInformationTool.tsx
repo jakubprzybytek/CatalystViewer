@@ -46,7 +46,9 @@ export default function BondInformationTool(): React.JSX.Element {
     <Paper sx={{ p: 2, mb: 2 }}>
       <Typography variant='h6' sx={{ mb: 1 }}>Bond Information</Typography>
       <Box component='form' onSubmit={fetchBondInformation} noValidate>
-        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ sm: 'flex-start' }}>
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{
+          alignItems: { sm: 'flex-start' }
+        }}>
           <TextField
             label='Bond name'
             value={bondName}

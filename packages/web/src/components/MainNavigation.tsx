@@ -37,13 +37,24 @@ export default function MainNavigation({ title, children }: MainNavigationParams
     <HideOnScroll>
       <AppBar component="nav">
         <Toolbar variant='dense'>
-          <Stack direction='row' flexGrow={1} sx={{
-            justifyContent: 'space-between'
-          }}>
-            <Stack justifyContent='center' flexGrow={1}>
-              <Typography component='span' textAlign='center'>{title}</Typography>
+          <Stack
+            direction='row'
+            sx={{
+              flexGrow: 1,
+              justifyContent: 'space-between'
+            }}>
+            <Stack
+              sx={{
+                justifyContent: 'center',
+                flexGrow: 1
+              }}>
+              <Typography component='span' sx={{
+                textAlign: 'center'
+              }}>{title}</Typography>
             </Stack>
-            <Stack direction='row' justifyContent={'flex-end'}>
+            <Stack direction='row' sx={{
+              justifyContent: 'flex-end'
+            }}>
               {children}
               <IconButton color='inherit' aria-label='Menu'
                 onClick={(event) => setAnchorEl(event.currentTarget)}>
@@ -68,5 +79,5 @@ export default function MainNavigation({ title, children }: MainNavigationParams
         </Toolbar>
       </AppBar>
     </HideOnScroll>
-  )
+  );
 }

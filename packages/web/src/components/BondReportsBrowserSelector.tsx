@@ -12,7 +12,7 @@ import SaveIcon from '@mui/icons-material/Save';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import DeleteIcon from '@mui/icons-material/Delete';
 import CancelIcon from '@mui/icons-material/Cancel';
-import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutlined';
 import { BondReportsBrowserSettings, DEFAULT_FILTERIN_OPTIONS_SETTING, DEFAULT_SORT_ORDER_SETTING, DEFAULT_VIEW_SETTING } from './BondReportsBrowser';
 import Condition from '@/common/Condition';
 import DialogContent from '@mui/material/DialogContent';

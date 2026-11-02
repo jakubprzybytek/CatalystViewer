@@ -36,7 +36,13 @@ export default function DailyStatsTool(): React.JSX.Element {
 
   return (
     <Paper sx={{ p: 2, mb: 2 }}>
-      <Stack direction='row' alignItems='center' justifyContent='space-between' sx={{ mb: 1 }}>
+      <Stack
+        direction='row'
+        sx={{
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          mb: 1
+        }}>
         <Typography variant='h6'>Daily Stats</Typography>
         <Button variant='contained' onClick={fetchDailyStats} disabled={isLoading}>
           Fetch

@@ -18,7 +18,9 @@ export default function BondCard({ bondReport, statistics }: BondCardParam): Rea
 
   return (
     <Paper className='bond-card' variant="outlined">
-      <Grid container width='100%'>
+      <Grid container sx={{
+        width: '100%'
+      }}>
         <BondCardDetailsSection bondReport={bondReport} statistics={statistics} expanded={expanded} onToggleExpanded={toggleExpanded} />
         <BondCardInterestSection details={bondReport.details} currentValues={bondReport.currentValues} expanded={expanded} />
         <BondCardTradingSection bondReport={bondReport} expanded={expanded} onToggleExpanded={toggleExpanded} />

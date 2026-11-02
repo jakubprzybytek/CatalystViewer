@@ -37,9 +37,19 @@ const FILTER_LABEL: Record<CoverageFilter, string> = {
 function IssuerRow({ item, selected, onSelect }: { item: FinancialsListItem; selected: boolean; onSelect: () => void }): React.JSX.Element {
   return (
     <ListItemButton selected={selected} onClick={onSelect} divider sx={{ display: 'block', py: 1 }}>
-      <Stack direction='row' justifyContent='space-between' alignItems='baseline' spacing={1}>
-        <Typography variant='body2' fontWeight={600} noWrap>{item.issuerName}</Typography>
-        <Typography variant='caption' color='text.secondary' noWrap>{item.industry}</Typography>
+      <Stack
+        direction='row'
+        spacing={1}
+        sx={{
+          justifyContent: 'space-between',
+          alignItems: 'baseline'
+        }}>
+        <Typography variant='body2' noWrap sx={{
+          fontWeight: 600
+        }}>{item.issuerName}</Typography>
+        <Typography variant='caption' noWrap sx={{
+          color: 'text.secondary'
+        }}>{item.industry}</Typography>
       </Stack>
       <Stack direction='row' spacing={0.5} sx={{ mt: 0.5, flexWrap: 'wrap', rowGap: 0.5 }}>
         {item.reportYears > 0 && (
@@ -51,10 +61,17 @@ function IssuerRow({ item, selected, onSelect }: { item: FinancialsListItem; sel
             label={`AI ${item.latestAiYear ?? '?'} · ${item.aiYears} yr`} />
         )}
         {item.reportYears === 0 && item.aiYears === 0 && (
-          <Typography variant='caption' color='text.secondary'>No figures collected</Typography>
+          <Typography variant='caption' sx={{
+            color: 'text.secondary'
+          }}>No figures collected</Typography>
         )}
         {item.scorecardUses && (
-          <Typography variant='caption' color='text.secondary' sx={{ alignSelf: 'center' }}>
+          <Typography
+            variant='caption'
+            sx={{
+              color: 'text.secondary',
+              alignSelf: 'center'
+            }}>
             scorecard: {item.scorecardUses === 'report' ? 'reports' : 'AI'}
           </Typography>
         )}
@@ -66,16 +83,28 @@ function IssuerRow({ item, selected, onSelect }: { item: FinancialsListItem; sel
 function IssuerDetails({ profile, onBack }: { profile: IssuerProfile; onBack?: () => void }): React.JSX.Element {
   return (
     <Box>
-      <Stack direction='row' alignItems='center' spacing={1} sx={{ mb: 1 }}>
+      <Stack
+        direction='row'
+        spacing={1}
+        sx={{
+          alignItems: 'center',
+          mb: 1
+        }}>
         {onBack && <IconButton size='small' onClick={onBack} aria-label='back to the list'><ArrowBack /></IconButton>}
         <Box>
-          <Typography variant='h6' lineHeight={1.2}>{profile.issuerName}</Typography>
-          <Typography variant='caption' color='text.secondary'>
+          <Typography variant='h6' sx={{
+            lineHeight: 1.2
+          }}>{profile.issuerName}</Typography>
+          <Typography variant='caption' sx={{
+            color: 'text.secondary'
+          }}>
             {profile.industry}
             {profile.websiteUrl && <> · <Link href={profile.websiteUrl} target='_blank' rel='noreferrer'>website</Link></>}
           </Typography>
           {profile.financialsCoverage?.company && (
-            <Typography variant='caption' color='text.secondary' component='div'>
+            <Typography variant='caption' component='div' sx={{
+              color: 'text.secondary'
+            }}>
               Registered: {registrationParts(profile.financialsCoverage.company).join(' · ')}
             </Typography>
           )}
@@ -123,7 +152,11 @@ export default function FinancialsPage(): React.JSX.Element {
       </ToggleButtonGroup>
       <Paper variant='outlined' sx={{ mt: 1 }}>
         {items.length === 0
-          ? <Typography color='text.secondary' sx={{ p: 2 }}>No issuers match.</Typography>
+          ? <Typography
+          sx={{
+            color: 'text.secondary',
+            p: 2
+          }}>No issuers match.</Typography>
           : <List disablePadding>{items.map(item => (
               <IssuerRow key={item.issuerName} item={item} selected={item.issuerName === selectedName} onSelect={() => select(item.issuerName)} />
             ))}</List>}
@@ -136,12 +169,18 @@ export default function FinancialsPage(): React.JSX.Element {
     content = <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}><CircularProgress /></Box>;
   } else if (isWide) {
     content = (
-      <Stack direction='row' spacing={2} alignItems='flex-start'>
+      <Stack direction='row' spacing={2} sx={{
+        alignItems: 'flex-start'
+      }}>
         <Box sx={{ width: 380, flexShrink: 0, position: 'sticky', top: 56, maxHeight: 'calc(100vh - 64px)', overflowY: 'auto' }}>{list}</Box>
         <Box sx={{ flexGrow: 1, minWidth: 0 }}>
           {selected
             ? <IssuerDetails profile={selected} />
-            : <Typography color='text.secondary' sx={{ mt: 2 }}>Pick an issuer to see its yearly figures, where each comes from, and the imported reports.</Typography>}
+            : <Typography
+            sx={{
+              color: 'text.secondary',
+              mt: 2
+            }}>Pick an issuer to see its yearly figures, where each comes from, and the imported reports.</Typography>}
         </Box>
       </Stack>
     );

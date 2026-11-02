@@ -29,7 +29,11 @@ type TabName = 'financials' | 'report' | 'logs';
 
 function AgentLogs({ events }: { events: AgentEvent[] }): React.JSX.Element {
   if (events.length === 0) {
-    return <Typography color='text.secondary'>No agent log available.</Typography>;
+    return (
+      <Typography sx={{
+        color: 'text.secondary'
+      }}>No agent log available.</Typography>
+    );
   }
 
   return (
@@ -41,7 +45,9 @@ function AgentLogs({ events }: { events: AgentEvent[] }): React.JSX.Element {
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
                 <Chip label={`#${event.iteration}`} size='small' color='primary' variant='outlined' />
                 <Chip label='tool_use' size='small' />
-                <Typography variant='subtitle2' fontWeight='bold'>{event.toolName}</Typography>
+                <Typography variant='subtitle2' sx={{
+                  fontWeight: 'bold'
+                }}>{event.toolName}</Typography>
               </Box>
               <Box component='pre' sx={{ m: 0, p: 1, bgcolor: 'grey.100', borderRadius: 1, fontSize: '0.75rem', overflow: 'auto', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
                 {JSON.stringify(event.input, null, 2)}
@@ -56,7 +62,9 @@ function AgentLogs({ events }: { events: AgentEvent[] }): React.JSX.Element {
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
                 <Chip label={`#${event.iteration}`} size='small' color='primary' variant='outlined' />
                 <Chip label='tool_result' size='small' color={event.isError ? 'error' : 'success'} />
-                <Typography variant='subtitle2' fontWeight='bold'>{event.toolName}</Typography>
+                <Typography variant='subtitle2' sx={{
+                  fontWeight: 'bold'
+                }}>{event.toolName}</Typography>
               </Box>
               <Box component='pre' sx={{ m: 0, p: 1, bgcolor: event.isError ? 'error.50' : 'grey.100', borderRadius: 1, fontSize: '0.75rem', overflow: 'auto', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
                 {event.result}
