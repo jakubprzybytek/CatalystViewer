@@ -3,7 +3,7 @@ import { readCatalystDailyStatisticsXlsFile, parseBondsQuotesPage, CatalystBondQ
 
 export async function getLatestCatalystDailyStatistics(): Promise<CatalystDailyStatisticsBondDetails[]> {
     const catalystDailyStatisticsFileName = await downloadLatestCatalystDailyStatisticsFile();
-    return readCatalystDailyStatisticsXlsFile(catalystDailyStatisticsFileName);
+    return await readCatalystDailyStatisticsXlsFile(catalystDailyStatisticsFileName);
 };
 
 export async function getCurrentCatalystBondsQuotes(): Promise<CatalystBondQuote[]> {

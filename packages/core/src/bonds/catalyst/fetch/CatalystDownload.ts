@@ -6,10 +6,9 @@ import { fixturePath, sourceFixturesDir } from '../../../common/Fixtures';
 
 const MAX_LOOKBACK_DAYS = 7;
 
-// GPW switched from .xls to .xlsx on 2026-10-05; keep .xls as a fallback for older files.
+// GPW switched from .xls to .xlsx on 2026-10-05; the reader (read-excel-file) reads .xlsx only.
 const FILE_FORMATS = [
     { extension: 'xlsx', contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' },
-    { extension: 'xls', contentType: 'application/vnd.ms-excel' },
 ];
 
 async function tryDownloadCatalystFile(url: string, fileNameToSave: string, expectedContentType: string): Promise<boolean> {

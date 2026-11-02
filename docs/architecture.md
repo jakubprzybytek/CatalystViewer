@@ -34,7 +34,7 @@ The core package contains the business logic for fetching, processing, and stori
 - **Statistics**: Computes liquidity metrics like average turnover, trading days ratio, and average spread.
 - **Storage**: Interfaces for DynamoDB tables (BondDetails, BondStatistics, Profiles).
 
-**Dependencies:** AWS SDK, Axios, date-fns, Ramda, simple-statistics, xlsx.
+**Dependencies:** AWS SDK, Axios, date-fns, Ramda, simple-statistics, read-excel-file (GPW daily statistics).
 
 ### Functions Package (`packages/functions`)
 
