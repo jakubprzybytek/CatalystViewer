@@ -83,6 +83,7 @@ async function main() {
         if (diffs.length) { console.log(`✗ ${label}: figures differ, left alone:\n    ${diffs.join("\n    ")}`); failed++; continue; }
         const written = dryRun || await financials.addLines(row.entityId, row.period, key, {
           standard: filing.standard, presentedUnit: filing.presentedUnit, lineSigns: filing.lineSigns, lines: period.lines, review: { status: "parsed" },
+          ...(filing.extraction ? { linesExtraction: filing.extraction } : {}),
         });
         if (!written) { console.log(`✗ ${label}: the row changed meanwhile, left alone`); failed++; continue; }
         const kb = (JSON.stringify(period.lines).length / 1024).toFixed(0);

@@ -28,6 +28,7 @@ export type DbIssuerFinancialsRecord = {
     figures: Partial<Record<FilingField, SourcedFigure>>;
     lines?: StatementLine[];      // every line of the primary statements; left out by the list reads
     review?: { status: ReviewStatus; note?: string; at?: string };
+    linesExtraction?: FilingExtraction;  // PDF lines added later (reparse-filings): the model read they came from
     column: 'current' | 'previous';
     filing: {
         key: string;              // S3 key of the original file in the Filings bucket

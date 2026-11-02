@@ -111,7 +111,7 @@ the new code and adds `lines`, `standard`, `presentedUnit` and `review` to its r
 figures: if a re-parse gives a different figure, it reports it and leaves the row alone.
 
 - ESEF (37 rows, 21 files): free.
-- PDF (22 rows, 11 files): one model read each, about $1.65 in total.
+- PDF (22 rows, 11 files): one model read each, about $1.65 in total. Done with prompt version 6; a re-read is a new model read, so the row records it as `linesExtraction`.
 
 It runs on dev first, then prod.
 

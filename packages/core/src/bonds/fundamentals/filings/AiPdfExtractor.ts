@@ -15,7 +15,7 @@ import { UnsupportedFilingError, type FilingExtraction, type FilingField, type F
 import type { PdfPage } from './pdfText';
 import { LINE_ITEMS, type StatementLine } from './statementLines';
 
-export const PROMPT_VERSION = 'pdf-statements-5';
+export const PROMPT_VERSION = 'pdf-statements-6';
 
 // ─── 1. Statement pages ─────────────────────────────────────────────────────────
 
@@ -128,6 +128,7 @@ Record every line of the statement of financial position, the income statement (
   Debt lines: debtBankLoans (bank loans, credits, borrowings), debtBonds (bonds, notes, debt securities), debtLeases (lease liabilities), debtMixed (a line combining several kinds, e.g. "financial liabilities" or "loans, borrowings and bonds", when the statement doesn't split them), debtOther (other interest-bearing financing, e.g. loans from related parties); interest payable, trade payables and derivatives are other, and so is an "other financial liabilities" line when the statement shows borrowings on their own lines.
   Other items: costOfSales, grossProfit, financeIncome, profitBeforeTax, incomeTax; propertyPlantEquipment, investmentProperty, loansGranted (loans the company gave to others), tradeReceivables (trade receivables, also "trade and other receivables"), tradePayables (likewise), contractLiabilities (contract liabilities, customer advances), provisions; investingCashFlow and financingCashFlow (the net totals), interestPaid, dividendsPaid, borrowingsRaised (proceeds from loans, borrowings and bond issues), borrowingsRepaid (repayment of loans and borrowings, bond redemption; not lease payments).
   depreciation: every depreciation and amortisation line in the income statement or the cash flow statement, including right-of-use asset depreciation when it is a separate line. capex: purchases of property, plant and equipment and intangible assets (investing cash flow). interestExpense: interest costs if shown; financeCosts: total finance costs.
+  Several lines of one kind each get the field: every intangible assets line (e.g. mining intangibles and other intangibles; goodwill is goodwill), every capex line (purchases of property, plant and equipment or intangible assets, e.g. "mining assets" and "other property, plant and equipment and intangibles"; not investment property, subsidiaries or financial assets), every depreciation or amortisation line, every debt line. minorityInterests: the non-controlling interests line in equity.
   Total fields (totalAssets, noncurrentAssets, currentAssets, totalLiabilities, noncurrentLiabilities, currentLiabilities, totalEquityAndLiabilities, equity) go on the total line only, never on the lines that make it up; when the total has no label, use the section name (e.g. "Current assets").
   When a line is a subtotal of lines you also record, still give it its field only if it is the standard total (e.g. currentAssets); otherwise other.
 

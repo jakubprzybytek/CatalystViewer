@@ -5,7 +5,7 @@ import { queryAll, scanAll } from '../utils';
 
 // Every attribute but `lines` (20–40 KB a row): the list reads don't need them.
 const LIST_ATTRIBUTES = ['entityId', 'krs', 'lei', 'registration', 'period', 'issuerName', 'companyName', 'scope', 'periodStart',
-    'periodEnd', 'months', 'currency', 'standard', 'presentedUnit', 'lineSigns', 'figures', 'column', 'filing', 'review', 'importedAt'];
+    'periodEnd', 'months', 'currency', 'standard', 'presentedUnit', 'lineSigns', 'figures', 'column', 'filing', 'review', 'linesExtraction', 'importedAt'];
 const LIST_PROJECTION = {
     ProjectionExpression: LIST_ATTRIBUTES.map((_, i) => `#a${i}`).join(', '),
     ExpressionAttributeNames: Object.fromEntries(LIST_ATTRIBUTES.map((name, i) => [`#a${i}`, name])),
@@ -57,15 +57,15 @@ export class IssuerFinancialsTable {
 
     // Adds statement lines and the fields that came with them to a stored year, leaving its figures alone.
     // Only when the row still comes from the same file (it may have been replaced meanwhile).
-    async addLines(entityId: string, period: string, fileKey: string, fields: Pick<DbIssuerFinancialsRecord, 'standard' | 'presentedUnit' | 'lineSigns' | 'lines' | 'review'>): Promise<boolean> {
+    async addLines(entityId: string, period: string, fileKey: string, fields: Pick<DbIssuerFinancialsRecord, 'standard' | 'presentedUnit' | 'lineSigns' | 'lines' | 'review' | 'linesExtraction'>): Promise<boolean> {
         try {
             await this.documentClient.send(new UpdateCommand({
                 TableName: this.tableName,
                 Key: { entityId, period },
-                UpdateExpression: 'SET #standard = :standard, #unit = :unit, #signs = :signs, #lines = :lines, #review = if_not_exists(#review, :review)',
+                UpdateExpression: `SET #standard = :standard, #unit = :unit, #signs = :signs, #lines = :lines, #review = if_not_exists(#review, :review)${fields.linesExtraction ? ', #linesExtraction = :linesExtraction' : ''}`,
                 ConditionExpression: '#filing.#key = :key',
-                ExpressionAttributeNames: { '#standard': 'standard', '#unit': 'presentedUnit', '#signs': 'lineSigns', '#lines': 'lines', '#review': 'review', '#filing': 'filing', '#key': 'key' },
-                ExpressionAttributeValues: { ':standard': fields.standard, ':unit': fields.presentedUnit, ':signs': fields.lineSigns, ':lines': fields.lines, ':review': fields.review, ':key': fileKey },
+                ExpressionAttributeNames: { '#standard': 'standard', '#unit': 'presentedUnit', '#signs': 'lineSigns', '#lines': 'lines', '#review': 'review', '#filing': 'filing', '#key': 'key', ...(fields.linesExtraction ? { '#linesExtraction': 'linesExtraction' } : {}) },
+                ExpressionAttributeValues: { ':standard': fields.standard, ':unit': fields.presentedUnit, ':signs': fields.lineSigns, ':lines': fields.lines, ':review': fields.review, ':key': fileKey, ...(fields.linesExtraction ? { ':linesExtraction': fields.linesExtraction } : {}) },
             }));
             return true;
         } catch (error) {

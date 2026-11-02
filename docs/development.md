@@ -168,6 +168,8 @@ npx sst shell --stage dev -- npm run reparse-filings                   # KRS XML
 npx sst shell --stage dev -- npm run reparse-filings -- --pdf          # PDFs too: one model read each (~$0.15)
 ```
 
+A PDF re-read is a new model read, so its lines are recorded with the read they came from (`linesExtraction`: model, prompt version, pages). The model doesn't answer the same way every time, even at temperature 0 (Polenergia: once the "revenue from contracts" line, once the "sales revenues" total), which is why a re-read whose figures differ is left alone.
+
 Not supported: small and micro entities (`JednostkaMala`, `JednostkaMikro`), banks and insurers, scanned PDFs (no text layer).
 
 **Viewing the figures:** an issuer card with imported reports shows a *Reports <year>* chip (click it for the figures) and, expanded, where the company is registered (country, KRS or local register number, LEI; stored with each row as `registration` on import). The card's *Financials* button opens the yearly figures (`GET /api/issuers/{name}/financials`, `getIssuerFinancials.ts`): every imported year with its source, notes, checks and a 15-minute link to the original file, plus the AI analysis's years. Code: `packages/core/src/bonds/fundamentals/filings/`, `scripts/import-filing/`.
