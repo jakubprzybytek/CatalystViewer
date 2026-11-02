@@ -1,5 +1,5 @@
 import { BondReport } from '@/sdk/Bonds';
-import { InterestPercentilesByInterestBaseType, groupByInterestBaseType, interestConstPart, firstDay, interestBaseType } from '.';
+import { InterestPercentilesByInterestBaseType, groupByInterestBaseType, interestConstPart, firstDay } from '.';
 import { getInterestConstColorCode } from '@/bonds/BondIndicators';
 import { colorMarkers } from '@/common/ColorCodes';
 

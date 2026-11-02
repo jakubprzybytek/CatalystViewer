@@ -1,0 +1,82 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": [
+    "eslint",
+    "typescript",
+    "unicorn",
+    "oxc",
+    "import",
+    "react",
+    "vitest"
+  ],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "warn"
+  },
+  "rules": {
+    "react/rules-of-hooks": "error",
+    "react/exhaustive-deps": "warn",
+    "react/react-in-jsx-scope": "off",
+    "unicorn/no-array-sort": "off",
+    "unicorn/no-array-reverse": "off",
+    "unicorn/consistent-function-scoping": "off",
+    "eslint/no-shadow": "off",
+    "vitest/require-mock-type-parameters": "off",
+    "react/set-state-in-effect": "off",
+    "react/purity": "off",
+    "react/exhaustive-effect-dependencies": "off",
+    "react/memo-dependencies": "off",
+    "import/no-unassigned-import": "off",
+    "eslint/no-unused-vars": [
+      "error",
+      {
+        "ignoreRestSiblings": true,
+        "argsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_"
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": [
+        "packages/web/**"
+      ],
+      "plugins": [
+        "eslint",
+        "typescript",
+        "unicorn",
+        "oxc",
+        "import",
+        "react",
+        "nextjs",
+        "vitest"
+      ]
+    },
+    {
+      "files": [
+        "infra/**",
+        "sst.config.ts"
+      ],
+      "rules": {
+        "eslint/no-new": "off",
+        "typescript/triple-slash-reference": "off"
+      }
+    }
+  ],
+  "settings": {
+    "next": {
+      "rootDir": "packages/web/"
+    }
+  },
+  "ignorePatterns": [
+    "**/.sst/**",
+    "**/.next/**",
+    "**/.open-next/**",
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/*.d.ts",
+    "playwright-report/**",
+    "test-results/**",
+    ".github/skills/**"
+  ]
+}

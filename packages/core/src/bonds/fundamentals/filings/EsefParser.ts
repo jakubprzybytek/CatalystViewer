@@ -172,15 +172,15 @@ function readTaxonomy(files: { name: string; text: () => string }[]): Taxonomy {
     const taxonomy: Taxonomy = { children: new Map(), anchors: new Map(), labels: new Map(), presentation: [] };
     for (const file of files) {
         const name = file.name.toLowerCase();
-        if (/_cal\.xml$/.test(name)) {
+        if (name.endsWith('_cal.xml')) {
             for (const arc of linkbaseArcs(file.text(), 'calculationArc')) {
                 const list = taxonomy.children.get(arc.from) ?? [];
                 if (!list.some(c => c.concept === arc.to)) list.push({ concept: arc.to, weight: arc.weight });
                 taxonomy.children.set(arc.from, list);
             }
-        } else if (/_pre\.xml$/.test(name)) {
+        } else if (name.endsWith('_pre.xml')) {
             taxonomy.presentation.push(...presentationRoles(file.text()));
-        } else if (/_def\.xml$/.test(name)) {
+        } else if (name.endsWith('_def.xml')) {
             for (const arc of linkbaseArcs(file.text(), 'definitionArc')) {
                 if (!arc.arcrole.endsWith('/wider-narrower')) continue;
                 // wider (IFRS) → narrower (extension)
@@ -445,13 +445,13 @@ export function parseEsef(input: EsefInput): ParsedFiling {
     // impairment and liquidation"). When it includes impairment, the tagged impairment losses are taken off.
     const filerDepreciationConcept = [...new Set(facts.map(f => f.concept))].find(c => !c.startsWith('ifrs-full:')
         && /deprec/i.test(`${c} ${label(c)}`) && /amorti[sz]/i.test(`${c} ${label(c)}`)
-        && (taxonomy?.anchors.get(c) ?? []).some(a => /^ifrs-full:Adjustments/.test(a)));
+        && (taxonomy?.anchors.get(c) ?? []).some(a => a.startsWith('ifrs-full:Adjustments')));
     let depreciationLessImpairment = false;
     const filerDepreciation = (p: { start: string; end: string }): SourcedFigure | undefined => {
         if (!filerDepreciationConcept) return undefined;
         const line = sourced([filerDepreciationConcept], p);
         if (!line || !/impair/i.test(`${filerDepreciationConcept} ${label(filerDepreciationConcept)}`)) return line;
-        const impairment = sourced([...new Set(facts.map(f => f.concept))].filter(c => /^ifrs-full:ImpairmentLossRecognisedInProfitOrLoss/.test(c)), p);
+        const impairment = sourced([...new Set(facts.map(f => f.concept))].filter(c => c.startsWith('ifrs-full:ImpairmentLossRecognisedInProfitOrLoss')), p);
         depreciationLessImpairment = true;
         return impairment ? { value: round2(line.value - impairment.value), source: [...line.source, ...impairment.source.map(c => `−${c}`)] } : line;
     };

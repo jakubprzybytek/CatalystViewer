@@ -6,7 +6,6 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
     "//postinstall": "@types/react@18 gets installed locally as a peer resolution for MUI, even though root has @types/react@19. npm overrides don't apply to peer deps, so we remove it post-install to force TypeScript to use the root @types/react@19 instead.",
     "postinstall": "rm -rf node_modules/@types/react node_modules/@types/react-dom"
   },

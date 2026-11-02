@@ -242,7 +242,7 @@ function krsLines(sections: { section: Section; root?: string }[], scope: Filing
                 }
             }
             for (const [key, child] of Object.entries(node)) {
-                if (key.startsWith('@_') || key === '#text' || /^Kwot/.test(key) || key === 'NazwaPozycji') continue;
+                if (key.startsWith('@_') || key === '#text' || key.startsWith('Kwot') || key === 'NazwaPozycji') continue;
                 for (const c of Array.isArray(child) ? child : [child]) if (isNode(c)) visit(c, key, order);
             }
         };

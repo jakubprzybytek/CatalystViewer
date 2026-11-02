@@ -84,6 +84,7 @@ export default function JobsPage(): React.JSX.Element {
       } catch { /* ignore background refresh errors */ }
     }, 15000);
     return () => clearInterval(interval);
+    // oxlint-disable-next-line react/exhaustive-deps -- by job id: the refresh itself replaces selectedJob
   }, [isRunningJobSelected, isDetailsOpen, selectedJob?.jobId]);
 
   function getJobDurationMs(job: GetJobResult): number {
@@ -140,6 +141,7 @@ export default function JobsPage(): React.JSX.Element {
 
   useEffect(() => {
     loadFirstPage(filters);
+    // oxlint-disable-next-line react/exhaustive-deps -- first page on mount; filter changes load it themselves
   }, []);
 
   return (

@@ -69,7 +69,7 @@ export function itemsFromFigures(
             const line = find(source);
             if (!line) continue;
             if (field === 'financialDebt') set(line, debtKind(`${line.code ?? ''} ${line.label}`, bondLines.has(line)));
-            else if (field === 'intangibleAssets') set(line, /:Goodwill$/.test(line.code ?? '') || /goodwill|warto[sś][cć] firmy/i.test(line.label) ? 'goodwill' : 'intangibleAssets');
+            else if (field === 'intangibleAssets') set(line, (line.code ?? '').endsWith(':Goodwill') || /goodwill|warto[sś][cć] firmy/i.test(line.label) ? 'goodwill' : 'intangibleAssets');
             // A figure summed from several lines tags them only where each line is that item too.
             else if (FIELD_ITEM[field] && (figure.source.length === 1 || SUMMED.has(field))) set(line, FIELD_ITEM[field]!);
         }

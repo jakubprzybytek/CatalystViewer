@@ -177,7 +177,6 @@ function toUpdatedBond(dbBond: DbBondDetails): UpdatedBond {
 }
 
 async function storeBondQuotes(bondsQuotesList: CatalystBondQuote[]): Promise<void> {
-  const now = clockNow();
   const bondStatisticsTable = new BondStatisticsTable(dynamoDbClient, Resource.BondStatistics.name);
 
   const bondStatistics: DbBondStatistics[] = bondsQuotesList

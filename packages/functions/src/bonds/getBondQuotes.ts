@@ -22,8 +22,6 @@ export const handler = lambdaHandler<BondQuotesQueryResult>(async event => {
     return Failure("Mandatory parameter is missing: 'market'");
   }
 
-  const bondId = `${bondName}#${market}`;
-
   logger.info('Received request for bond quotes', { bond: bondName, market });
 
   const bondStatisticsTable = new BondStatisticsTable(dynamoDBClient, Resource.BondStatistics.name);

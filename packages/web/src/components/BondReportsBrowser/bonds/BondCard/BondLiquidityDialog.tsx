@@ -12,12 +12,11 @@ import CircularProgress from "@mui/material/CircularProgress";
 import IconButton from "@mui/material/IconButton";
 import CloseIcon from '@mui/icons-material/Close';
 import Condition from "@/common/Condition";
-import { Legend, ResponsiveContainer, XAxis, YAxis, Tooltip, Bar, Line, ComposedChart, CartesianGrid, ReferenceLine, AreaChart, Area } from "recharts";
+import { Legend, ResponsiveContainer, XAxis, YAxis, Tooltip, Bar, Line, ComposedChart, CartesianGrid, ReferenceLine } from "recharts";
 import { useMediaQuery, useTheme } from "@mui/material";
 import { format, isAfter, isBefore, sub } from "date-fns";
 import { BondQuote, getBondQuotes, BondReport } from "@/sdk";
 import { getAsks, getBids, getClosePrices } from "@/bonds/statistics";
-import { formatDate } from "@/common/Formats";
 import { today } from "@/common/Clock";
 import { min, max } from "simple-statistics";
 
@@ -84,7 +83,7 @@ export default function BondLiquidityDialog({ bondReport: { details, currentValu
   useEffect(() => {
     setIsLoading(true);
     fetchData(details.name, details.market);
-  }, []);
+  }, [details.name, details.market]);
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));

@@ -1,6 +1,6 @@
 import { removeElement } from '@/common/Arrays';
 import BondReportsFilterDrawer from './BondReportsFilterDrawer';
-import { filterBy, isBondType, isInterestBaseType, isIssuedBy, isOnMarkets, nominalValueLessThan, isCurrency, isTreasuryBondType } from "@/bonds/statistics";
+import { filterBy, isInterestBaseType, isIssuedBy, isOnMarkets, nominalValueLessThan, isCurrency, isTreasuryBondType } from "@/bonds/statistics";
 
 export default BondReportsFilterDrawer;
 

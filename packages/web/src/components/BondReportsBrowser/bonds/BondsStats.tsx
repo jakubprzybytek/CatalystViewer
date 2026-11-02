@@ -6,7 +6,7 @@ import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
 import { ScatterChart, Scatter, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import { BondReport } from '@/sdk/Bonds';
-import { InterestPercentilesByInterestBaseType, groupByInterestBaseType } from '@/bonds/statistics';
+import { InterestPercentilesByInterestBaseType } from '@/bonds/statistics';
 import { get2dStatsForInterestBaseTypes, Bond2dPoint } from '@/bonds/statistics/Bonds2dStats';
 
 const sort = (arr: string[]) => [...arr].sort();

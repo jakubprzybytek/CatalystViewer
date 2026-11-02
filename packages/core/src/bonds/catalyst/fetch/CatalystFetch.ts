@@ -1,4 +1,4 @@
-import axios, { AxiosError } from 'axios';
+import axios, { AxiosError, isAxiosError } from 'axios';
 import { readFixtureText, sourceFixturesDir } from '../../../common/Fixtures';
 
 export async function fetchBondsQuotes(path: string): Promise<string> {
@@ -25,7 +25,7 @@ export async function fetchBondsQuotes(path: string): Promise<string> {
     })
         .then(response => response.data)
         .catch(error => {
-            if (axios.isAxiosError(error))
+            if (isAxiosError(error))
                 throw Error(`Cannot fetch '${url}': ${(error as AxiosError).code}`);
             else
                 throw Error(`Cannot fetch '${url}': ${error}`);

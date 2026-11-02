@@ -122,6 +122,9 @@ export default function BondReportsBrowser({ settings, setSettings }: BondReport
     fetchData(filteringOptions.bondType);
   }, [filteringOptions.bondType]);
 
+  // Dependencies by field: filteringOptions is a new object on every render (useSettings), and the
+  // bond type reloads the reports instead.
+  /* oxlint-disable react/exhaustive-deps */
   // first, filter without issuers - it will be used to display all issuers
   const filteredBondReportsWithoutIssuers = useMemo(() =>
     filterUsing({ ...filteringOptions, issuers: [] })(allBondReports)
@@ -138,6 +141,7 @@ export default function BondReportsBrowser({ settings, setSettings }: BondReport
 
     return filteredBondReports;
   }, [allBondReports, filteringOptions.maxNominal, filteringOptions.currencies, filteringOptions.markets, filteringOptions.interestBaseTypes, filteringOptions.issuers, filteringOptions.treasuryBondTypes]);
+  /* oxlint-enable react/exhaustive-deps */
 
   const filteredAndSortedBondsReports = useMemo(() =>
     getBondReportsSortingFunction(sortOrder)(filteredBondReports), [sortOrder, filteredBondReports]);

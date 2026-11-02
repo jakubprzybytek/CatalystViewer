@@ -32,7 +32,6 @@ export class AgentLoop {
 
         // Build tool specs — cast required because the SDK's Tool union includes
         // an `$unknown` member that cannot be constructed directly.
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const toolConfig: any = {
             tools: this.tools.map((tool) => ({
                 toolSpec: {
@@ -117,7 +116,6 @@ export class AgentLoop {
 
                 // Append tool results as a user turn.
                 // ContentBlock union also includes $unknown, so we cast here.
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const toolResultContent = toolResults.map((r) => ({ toolResult: r })) as any;
 
                 // If this was the last allowed iteration, force a final answer by

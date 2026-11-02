@@ -1,6 +1,5 @@
 import Grid from "@mui/material/Grid";
 import Stack from "@mui/material/Stack";
-import Box from "@mui/material/Box";
 import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
@@ -27,13 +26,13 @@ function ReportSectionTitle({ children }: ReportSectionTitleParam): React.JSX.El
 
 type ReportEntryParam = {
   caption: string;
-  style?: 'strong' | 'weak';
+  emphasis?: 'strong' | 'weak';
   children: React.ReactNode;
 }
 
-function ReportEntry({ caption, style = undefined, children }: ReportEntryParam): React.JSX.Element {
-  const fontWeight = style == 'strong' ? 500 : 400;
-  const color = style == 'weak' ? 'gray' : 'inherit';
+function ReportEntry({ caption, emphasis = undefined, children }: ReportEntryParam): React.JSX.Element {
+  const fontWeight = emphasis == 'strong' ? 500 : 400;
+  const color = emphasis == 'weak' ? 'gray' : 'inherit';
   return (
     <Stack direction='row'>
       <Typography component='span' variant='caption' sx={{
@@ -110,7 +109,7 @@ export default function BondYTMReportDialog({ ytmReport, onClose }: BondYTMRepor
               <ReportEntry caption='Accured interest'>{formatCurrency(bondCurrentValues.accuredInterest, bondDetails.currency)}</ReportEntry>
               <ReportEntry caption='Buying commision'>{formatCurrency(ytmReport.buyingCommision, bondDetails.currency)}</ReportEntry>
               <Divider sx={{ mt: 0.5, mb: 1 }} />
-              <ReportEntry caption='Total buying price (BP)' style='strong'>{formatCurrency(ytmReport.totalBuyingPrice, bondDetails.currency)}</ReportEntry>
+              <ReportEntry caption='Total buying price (BP)' emphasis='strong'>{formatCurrency(ytmReport.totalBuyingPrice, bondDetails.currency)}</ReportEntry>
             </Paper>
           </Grid>
           <Grid size={{ xs: 12, sm: 6 }}>
@@ -118,17 +117,17 @@ export default function BondYTMReportDialog({ ytmReport, onClose }: BondYTMRepor
             <Paper className="report-section" variant="outlined" sx={{ backgroundColor: 'lightgreen', mb: 1 }}>
               <ReportSectionTitle>Interest</ReportSectionTitle>
               <ReportEntry caption='Payable interest (I) - (1+IR)^TtM'>{formatCurrency(ytmReport.totalPayableInterest, bondDetails.currency)}</ReportEntry>
-              <ReportEntry caption='Interest tax IT - I*IR' style={noTax ? 'weak' : undefined}>{ytmReport.interestTax > 0 && '-'}{formatCurrency(ytmReport.interestTax, bondDetails.currency)}</ReportEntry>
+              <ReportEntry caption='Interest tax IT - I*IR' emphasis={noTax ? 'weak' : undefined}>{ytmReport.interestTax > 0 && '-'}{formatCurrency(ytmReport.interestTax, bondDetails.currency)}</ReportEntry>
               <Divider sx={{ mt: 0.5, mb: 1 }} />
-              <ReportEntry caption='Net payable interest' style='strong'>{formatCurrency(ytmReport.netTotalPayableInterest, bondDetails.currency)}</ReportEntry>
+              <ReportEntry caption='Net payable interest' emphasis='strong'>{formatCurrency(ytmReport.netTotalPayableInterest, bondDetails.currency)}</ReportEntry>
             </Paper>
             <Paper className="report-section" variant="outlined" sx={{ backgroundColor: 'lightgreen' }}>
               <ReportSectionTitle>Payoff</ReportSectionTitle>
               <ReportEntry caption='Payoff price (PP)'>{formatCurrency(bondDetails.nominalValue, bondDetails.currency)}</ReportEntry>
               <ReportEntry caption='Sale profit (SP) - PP-BP'>{formatCurrency(ytmReport.saleProfit, bondDetails.currency)}</ReportEntry>
-              <ReportEntry caption='Sale tax - SP*TR' style={noTax ? 'weak' : undefined}>{formatCurrency(ytmReport.saleTax, bondDetails.currency)}</ReportEntry>
+              <ReportEntry caption='Sale tax - SP*TR' emphasis={noTax ? 'weak' : undefined}>{formatCurrency(ytmReport.saleTax, bondDetails.currency)}</ReportEntry>
               <Divider sx={{ mt: 0.5, mb: 1 }} />
-              <ReportEntry caption='Sale income' style='strong'>{formatCurrency(ytmReport.saleIncome, bondDetails.currency)}</ReportEntry>
+              <ReportEntry caption='Sale income' emphasis='strong'>{formatCurrency(ytmReport.saleIncome, bondDetails.currency)}</ReportEntry>
             </Paper>
           </Grid>
           <Grid size={{ xs: 12, sm: 6 }} offset={{ sm: 3 }}>
@@ -140,7 +139,7 @@ export default function BondYTMReportDialog({ ytmReport, onClose }: BondYTMRepor
               <ReportEntry caption='Total buying price'>-{formatCurrency(ytmReport.totalBuyingPrice, bondDetails.currency)}</ReportEntry>
               <Divider sx={{ mt: 0.5, mb: 1 }} />
               <ReportEntry caption='Total profit'>{formatCurrency(ytmReport.profit, bondDetails.currency)}</ReportEntry>
-              <ReportEntry caption='YTM' style='strong'>{(ytmReport.ytm * 100).toFixed(2)}%</ReportEntry>
+              <ReportEntry caption='YTM' emphasis='strong'>{(ytmReport.ytm * 100).toFixed(2)}%</ReportEntry>
             </Paper>
           </Grid>
         </Grid>

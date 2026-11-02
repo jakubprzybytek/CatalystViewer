@@ -21,7 +21,7 @@ export function useLocalStorage<T>(key: string, initialValue: T): [T, Dispatch<S
     // ... persists the new value to localStorage.
     const setValue: Dispatch<SetStateAction<T>> = (value: T | ((oldValue: T) => T)) => {
         try {
-            const valueToStore = value instanceof Function ? value(storedValue) : value;
+            const valueToStore = typeof value === 'function' ? (value as (oldValue: T) => T)(storedValue) : value;
             // Save state
             setStoredValue(valueToStore);
             // Save to local storage

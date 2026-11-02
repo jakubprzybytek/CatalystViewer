@@ -1,5 +1,4 @@
 import { describe, it, expect } from "vitest";
-import { formatCompactCurrency } from "./Formats";
 import { removeAt, removeElement } from "./Arrays";
 
 describe("Arrays", () => {

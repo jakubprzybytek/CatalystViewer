@@ -32,13 +32,13 @@ export default function BondCardTradingSection({ bondReport, expanded, onToggleE
       <CardSectionRow>
         {liquidityReport && <BondLiquidityDialog bondReport={liquidityReport} onClose={() => setLiquidityReport(undefined)} />}
         <CardEntry caption='Avg turnover' width='25%'>
-          <CardValue>{!!currentValues.averageTurnover ? formatCompactCurrency(currentValues.averageTurnover * 1000, details.currency) : 'N/A'}</CardValue>
+          <CardValue>{currentValues.averageTurnover ? formatCompactCurrency(currentValues.averageTurnover * 1000, details.currency) : 'N/A'}</CardValue>
         </CardEntry>
         <CardEntry caption='Trading ratio' textAlign='center' width='25%'>
           <CardValue colorCode={tradingDaysColorCode}>{Math.round(currentValues.tradingDaysRatio * 100)}%</CardValue>
         </CardEntry>
         <CardEntry caption='Avg spread' textAlign='end' width='25%'>
-          <CardValue>{!!currentValues.averageSpread ? formatCurrency(currentValues.averageSpread, details.currency) : 'N/A'}</CardValue>
+          <CardValue>{currentValues.averageSpread ? formatCurrency(currentValues.averageSpread, details.currency) : 'N/A'}</CardValue>
         </CardEntry>
         <Collapse in={expanded} orientation='horizontal'>
           <Button variant='outlined' size='small' sx={{ textTransform: 'none', ml: 2 }} onClick={() => setLiquidityReport(bondReport)}>

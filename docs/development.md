@@ -30,10 +30,13 @@ Stop `sst dev` when you're done: it holds `dev`'s lock and blocks every deploy t
 | Kind | Command |
 |---|---|
 | Type check | `npm run typecheck` (infra and all packages) |
+| Lint | `npm run lint`: [oxlint](https://oxc.rs/docs/guide/usage/linter) over the whole repo, config in `.oxlintrc.json`; warnings fail it |
 | Unit (Vitest) | `npm test` |
 | Seed a test stage | `npx sst shell --stage int -- npm run seed` (int or dev) |
 | Integration (API) | `npx sst shell --stage int -- npm run test:integration` |
 | E2E (Playwright) | `npx sst shell --stage int -- npm run test:e2e` |
+
+**Lint** is oxlint, not ESLint: typescript-eslint (which ESLint needs to read TypeScript) uses TypeScript's JavaScript API, which TypeScript 7's npm package no longer has; oxlint has its own parser. `.oxlintrc.json` turns on the correctness rules (errors) and suspicious ones (warnings), the React hooks rules (`react/rules-of-hooks`, `react/exhaustive-deps`) and the Next.js rules for `packages/web`. Off: rules for the old JSX transform (`react-in-jsx-scope`), the React Compiler-era rules (`set-state-in-effect`, `purity`, the duplicate dependency checks: the app doesn't use the compiler, and they flag its load-on-open effects), and purely stylistic ones. A deliberately partial dependency list gets an `oxlint-disable` comment with the reason.
 
 Integration and E2E tests expect the seeded fixtures and log in as the test user; details in [testing.md](testing.md).
 
@@ -179,7 +182,7 @@ Not supported: small and micro entities (`JednostkaMala`, `JednostkaMikro`), ban
 | File | Trigger | What it does |
 |---|---|---|
 | `.github/workflows/continuous-delivery.yaml` | push to `main` (except `docs/**`, `**/*.md`), manual | checks → deploy int → seed → integration and E2E tests → tag `v1.N` → deploy prod from the tag → site and API answer (no login) |
-| `.github/workflows/pull-request-checks.yaml` | pull request (Dependabot's too) | typecheck, unit tests, site build; no AWS access |
+| `.github/workflows/pull-request-checks.yaml` | pull request (Dependabot's too) | typecheck, lint, unit tests, site build; no AWS access |
 | `.github/dependabot.yml` | weekly (npm), monthly (actions) | version update PRs; security update PRs come from the repo setting ([dependabot standard](https://github.com/jakubprzybytek/agent-playbook/blob/main/skills/dependabot/STANDARD.md)) |
 
 - Rollback or redeploy: run Continuous Delivery manually from the release tag ("Use workflow from"; `gh workflow run continuous-delivery.yaml --ref v1.6`). It deploys the tag to int, seeds it, runs the tests, then deploys it to prod, without a new version. Works for `v1.5` and later; `v1.0.0`–`v1.4` predate `continuous-delivery.yaml` and can't be rolled back this way.

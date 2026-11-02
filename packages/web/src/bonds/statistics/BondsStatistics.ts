@@ -1,5 +1,5 @@
 import { quantile, min } from 'simple-statistics';
-import { BondsStatistics, InterestPercentilesByInterestBaseType, groupByType, groupByInterestBaseType, getInterestConstParts } from '.';
+import { InterestPercentilesByInterestBaseType, groupByInterestBaseType, getInterestConstParts } from '.';
 import { BondReport } from '@/sdk/Bonds';
 
 export function computeStatisticsForInterestBaseTypes(bonds: BondReport[]): InterestPercentilesByInterestBaseType {

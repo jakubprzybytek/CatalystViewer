@@ -31,6 +31,7 @@ jobs:
         run: npm audit signatures
       # `typecheck` runs `sst install` first, for the generated sst-env.d.ts
       - run: npm run typecheck
+      - run: npm run lint
       - run: npm test
       # The site only: the root `build` (sst build) needs AWS access
       - run: npm run build -w web

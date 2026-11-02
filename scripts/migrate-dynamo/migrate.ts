@@ -50,15 +50,13 @@ async function validateTables(
   const errors: string[] = [];
 
   for (const { source, target } of tables) {
-    let sourceExists = true;
     let targetExists = true;
 
-    for (const [tableName, exists] of [[source, sourceExists], [target, targetExists]] as [string, boolean][]) {
+    for (const tableName of [source, target]) {
       try {
         await dynamoClient.send(new DescribeTableCommand({ TableName: tableName }));
       } catch {
         errors.push(`Table does not exist: '${tableName}'`);
-        if (tableName === source) sourceExists = false;
         if (tableName === target) targetExists = false;
       }
     }
