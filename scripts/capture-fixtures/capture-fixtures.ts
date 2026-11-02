@@ -9,7 +9,8 @@ import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "fs";
 import { join } from "path";
 import axios from "axios";
 import { format, isWeekend, subDays } from "date-fns";
-import { utils, read, write } from "xlsx";
+import { readSheet } from "read-excel-file/node";
+import writeExcelFile from "write-excel-file/node";
 import { DynamoDBClient, ListTablesCommand, QueryCommand, ScanCommand, type AttributeValue } from "@aws-sdk/client-dynamodb";
 import { parseBondsQuotesPage, readCatalystDailyStatisticsXlsFile } from "../../packages/core/src/bonds/catalyst/sources";
 import { parseObligacjeBondInformationPage } from "../../packages/core/src/bonds/obligacjepl/ObligacjeBondInformationPage";
@@ -102,14 +103,12 @@ function trimQuotesPage(markup: string, sections: [string, string][]): string {
   });
 }
 
-// Keeps the header rows, the bond type rows and the fixture bonds (column I = name).
-function trimDailyStatistics(file: Buffer): Buffer {
-  const workbook = read(file);
-  const sheet = workbook.Sheets["instrumenty"];
-  const rows = utils.sheet_to_json<unknown[]>(sheet, { header: 1, raw: true, defval: null });
+// Keeps the header rows, the bond type rows and the fixture bonds (column I = name), in the
+// "instrumenty" sheet (the only one the reader uses).
+async function trimDailyStatistics(file: Buffer): Promise<Buffer> {
+  const rows = await readSheet(file, "instrumenty");
   const kept = rows.filter((row, index) => index < 10 || !row[7] || IN_SOURCES.has(String(row[8])));
-  workbook.Sheets["instrumenty"] = utils.aoa_to_sheet(kept);
-  return write(workbook, { type: "buffer", bookType: "xlsx" }) as Buffer;
+  return writeExcelFile(kept, { sheet: "instrumenty" }).toBuffer();
 }
 
 // ─── Prod data (read only) ─────────────────────────────────────────────────────
@@ -183,11 +182,11 @@ async function main() {
 
   const statsOriginal = await source(dailyStatsFile, `https://gpwcatalyst.pl/pub/CATALYST/statystyki/statystyki_dzienne/${dailyStatsFile}`);
   const statsPath = join(OUT, "sources", "gpwcatalyst", dailyStatsFile);
-  writeFileSync(statsPath, trimDailyStatistics(statsOriginal));
+  writeFileSync(statsPath, await trimDailyStatistics(statsOriginal));
   writeFileSync(join(OUT, "original.xlsx.tmp"), statsOriginal);
-  const expectedStats = readCatalystDailyStatisticsXlsFile(join(OUT, "original.xlsx.tmp")).filter((s) => IN_SOURCES.has(s.name));
+  const expectedStats = (await readCatalystDailyStatisticsXlsFile(join(OUT, "original.xlsx.tmp"))).filter((s) => IN_SOURCES.has(s.name));
   rmSync(join(OUT, "original.xlsx.tmp"));
-  const actualStats = readCatalystDailyStatisticsXlsFile(statsPath);
+  const actualStats = await readCatalystDailyStatisticsXlsFile(statsPath);
   if (JSON.stringify(actualStats) !== JSON.stringify(expectedStats)) throw new Error("Trimmed daily statistics parse differently");
 
   for (const name of IN_SOURCES) {
