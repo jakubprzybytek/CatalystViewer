@@ -49,7 +49,9 @@ export function BondReportsFilterPanel({ allBondReports, allBondTypes, filtering
           all={allBondTypes} selected={filteringOptions.bondType} setSelected={setBondType} />
       </Box>
       <Divider>Properties</Divider>
-      <Grid container padding={1} spacing={2}>
+      <Grid container spacing={2} sx={{
+        padding: 1
+      }}>
         <Grid size={12}>
           <NominalValueFilter selectedNominalValue={filteringOptions.maxNominal} setSelectedNominalValue={setMaxNominal} />
         </Grid>

@@ -17,7 +17,9 @@ function MetricsList({ dimension }: { dimension: DimensionResult }) {
   return (
     <Stack spacing={0.5} sx={{ pt: 0.5 }}>
       {dimension.metrics.map(m => (
-        <Stack key={m.name} direction='row' spacing={1} alignItems='center'>
+        <Stack key={m.name} direction='row' spacing={1} sx={{
+          alignItems: 'center'
+        }}>
           <SignalDot signal={m.signal} />
           <Typography variant='caption'>{m.name}: {m.formattedValue}</Typography>
         </Stack>
@@ -45,9 +47,9 @@ export default function IssuerScorecard({ scorecard }: IssuerScorecardProps): Re
           {scorecard.dimensions.map(d => {
             const cell = (
               <Stack
-                alignItems='center'
                 onClick={!isHoverDevice ? () => setSelectedDimension(d) : undefined}
                 sx={{
+                  alignItems: 'center',
                   cursor: isHoverDevice ? 'default' : 'pointer',
                   pt: 0.75,
                   pb: 0.25,
@@ -56,9 +58,8 @@ export default function IssuerScorecard({ scorecard }: IssuerScorecardProps): Re
                   my: 0.25,
                   borderRadius: 2,
                   backgroundColor: 'var(--cv-bg-card)',
-                  border: '1px solid var(--cv-border-soft)',
-                }}
-              >
+                  border: '1px solid var(--cv-border-soft)'
+                }}>
                 <Typography variant='caption' sx={{ color: 'text.secondary', textAlign: 'center', lineHeight: 1.2, fontSize: '0.65rem' }}>
                   {d.name}
                 </Typography>
@@ -86,7 +87,9 @@ export default function IssuerScorecard({ scorecard }: IssuerScorecardProps): Re
         {selectedDimension && (
           <>
             <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 1, pr: 1, borderBottom: '1px solid var(--cv-border-soft)' }}>
-              <Stack direction='row' spacing={1} alignItems='center'>
+              <Stack direction='row' spacing={1} sx={{
+                alignItems: 'center'
+              }}>
                 <SignalDot signal={selectedDimension.signal} size='lg' />
                 <Typography variant='h6' sx={{ fontWeight: 700, letterSpacing: '-0.01em' }}>{selectedDimension.name}</Typography>
               </Stack>

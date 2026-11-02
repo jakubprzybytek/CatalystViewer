@@ -37,7 +37,9 @@ const CustomTooltip = ({ active, payload, label }: CustomTooltipParam) => {
   if (active && payload && payload.length) {
     return (
       <Paper sx={{ p: 1 }}>
-        <Typography fontWeight={500}>{format(new Date(label), "dd.MM.yyyy")}</Typography>
+        <Typography sx={{
+          fontWeight: 500
+        }}>{format(new Date(label), "dd.MM.yyyy")}</Typography>
         <Typography variant='body2'>Bid: {payload[1]?.value || 'N/A'}</Typography>
         <Typography variant='body2'>Ask: {payload[2]?.value || 'N/A'}</Typography>
         <Typography variant='body2'>Close: {payload[3]?.value || 'N/A'}</Typography>
@@ -128,7 +130,12 @@ export default function BondLiquidityDialog({ bondReport: { details, currentValu
           </Alert>
         </Condition>
         <Condition render={isLoading}>
-          <Stack alignItems='center' marginTop={2} marginBottom={2}>
+          <Stack
+            sx={{
+              alignItems: 'center',
+              marginTop: 2,
+              marginBottom: 2
+            }}>
             <CircularProgress />
           </Stack>
         </Condition>

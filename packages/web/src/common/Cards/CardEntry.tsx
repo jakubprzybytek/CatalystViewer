@@ -39,7 +39,9 @@ export function CardValue({ colorCode = 'none', bold = false, children }: CardVa
 
   if (colorMarker === undefined) {
     return (
-      <Typography component='span' variant='body1' fontWeight={fontWeight} >{children}</Typography>
+      <Typography component='span' variant='body1' sx={{
+        fontWeight: fontWeight
+      }} >{children}</Typography>
     );
   }
 

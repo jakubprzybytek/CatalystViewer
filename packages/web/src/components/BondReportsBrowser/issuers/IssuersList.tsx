@@ -110,7 +110,9 @@ export default function IssuersList({ bondReports, issuerProfiles, statistics, f
   }, [bondReports, issuerProfiles]);
 
   return (
-    <Grid container padding={1} spacing={1}>
+    <Grid container spacing={1} sx={{
+      padding: 1
+    }}>
       {issuers.map(issuerReport => (
         <Grid key={`${issuerReport.name}#${issuerReport.interestBaseType}`} size={{ xs: 12, sm: 6, lg: 4, xl: 3 }}>
           <IssuerCard

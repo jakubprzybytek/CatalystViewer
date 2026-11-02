@@ -46,12 +46,16 @@ export default function IssuersSelector({ allIssuers, selectedIssuers, addIssuer
               </MenuItem>)
           )}
         </Menu>
-        <Stack direction='row' flexWrap='wrap' sx={{
-          '& > div': {
-            mr: 1,
-            mb: 1
-          }
-        }}>
+        <Stack
+          direction='row'
+          sx={{
+            flexWrap: 'wrap',
+
+            '& > div': {
+              mr: 1,
+              mb: 1
+            }
+          }}>
           {selectedIssuers && selectedIssuers.map(issuer =>
             <Chip key={issuer} label={issuer} size='small'
               onDelete={() => { removeIssuer(issuer) }} />

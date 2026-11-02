@@ -44,11 +44,20 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
     const point = payload[0].payload;
     return (
         <Paper elevation={3} sx={{ p: 1, fontSize: 12, lineHeight: 1.6 }}>
-            <Typography variant="body2" fontWeight="bold">{point.name}</Typography>
-            <Typography variant="caption" display="block" sx={{ color: 'gray' }}>
+            <Typography variant="body2" sx={{
+                fontWeight: "bold"
+            }}>{point.name}</Typography>
+            <Typography
+                variant="caption"
+                sx={{
+                    display: "block",
+                    color: 'gray'
+                }}>
                 Issue date: {format(new Date(point.x), 'dd MMM yyyy')}
             </Typography>
-            <Typography variant="caption" display="block">
+            <Typography variant="caption" sx={{
+                display: "block"
+            }}>
                 Rate: {point.interestVariable} + {point.y.toFixed(2)}%
             </Typography>
         </Paper>

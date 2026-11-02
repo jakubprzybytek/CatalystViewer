@@ -18,7 +18,9 @@ export default function BondsList({ bondReports, statistics }: BondsListParam): 
   useEffect(() => setDisplayedItemsCount(BATCH_SIZE), [bondReports]);
 
   return (
-    <Grid container padding={1} spacing={0.75}>
+    <Grid container spacing={0.75} sx={{
+      padding: 1
+    }}>
       {bondReports.slice(0, displayedItemsCount).map(bondReport => (
         <Grid key={`${bondReport.details.name}#${bondReport.details.market}`} size={{ xs: 12, sm: 6, md: 12 }}>
           <BondCard bondReport={bondReport} statistics={statistics} />

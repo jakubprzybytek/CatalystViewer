@@ -115,9 +115,17 @@ function IssuerCard({ issuerReport, statistics, isChecked, onIssuerChecked }: Is
         }
       }}>
         <CardSectionRow>
-          <Stack direction='row' flexGrow={1} justifyContent='space-between' alignItems='flex-start'>
+          <Stack
+            direction='row'
+            sx={{
+              flexGrow: 1,
+              justifyContent: 'space-between',
+              alignItems: 'flex-start'
+            }}>
             <Typography variant='h6' sx={{ fontWeight: 700, letterSpacing: '-0.01em', color: 'var(--cv-text-primary)' }}>{issuerReport.name}</Typography>
-            <Stack direction='row' alignItems='center' spacing={0.5}>
+            <Stack direction='row' spacing={0.5} sx={{
+              alignItems: 'center'
+            }}>
               {isInFundamentalScope(issuerReport.industry) && (
                 <IconButton size='small' title='Run Fundamental Analysis' onClick={() => setConfirmOpen(true)}>
                   <QueryStatsOutlinedIcon />
@@ -132,8 +140,21 @@ function IssuerCard({ issuerReport, statistics, isChecked, onIssuerChecked }: Is
           </Stack>
         </CardSectionRow>
         <CardSectionRow>
-          <Stack direction='row' flexGrow={1} justifyContent='space-between' alignItems='center' sx={{ mt: -1 }}>
-            <Stack direction='row' spacing={0.5} alignItems='center' flexWrap='wrap'>
+          <Stack
+            direction='row'
+            sx={{
+              flexGrow: 1,
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              mt: -1
+            }}>
+            <Stack
+              direction='row'
+              spacing={0.5}
+              sx={{
+                alignItems: 'center',
+                flexWrap: 'wrap'
+              }}>
               {issuerReport.industry && industryColors && (
                 <Chip
                   size='small'
@@ -151,7 +172,9 @@ function IssuerCard({ issuerReport, statistics, isChecked, onIssuerChecked }: Is
                   size='small'
                   variant='outlined'
                   label={
-                    <Stack direction='row' alignItems='center' spacing={0}>
+                    <Stack direction='row' spacing={0} sx={{
+                      alignItems: 'center'
+                    }}>
                       <QueryStatsOutlinedIcon sx={{ fontSize: '0.85rem', mr: 0.25 }} />
                       {issuerReport.scorecard.dimensions.map((d, i) => (
                         <SignalDot key={i} signal={d.signal} />
@@ -175,12 +198,16 @@ function IssuerCard({ issuerReport, statistics, isChecked, onIssuerChecked }: Is
                 </Tooltip>
               )}
             </Stack>
-            <Stack direction='row' alignItems='center'>
+            <Stack direction='row' sx={{
+              alignItems: 'center'
+            }}>
               <Checkbox
                 size='small'
                 checked={isChecked}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>) => onIssuerChecked(issuerReport.name, event.target.checked)} />
-              <Typography variant='caption' color='text.secondary'>Selected</Typography>
+              <Typography variant='caption' sx={{
+                color: 'text.secondary'
+              }}>Selected</Typography>
             </Stack>
           </Stack>
         </CardSectionRow>
