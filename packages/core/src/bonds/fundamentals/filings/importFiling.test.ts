@@ -128,7 +128,7 @@ describe('importFiling', () => {
         it('takes the KRS number from the LEI register and stores the package', async () => {
             const { deps, rows, uploads } = fakes([], 'TESTOWA DEWELOPER SPÓŁKA AKCYJNA', { legalName: 'TESTOWA DEWELOPER SPÓŁKA AKCYJNA', krs: '0000123456', registeredAs: '0000123456', jurisdiction: 'PL' });
             const result = await importFiling(deps, esefPackage);
-            expect(result).toMatchObject({ issuerName: 'Testowa Deweloper S.A.', entityId: '0000123456', krs: '0000123456', lei: '259400TESTOWA0000001', warnings: [] });
+            expect(result).toMatchObject({ issuerName: 'Testowa Deweloper S.A.', entityId: '0000123456', krs: '0000123456', lei: '259400TESTOWA0000001', registration: { country: 'PL', id: '0000123456' }, warnings: [] });
             expect(uploads).toEqual([{ key: expect.stringMatching(/^filings\/0000123456\/2025-12-31-group-[0-9a-f]{12}\.zip$/), contentType: 'application/zip' }]);
             expect(rows.get('0000123456|2025-12-31#group')).toMatchObject({ scope: 'group', lei: '259400TESTOWA0000001', filing: { format: 'esef' } });
         });
@@ -137,6 +137,7 @@ describe('importFiling', () => {
             const { deps } = fakes([], undefined, { legalName: 'TESTOWA DEWELOPER S.A.', registeredAs: 'B123456', jurisdiction: 'LU' });
             const result = await importFiling(deps, esefPackage, { dryRun: true });
             expect(result.entityId).toBe('LEI:259400TESTOWA0000001');
+            expect(result.registration).toEqual({ country: 'LU', id: 'B123456' });
             expect(result.s3Key).toMatch(/^filings\/LEI-259400TESTOWA0000001\//);
             expect(result.warnings).toEqual(["LEI 259400TESTOWA0000001 (TESTOWA DEWELOPER S.A.) isn't registered in the KRS (LU B123456): stored under its LEI"]);
         });

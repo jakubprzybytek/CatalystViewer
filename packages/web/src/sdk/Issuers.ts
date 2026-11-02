@@ -13,6 +13,7 @@ export type FinancialsSource =
 
 // What's collected for an issuer, whatever the scorecard uses (for the Financials page).
 export type FinancialsCoverage = {
+  company?: { name: string; country?: string; krs?: string; lei?: string; registeredAs?: string };
   filed?: { latestPeriodEnd: string; earliestPeriodEnd: string; years: number; formats: ('krs-xml' | 'esef' | 'ifrs-text' | 'ai-pdf')[]; scopes: ('single' | 'group')[]; lastImportedAt: string };
   ai?: { performedAt: string; latestYear?: number; years: number };
 };

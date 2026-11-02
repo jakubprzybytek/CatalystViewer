@@ -493,7 +493,7 @@ export function parseEsef(input: EsefInput): ParsedFiling {
         notes.push('Revenue: no total tagged, sum of revenue lines');
     }
 
-    const companyName = nonNumeric(xhtml, 'NameOfReportingEntityOrOtherMeansOfIdentification') ?? '';
+    const companyName = reportingEntityName(nonNumeric(xhtml, 'NameOfReportingEntityOrOtherMeansOfIdentification') ?? '');
     return {
         format: 'esef',
         scope: detectScope(xhtml),
@@ -521,4 +521,10 @@ const round2 = (v: number) => Math.round(v * 100) / 100;
 
 function fmt(value: number): string {
     return value.toLocaleString('en-US', { maximumFractionDigits: 2 });
+}
+
+// Some filers tag a sentence: "Jednostką sporządzającą sprawozdanie finansowe jest P.A. NOVA S.A." → "P.A. NOVA S.A."
+export function reportingEntityName(tagged: string): string {
+    const name = tagged.replace(/\s+/g, ' ').trim();
+    return name.match(/\s(?:jest|is)\s+(.+)$/i)?.[1] ?? name;
 }

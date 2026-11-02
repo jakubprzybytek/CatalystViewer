@@ -45,6 +45,7 @@ export type ImportFilingResult = {
     entityId: string;
     krs?: string;
     lei?: string;
+    registration?: { country: string; id?: string };
     s3Key: string;
     stored: { periodEnd: string; column: 'current' | 'previous'; written: boolean }[];
     warnings: string[];
@@ -148,7 +149,7 @@ async function gleifRecord(lei: string): Promise<LeiRecord | undefined> {
     };
 }
 
-type Identity = { entityId: string; krs?: string; lei?: string; names: string[] };
+type Identity = { entityId: string; krs?: string; lei?: string; registration?: { country: string; id?: string }; names: string[] };
 
 async function identify(filing: ParsedFiling, deps: ImportFilingDeps, options: ImportFilingOptions, warnings: string[]): Promise<Identity> {
     const names = [filing.companyName].filter(Boolean);
@@ -157,6 +158,7 @@ async function identify(filing: ParsedFiling, deps: ImportFilingDeps, options: I
         throw new ImportFilingError(`--lei ${options.lei} doesn't match the filing's LEI ${filing.lei}`);
     }
     const lei = options.lei ?? filing.lei;
+    let abroad: { country: string; id?: string } | undefined;   // from the LEI register, for a company outside the KRS
     // With --lei, a KRS number found in the text is someone else's (e.g. a subsidiary in the group list).
     let krs = options.krs ?? (options.lei ? undefined : filing.krs);
     const krsFromText = !options.krs && filing.format === 'ai-pdf' && krs !== undefined;
@@ -178,6 +180,7 @@ async function identify(filing: ParsedFiling, deps: ImportFilingDeps, options: I
                 }
                 krs ??= record.krs;
                 if (!record.krs) {
+                    if (record.jurisdiction) abroad = { country: record.jurisdiction.slice(0, 2).toUpperCase(), id: record.registeredAs };
                     const where = [record.jurisdiction, record.registeredAs].filter(Boolean).join(' ') || 'unknown register';
                     warnings.push(`LEI ${lei} (${record.legalName}) isn't registered in the KRS (${where}): stored under its LEI`);
                 }
@@ -212,7 +215,8 @@ async function identify(filing: ParsedFiling, deps: ImportFilingDeps, options: I
             warnings.push(`Couldn't check KRS ${krs} in the court register: ${error instanceof Error ? error.message : error}`);
         }
     }
-    return { entityId: krs ?? `LEI:${lei}`, krs, lei, names };
+    const registration = krs ? { country: 'PL', id: krs } : abroad;
+    return { entityId: krs ?? `LEI:${lei}`, krs, lei, registration, names };
 }
 
 function resolveIssuer(identity: Identity, deps: ImportFilingDeps, known: DbIssuerFinancialsRecord[], requested?: string): string {
@@ -268,6 +272,7 @@ export async function importFiling(deps: ImportFilingDeps, data: Buffer, options
         entityId: identity.entityId,
         krs: identity.krs,
         lei: identity.lei,
+        ...(identity.registration ? { registration: identity.registration } : {}),
         period: `${p.periodEnd}#${filing.scope}`,
         issuerName,
         companyName: filing.companyName || identity.names[1] || '',
@@ -282,7 +287,7 @@ export async function importFiling(deps: ImportFilingDeps, data: Buffer, options
         importedAt,
     }));
 
-    const result = { filing, issuerName, entityId: identity.entityId, krs: identity.krs, lei: identity.lei, s3Key, warnings };
+    const result = { filing, issuerName, entityId: identity.entityId, krs: identity.krs, lei: identity.lei, registration: identity.registration, s3Key, warnings };
     if (options.dryRun) {
         return { ...result, stored: records.map(r => ({ periodEnd: r.periodEnd, column: r.column, written: false })) };
     }

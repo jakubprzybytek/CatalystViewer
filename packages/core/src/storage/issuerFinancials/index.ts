@@ -9,6 +9,7 @@ export type DbIssuerFinancialsRecord = {
     entityId: string;             // PK: the KRS number (Polish companies), else "LEI:<lei>"
     krs?: string;
     lei?: string;
+    registration?: { country: string; id?: string };  // ISO 3166 country and local register number (KRS for Poland)
     period: string;               // SK: "<YYYY-MM-DD>#single" | "<YYYY-MM-DD>#group"
     issuerName: string;           // the app's issuer name (BondDetails, IssuerProfiles)
     companyName: string;          // as in the filing

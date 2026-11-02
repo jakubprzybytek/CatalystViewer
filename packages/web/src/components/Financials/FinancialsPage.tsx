@@ -24,6 +24,7 @@ import Search from '@mui/icons-material/Search';
 import MainNavigation from '@/components/MainNavigation';
 import IssuerFinancialsTable, { FORMAT_LABEL } from '@/components/BondReportsBrowser/issuers/IssuerFinancialsTable';
 import { getIssuerProfiles, type FilingFormat, type IssuerProfile } from '@/sdk/Issuers';
+import { registrationParts } from '@/bonds/fundamentals/registration';
 import { buildFinancialsList, countByFilter, type CoverageFilter, type FinancialsListItem } from '@/bonds/fundamentals/financialsList';
 
 const FILTER_LABEL: Record<CoverageFilter, string> = {
@@ -73,6 +74,11 @@ function IssuerDetails({ profile, onBack }: { profile: IssuerProfile; onBack?: (
             {profile.industry}
             {profile.websiteUrl && <> · <Link href={profile.websiteUrl} target='_blank' rel='noreferrer'>website</Link></>}
           </Typography>
+          {profile.financialsCoverage?.company && (
+            <Typography variant='caption' color='text.secondary' component='div'>
+              Registered: {registrationParts(profile.financialsCoverage.company).join(' · ')}
+            </Typography>
+          )}
         </Box>
       </Stack>
       <IssuerFinancialsTable issuerName={profile.issuerName} />

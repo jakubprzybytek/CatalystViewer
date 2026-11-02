@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { UnsupportedFilingError } from './FilingParser';
-import { looksLikeEsef, openEsef, parseEsef, parseIxNumber } from './EsefParser';
+import { looksLikeEsef, openEsef, parseEsef, parseIxNumber, reportingEntityName } from './EsefParser';
 import { esefPackage, esefReport, makeZip } from './fixtures/esefPackage';
 
 const value = (filing: ReturnType<typeof parseEsef>, column: number, field: string) =>
@@ -202,4 +202,13 @@ ${fact('cp:DepreciationAmortizationImpairmentAndLiquidation', 'D', '4.433,1')}${
         expect(() => parseEsef(openEsef(untagged))).toThrow(UnsupportedFilingError);
         expect(() => openEsef(makeZip({ 'a/readme.txt': 'x' }))).toThrow(/not an ESEF report package/);
     });
+});
+
+describe('reportingEntityName', () => {
+    it.each([
+        ['Jednostką sporządzającą sprawozdanie finansowe jest P.A. NOVA S.A.', 'P.A. NOVA S.A.'],
+        ['Jednostką sporządzającą skonsolidowane sprawozdanie finansowe jest P.A. NOVA S.A.', 'P.A. NOVA S.A.'],
+        ['KGHM Polska Miedź S.A.', 'KGHM Polska Miedź S.A.'],
+        ['AB', 'AB'],
+    ])('%s → %s', (tagged, name) => expect(reportingEntityName(tagged)).toBe(name));
 });

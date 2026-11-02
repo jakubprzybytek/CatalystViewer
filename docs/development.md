@@ -141,7 +141,7 @@ One call per report (two with a retry), ~8k tokens in and ~10k out (≈ $0.15 wi
 
 Not supported: small and micro entities (`JednostkaMala`, `JednostkaMikro`), banks and insurers, scanned PDFs (no text layer).
 
-**Viewing the figures:** the issuer card's *Financials* button opens the yearly figures (`GET /api/issuers/{name}/financials`, `getIssuerFinancials.ts`): every imported year with its source, notes, checks and a 15-minute link to the original file, plus the AI analysis's years. Code: `packages/core/src/bonds/fundamentals/filings/`, `scripts/import-filing/`.
+**Viewing the figures:** an issuer card with imported reports shows a *Reports <year>* chip (click it for the figures) and, expanded, where the company is registered (country, KRS or local register number, LEI; stored with each row as `registration` on import). The card's *Financials* button opens the yearly figures (`GET /api/issuers/{name}/financials`, `getIssuerFinancials.ts`): every imported year with its source, notes, checks and a 15-minute link to the original file, plus the AI analysis's years. Code: `packages/core/src/bonds/fundamentals/filings/`, `scripts/import-filing/`.
 
 ## Delivery
 

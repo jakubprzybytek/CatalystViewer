@@ -56,6 +56,8 @@ export function scorecardWithSource(
 // What's collected for an issuer, whatever the scorecard uses: imported reports (both scopes, any
 // period length) and the AI analysis's years. For the Financials page.
 export type FinancialsCoverage = {
+    // the company of the latest imported report: where it's registered and its identifiers
+    company?: { name: string; country?: string; krs?: string; lei?: string; registeredAs?: string };
     filed?: { latestPeriodEnd: string; earliestPeriodEnd: string; years: number; formats: DbIssuerFinancialsRecord['filing']['format'][]; scopes: ('single' | 'group')[]; lastImportedAt: string };
     ai?: { performedAt: string; latestYear?: number; years: number };
 };
@@ -71,6 +73,15 @@ export function financialsCoverage(filings: DbIssuerFinancialsRecord[], analysis
             formats: [...new Set(filings.map(f => f.filing.format ?? 'krs-xml'))],
             scopes: [...new Set(filings.map(f => f.scope))].sort(),
             lastImportedAt: filings.map(f => f.importedAt).sort().at(-1)!,
+        };
+        const latest = [...filings].sort((a, b) => a.periodEnd.localeCompare(b.periodEnd) || a.importedAt.localeCompare(b.importedAt)).at(-1)!;
+        const country = latest.registration?.country ?? (latest.krs ? 'PL' : undefined);
+        coverage.company = {
+            name: latest.companyName,
+            ...(country ? { country } : {}),
+            ...(latest.krs ? { krs: latest.krs } : {}),
+            ...(latest.lei ? { lei: latest.lei } : {}),
+            ...(!latest.krs && latest.registration?.id ? { registeredAs: latest.registration.id } : {}),
         };
     }
     if (analysis) {

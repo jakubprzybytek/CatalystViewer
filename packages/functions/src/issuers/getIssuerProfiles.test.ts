@@ -83,7 +83,15 @@ describe('scorecardWithSource', () => {
         expect(financialsCoverage([filing, previous], analysis)).toEqual({
             filed: { latestPeriodEnd: '2025-12-31', earliestPeriodEnd: '2024-12-31', years: 2, formats: ['krs-xml', 'esef'], scopes: ['group', 'single'], lastImportedAt: '2026-11-01T10:00:00.000Z' },
             ai: { performedAt: '2026-10-01T10:00:00.000Z', latestYear: 2024, years: 1 },
+            company: { name: 'TESTOWA S.A.' },
         });
         expect(financialsCoverage([], undefined)).toEqual({});
+    });
+
+    it('says where the company is registered', () => {
+        expect(financialsCoverage([{ ...filing, krs: '0000123456', lei: '259400TESTOWA0000001' }], undefined).company)
+            .toEqual({ name: 'TESTOWA S.A.', country: 'PL', krs: '0000123456', lei: '259400TESTOWA0000001' });
+        expect(financialsCoverage([{ ...filing, entityId: 'LEI:213800OVMJPFP79OB449', lei: '213800OVMJPFP79OB449', registration: { country: 'NL', id: '81928491' } }], undefined).company)
+            .toEqual({ name: 'TESTOWA S.A.', country: 'NL', lei: '213800OVMJPFP79OB449', registeredAs: '81928491' });
     });
 });

@@ -14,6 +14,8 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogActions from '@mui/material/DialogActions';
 import Snackbar from '@mui/material/Snackbar';
+import Tooltip from '@mui/material/Tooltip';
+import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
 import ExpandMoreOutlinedIcon from '@mui/icons-material/ExpandMoreOutlined';
 import ExpandLessOutlinedIcon from '@mui/icons-material/ExpandLessOutlined';
 import OpenInNewOutlinedIcon from '@mui/icons-material/OpenInNewOutlined';
@@ -28,6 +30,7 @@ import IssuerScorecard from './IssuerScorecard';
 import AnalysisReportModal from './AnalysisReportModal';
 import { SignalDot } from './SignalDot';
 import { triggerFundamentalAnalysis } from '@/sdk/Issuers';
+import { registrationParts, reportsLabel } from '@/bonds/fundamentals/registration';
 
 const FILING_SOURCE = {
   'krs-xml': 'filed statements (KRS)',
@@ -84,6 +87,11 @@ function IssuerCard({ issuerReport, statistics, isChecked, onIssuerChecked }: Is
   const minNominalValueColorCode = getNominalValueColorCode(issuerReport.minNominalValue);
   const interestConstColorCode = getInterestConstColorCode(issuerReport.interestConstAverage, statistics[issuerReport.interestBaseType]);
   const industryColors = issuerReport.industry ? getIndustryColors(issuerReport.industry) : undefined;
+  const filed = issuerReport.financialsCoverage?.filed;
+  const company = issuerReport.financialsCoverage?.company;
+  const reports = reportsLabel(issuerReport.financialsCoverage);
+  const hasFinancials = !!issuerReport.performedAt || !!filed;
+  const hasDetails = !!(issuerReport.businessSummary || issuerReport.websiteUrl || issuerReport.scorecard || company || hasFinancials);
 
   const handleTriggerAnalysis = async () => {
     setConfirmOpen(false);
@@ -115,7 +123,7 @@ function IssuerCard({ issuerReport, statistics, isChecked, onIssuerChecked }: Is
                   <QueryStatsOutlinedIcon />
                 </IconButton>
               )}
-              {(issuerReport.businessSummary || issuerReport.websiteUrl || issuerReport.scorecard) && (
+              {hasDetails && (
                 <IconButton size='small' onClick={() => setExpanded(!expanded)}>
                   {expanded ? <ExpandLessOutlinedIcon /> : <ExpandMoreOutlinedIcon />}
                 </IconButton>
@@ -153,6 +161,19 @@ function IssuerCard({ issuerReport, statistics, isChecked, onIssuerChecked }: Is
                   sx={{ fontWeight: 400 }}
                 />
               )}
+              {reports && filed && (
+                <Tooltip title={`Annual reports imported: ${filed.years} fiscal year${filed.years > 1 ? 's' : ''}, ${filed.earliestPeriodEnd.slice(0, 4)}–${filed.latestPeriodEnd.slice(0, 4)}. Click for the figures.`}>
+                  <Chip
+                    size='small'
+                    variant='outlined'
+                    color='primary'
+                    icon={<DescriptionOutlinedIcon sx={{ fontSize: '0.9rem' }} />}
+                    label={reports}
+                    onClick={() => setModalOpen(true)}
+                    sx={{ fontWeight: 400 }}
+                  />
+                </Tooltip>
+              )}
             </Stack>
             <Stack direction='row' alignItems='center'>
               <Checkbox
@@ -163,7 +184,7 @@ function IssuerCard({ issuerReport, statistics, isChecked, onIssuerChecked }: Is
             </Stack>
           </Stack>
         </CardSectionRow>
-        <Collapse in={expanded && !!(issuerReport.businessSummary || issuerReport.websiteUrl || issuerReport.scorecard)}>
+        <Collapse in={expanded && hasDetails}>
           <Box className='expanded-content'>
             <CardSectionRow>
               {issuerReport.businessSummary && (
@@ -185,6 +206,13 @@ function IssuerCard({ issuerReport, statistics, isChecked, onIssuerChecked }: Is
                 </CardEntry>
               </CardSectionRow>
             )}
+            {company && (
+              <CardSectionRow>
+                <CardEntry caption='Registered' width='100%'>
+                  <CardValue>{registrationParts(company).join(' · ')}</CardValue>
+                </CardEntry>
+              </CardSectionRow>
+            )}
             {issuerReport.classifiedAtTs && (
               <Typography component='span' className='tiny-text'>Classified on: {new Date(issuerReport.classifiedAtTs).toLocaleString('pl-PL')}</Typography>
             )}
@@ -199,23 +227,23 @@ function IssuerCard({ issuerReport, statistics, isChecked, onIssuerChecked }: Is
                     {issuerReport.financialsSource.years > 1 ? ` and ${issuerReport.financialsSource.years - 1} earlier` : ''}
                   </Typography>
                 )}
-                {(issuerReport.performedAt || issuerReport.financialsSource?.kind === 'filing') && (
-                  <Box sx={{ display: 'flex', justifyContent: 'flex-end', pr: '8px', mt: 0.5 }}>
-                    <Button
-                      size='small'
-                      variant='outlined'
-                      onClick={() => setModalOpen(true)}
-                    >
-                      {issuerReport.performedAt ? 'Financials & report →' : 'Financials →'}
-                    </Button>
-                  </Box>
-                )}
-                {issuerReport.performedAt && (
-                  <Typography component='span' className='tiny-text'>
-                    Analysed on: {new Date(issuerReport.performedAt).toLocaleString('pl-PL')}
-                  </Typography>
-                )}
               </>
+            )}
+            {hasFinancials && (
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end', pr: '8px', mt: 0.5 }}>
+                <Button
+                  size='small'
+                  variant='outlined'
+                  onClick={() => setModalOpen(true)}
+                >
+                  {issuerReport.performedAt ? 'Financials & report →' : 'Financials →'}
+                </Button>
+              </Box>
+            )}
+            {issuerReport.performedAt && (
+              <Typography component='span' className='tiny-text'>
+                Analysed on: {new Date(issuerReport.performedAt).toLocaleString('pl-PL')}
+              </Typography>
             )}
           </Box>
         </Collapse>
