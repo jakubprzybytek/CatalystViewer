@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
+import Box from "@mui/material/Box";
 import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
@@ -132,7 +133,9 @@ export default function BondLiquidityDialog({ bondReport: { details, currentValu
           </Stack>
         </Condition>
         <Condition render={!isLoading}>
-          <ResponsiveContainer aspect={isMobile ? 0.8 : 1.8}>
+          {/* The box sets the chart's size: recharts 3 doesn't give a ResponsiveContainer with only an aspect a height */}
+          <Box sx={{ width: '100%', aspectRatio: isMobile ? 0.8 : 1.8 }}>
+          <ResponsiveContainer width='100%' height='100%'>
             <ComposedChart maxBarSize={20} data={chartQuotes}>
               <XAxis xAxisId='time' type='number' scale='time'
                 padding={{ left: 20, right: 20 }}
@@ -157,6 +160,7 @@ export default function BondLiquidityDialog({ bondReport: { details, currentValu
               <Line name='Close price' xAxisId='time' yAxisId='price' dataKey='close' strokeWidth={2} stroke="#3399ff" />
             </ComposedChart>
           </ResponsiveContainer>
+          </Box>
         </Condition>
       </DialogContent>
     </Dialog>
