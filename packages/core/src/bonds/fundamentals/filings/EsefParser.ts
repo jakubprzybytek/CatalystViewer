@@ -180,6 +180,8 @@ const ifrs = (name: string) => `ifrs-full:${name}`;
 // Borrowings, bonds, notes, loans, leases; not interest payable, trade or other payables, provisions.
 const DEBT_NAME = /borrowing|loan|bond|notesanddebentures|debenture|leaseliabilit|financelease|debt|kredyt|pozycz|pożycz|obligac|leasing|weksl/i;
 const NOT_DEBT_NAME = /interest(payable)?$|payable|provision|deferred|tax|trade|grant|employee|derivative|receivable|guarantee/i;
+// "LoansBorrowingsAndBondsPayable" is debt: a trailing "Payable(s)" alone doesn't make a line non-debt.
+const notDebtName = (local: string) => NOT_DEBT_NAME.test(local.replace(/Payables?$/, ''));
 const BOND_NAME = /bond|notesanddebentures|debenture|debtinstrumentsissued|obligac/i;
 
 // Standard IFRS debt concepts, used without a calculation tree (bare .xhtml): one per line, most
@@ -312,7 +314,7 @@ export function parseEsef(input: EsefInput): ParsedFiling {
         const anchors = taxonomy?.anchors.get(concept) ?? [];
         const names = [concept.split(':')[1] ?? concept, ...anchors.map(a => a.split(':')[1] ?? a)];
         const text = `${names.join(' ')} ${label(concept)}`;
-        return DEBT_NAME.test(text) && !NOT_DEBT_NAME.test(names[0]) && !/odsetk|interest payable/i.test(label(concept));
+        return DEBT_NAME.test(text) && !notDebtName(names[0]) && !/odsetk|interest payable/i.test(label(concept));
     };
     // A line of bonds only: "credits, loans, bonds" lines can't be split.
     const isBond = (concept: string) => {
@@ -347,7 +349,7 @@ export function parseEsef(input: EsefInput): ParsedFiling {
     let filerNamedDebtUsed = false;
     const filerDebtByName = (side: 'noncurrent' | 'current', p: { start: string; end: string }) => filerConcepts.filter(c => {
         const local = c.split(':')[1] ?? c;
-        return DEBT_NAME.test(local) && !NOT_DEBT_NAME.test(local) && sideOf(local) === side && value(c, p) !== undefined;
+        return DEBT_NAME.test(local) && !notDebtName(local) && sideOf(local) === side && value(c, p) !== undefined;
     });
 
     let wideDebtUsed = false;

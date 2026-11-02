@@ -126,6 +126,17 @@ ${['TradeAndOtherPayables', 'LoansReceived', 'DebtInstrumentsIssuedAtAmortisedCo
             expect(filing.checks).toEqual([]);
         });
 
+        it('counts a filer line named "...LoansBorrowingsAndBondsPayable" as debt (Murapol)', () => {
+            const withPayable = report.replace('ifrs-full:LoansReceived', 'testowa:LoansBorrowingsAndBondsPayable');
+            const cal = `<link:linkbase xmlns:link="http://www.xbrl.org/2003/linkbase" xmlns:xlink="http://www.w3.org/1999/xlink"><link:calculationLink>
+<link:loc xlink:label="p" xlink:href="x.xsd#ifrs-full_Liabilities"/>
+${['ifrs-full_TradeAndOtherPayables', 'testowa_LoansBorrowingsAndBondsPayable', 'ifrs-full_LeaseLiabilities'].map((c, i) =>
+                `<link:loc xlink:label="c${i}" xlink:href="x.xsd#${c}"/><link:calculationArc xlink:from="p" xlink:to="c${i}" weight="1"/>`).join('')}
+</link:calculationLink></link:linkbase>`;
+            const filing = parseEsef(openEsef(makeZip({ 'p/reports/r.xhtml': withPayable, 'p/x/r_cal.xml': cal })));
+            expect(value(filing, 0, 'financialDebt')).toEqual({ value: 3_800_000, source: ['testowa:LoansBorrowingsAndBondsPayable', 'ifrs-full:LeaseLiabilities'] });
+        });
+
         it('takes EBIT from the line the calculation tree sums the operating lines into, when the filer swapped the tags', () => {
             const swapped = report.replace('</body>', `${fact('ifrs-full:GrossProfit', 'D', '5,000')}${fact('ifrs-full:SellingExpense', 'D', '1,000')}`
                 + `${fact('ifrs-full:ShareOfProfitLossOfAssociatesAndJointVenturesAccountedForUsingEquityMethod', 'D', '4,000')}${fact('ifrs-full:ProfitLossFromOperatingActivities', 'D', '140')}</body>`);

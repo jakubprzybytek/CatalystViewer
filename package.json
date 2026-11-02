@@ -17,7 +17,8 @@
     "quote": "esrun packages/core/src/bonds/catalyst/catalyst.ts quote",
     "classify-issuer": "esrun --send-code-mode=temporaryFile --node-env-file-if-exists=.env.local packages/core/src/ai/issuers/cli.ts classify",
     "analyze-issuer": "esrun --send-code-mode=temporaryFile --node-env-file-if-exists=.env.local packages/core/src/ai/issuers/cli.ts analyze",
-    "import-filing": "esrun --send-code-mode=temporaryFile scripts/import-filing/import-filing.ts"
+    "import-filing": "esrun --send-code-mode=temporaryFile scripts/import-filing/import-filing.ts",
+    "check-filings": "esrun --send-code-mode=temporaryFile scripts/check-filings/check-filings.ts"
   },
   "devDependencies": {
     "@playwright/test": "^1.60.0",

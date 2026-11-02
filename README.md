@@ -12,6 +12,7 @@ npm run dev -- --stage dev
 * `npm run classify-issuer -- "Kruk S.A."` - Classify an issuer using AI (displays result, stores nothing)
 * `npm run analyze-issuer -- "Kruk S.A."` - Run the fundamental analysis using AI (displays result, stores nothing); see [docs/development.md](docs/development.md#testing-the-ai-features-locally)
 * `npx sst shell --stage prod -- npm run import-filing -- <file>` - Import an issuer's annual statement (KRS XML, ESEF report package, IFRS XHTML, or a PDF read by a model; options `--issuer`, `--krs`, `--lei`, `--dry-run`, `--force`, `--model`); its figures replace the AI-collected ones in the scorecard; see [docs/development.md](docs/development.md#importing-filed-statements-krs)
+* `npx sst shell --stage prod -- npm run check-filings` - Check imported reports against hand-checked figures (`scripts/check-filings/expected.json`); see [docs/development.md](docs/development.md#importing-filed-statements-krs)
 
 ### Bonds Update Workflow
 

@@ -140,6 +140,16 @@ Details:
 
 One call per report (two with a retry), ~8k tokens in and ~10k out (≈ $0.15 with Sonnet 4.6). The row records the model, prompt version and pages read (`filing.extraction`). The KRS number is taken from the text (also without leading zeros) or the LEI next to "LEI"; a PDF with neither is refused before the model call unless `--krs` is given. Lines that combine loans and bonds ("financial liabilities") count as debt with no bond split.
 
+**Checking the imports** (`scripts/check-filings/`): `expected.json` holds, for every imported report, the figures of its own fiscal year (revenue, net profit, total assets, equity, cash, plus a few regression figures), read by hand from the printed statements, not from the parser. The check compares them with the stored rows and with a fresh parse of the original files in the `Filings` bucket:
+
+```sh
+npx sst shell --stage prod -- npm run check-filings                    # stored rows + re-parse of KRS XML / ESEF / IFRS text (free)
+npx sst shell --stage prod -- npm run check-filings -- --only orlen    # one issuer
+npx sst shell --stage prod -- npm run check-filings -- --pdf           # also re-read the PDFs with the model (~$0.15 each)
+```
+
+Run it after any change to the parsers or the PDF prompt. When importing a new report, check its figures against the document and add it to `expected.json`.
+
 Not supported: small and micro entities (`JednostkaMala`, `JednostkaMikro`), banks and insurers, scanned PDFs (no text layer).
 
 **Viewing the figures:** an issuer card with imported reports shows a *Reports <year>* chip (click it for the figures) and, expanded, where the company is registered (country, KRS or local register number, LEI; stored with each row as `registration` on import). The card's *Financials* button opens the yearly figures (`GET /api/issuers/{name}/financials`, `getIssuerFinancials.ts`): every imported year with its source, notes, checks and a 15-minute link to the original file, plus the AI analysis's years. Code: `packages/core/src/bonds/fundamentals/filings/`, `scripts/import-filing/`.

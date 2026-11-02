@@ -1,0 +1,459 @@
+{
+  "checkedOn": "2026-11-02",
+  "note": "Figures of each report's own fiscal year, in thousands of its currency, read by hand from the printed statements (not from the parser).",
+  "reports": [
+    {
+      "issuer": "AB S.A.",
+      "entityId": "0000053834",
+      "period": "2024-09-30#group",
+      "file": "filings/0000053834/2024-09-30-group-26f1849869c3.zip",
+      "format": "esef",
+      "currency": "PLN",
+      "thousands": {
+        "revenue": 14658180,
+        "netProfit": 174686,
+        "totalAssets": 3875790,
+        "equity": 1392181,
+        "cash": 143614
+      }
+    },
+    {
+      "issuer": "AB S.A.",
+      "entityId": "0000053834",
+      "period": "2025-09-30#group",
+      "file": "filings/0000053834/2025-09-30-group-13b02d17a4b5.zip",
+      "format": "esef",
+      "currency": "PLN",
+      "thousands": {
+        "revenue": 14931151,
+        "netProfit": 173863,
+        "totalAssets": 4219953,
+        "equity": 1528635,
+        "cash": 134575
+      }
+    },
+    {
+      "issuer": "Allegro.eu SA",
+      "entityId": "LEI:222100VRLXV3FPMG4982",
+      "period": "2025-12-31#group",
+      "file": "filings/LEI-222100VRLXV3FPMG4982/2025-12-31-group-ef6b2afc0da8.zip",
+      "format": "esef",
+      "currency": "PLN",
+      "thousands": {
+        "revenue": 11458100,
+        "netProfit": 1517100,
+        "totalAssets": 19721200,
+        "equity": 10144300,
+        "cash": 2840700
+      }
+    },
+    {
+      "issuer": "Atal S.A.",
+      "entityId": "0000262397",
+      "period": "2025-12-31#group",
+      "file": "filings/0000262397/2025-12-31-group-32dc58ce13b0.zip",
+      "format": "esef",
+      "currency": "PLN",
+      "thousands": {
+        "revenue": 1267068,
+        "netProfit": 223490,
+        "totalAssets": 4915533,
+        "equity": 1725362,
+        "cash": 145696
+      }
+    },
+    {
+      "issuer": "Benefit Systems S.A.",
+      "entityId": "0000370919",
+      "period": "2025-12-31#group",
+      "file": "filings/0000370919/2025-12-31-group-61794b0fe41a.pdf",
+      "format": "ai-pdf",
+      "currency": "PLN",
+      "thousands": {
+        "revenue": 4522683,
+        "netProfit": 572895,
+        "totalAssets": 7051980,
+        "equity": 2363319,
+        "cash": 597946
+      }
+    },
+    {
+      "issuer": "Cognor S.A.",
+      "entityId": "0000211496",
+      "period": "2025-12-31#single",
+      "file": "filings/0000211496/2025-12-31-single-0f1a9e1596fe.pdf",
+      "format": "ai-pdf",
+      "currency": "PLN",
+      "thousands": {
+        "revenue": 1962578,
+        "netProfit": -119430,
+        "totalAssets": 2563785,
+        "equity": 1118470,
+        "cash": 93347
+      }
+    },
+    {
+      "issuer": "Cyfrowy Polsat S.A.",
+      "entityId": "0000010078",
+      "period": "2025-12-31#group",
+      "file": "filings/0000010078/2025-12-31-group-b4195a31ca9c.zip",
+      "format": "esef",
+      "currency": "PLN",
+      "thousands": {
+        "revenue": 14323600,
+        "netProfit": -2602600,
+        "totalAssets": 35269100,
+        "equity": 14406600,
+        "cash": 3183200
+      }
+    },
+    {
+      "issuer": "Dekpol S.A.",
+      "entityId": "0000505979",
+      "period": "2025-12-31#group",
+      "file": "filings/0000505979/2025-12-31-group-2b06791281fe.zip",
+      "format": "esef",
+      "currency": "PLN",
+      "thousands": {
+        "revenue": 1876436,
+        "netProfit": 104382,
+        "totalAssets": 1938382,
+        "equity": 714784,
+        "cash": 465047
+      }
+    },
+    {
+      "issuer": "Dom Development S.A.",
+      "entityId": "0000031483",
+      "period": "2025-12-31#group",
+      "file": "filings/0000031483/2025-12-31-group-5653c6d88fc9.pdf",
+      "format": "ai-pdf",
+      "currency": "PLN",
+      "thousands": {
+        "revenue": 3255594,
+        "netProfit": 654135,
+        "totalAssets": 5981342,
+        "equity": 1988405,
+        "cash": 268689
+      }
+    },
+    {
+      "issuer": "Echo Investment S.A.",
+      "entityId": "0000007025",
+      "period": "2025-12-31#group",
+      "file": "filings/0000007025/2025-12-31-group-843e0482551b.pdf",
+      "format": "ai-pdf",
+      "currency": "PLN",
+      "thousands": {
+        "revenue": 2012720,
+        "netProfit": -11543,
+        "totalAssets": 6576697,
+        "equity": 1658569,
+        "cash": 377452
+      }
+    },
+    {
+      "issuer": "Enea S.A.",
+      "entityId": "0000012483",
+      "period": "2025-12-31#group",
+      "file": "filings/0000012483/2025-12-31-group-7b19f49d379e.zip",
+      "format": "esef",
+      "currency": "PLN",
+      "thousands": {
+        "revenue": 27539506,
+        "netProfit": 1766010,
+        "totalAssets": 39886329,
+        "equity": 17738632,
+        "cash": 4524839
+      }
+    },
+    {
+      "issuer": "Erbud S.A.",
+      "entityId": "0000268667",
+      "period": "2025-12-31#group",
+      "file": "filings/0000268667/2025-12-31-group-6ef30ef3f69c.xhtml",
+      "format": "esef",
+      "currency": "PLN",
+      "thousands": {
+        "revenue": 3258215,
+        "netProfit": -28302,
+        "totalAssets": 1987293,
+        "equity": 572707,
+        "cash": 271716
+      }
+    },
+    {
+      "issuer": "Inpro S.A.",
+      "entityId": "0000306071",
+      "period": "2025-12-31#group",
+      "file": "filings/0000306071/2025-12-31-group-b43fccbd7c3d.zip",
+      "format": "esef",
+      "currency": "PLN",
+      "thousands": {
+        "revenue": 421062,
+        "netProfit": 67163,
+        "totalAssets": 972680,
+        "equity": 592213,
+        "cash": 52601
+      }
+    },
+    {
+      "issuer": "KGHM Polska Miedź S.A.",
+      "entityId": "0000023302",
+      "period": "2025-12-31#group",
+      "file": "filings/0000023302/2025-12-31-group-6e66abd5f6b3.pdf",
+      "format": "ai-pdf",
+      "currency": "PLN",
+      "thousands": {
+        "revenue": 36366000,
+        "netProfit": 3688000,
+        "totalAssets": 58240000,
+        "equity": 32898000,
+        "cash": 443000
+      }
+    },
+    {
+      "issuer": "Kruk S.A.",
+      "entityId": "0000240829",
+      "period": "2024-12-31#group",
+      "file": "filings/0000240829/2024-12-31-group-bcb022144130.zip",
+      "format": "esef",
+      "currency": "PLN",
+      "thousands": {
+        "revenue": 2907553,
+        "netProfit": 1074278,
+        "totalAssets": 11648879,
+        "equity": 4528657,
+        "cash": 214790
+      }
+    },
+    {
+      "issuer": "Kruk S.A.",
+      "entityId": "0000240829",
+      "period": "2025-12-31#group",
+      "file": "filings/0000240829/2025-12-31-group-2c83299eb8aa.zip",
+      "format": "esef",
+      "currency": "PLN",
+      "thousands": {
+        "revenue": 3190651,
+        "netProfit": 1085641,
+        "totalAssets": 13032173,
+        "equity": 5326464,
+        "cash": 212629
+      }
+    },
+    {
+      "issuer": "Marvipol Development S.A.",
+      "entityId": "0000534585",
+      "period": "2025-12-31#group",
+      "file": "filings/0000534585/2025-12-31-group-94900fe36e9f.pdf",
+      "format": "ai-pdf",
+      "currency": "PLN",
+      "thousands": {
+        "revenue": 547698,
+        "netProfit": 58171,
+        "totalAssets": 1445797,
+        "equity": 731131,
+        "cash": 271200
+      }
+    },
+    {
+      "issuer": "Murapol S.A.",
+      "entityId": "0000275523",
+      "period": "2025-12-31#group",
+      "file": "filings/0000275523/2025-12-31-group-6c2c11e40326.zip",
+      "format": "esef",
+      "currency": "PLN",
+      "thousands": {
+        "revenue": 1260847,
+        "netProfit": 235844,
+        "totalAssets": 2433623,
+        "equity": 640954,
+        "cash": 278318,
+        "financialDebt": 736469
+      }
+    },
+    {
+      "issuer": "Orlen S.A.",
+      "entityId": "0000028860",
+      "period": "2023-12-31#group",
+      "file": "filings/0000028860/2023-12-31-group-accfe3127a79.zip",
+      "format": "esef",
+      "currency": "PLN",
+      "thousands": {
+        "revenue": 372767000,
+        "netProfit": 20727000,
+        "totalAssets": 264178000,
+        "equity": 153180000,
+        "cash": 13282000
+      }
+    },
+    {
+      "issuer": "Orlen S.A.",
+      "entityId": "0000028860",
+      "period": "2024-12-31#group",
+      "file": "filings/0000028860/2024-12-31-group-4e1f3b82c765.zip",
+      "format": "esef",
+      "currency": "PLN",
+      "thousands": {
+        "revenue": 294976000,
+        "netProfit": 1383000,
+        "totalAssets": 255368000,
+        "equity": 146689000,
+        "cash": 11042000,
+        "ebit": 7947000
+      }
+    },
+    {
+      "issuer": "Orlen S.A.",
+      "entityId": "0000028860",
+      "period": "2025-12-31#group",
+      "file": "filings/0000028860/2025-12-31-group-a4b8a88b2ca8.zip",
+      "format": "esef",
+      "currency": "PLN",
+      "thousands": {
+        "revenue": 267827000,
+        "netProfit": 2648000,
+        "totalAssets": 265048000,
+        "equity": 144543000,
+        "cash": 26445000
+      }
+    },
+    {
+      "issuer": "P.A. Nova S.A.",
+      "entityId": "0000272669",
+      "period": "2024-12-31#group",
+      "file": "filings/0000272669/2024-12-31-group-d5c02f9642ad.zip",
+      "format": "esef",
+      "currency": "PLN",
+      "thousands": {
+        "revenue": 283991,
+        "netProfit": 22268,
+        "totalAssets": 943018,
+        "equity": 495640,
+        "cash": 60091
+      }
+    },
+    {
+      "issuer": "P.A. Nova S.A.",
+      "entityId": "0000272669",
+      "period": "2025-12-31#group",
+      "file": "filings/0000272669/2025-12-31-group-3ebda9e1a550.zip",
+      "format": "esef",
+      "currency": "PLN",
+      "thousands": {
+        "revenue": 246452,
+        "netProfit": 22050,
+        "totalAssets": 992889,
+        "equity": 511540,
+        "cash": 65857
+      }
+    },
+    {
+      "issuer": "P4 Sp. z o.o.",
+      "entityId": "0000217207",
+      "period": "2025-12-31#group",
+      "file": "filings/0000217207/2025-12-31-group-c9156e8ea9c3.pdf",
+      "format": "ai-pdf",
+      "currency": "PLN",
+      "thousands": {
+        "revenue": 10544900,
+        "netProfit": 1432600,
+        "totalAssets": 21070000,
+        "equity": 1338100,
+        "cash": 94400
+      }
+    },
+    {
+      "issuer": "PCC Exol S.A.",
+      "entityId": "0000306150",
+      "period": "2025-12-31#group",
+      "file": "filings/0000306150/2025-12-31-group-878c75e488ab.zip",
+      "format": "esef",
+      "currency": "PLN",
+      "thousands": {
+        "revenue": 1085503,
+        "netProfit": 37933,
+        "totalAssets": 969949,
+        "equity": 505498,
+        "cash": 19460
+      }
+    },
+    {
+      "issuer": "PCC Rokita S.A.",
+      "entityId": "0000105885",
+      "period": "2025-12-31#group",
+      "file": "filings/0000105885/2025-12-31-group-33d8288fd502.zip",
+      "format": "esef",
+      "currency": "PLN",
+      "thousands": {
+        "revenue": 1801291,
+        "netProfit": 61504,
+        "totalAssets": 2305405,
+        "equity": 1355787,
+        "cash": 121971
+      }
+    },
+    {
+      "issuer": "Pepco Group NV",
+      "entityId": "LEI:213800OVMJPFP79OB449",
+      "period": "2025-09-30#group",
+      "file": "filings/LEI-213800OVMJPFP79OB449/2025-09-30-group-cf6497b92a37.pdf",
+      "format": "ai-pdf",
+      "currency": "EUR",
+      "thousands": {
+        "revenue": 4523463,
+        "netProfit": -175803,
+        "totalAssets": 3037000,
+        "equity": 163012,
+        "cash": 464357,
+        "depreciation": 520438
+      }
+    },
+    {
+      "issuer": "Polenergia S.A.",
+      "entityId": "0000026545",
+      "period": "2025-12-31#group",
+      "file": "filings/0000026545/2025-12-31-group-940fbb5a2bec.pdf",
+      "format": "ai-pdf",
+      "currency": "PLN",
+      "thousands": {
+        "revenue": 4225771,
+        "netProfit": -124568,
+        "totalAssets": 8367780,
+        "equity": 4351161,
+        "cash": 874461
+      }
+    },
+    {
+      "issuer": "Unibep S.A.",
+      "entityId": "0000231271",
+      "period": "2025-12-31#group",
+      "file": "filings/0000231271/2025-12-31-group-b4abae894dea.pdf",
+      "format": "ai-pdf",
+      "currency": "PLN",
+      "thousands": {
+        "revenue": 2358373,
+        "netProfit": 49237,
+        "totalAssets": 1993842,
+        "equity": 350209,
+        "cash": 500645
+      }
+    },
+    {
+      "issuer": "Żabka Group",
+      "entityId": "LEI:549300TU2RZ35E4ET914",
+      "period": "2025-12-31#group",
+      "file": "filings/LEI-549300TU2RZ35E4ET914/2025-12-31-group-a611ecd11ae5.zip",
+      "format": "esef",
+      "currency": "PLN",
+      "thousands": {
+        "revenue": 27152564,
+        "netProfit": 1057083,
+        "totalAssets": 19513699,
+        "equity": 2493708,
+        "cash": 1078992
+      }
+    }
+  ]
+}
