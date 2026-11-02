@@ -10,10 +10,13 @@ import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
+import ToggleButton from '@mui/material/ToggleButton';
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import OpenInNewOutlinedIcon from '@mui/icons-material/OpenInNewOutlined';
 import { getIssuerFinancials, type FilingFormat, type FinancialField, type IssuerFinancials } from '@/sdk/Issuers';
+import IssuerStatements from './IssuerStatements';
 import { buildColumns, disagreement, valueOf, type FinancialsColumn } from '@/bonds/fundamentals/financialColumns';
 
 export const FORMAT_LABEL: Record<FilingFormat, string> = {
@@ -215,10 +218,12 @@ export function FinancialsView({ data }: { data: IssuerFinancials }): React.JSX.
 export default function IssuerFinancialsTable({ issuerName }: { issuerName: string }): React.JSX.Element {
   const [data, setData] = useState<IssuerFinancials | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [view, setView] = useState<'summary' | 'statements'>('summary');
 
   useEffect(() => {
     setData(null);
     setError(null);
+    setView('summary');
     getIssuerFinancials(issuerName)
       .then(setData)
       .catch(() => setError('Failed to load the financials. Please try again.'));
@@ -226,5 +231,15 @@ export default function IssuerFinancialsTable({ issuerName }: { issuerName: stri
 
   if (error) return <Typography color='error'>{error}</Typography>;
   if (!data) return <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}><CircularProgress /></Box>;
-  return <FinancialsView data={data} />;
+  return (
+    <Box>
+      {data.filed.length > 0 && (
+        <ToggleButtonGroup size='small' exclusive value={view} onChange={(_, v: 'summary' | 'statements' | null) => v && setView(v)} sx={{ mb: 1.5 }} aria-label='financials view'>
+          <ToggleButton value='summary' sx={{ py: 0.25, px: 1.5 }}>Summary</ToggleButton>
+          <ToggleButton value='statements' sx={{ py: 0.25, px: 1.5 }}>Full statements</ToggleButton>
+        </ToggleButtonGroup>
+      )}
+      {view === 'summary' ? <FinancialsView data={data} /> : <IssuerStatements issuerName={issuerName} years={data.filed} />}
+    </Box>
+  );
 }

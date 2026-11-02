@@ -125,6 +125,16 @@ describe("issuer financials", () => {
     expect(Array.isArray(body.filed)).toBe(true);
     for (const year of body.filed) expect(year).not.toHaveProperty("lines");
   });
+
+  it("refuses a statements request without a year and scope", async () => {
+    const { status } = await api(`/api/issuers/${encodeURIComponent("Atal S.A.")}/statements`);
+    expect(status).toBe(400);
+  });
+
+  it("answers 404 for statements of a year with no imported report", async () => {
+    const { status } = await api(`/api/issuers/${encodeURIComponent("Atal S.A.")}/statements?period=1900-12-31&scope=group`);
+    expect(status).toBe(404);
+  });
 });
 
 describe("jobs", () => {

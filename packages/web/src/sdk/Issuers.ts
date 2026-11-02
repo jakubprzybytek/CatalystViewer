@@ -138,6 +138,51 @@ export async function getIssuerFinancials(issuerName: string): Promise<IssuerFin
   return { ...result, filed: result.filed ?? [] };
 }
 
+// One filed year's full statements (GET /api/issuers/{name}/statements). Values in units of the currency.
+export type StatementName = 'balance' | 'income' | 'cashFlow';
+
+export type StatementLine = {
+  statement: StatementName;
+  order: number;
+  label: string;
+  value: number;
+  code?: string;      // KRS line code or XBRL concept
+  anchor?: string;
+  parent?: number;    // order of the subtotal it adds up into
+  item?: string;      // the app's standard item
+  page?: number;      // PDF page
+};
+
+export type IssuerStatements = {
+  issuerName: string;
+  periodStart: string;
+  periodEnd: string;
+  scope: 'single' | 'group';
+  currency: string;
+  format: FilingFormat;
+  standard?: 'ifrs' | 'pl-uor';
+  presentedUnit: 1 | 1000 | 1000000;
+  lineSigns?: 'printed' | 'tagged';
+  review?: { status: 'parsed' | 'hand-checked' | 'flagged'; note?: string; at?: string };
+  extraction?: { model: string; promptVersion: string; pages: number[] };
+  lines: StatementLine[];
+};
+
+export async function getIssuerStatements(issuerName: string, periodEnd: string, scope: 'single' | 'group'): Promise<IssuerStatements> {
+  const session = await fetchAuthSession();
+  const response = await get({
+    apiName: 'api',
+    path: `/api/issuers/${encodeURIComponent(issuerName)}/statements`,
+    options: {
+      queryParams: { period: periodEnd, scope },
+      headers: {
+        Authorization: `Bearer ${session.tokens?.accessToken?.toString()}`,
+      },
+    },
+  }).response;
+  return (await response.body.json()) as unknown as IssuerStatements;
+}
+
 export async function triggerFundamentalAnalysis(issuerName: string): Promise<void> {
   const session = await fetchAuthSession();
   await post({

@@ -72,6 +72,14 @@ const getIssuerFinancialsFunction = apiFunction("GetIssuerFinancials", {
   link: [issuerProfilesTable, issuerFinancialsTable, filingsBucket],
 });
 
+// One filed year's full statements (every stored line).
+const getIssuerStatementsFunction = apiFunction("GetIssuerStatements", {
+  handler: "packages/functions/src/issuers/getIssuerStatements.handler",
+  memory: "256 MB",
+  timeout: "10 seconds",
+  link: [issuerFinancialsTable],
+});
+
 const getIssuerAnalysisFunction = apiFunction("GetIssuerAnalysis", {
   handler: "packages/functions/src/issuers/getIssuerAnalysis.handler",
   memory: "256 MB",
@@ -168,6 +176,7 @@ api.route("GET /api/bondQuotes", getBondQuotesFunction.arn, jwtAuth);
 api.route("GET /api/issuers/profiles", getIssuerProfilesFunction.arn, jwtAuth);
 api.route("GET /api/issuers/{name}/analysis", getIssuerAnalysisFunction.arn, jwtAuth);
 api.route("GET /api/issuers/{name}/financials", getIssuerFinancialsFunction.arn, jwtAuth);
+api.route("GET /api/issuers/{name}/statements", getIssuerStatementsFunction.arn, jwtAuth);
 api.route("POST /api/issuers/{name}/analysis/trigger", triggerFundamentalAnalysisFunction.arn, jwtAuth);
 api.route("GET /api/jobs", getJobsFunction.arn, jwtAuth);
 api.route("GET /api/jobs/{jobId}", getJobFunction.arn, jwtAuth);

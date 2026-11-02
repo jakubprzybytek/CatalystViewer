@@ -74,6 +74,10 @@ declare module "sst" {
       "name": string
       "type": "sst.aws.Function"
     }
+    "GetIssuerStatements": {
+      "name": string
+      "type": "sst.aws.Function"
+    }
     "GetJob": {
       "name": string
       "type": "sst.aws.Function"
