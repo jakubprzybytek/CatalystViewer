@@ -1,6 +1,6 @@
 // Imports issuers' annual financial statements into a stage. Run inside `sst shell`:
 //
-//   npx sst shell --stage prod -- npm run import-filing -- <file>... [--issuer "<name>"] [--krs <number>] [--dry-run] [--force]
+//   npx sst shell --stage prod -- npm run import-filing -- <file>... [--issuer "<name>"] [--krs <number>] [--lei <code>] [--dry-run] [--force]
 //
 // Files (format detected):
 //   .xml    Polish accounting act statement from the KRS financial documents browser (rdf-przegladarka.ms.gov.pl)
@@ -11,6 +11,7 @@
 //
 // --issuer   the app's issuer name, when the filing's company name doesn't match one (one file only)
 // --krs      the company's KRS number, when the filing doesn't give one (one file only)
+// --lei      the company's LEI, for a foreign issuer with no KRS number (one file only)
 // --dry-run  parse, match and check, but write nothing
 // --force    store a filing whose consistency checks failed, or a second company for an issuer
 // --model    model alias for PDFs (default: the app's default model), e.g. sonnet_4.6, opus_4.6
@@ -36,6 +37,7 @@ function parseArgs(argv: string[]) {
   const files: string[] = [];
   let issuerName: string | undefined;
   let krs: string | undefined;
+  let lei: string | undefined;
   let dryRun = false;
   let force = false;
   let model: ModelAlias = DEFAULT_MODEL_ALIAS;
@@ -43,6 +45,7 @@ function parseArgs(argv: string[]) {
     const arg = argv[i];
     if (arg === "--issuer") issuerName = argv[++i];
     else if (arg === "--krs") krs = argv[++i];
+    else if (arg === "--lei") lei = argv[++i];
     else if (arg === "--dry-run") dryRun = true;
     else if (arg === "--force") force = true;
     else if (arg === "--model") {
@@ -53,9 +56,9 @@ function parseArgs(argv: string[]) {
     else if (arg.startsWith("--")) throw new Error(`Unknown option ${arg}`);
     else files.push(arg);
   }
-  if (files.length === 0) throw new Error('Usage: npm run import-filing -- <file>... [--issuer "<name>"] [--krs <number>] [--dry-run] [--force]');
-  if ((issuerName || krs) && files.length > 1) throw new Error("--issuer and --krs work with one file at a time");
-  return { files, issuerName, krs, dryRun, force, model };
+  if (files.length === 0) throw new Error('Usage: npm run import-filing -- <file>... [--issuer "<name>"] [--krs <number>] [--lei <code>] [--dry-run] [--force]');
+  if ((issuerName || krs || lei) && files.length > 1) throw new Error("--issuer, --krs and --lei work with one file at a time");
+  return { files, issuerName, krs, lei, dryRun, force, model };
 }
 
 const ROWS: [FilingField, string][] = [
@@ -94,7 +97,7 @@ function linkedResources() {
 }
 
 async function main() {
-  const { files, issuerName, krs, dryRun, force, model } = parseArgs(process.argv.slice(2));
+  const { files, issuerName, krs, lei, dryRun, force, model } = parseArgs(process.argv.slice(2));
   const resources = linkedResources();
   const transcribe = bedrockTranscriber(new BedrockRuntimeClient({ region: REGION }), resolveModelId(model), model);
 
@@ -128,7 +131,7 @@ async function main() {
   for (const file of files) {
     console.log(`\n${file} → ${resources.stage}${dryRun ? " (dry run)" : ""}`);
     try {
-      const result = await importFiling(deps, readFileSync(file), { issuerName, krs, fileName: file, dryRun, force });
+      const result = await importFiling(deps, readFileSync(file), { issuerName, krs, lei, fileName: file, dryRun, force });
       printFiling(result.filing);
       for (const note of result.filing.notes ?? []) console.log(`  · ${note}`);
       console.log(`  Issuer: ${result.issuerName} (stored under ${result.entityId})`);

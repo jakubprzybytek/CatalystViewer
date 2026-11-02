@@ -92,14 +92,20 @@ npx sst shell --stage dev -- npm run import-filing -- --dry-run report.zip      
 npx sst shell --stage prod -- npm run import-filing -- statement.xml group.xml report.zip
 npx sst shell --stage prod -- npm run import-filing -- statement.xml --issuer "Dadelo S.A."
 npx sst shell --stage prod -- npm run import-filing -- separate.xhtml --krs 0000031483
+npx sst shell --stage prod -- npm run import-filing -- annual-report.pdf --dry-run      # PDF: one paid model call per run, dry or not
+npx sst shell --stage prod -- npm run import-filing -- annual-report.pdf --issuer "Pepco Group NV" --lei 213800OVMJPFP79OB449   # foreign issuer, no KRS
 ```
 
 | Option | Meaning |
 |---|---|
 | `--issuer "<name>"` | the issuer's name as in the app, when the company name in the filing doesn't match one (legal forms are ignored: "DADELO SPÓŁKA AKCYJNA" matches "Dadelo S.A."); one file at a time |
-| `--krs <number>` | the company's KRS number, when the filing doesn't give one (IFRS text); one file at a time |
-| `--dry-run` | everything but the writes |
+| `--krs <number>` | the company's KRS number, when the filing doesn't give one (IFRS text, PDF) or the PDF's text gives a subsidiary's; one file at a time |
+| `--lei <code>` | the company's LEI, for a foreign issuer with no KRS number (look it up at [GLEIF](https://search.gleif.org)); KRS numbers in the text are then ignored and the rows are stored under `LEI:<lei>`; one file at a time |
+| `--dry-run` | everything but the writes (a PDF still costs its model call) |
 | `--force` | store a filing whose consistency checks failed, or one of a second company for the same issuer |
+| `--model <alias>` | PDFs only: the model that reads the statements (default: the app's default model, now `sonnet_4.6`), e.g. `opus_4.6` |
+
+Several files can be imported in one run; `--issuer`, `--krs` and `--lei` work with one file at a time. Without `sst shell`, only `--dry-run` works, and only parses (no issuer matching, no registers).
 
 What happens:
 
@@ -119,11 +125,19 @@ How figures are derived where the format leaves a choice (the importer prints th
 
 **PDF reports** (`.pdf`, e.g. unlisted IFRS reporters like P4, or an issuer whose website only has the PDF) are read by a model and checked in code (`AiPdfExtractor.ts`):
 
-1. code reads the PDF text (pdfjs-dist) and picks the statement pages: a statement heading near the top of a page that is mostly table lines, plus the next page; the table of contents is skipped;
+1. code reads the PDF text (pdfjs-dist) and picks the statement pages: a statement heading (Polish or English) near the top of a page that is mostly table lines (lines ending in an amount, so narrative pages with numbers in their prose don't count), plus the next page; the table of contents is skipped;
 2. the model (`--model`, default the app's default model) copies every line of the balance sheet, income statement and cash flow statement through a tool with a fixed schema: label, page, the amount per fiscal-year column exactly as printed, and the standard item it is (revenue, total assets, bonds, bank loans, leases, combined financing, …). It doesn't compute anything;
 3. code turns the printed amounts into numbers and sums the figures; checks: every amount is on its page, total assets = total equity and liabilities, equity and net profit are there. A failed check refuses the import, as for other formats.
 
-One call per report, ~8k tokens in and ~10k out (≈ $0.15 with Sonnet 4.6). The row records the model, prompt version and pages read (`filing.extraction`). The KRS number is taken from the text (also without leading zeros) or the LEI next to "LEI"; a PDF with neither is refused before the model call unless `--krs` is given. Lines that combine loans and bonds ("financial liabilities") count as debt with no bond split.
+Details:
+
+- **Number format:** Polish ("1 792,2", "1.792,2") or English ("1,792.2"), decided per report from the printed amounts; English reports get a note. Some English-language reports (e.g. Polenergia) still print Polish numbers.
+- **Retry:** when the answer has no lines at all for a statement (the model sometimes stops after the income statement), the model is asked once more and the fuller answer kept; that costs a second call.
+- **UK-style balance sheets** (net assets, no "total equity and liabilities" line, e.g. Pepco): total assets are checked against equity + total liabilities.
+- **Totals:** when the model also tags the lines that make up current assets or current liabilities as those totals, the largest line (the total) is used. Depreciation sums the cash flow lines (IFRS 16 reports may show right-of-use depreciation separately).
+- **Company:** a KRS number read from the text whose registered name differs from the report's company name (one name not containing the other) is refused as probably a subsidiary's from the list of group companies; pass `--krs`, or `--lei` for a foreign issuer.
+
+One call per report (two with a retry), ~8k tokens in and ~10k out (≈ $0.15 with Sonnet 4.6). The row records the model, prompt version and pages read (`filing.extraction`). The KRS number is taken from the text (also without leading zeros) or the LEI next to "LEI"; a PDF with neither is refused before the model call unless `--krs` is given. Lines that combine loans and bonds ("financial liabilities") count as debt with no bond split.
 
 Not supported: small and micro entities (`JednostkaMala`, `JednostkaMikro`), banks and insurers, scanned PDFs (no text layer).
 

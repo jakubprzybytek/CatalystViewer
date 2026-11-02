@@ -14,7 +14,7 @@ import { BedrockRuntimeClient, ConverseCommand } from '@aws-sdk/client-bedrock-r
 import { UnsupportedFilingError, type FilingExtraction, type FilingField, type FilingPeriod, type ParsedFiling, type SourcedFigure } from './FilingParser';
 import type { PdfPage } from './pdfText';
 
-export const PROMPT_VERSION = 'pdf-statements-1';
+export const PROMPT_VERSION = 'pdf-statements-2';
 
 // ─── 1. Statement pages ─────────────────────────────────────────────────────────
 
@@ -26,16 +26,19 @@ const fold = (s: string) => s.toLowerCase().normalize('NFD').replace(/\p{Diacrit
 // heading may run over two lines.
 const HEADINGS: Record<Statement, RegExp> = {
     balance: /(sprawozdani\w*(?: \w+){0,2} z sytuacji finansowej|^.{0,40}\bbilans\b|statement of financial position|balance sheet)/,
-    income: /(rachunek zyskow (?:i|lub) strat|sprawozdani\w*(?: \w+){0,2} z (?:wyniku|calkowitych dochodow)|statement of (?:profit or loss|comprehensive income)|income statement)/,
+    income: /(rachunek zyskow (?:i|lub) strat|sprawozdani\w*(?: \w+){0,2} z (?:wyniku|calkowitych dochodow)|statement of (?:profit(?: or |\/)loss|comprehensive income)|profit and loss account|income statement)/,
     cashFlow: /(sprawozdani\w*(?: \w+){0,2} z przeplywow pienieznych|rachunek przeplywow pienieznych|statement of cash flows|cash flow statement)/,
 };
-const AMOUNT = /\(?-?\d{1,3}(?:[ . ]\d{3})*(?:,\d+)?\)?/g;
+// Polish "1 792,2" / "1.792,2" or English "1,792.2" (thousands groups, then decimals)
+const AMOUNT = /\(?-?\d{1,3}(?:[\s.,]\d{3})*(?:[.,]\d+)?\)?/g;
+const ENDS_IN_AMOUNT = /\d\)?\s*\|?\s*$/;
 const MIN_TABLE_LINES = 12;
 // A table of contents: dot leaders, a "contents" title, or most lines ending in a page number.
 const isContents = (page: PdfPage) => page.lines.some(l => /\.{6,}/.test(l))
     || page.lines.slice(0, 5).some(l => /^(spis tresci|table of contents|contents)\b/.test(fold(l.trim())))
     || page.lines.filter(l => /\|\s*\d{1,3}\s*$/.test(l)).length > page.lines.length * 0.6;
-const tableLines = (page: PdfPage) => page.lines.filter(l => (l.match(AMOUNT) ?? []).length >= 2).length;
+// Table lines: two amounts or more, the last cell an amount (prose with numbers in it rarely ends in one).
+const tableLines = (page: PdfPage) => page.lines.filter(l => (l.match(AMOUNT) ?? []).length >= 2 && ENDS_IN_AMOUNT.test(l)).length;
 
 // The page's first short lines, each alone and joined with the next.
 const headingLines = (page: PdfPage) => {
@@ -107,7 +110,7 @@ export const STATEMENTS_TOOL = {
                         field: { enum: LINE_FIELDS, description: 'the standard item this line is, or other' },
                         values: {
                             type: 'array',
-                            items: { type: 'object', required: ['column', 'printed'], properties: { column: { type: 'string' }, printed: { type: 'string', description: 'the amount exactly as printed, e.g. "(1 792,2)" or "-"' } } },
+                            items: { type: 'object', required: ['column', 'printed'], properties: { column: { type: 'string' }, printed: { type: 'string', description: 'the amount exactly as printed, e.g. "(1 792,2)", "(1,792.2)" or "-"' } } },
                         },
                     },
                 },
@@ -125,6 +128,7 @@ Record every line of the statement of financial position, the income statement (
 - field: classify each line. Totals: totalAssets, totalEquityAndLiabilities, equity (total equity incl. non-controlling interests), etc.
   Debt lines: debtBankLoans (bank loans, credits, borrowings), debtBonds (bonds, notes, debt securities), debtLeases (lease liabilities), debtMixed (a line combining several kinds, e.g. "financial liabilities" or "loans, borrowings and bonds", when the statement doesn't split them), debtOther (other interest-bearing financing, e.g. loans from related parties); interest payable, trade payables and derivatives are other.
   depreciation: depreciation and amortisation in the income statement or the cash flow statement. capex: purchases of property, plant and equipment and intangible assets (investing cash flow). interestExpense: interest costs if shown; financeCosts: total finance costs.
+  Total fields (totalAssets, noncurrentAssets, currentAssets, totalLiabilities, noncurrentLiabilities, currentLiabilities, totalEquityAndLiabilities, equity) go on the total line only, never on the lines that make it up; when the total has no label, use the section name (e.g. "Current assets").
   When a line is a subtotal of lines you also record, still give it its field only if it is the standard total (e.g. currentAssets); otherwise other.
 
 ${text}`;
@@ -155,16 +159,31 @@ export function bedrockTranscriber(client: BedrockRuntimeClient, modelId: string
 
 const DASH = /^[-–—]?$/;   // a dash or an empty cell: nothing in that column
 
-export function parsePrinted(printed: string): number | undefined {
+// 'pl': "1 792,2", "1.792,2"; 'en': "1,792.2"
+export type NumberStyle = 'pl' | 'en';
+
+export function parsePrinted(printed: string, style: NumberStyle = 'pl'): number | undefined {
     const t = printed.trim();
     if (DASH.test(t)) return 0;
-    if (!/^\(?[-–]?\s?\d[\d\s. ]*(,\d+)?\)?$/.test(t)) return undefined;
-    const value = Number(t.replace(/[()\s. \-–]/g, '').replace(',', '.'));
+    const [shape, group, decimal] = style === 'en'
+        ? [/^\(?[-–]?\s?\d{1,3}(,\d{3})*(\.\d+)?\)?$/, /,/g, '.']
+        : [/^\(?[-–]?\s?\d[\d\s.]*(,\d+)?\)?$/, /[\s.]/g, ','];
+    if (!shape.test(t)) return undefined;
+    const value = Number(t.replace(/[()\-–]/g, '').replace(group, '').replace(decimal, '.'));
     if (!Number.isFinite(value)) return undefined;
     return /^\(|^[-–]/.test(t) ? -value : value;
 }
 
-const squash = (s: string) => s.replace(/[\s ]/g, '');
+// The report's number style, from the printed amounts: English when commas separate thousands
+// ("4,523,463") in more amounts than show Polish signs (space or dot groups, a comma before 1–2 decimals).
+export function numberStyle(printed: string[]): NumberStyle {
+    const enGroups = (p: string) => /\d,\d{3}(?!\d)/.test(p);
+    const en = printed.filter(p => enGroups(p) && !/\d\s\d{3}/.test(p)).length;
+    const pl = printed.filter(p => (/\d[\s.]\d{3}(?!\d)/.test(p) && !enGroups(p)) || /\d,\d{1,2}\)?$/.test(p.trim())).length;
+    return en > pl ? 'en' : 'pl';
+}
+
+const squash = (s: string) => s.replace(/\s/g, '');
 
 // KRS number printed near "KRS" or "Rejestr Sądowy" anywhere in the report, also without its leading
 // zeros ("numer rejestru KRS 23302"); the court register check confirms it.
@@ -182,12 +201,18 @@ export function findLei(pages: PdfPage[]): string | undefined {
     return text.match(/\b([A-Z0-9]{18}\d{2})\b[\s|]*\(?LEI\)?|\bLEI\b[\s:|]*([A-Z0-9]{18}\d{2})\b/)?.slice(1).find(Boolean);
 }
 
-// "2025-12-31" or "31.12.2025" → "2025-12-31"; anything else is undefined.
+const MONTHS = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'];
+
+// "2025-12-31", "31.12.2025" or "30 September 2025" → ISO date; anything else is undefined.
 export function isoDate(printed: string | undefined): string | undefined {
     const t = (printed ?? '').trim();
     const iso = t.match(/^(\d{4})-(\d{2})-(\d{2})$/);
     const pl = t.match(/^(\d{1,2})[./](\d{1,2})[./](\d{4})$/);
-    const [y, m, d] = iso ? [iso[1], iso[2], iso[3]] : pl ? [pl[3], pl[2].padStart(2, '0'), pl[1].padStart(2, '0')] : [];
+    const en = t.match(/^(\d{1,2}) ([A-Za-z]+) (\d{4})$/);
+    const month = en ? MONTHS.indexOf(en[2].toLowerCase()) + 1 : 0;
+    const [y, m, d] = iso ? [iso[1], iso[2], iso[3]]
+        : pl ? [pl[3], pl[2].padStart(2, '0'), pl[1].padStart(2, '0')]
+        : en && month ? [en[3], String(month).padStart(2, '0'), en[1].padStart(2, '0')] : [];
     if (!y || Number.isNaN(new Date(`${y}-${m}-${d}T00:00:00Z`).getTime())) return undefined;
     return `${y}-${m}-${d}`;
 }
@@ -215,9 +240,10 @@ export function transcriptToFiling(transcript: Transcript, pages: PdfPage[], ext
     // Every amount must be on the page the model cites.
     const pageText = new Map(pages.map(p => [p.page, squash(p.lines.join('|'))]));
     const numbers = new Map<object, number | undefined>();
+    const style = numberStyle(t.lines.flatMap(l => l.values.map(v => v.printed)));
     for (const line of t.lines) {
         for (const v of line.values) {
-            const value = parsePrinted(v.printed);
+            const value = parsePrinted(v.printed, style);
             numbers.set(v, value);
             if (value === undefined) {
                 checks.push(`p. ${line.page} "${line.label}": "${v.printed}" isn't an amount`);
@@ -228,6 +254,7 @@ export function transcriptToFiling(transcript: Transcript, pages: PdfPage[], ext
     }
 
     const notes: string[] = [`Read from the PDF by ${extraction.model} (${extraction.promptVersion}, pages ${extraction.pages.join(', ')}); amounts checked against the page text`];
+    if (style === 'en') notes.push('Amounts printed in English number format (1,234.5)');
     let mixedDebt = false;
     const periods: FilingPeriod[] = t.columns.slice(0, 2).map((column, i) => {
         const of = (field: LineField, statement?: Statement) => t.lines
@@ -240,13 +267,16 @@ export function transcriptToFiling(transcript: Transcript, pages: PdfPage[], ext
             return { value: round2(abs ? Math.abs(total) : total), source: items.map(x => `p. ${x.line.page}/${x.line.label}`) };
         };
         const first = (field: LineField, statement?: Statement, abs = false) => figure(of(field, statement).slice(0, 1), abs);
+        // A total the model also gave to the lines making it up: the largest of them is the total.
+        const total = (field: LineField, statement: Statement) => figure(of(field, statement).sort((a, b) => Math.abs(b.value) - Math.abs(a.value)).slice(0, 1));
 
         const debtItems = (['debtBankLoans', 'debtBonds', 'debtLeases', 'debtMixed', 'debtOther'] as const).flatMap(f => of(f, 'balance'));
         if (of('debtMixed', 'balance').length && !of('debtBonds', 'balance').length) mixedDebt = true;
         const figures: Partial<Record<FilingField, SourcedFigure>> = {
             revenue: first('revenue', 'income'),
             ebit: first('ebit', 'income'),
-            depreciation: first('depreciation', 'cashFlow', true) ?? first('depreciation', 'income', true),
+            // all cash flow lines: IFRS 16 reports often add right-of-use depreciation separately
+            depreciation: figure(of('depreciation', 'cashFlow'), true) ?? first('depreciation', 'income', true),
             interestExpense: first('interestExpense', 'income', true) ?? first('financeCosts', 'income', true),
             netProfit: first('netProfit', 'income'),
             totalAssets: first('totalAssets', 'balance'),
@@ -255,9 +285,9 @@ export function transcriptToFiling(transcript: Transcript, pages: PdfPage[], ext
             financialDebt: figure(debtItems),
             bonds: figure(of('debtBonds', 'balance')),
             cash: first('cash', 'balance'),
-            currentAssets: first('currentAssets', 'balance'),
+            currentAssets: total('currentAssets', 'balance'),
             inventory: figure(of('inventory', 'balance')),
-            currentLiabilities: first('currentLiabilities', 'balance'),
+            currentLiabilities: total('currentLiabilities', 'balance'),
             minorityInterests: first('minorityInterests', 'balance'),
             operatingCashFlow: first('operatingCashFlow', 'cashFlow'),
             capex: figure(of('capex', 'cashFlow'), true),
@@ -268,7 +298,10 @@ export function transcriptToFiling(transcript: Transcript, pages: PdfPage[], ext
         if (!end) throw new UnsupportedFilingError(`The model gave an unreadable date for column ${column.id}: "${column.periodEnd}"`);
         const label = i === 0 ? end : `${end} (comparative)`;
         const assets = figures.totalAssets?.value;
-        const equityAndLiabilities = figure(of('totalEquityAndLiabilities', 'balance').slice(0, 1))?.value;
+        // UK-style statements show net assets instead: then equity + total liabilities
+        const liabilities = figure(of('totalLiabilities', 'balance').slice(0, 1))?.value;
+        const equityAndLiabilities = figure(of('totalEquityAndLiabilities', 'balance').slice(0, 1))?.value
+            ?? (figures.equity && liabilities !== undefined ? round2(figures.equity.value + liabilities) : undefined);
         const tolerance = Math.max(unit, Math.abs(assets ?? 0) * 0.0005);
         if (assets === undefined) checks.push(`${label}: no total assets`);
         else if (equityAndLiabilities === undefined) checks.push(`${label}: no total equity and liabilities`);
@@ -301,8 +334,19 @@ export function transcriptToFiling(transcript: Transcript, pages: PdfPage[], ext
 export async function extractStatements(pages: PdfPage[], transcribe: Transcriber): Promise<ParsedFiling> {
     const chosen = findStatementPages(pages);
     if (chosen.length === 0) throw new UnsupportedFilingError('No financial statement pages found in this PDF (scanned, or not an annual report?)');
-    const answer = await transcribe(statementsPrompt(pages, chosen));
+    const prompt = statementsPrompt(pages, chosen);
+    let answer = await transcribe(prompt);
+    let tokens = { inputTokens: answer.inputTokens, outputTokens: answer.outputTokens };
+    // The model sometimes stops after one statement: ask once more, and keep the fuller answer.
+    const missing = (input: unknown) => (['balance', 'income', 'cashFlow'] as const)
+        .filter(s => !(input as Partial<Transcript>)?.lines?.some(l => l.statement === s));
+    const gaps = missing(answer.input);
+    if (gaps.length > 0) {
+        const retry = await transcribe(`${prompt}\n\nRecord all three statements in this one call. (An earlier answer stopped without the ${gaps.join(' and ')} lines.)`);
+        tokens = { inputTokens: (tokens.inputTokens ?? 0) + (retry.inputTokens ?? 0), outputTokens: (tokens.outputTokens ?? 0) + (retry.outputTokens ?? 0) };
+        if (missing(retry.input).length < gaps.length) answer = retry;
+    }
     return transcriptToFiling(answer.input as Transcript, pages, {
-        model: answer.model, promptVersion: PROMPT_VERSION, pages: chosen, inputTokens: answer.inputTokens, outputTokens: answer.outputTokens,
+        model: answer.model, promptVersion: PROMPT_VERSION, pages: chosen, ...tokens,
     });
 }

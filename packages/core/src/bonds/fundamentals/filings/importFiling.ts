@@ -33,6 +33,7 @@ export type ImportFilingDeps = {
 export type ImportFilingOptions = {
     issuerName?: string;   // skip name matching
     krs?: string;          // the company's KRS number, when the filing doesn't give one
+    lei?: string;          // the company's LEI, for a foreign issuer with no KRS number
     fileName?: string;     // helps tell formats apart
     dryRun?: boolean;      // everything but the writes
     force?: boolean;       // store although the filing's consistency checks failed
@@ -75,13 +76,13 @@ export function readFiling(data: Buffer, fileName = ''): { filing: ParsedFiling;
 // Any supported file; a PDF goes to the model. With `requireIdentity`, a PDF that names no KRS number
 // or LEI (and no `krs` given) is refused before the paid model call.
 export async function readAnyFiling(
-    data: Buffer, fileName = '', transcribe?: Transcriber, opts: { requireIdentity?: boolean; krs?: string } = {},
+    data: Buffer, fileName = '', transcribe?: Transcriber, opts: { requireIdentity?: boolean; krs?: string; lei?: string } = {},
 ): Promise<{ filing: ParsedFiling; kind: FileKind }> {
     if (!isPdf(data)) return readFiling(data, fileName);
     if (!transcribe) throw new ImportFilingError('A PDF is read by a model: no model configured');
     const pages = await readPdfPages(data);
-    if (opts.requireIdentity && !opts.krs && !findKrs(pages) && !findLei(pages)) {
-        throw new ImportFilingError('The PDF names no KRS number or LEI; pass --krs <number>');
+    if (opts.requireIdentity && !opts.krs && !opts.lei && !findKrs(pages) && !findLei(pages)) {
+        throw new ImportFilingError('The PDF names no KRS number or LEI; pass --krs <number> (or --lei <code> for a foreign issuer)');
     }
     return { filing: await extractStatements(pages, transcribe), kind: { extension: 'pdf', contentType: 'application/pdf' } };
 }
@@ -99,6 +100,7 @@ const LEGAL_FORMS: [RegExp, string][] = [
     [/\bSP ?K\b/g, ''],
     [/\bP ?S ?A\b/g, ''],
     [/\bS ?A\b/g, ''],
+    [/\b(N ?V|B ?V|PLC|SE|AG|LTD|GMBH|S ?A ?R ?L)\b/g, ''],   // foreign issuers (Pepco Group N.V., MOL PLC)
     [/\bW (UPADLOSCI|RESTRUKTURYZACJI|LIKWIDACJI)\b/g, ''],
     [/^GRUPA KAPITALOWA /g, ''],
 ];
@@ -113,6 +115,12 @@ export function normalizeCompanyName(name: string): string {
         .trim();
     for (const [pattern, replacement] of LEGAL_FORMS) n = n.replace(pattern, replacement);
     return n.replace(/\s+/g, ' ').trim();
+}
+
+// "Polenergia S.A. Group" and "POLENERGIA SPÓŁKA AKCYJNA": one name holds the other.
+function overlaps(a: string, b: string): boolean {
+    const [x, y] = [normalizeCompanyName(a), normalizeCompanyName(b)];
+    return x !== '' && y !== '' && (` ${x} `.includes(` ${y} `) || ` ${y} `.includes(` ${x} `));
 }
 
 // ─── Registers ──────────────────────────────────────────────────────────────────
@@ -144,35 +152,42 @@ type Identity = { entityId: string; krs?: string; lei?: string; names: string[] 
 
 async function identify(filing: ParsedFiling, deps: ImportFilingDeps, options: ImportFilingOptions, warnings: string[]): Promise<Identity> {
     const names = [filing.companyName].filter(Boolean);
-    let krs = options.krs ?? filing.krs;
+    if (options.lei && !/^[A-Z0-9]{18}\d{2}$/.test(options.lei)) throw new ImportFilingError(`"${options.lei}" isn't a LEI (20 characters)`);
+    if (options.lei && filing.lei && options.lei !== filing.lei) {
+        throw new ImportFilingError(`--lei ${options.lei} doesn't match the filing's LEI ${filing.lei}`);
+    }
+    const lei = options.lei ?? filing.lei;
+    // With --lei, a KRS number found in the text is someone else's (e.g. a subsidiary in the group list).
+    let krs = options.krs ?? (options.lei ? undefined : filing.krs);
+    const krsFromText = !options.krs && filing.format === 'ai-pdf' && krs !== undefined;
     if (options.krs && filing.krs && options.krs !== filing.krs) {
         throw new ImportFilingError(`--krs ${options.krs} doesn't match the filing's KRS number ${filing.krs}`);
     }
     if (krs && !/^\d{10}$/.test(krs)) throw new ImportFilingError(`"${krs}" isn't a KRS number (10 digits)`);
 
     // ESEF: the LEI register gives the legal name and, for Polish companies, the KRS number.
-    if (filing.lei) {
+    if (lei) {
         try {
-            const record = await (deps.leiRecord ?? gleifRecord)(filing.lei);
+            const record = await (deps.leiRecord ?? gleifRecord)(lei);
             if (!record) {
-                warnings.push(`LEI ${filing.lei} isn't in the LEI register (GLEIF)`);
+                warnings.push(`LEI ${lei} isn't in the LEI register (GLEIF)`);
             } else {
                 names.push(record.legalName);
                 if (record.krs && krs && record.krs !== krs) {
-                    throw new ImportFilingError(`LEI ${filing.lei} is registered under KRS ${record.krs}, not ${krs}`);
+                    throw new ImportFilingError(`LEI ${lei} is registered under KRS ${record.krs}, not ${krs}`);
                 }
                 krs ??= record.krs;
                 if (!record.krs) {
                     const where = [record.jurisdiction, record.registeredAs].filter(Boolean).join(' ') || 'unknown register';
-                    warnings.push(`LEI ${filing.lei} (${record.legalName}) isn't registered in the KRS (${where}): stored under its LEI`);
+                    warnings.push(`LEI ${lei} (${record.legalName}) isn't registered in the KRS (${where}): stored under its LEI`);
                 }
             }
         } catch (error) {
             if (error instanceof ImportFilingError) throw error;
-            warnings.push(`Couldn't check LEI ${filing.lei} in the LEI register: ${error instanceof Error ? error.message : error}`);
+            warnings.push(`Couldn't check LEI ${lei} in the LEI register: ${error instanceof Error ? error.message : error}`);
         }
     }
-    if (!krs && !filing.lei) {
+    if (!krs && !lei) {
         throw new ImportFilingError('The filing has no KRS number; pass --krs <number>');
     }
 
@@ -183,16 +198,21 @@ async function identify(filing: ParsedFiling, deps: ImportFilingDeps, options: I
             if (!registered) {
                 warnings.push(`KRS ${krs} isn't in the court register (business register, rejestr P)`);
             } else {
-                if (!names.some(n => normalizeCompanyName(n) === normalizeCompanyName(registered))) {
+                if (!names.some(n => overlaps(n, registered))) {
+                    // A number read from a PDF's text may be a subsidiary's, from the list of group companies.
+                    if (krsFromText) {
+                        throw new ImportFilingError(`KRS ${krs} found in the report is registered as "${registered}", not "${filing.companyName}" (a subsidiary?); pass --krs <number>, or --lei <code> for a foreign issuer`);
+                    }
                     warnings.push(`KRS ${krs} is registered as "${registered}", the filing says "${filing.companyName}" (renamed?)`);
                 }
                 names.push(registered);
             }
         } catch (error) {
+            if (error instanceof ImportFilingError) throw error;
             warnings.push(`Couldn't check KRS ${krs} in the court register: ${error instanceof Error ? error.message : error}`);
         }
     }
-    return { entityId: krs ?? `LEI:${filing.lei}`, krs, lei: filing.lei, names };
+    return { entityId: krs ?? `LEI:${lei}`, krs, lei, names };
 }
 
 function resolveIssuer(identity: Identity, deps: ImportFilingDeps, known: DbIssuerFinancialsRecord[], requested?: string): string {
@@ -217,7 +237,7 @@ function resolveIssuer(identity: Identity, deps: ImportFilingDeps, known: DbIssu
 // ─── Entry point ────────────────────────────────────────────────────────────────
 
 export async function importFiling(deps: ImportFilingDeps, data: Buffer, options: ImportFilingOptions = {}): Promise<ImportFilingResult> {
-    const { filing, kind } = await readAnyFiling(data, options.fileName, deps.transcribe, { requireIdentity: true, krs: options.krs });
+    const { filing, kind } = await readAnyFiling(data, options.fileName, deps.transcribe, { requireIdentity: true, krs: options.krs, lei: options.lei });
     const warnings: string[] = [];
 
     if (filing.checks.length > 0 && !options.force) {
@@ -226,6 +246,7 @@ export async function importFiling(deps: ImportFilingDeps, data: Buffer, options
     warnings.push(...filing.checks);
 
     const identity = await identify(filing, deps, options, warnings);
+    if (options.lei && !options.krs) filing.krs = identity.krs;   // not a number from the text (a subsidiary's)
     const all = await deps.financialsTable.getAll();
     const issuerName = resolveIssuer(identity, deps, all, options.issuerName);
 

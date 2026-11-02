@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { extractStatements, findKrs, findLei, findStatementPages, isoDate, parsePrinted, transcriptToFiling, type Transcriber } from './AiPdfExtractor';
+import { extractStatements, findKrs, findLei, findStatementPages, isoDate, numberStyle, parsePrinted, transcriptToFiling, type Transcriber, type Transcript } from './AiPdfExtractor';
 import { isPdf, readPdfPages } from './pdfText';
 import { makePdf } from './fixtures/makePdf';
 import { asPages, reportPages, transcript } from './fixtures/pdfReport';
@@ -12,10 +12,22 @@ describe('parsePrinted', () => {
     it.each([['1 000,0', 1000], ['(1 792,2)', -1792.2], ['-', 0], ['', 0], ['–', 0], ['-35,3', -35.3], ['12', 12], ['n/a', undefined], ['2025-12', undefined]])('%s → %s', (printed, value) => {
         expect(parsePrinted(printed)).toBe(value);
     });
+    it.each([['4,523,463', 4523463], ['(175,803)', -175803], ['1,234.5', 1234.5], ['–', 0], ['12', 12], ['1 234,5', undefined]])('English %s → %s', (printed, value) => {
+        expect(parsePrinted(printed, 'en')).toBe(value);
+    });
+});
+
+describe('numberStyle', () => {
+    it('tells English amounts from Polish ones', () => {
+        expect(numberStyle(['4,523,463', '(175,803)', '–', '12'])).toBe('en');
+        expect(numberStyle(['1 000,0', '(1 792,2)', '-', '35,3'])).toBe('pl');
+        expect(numberStyle(['7 001 511', '5 447 865', '9 220'])).toBe('pl');
+        expect(numberStyle(['1.792,2', '1.000'])).toBe('pl');
+    });
 });
 
 describe('isoDate', () => {
-    it.each([['2025-12-31', '2025-12-31'], ['31.12.2025', '2025-12-31'], ['1.01.2025', '2025-01-01'], ['2025-13-45', undefined], ['grudzień 2025', undefined], [undefined, undefined]])('%s → %s', (printed, iso) => {
+    it.each([['2025-12-31', '2025-12-31'], ['31.12.2025', '2025-12-31'], ['30 September 2025', '2025-09-30'], ['1.01.2025', '2025-01-01'], ['2025-13-45', undefined], ['grudzień 2025', undefined], [undefined, undefined]])('%s → %s', (printed, iso) => {
         expect(isoDate(printed)).toBe(iso);
     });
 });
@@ -51,6 +63,11 @@ describe('findStatementPages', () => {
         expect(findStatementPages(pages)).toEqual([2, 3, 4]);
     });
 
+    it('skips a narrative page with numbers in its prose', () => {
+        const prose = Array.from({ length: 20 }, (_, i) => `up ${i}% on FY24 (6.2 Euro cents), subject to approval of ${i + 1} shareholders`);
+        expect(findStatementPages([{ page: 1, lines: ['Financial review', 'balance sheet strength', ...prose] }])).toEqual([]);
+    });
+
     it('skips a table of contents without dot leaders', () => {
         const table = Array.from({ length: 14 }, (_, i) => `Pozycja ${i} | 1 000 | 2 000`);
         const contents = (page: number, title: string[]) => ({ page, lines: [...title, ...Array.from({ length: 14 }, (_, i) => `NOTA ${i} Opis noty | ${10 + i}`)] });
@@ -61,6 +78,7 @@ describe('findStatementPages', () => {
             { page: 8, lines: ['Skonsolidowane sprawozdanie', 'z sytuacji finansowej [tys. PLN]', ...table] },
         ];
         expect(findStatementPages(pages)).toEqual([7, 8]);
+        expect(findStatementPages([{ page: 3, lines: ['(PLN thousand)', 'Consolidated profit and loss account', ...table] }])).toEqual([3]);
     });
 });
 
@@ -106,7 +124,48 @@ describe('transcriptToFiling', () => {
     });
 });
 
+describe('transcriptToFiling with English amounts', () => {
+    it('reads "4,523,463" as thousands, and checks a UK-style balance sheet (net assets) against equity + liabilities', () => {
+        const en: Transcript = {
+            companyName: 'Test N.V.', scope: 'group', currency: 'EUR', unit: 1000,
+            columns: [{ id: 'a', periodEnd: '2025-09-30' }, { id: 'b', periodEnd: '2024-09-30' }],
+            lines: [
+                ['income', 'Revenue', 'revenue', '4,523,463', '4,160,416'],
+                ['income', 'Loss for the year', 'netProfit', '(175,803)', '(734,230)'],
+                ['balance', 'Total assets', 'totalAssets', '3,512,004', '3,900,111'],
+                ['balance', 'Total equity', 'equity', '236,368', '441,251'],
+                ['balance', 'Tax receivable', 'currentAssets', '20', '253'],
+                ['balance', 'Current assets total', 'currentAssets', '1,436,142', '1,673,425'],
+                ['balance', 'Total liabilities', 'totalLiabilities', '3,275,636', '3,458,860'],
+                ['cashFlow', 'Depreciation, amortisation and impairment', 'depreciation', '219,137', '143,572'],
+                ['cashFlow', 'Right-of-use asset depreciation', 'depreciation', '301,301', '271,440'],
+            ].map(([statement, label, field, a, b]) => ({ statement: statement as 'income', page: 1, label, field: field as 'revenue', values: [{ column: 'a', printed: a }, { column: 'b', printed: b }] })),
+        };
+        const pages = [{ page: 1, lines: en.lines.map(l => `${l.label} | ${l.values.map(v => v.printed).join(' | ')}`) }];
+        const filing = transcriptToFiling(en, pages, EXTRACTION);
+        expect(filing.checks).toEqual([]);
+        expect(filing.periods[0]).toMatchObject({ periodStart: '2024-10-01', periodEnd: '2025-09-30', months: 12 });
+        expect(filing.periods[0].figures.revenue!.value).toBe(4_523_463_000);
+        expect(filing.periods[0].figures.netProfit!.value).toBe(-175_803_000);
+        expect(filing.periods[0].figures.currentAssets!.value).toBe(1_436_142_000);
+        expect(filing.periods[0].figures.depreciation!.value).toBe(520_438_000);
+        expect(filing.notes).toContain('Amounts printed in English number format (1,234.5)');
+    });
+});
+
 describe('extractStatements from a PDF', () => {
+    it('asks again when the answer stops before a whole statement, and keeps the fuller answer', async () => {
+        const pages = await readPdfPages(makePdf(reportPages));
+        const prompts: string[] = [];
+        const partial = { ...transcript, lines: transcript.lines.filter(l => l.statement === 'income') };
+        const transcribe: Transcriber = async p => { prompts.push(p); return { input: prompts.length === 1 ? partial : transcript, model: 'test-model', inputTokens: 10, outputTokens: 20 }; };
+        const filing = await extractStatements(pages, transcribe);
+        expect(prompts).toHaveLength(2);
+        expect(prompts[1]).toContain('stopped without the balance and cashFlow lines');
+        expect(filing.checks).toEqual([]);
+        expect(filing.extraction).toMatchObject({ inputTokens: 20, outputTokens: 40 });
+    });
+
     it('reads the PDF text, sends only the statement pages and checks the answer', async () => {
         const pdf = makePdf(reportPages);
         expect(isPdf(pdf)).toBe(true);

@@ -44,6 +44,9 @@ describe('normalizeCompanyName', () => {
         ['Łódzka Grupa S.K.A.', 'LODZKA GRUPA'],
         ['Nowa Prosta Spółka Akcyjna', 'NOWA'],
         ['Grupa Kapitałowa Cavatina Holding Spółka Akcyjna', 'CAVATINA HOLDING'],
+        ['Pepco Group N.V.', 'PEPCO GROUP'],
+        ['Pepco Group NV', 'PEPCO GROUP'],
+        ['MOL Hungarian Oil & Gas PLC', 'MOL HUNGARIAN OIL GAS'],
     ])('%s → %s', (name, normalized) => {
         expect(normalizeCompanyName(name)).toBe(normalized);
     });
@@ -156,13 +159,38 @@ describe('importFiling', () => {
             expect(result).toMatchObject({ issuerName: 'Testowa Group S.A.', entityId: '0000123456', warnings: [] });
             expect(uploads).toEqual([{ key: expect.stringMatching(/^filings\/0000123456\/2025-12-31-group-[0-9a-f]{12}\.pdf$/), contentType: 'application/pdf' }]);
             expect(rows.get('0000123456|2025-12-31#group')).toMatchObject({
-                filing: { format: 'ai-pdf', extraction: { model: 'test-model', promptVersion: 'pdf-statements-1', pages: [2, 3, 4, 5] } },
+                filing: { format: 'ai-pdf', extraction: { model: 'test-model', promptVersion: 'pdf-statements-2', pages: [2, 3, 4, 5] } },
             });
         });
 
         it('needs a model', async () => {
             const { deps } = fakes();
             await expect(importFiling(deps, pdf, { dryRun: true })).rejects.toThrow(/no model configured/);
+        });
+
+        it("refuses a KRS number from the text that belongs to another company (a subsidiary)", async () => {
+            const { deps } = fakes([], 'CARDINA INVESTMENTS SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ');
+            deps.issuerNames = ['Testowa Group S.A.'];
+            deps.transcribe = async () => ({ input: transcript, model: 'test-model' });
+            await expect(importFiling(deps, pdf, { dryRun: true })).rejects.toThrow(/KRS 0000123456 found in the report is registered as "CARDINA INVESTMENTS.*pass --krs <number>, or --lei/);
+        });
+
+        it('takes a KRS number from the text when the registered name is the filing\'s without "Group"', async () => {
+            const { deps } = fakes([], 'TESTOWA SPÓŁKA AKCYJNA');
+            deps.issuerNames = ['Testowa S.A.'];
+            deps.transcribe = async () => ({ input: transcript, model: 'test-model' });
+            const result = await importFiling(deps, pdf, { dryRun: true });
+            expect(result).toMatchObject({ issuerName: 'Testowa S.A.', entityId: '0000123456' });
+        });
+
+        it('stores a foreign issuer under the --lei given, ignoring KRS numbers in the text', async () => {
+            const { deps } = fakes([], 'CARDINA INVESTMENTS SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ', { legalName: 'Testowa Group N.V.', registeredAs: '81928491', jurisdiction: 'NL' });
+            deps.issuerNames = ['Testowa Group NV'];
+            deps.transcribe = async () => ({ input: transcript, model: 'test-model' });
+            const result = await importFiling(deps, pdf, { dryRun: true, lei: '724500TESTOWA0000001' });
+            expect(result).toMatchObject({ issuerName: 'Testowa Group NV', entityId: 'LEI:724500TESTOWA0000001', lei: '724500TESTOWA0000001' });
+            expect(result.krs).toBeUndefined();
+            expect(result.filing.krs).toBeUndefined();
         });
 
         it("doesn't call the model for a PDF that names no company number", async () => {
