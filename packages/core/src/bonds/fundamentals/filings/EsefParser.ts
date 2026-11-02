@@ -387,6 +387,20 @@ export function parseEsef(input: EsefInput): ParsedFiling {
         return sourced(revenueParts, p);
     };
 
+    // Operating profit: the line the calculation tree sums the operating lines into. Normally
+    // ProfitLossFromOperatingActivities; a filer that put that tag on another line of profit before tax
+    // (Orlen FY2024 swapped it with the share of associates) still sums gross profit, selling costs, etc.
+    // into the right line.
+    const OPERATING_LINES = /^ifrs-full:(GrossProfit|Revenue|CostOfSales|SellingExpense|DistributionCosts|GeneralAndAdministrativeExpense|AdministrativeExpense|OtherIncome|OtherExpenseByFunction|OtherOperatingIncomeExpense)$/;
+    const sumsOperatingLines = (c: string) => (taxonomy?.children.get(c) ?? []).filter(k => OPERATING_LINES.test(k.concept)).length >= 2;
+    const STANDARD_EBIT = ifrs('ProfitLossFromOperatingActivities');
+    const ebitConcept = taxonomy && !sumsOperatingLines(STANDARD_EBIT)
+        ? (taxonomy.children.get(ifrs('ProfitLossBeforeTax')) ?? []).map(k => k.concept).find(c => c !== STANDARD_EBIT && sumsOperatingLines(c)) ?? STANDARD_EBIT
+        : STANDARD_EBIT;
+    if (ebitConcept !== STANDARD_EBIT) {
+        notes.push(`EBIT: the calculation tree sums the operating lines into ${ebitConcept}, not ${STANDARD_EBIT} (tags swapped by the filer); that line used`);
+    }
+
     // A filer's own cash flow line for depreciation and amortisation (e.g. "depreciation, amortisation,
     // impairment and liquidation"). When it includes impairment, the tagged impairment losses are taken off.
     const filerDepreciationConcept = [...new Set(facts.map(f => f.concept))].find(c => !c.startsWith('ifrs-full:')
@@ -407,7 +421,7 @@ export function parseEsef(input: EsefInput): ParsedFiling {
         const debt = debtFor(p);
         const figures: FilingPeriod['figures'] = {
             revenue: revenueFor(p),
-            ebit: firstOf([ifrs('ProfitLossFromOperatingActivities')], p),
+            ebit: firstOf([ebitConcept], p),
             depreciation: firstOf([
                 ifrs('DepreciationAndAmortisationExpense'),
                 ifrs('AdjustmentsForDepreciationAndAmortisationExpense'),

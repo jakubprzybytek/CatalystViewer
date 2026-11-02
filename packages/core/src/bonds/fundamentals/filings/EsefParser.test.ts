@@ -126,6 +126,22 @@ ${['TradeAndOtherPayables', 'LoansReceived', 'DebtInstrumentsIssuedAtAmortisedCo
             expect(filing.checks).toEqual([]);
         });
 
+        it('takes EBIT from the line the calculation tree sums the operating lines into, when the filer swapped the tags', () => {
+            const swapped = report.replace('</body>', `${fact('ifrs-full:GrossProfit', 'D', '5,000')}${fact('ifrs-full:SellingExpense', 'D', '1,000')}`
+                + `${fact('ifrs-full:ShareOfProfitLossOfAssociatesAndJointVenturesAccountedForUsingEquityMethod', 'D', '4,000')}${fact('ifrs-full:ProfitLossFromOperatingActivities', 'D', '140')}</body>`);
+            const arc = (from: string, to: string, w: number, i: number) =>
+                `<link:loc xlink:label="f${i}" xlink:href="x.xsd#ifrs-full_${from}"/><link:loc xlink:label="t${i}" xlink:href="x.xsd#ifrs-full_${to}"/><link:calculationArc xlink:from="f${i}" xlink:to="t${i}" weight="${w}"/>`;
+            const cal = `<link:linkbase xmlns:link="http://www.xbrl.org/2003/linkbase" xmlns:xlink="http://www.w3.org/1999/xlink"><link:calculationLink>
+${arc('ShareOfProfitLossOfAssociatesAndJointVenturesAccountedForUsingEquityMethod', 'GrossProfit', 1, 1)}${arc('ShareOfProfitLossOfAssociatesAndJointVenturesAccountedForUsingEquityMethod', 'SellingExpense', -1, 2)}
+${arc('ProfitLossBeforeTax', 'ShareOfProfitLossOfAssociatesAndJointVenturesAccountedForUsingEquityMethod', 1, 3)}${arc('ProfitLossBeforeTax', 'ProfitLossFromOperatingActivities', 1, 4)}
+</link:calculationLink></link:linkbase>`;
+            const filing = parseEsef(openEsef(makeZip({ 'p/reports/r.xhtml': swapped, 'p/x/r_cal.xml': cal })));
+            expect(value(filing, 0, 'ebit')).toEqual({ value: 4_000_000, source: ['ifrs-full:ShareOfProfitLossOfAssociatesAndJointVenturesAccountedForUsingEquityMethod'] });
+            expect((filing.notes ?? []).join(' ')).toMatch(/EBIT: the calculation tree sums the operating lines into .*ShareOfProfitLoss/);
+            // without the tree: the standard tag
+            expect(value(parseEsef(openEsef(Buffer.from(swapped))), 0, 'ebit').value).toBe(140_000);
+        });
+
         it('reads inventories tagged with the newer InventoriesTotal concept', () => {
             const filing = parseEsef(openEsef(Buffer.from(report.replace('</body>', `${fact('ifrs-full:InventoriesTotal', 'I', '2,200')}</body>`))));
             expect(value(filing, 0, 'inventory')).toEqual({ value: 2_200_000, source: ['ifrs-full:InventoriesTotal'] });
