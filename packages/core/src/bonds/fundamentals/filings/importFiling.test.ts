@@ -115,7 +115,10 @@ describe('importFiling', () => {
         const broken = Buffer.from(xml.toString('utf-8').replace('<jin:Pasywa><dtsf:KwotaA>1000000', '<jin:Pasywa><dtsf:KwotaA>1000500'));
         await expect(importFiling(deps, broken)).rejects.toThrow(/doesn't add up/);
         const result = await importFiling(deps, broken, { force: true });
-        expect(result.warnings).toEqual(['2025-12-31: total assets 1,000,000 ≠ total equity and liabilities 1,000,500']);
+        expect(result.warnings).toEqual([
+            '2025-12-31: total assets 1,000,000 ≠ total equity and liabilities 1,000,500',
+            '2025-12-31: the lines under "Pasywa razem" add up to 1,000,000, not 1,000,500',
+        ]);
     });
 
     it('warns when the court register has another name for the KRS number', async () => {
@@ -160,7 +163,7 @@ describe('importFiling', () => {
             expect(result).toMatchObject({ issuerName: 'Testowa Group S.A.', entityId: '0000123456', warnings: [] });
             expect(uploads).toEqual([{ key: expect.stringMatching(/^filings\/0000123456\/2025-12-31-group-[0-9a-f]{12}\.pdf$/), contentType: 'application/pdf' }]);
             expect(rows.get('0000123456|2025-12-31#group')).toMatchObject({
-                filing: { format: 'ai-pdf', extraction: { model: 'test-model', promptVersion: 'pdf-statements-4', pages: [2, 3, 4, 5] } },
+                filing: { format: 'ai-pdf', extraction: { model: 'test-model', promptVersion: 'pdf-statements-5', pages: [2, 3, 4, 5] } },
             });
         });
 

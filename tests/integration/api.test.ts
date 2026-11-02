@@ -117,6 +117,16 @@ describe("issuers", async () => {
   });
 });
 
+describe("issuer financials", () => {
+  it("returns an issuer's filed years without their statement lines", async () => {
+    const { status, body } = await api<{ issuerName: string; filed: Record<string, unknown>[] }>(`/api/issuers/${encodeURIComponent("Atal S.A.")}/financials`);
+    expect(status).toBe(200);
+    expect(body.issuerName).toBe("Atal S.A.");
+    expect(Array.isArray(body.filed)).toBe(true);
+    for (const year of body.filed) expect(year).not.toHaveProperty("lines");
+  });
+});
+
 describe("jobs", () => {
   it("recorded the seed's Bonds Updater run as succeeded", async () => {
     const { status, body } = await api<{ jobs: Job[] }>("/api/jobs");

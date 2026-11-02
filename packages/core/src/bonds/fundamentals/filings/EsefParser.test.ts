@@ -52,6 +52,20 @@ describe('parseEsef', () => {
             expect(value(filing, 0, 'bonds')).toEqual({ value: 8_000_000, source: ['ifrs-full:NoncurrentPortionOfNoncurrentBondsIssued'] });
         });
 
+        it('keeps the lines of the three statement roles in order, labelled as printed, with parents and items', () => {
+            expect(filing).toMatchObject({ standard: 'ifrs', presentedUnit: 1000, lineSigns: 'tagged' });
+            const lines = filing.periods[0].lines;
+            const balance = lines.filter(l => l.statement === 'balance');
+            expect(balance.slice(0, 3).map(l => [l.label, l.item])).toEqual([['Wartości niematerialne', 'intangibleAssets'], ['Wartość firmy', 'goodwill'], ['Aktywa trwałe', 'noncurrentAssets']]);
+            const loans = balance.find(l => l.code === 'testowa:BondsAndLoansCurrent')!;
+            expect(loans).toMatchObject({ label: 'Kredyty, pożyczki i obligacje krótkoterminowe', anchor: 'ifrs-full:CurrentBorrowingsAndCurrentPortionOfNoncurrentBorrowings', item: 'debtMixed', value: 5_000_000 });
+            expect(balance[loans.parent!].code).toBe('ifrs-full:CurrentLiabilities');
+            // income statement role, not the changes in equity one (which also holds profit)
+            expect(lines.filter(l => l.statement === 'income').map(l => l.code)).toEqual([
+                'ifrs-full:RevenueFromSaleOfGoods', 'testowa:RentalRevenue', 'ifrs-full:ProfitLossFromOperatingActivities', 'ifrs-full:FinanceCosts', 'ifrs-full:ProfitLoss']);
+            expect(lines.filter(l => l.statement === 'cashFlow').map(l => l.item)).toEqual(['netProfit', 'depreciation', 'operatingCashFlow', 'capex', 'capex']);
+        });
+
         it('sums revenue lines when no total is tagged, including filer lines anchored to revenue', () => {
             expect(value(filing, 0, 'revenue')).toEqual({ value: 50_000_000, source: ['ifrs-full:RevenueFromSaleOfGoods', 'testowa:RentalRevenue'] });
             expect(filing.notes).toEqual(expect.arrayContaining(['Revenue: no total tagged, sum of revenue lines', 'Interest: no interest expense tagged, finance costs used']));

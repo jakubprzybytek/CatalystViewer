@@ -13,8 +13,9 @@
 import { BedrockRuntimeClient, ConverseCommand } from '@aws-sdk/client-bedrock-runtime';
 import { UnsupportedFilingError, type FilingExtraction, type FilingField, type FilingPeriod, type ParsedFiling, type SourcedFigure } from './FilingParser';
 import type { PdfPage } from './pdfText';
+import { LINE_ITEMS, type StatementLine } from './statementLines';
 
-export const PROMPT_VERSION = 'pdf-statements-4';
+export const PROMPT_VERSION = 'pdf-statements-5';
 
 // ─── 1. Statement pages ─────────────────────────────────────────────────────────
 
@@ -67,18 +68,15 @@ export function findStatementPages(pages: PdfPage[]): number[] {
 
 // ─── 2. Transcription ───────────────────────────────────────────────────────────
 
-export const LINE_FIELDS = [
-    'revenue', 'ebit', 'depreciation', 'interestExpense', 'financeCosts', 'netProfit',
-    'totalAssets', 'noncurrentAssets', 'currentAssets', 'inventory', 'cash', 'intangibleAssets', 'goodwill',
-    'equity', 'minorityInterests', 'totalLiabilities', 'noncurrentLiabilities', 'currentLiabilities', 'totalEquityAndLiabilities',
-    'debtBankLoans', 'debtBonds', 'debtLeases', 'debtMixed', 'debtOther', 'operatingCashFlow', 'capex', 'other',
-] as const;
+// The model classifies each line as one of the standard line items, or other.
+export const LINE_FIELDS = [...LINE_ITEMS, 'other'] as const;
 export type LineField = typeof LINE_FIELDS[number];
 
 export type Transcript = {
     companyName: string;
     scope: 'group' | 'single';
     currency: string;
+    standard?: 'ifrs' | 'pl-uor';
     unit: 1 | 1000 | 1000000;
     columns: { id: string; periodStart?: string; periodEnd: string }[];
     lines: { statement: Statement; page: number; label: string; field: LineField; values: { column: string; printed: string }[] }[];
@@ -94,6 +92,7 @@ export const STATEMENTS_TOOL = {
             companyName: { type: 'string' },
             scope: { enum: ['group', 'single'], description: 'group = consolidated statements' },
             currency: { type: 'string', description: 'ISO code, e.g. PLN' },
+            standard: { enum: ['ifrs', 'pl-uor'], description: 'ifrs = IFRS (MSSF); pl-uor = the Polish accounting act (ustawa o rachunkowości)' },
             unit: { enum: [1, 1000, 1000000], description: 'multiplier of the printed amounts (thousands = 1000, millions = 1000000)' },
             columns: {
                 type: 'array', description: 'the fiscal-year columns, current year first; ignore quarter columns',
@@ -127,6 +126,7 @@ Record every line of the statement of financial position, the income statement (
 - columns: the full fiscal years only (if quarters are also shown, skip them);
 - field: classify each line. Totals: totalAssets, totalEquityAndLiabilities, equity (total equity incl. non-controlling interests), etc.
   Debt lines: debtBankLoans (bank loans, credits, borrowings), debtBonds (bonds, notes, debt securities), debtLeases (lease liabilities), debtMixed (a line combining several kinds, e.g. "financial liabilities" or "loans, borrowings and bonds", when the statement doesn't split them), debtOther (other interest-bearing financing, e.g. loans from related parties); interest payable, trade payables and derivatives are other, and so is an "other financial liabilities" line when the statement shows borrowings on their own lines.
+  Other items: costOfSales, grossProfit, financeIncome, profitBeforeTax, incomeTax; propertyPlantEquipment, investmentProperty, loansGranted (loans the company gave to others), tradeReceivables (trade receivables, also "trade and other receivables"), tradePayables (likewise), contractLiabilities (contract liabilities, customer advances), provisions; investingCashFlow and financingCashFlow (the net totals), interestPaid, dividendsPaid, borrowingsRaised (proceeds from loans, borrowings and bond issues), borrowingsRepaid (repayment of loans and borrowings, bond redemption; not lease payments).
   depreciation: every depreciation and amortisation line in the income statement or the cash flow statement, including right-of-use asset depreciation when it is a separate line. capex: purchases of property, plant and equipment and intangible assets (investing cash flow). interestExpense: interest costs if shown; financeCosts: total finance costs.
   Total fields (totalAssets, noncurrentAssets, currentAssets, totalLiabilities, noncurrentLiabilities, currentLiabilities, totalEquityAndLiabilities, equity) go on the total line only, never on the lines that make it up; when the total has no label, use the section name (e.g. "Current assets").
   When a line is a subtotal of lines you also record, still give it its field only if it is the standard total (e.g. currentAssets); otherwise other.
@@ -294,6 +294,19 @@ export function transcriptToFiling(transcript: Transcript, pages: PdfPage[], ext
         };
         for (const key of Object.keys(figures) as FilingField[]) if (figures[key] === undefined) delete figures[key];
 
+        // Every line with an amount in this column, as printed
+        const lines: StatementLine[] = [];
+        const count: Partial<Record<Statement, number>> = {};
+        for (const line of t.lines) {
+            const value = line.values.filter(v => v.column === column.id).map(v => numbers.get(v)).find(v => v !== undefined);
+            if (value === undefined) continue;
+            count[line.statement] = (count[line.statement] ?? -1) + 1;
+            lines.push({
+                statement: line.statement, order: count[line.statement]!, label: line.label, value: round2(value * unit), page: line.page,
+                ...(line.field && line.field !== 'other' && (LINE_ITEMS as readonly string[]).includes(line.field) ? { item: line.field } : {}),
+            });
+        }
+
         const end = isoDate(column.periodEnd);
         if (!end) throw new UnsupportedFilingError(`The model gave an unreadable date for column ${column.id}: "${column.periodEnd}"`);
         const label = i === 0 ? end : `${end} (comparative)`;
@@ -310,7 +323,7 @@ export function transcriptToFiling(transcript: Transcript, pages: PdfPage[], ext
         if (!figures.netProfit) checks.push(`${label}: no net profit`);
 
         const start = isoDate(column.periodStart) ?? yearStart(end);
-        return { column: i === 0 ? 'current' : 'previous', periodStart: start, periodEnd: end, months: monthsBetween(start, end), figures };
+        return { column: i === 0 ? 'current' : 'previous', periodStart: start, periodEnd: end, months: monthsBetween(start, end), figures, lines };
     });
     if (mixedDebt) notes.push('Debt: the balance sheet has combined financing lines (e.g. "financial liabilities"), so bonds aren\'t split out');
 
@@ -321,6 +334,9 @@ export function transcriptToFiling(transcript: Transcript, pages: PdfPage[], ext
         krs: findKrs(pages),
         lei: findLei(pages),
         currency: /^[A-Z]{3}$/.test(t.currency) ? t.currency : 'PLN',
+        standard: t.standard === 'pl-uor' ? 'pl-uor' : 'ifrs',
+        presentedUnit: unit as 1 | 1000 | 1000000,
+        lineSigns: 'printed',
         schema: `PDF read by ${extraction.model} (${extraction.promptVersion})`,
         periods,
         checks,

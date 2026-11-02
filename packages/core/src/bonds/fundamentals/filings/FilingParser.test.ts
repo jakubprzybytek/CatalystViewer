@@ -25,6 +25,18 @@ describe('parseFiling', () => {
             });
         });
 
+        it('keeps every statement line, with its label from the Ministry schema, parent and item', () => {
+            const lines = filing.periods[0].lines;
+            expect(filing).toMatchObject({ standard: 'pl-uor', presentedUnit: 1, lineSigns: 'tagged' });
+            expect(lines[0]).toEqual({ statement: 'balance', order: 0, label: 'Aktywa razem', value: 1_000_000, code: 'Aktywa', item: 'totalAssets' });
+            const bonds = lines.find(l => l.code === 'Pasywa_B_II_3_B')!;
+            expect(bonds).toMatchObject({ label: 'z tytułu emisji dłużnych papierów wartościowych', value: 150_000, item: 'debtBonds' });
+            expect(lines[bonds.parent!].code).toBe('Pasywa_B_II_3');
+            expect(lines.find(l => l.code === 'Pasywa_B_III_3_E')).toMatchObject({ label: 'zaliczki otrzymane na dostawy i usługi', item: 'contractLiabilities' });
+            expect(lines.filter(l => l.statement === 'income').map(l => l.item)).toEqual(['revenue', undefined, 'depreciation', 'ebit', 'financeCosts', 'interestExpense', 'netProfit']);
+            expect(filing.periods[1].lines.find(l => l.code === 'Aktywa')!.value).toBe(900_000);
+        });
+
         it('reads both columns as full fiscal years', () => {
             expect(filing.periods.map(p => [p.column, p.periodStart, p.periodEnd, p.months])).toEqual([
                 ['current', '2025-01-01', '2025-12-31', 12],
@@ -114,7 +126,10 @@ describe('parseFiling', () => {
             '<jin:Pasywa><dtsf:KwotaA>1000000</dtsf:KwotaA>',
             '<jin:Pasywa><dtsf:KwotaA>1000500</dtsf:KwotaA>',
         );
-        expect(parseFiling(xml).checks).toEqual(['2025-12-31: total assets 1,000,000 ≠ total equity and liabilities 1,000,500']);
+        expect(parseFiling(xml).checks).toEqual([
+            '2025-12-31: total assets 1,000,000 ≠ total equity and liabilities 1,000,500',
+            '2025-12-31: the lines under "Pasywa razem" add up to 1,000,000, not 1,000,500',
+        ]);
     });
 
     it('reports a net profit that differs between the statements', () => {

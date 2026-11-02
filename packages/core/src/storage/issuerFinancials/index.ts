@@ -1,6 +1,10 @@
 export * from './IssuerFinancialsTable';
 
 import type { FilingExtraction, FilingField, FilingScope, ParsedFiling, SourcedFigure } from '../../bonds/fundamentals/filings/FilingParser';
+import type { StatementLine } from '../../bonds/fundamentals/filings/statementLines';
+
+// parsed: as imported; hand-checked: in the test set (scripts/check-filings); flagged: someone noted a problem
+export type ReviewStatus = 'parsed' | 'hand-checked' | 'flagged';
 
 // One fiscal year of an issuer's financials, read from a filed statement.
 // Key: entityId (PK), period = "<periodEnd>#<scope>" (SK). Each filing gives two years: its own (column
@@ -18,7 +22,12 @@ export type DbIssuerFinancialsRecord = {
     periodEnd: string;
     months: number;
     currency: string;             // ISO 4217; figures are in units of it
+    standard?: ParsedFiling['standard'];          // rows imported before statement lines have none
+    presentedUnit?: ParsedFiling['presentedUnit'];
+    lineSigns?: ParsedFiling['lineSigns'];
     figures: Partial<Record<FilingField, SourcedFigure>>;
+    lines?: StatementLine[];      // every line of the primary statements; left out by the list reads
+    review?: { status: ReviewStatus; note?: string; at?: string };
     column: 'current' | 'previous';
     filing: {
         key: string;              // S3 key of the original file in the Filings bucket

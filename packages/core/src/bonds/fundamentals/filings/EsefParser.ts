@@ -8,12 +8,13 @@
 // and the filer's own (extension) concepts are classified by the IFRS concept they're anchored to, or by
 // their label. With the .xhtml alone, it falls back to the standard IFRS debt concepts.
 import { readZip, isZip } from './zip';
+import { itemsFromFigures, lineChecks, type LineItem, type StatementLine, type StatementName } from './statementLines';
 import { UnsupportedFilingError, type FilingField, type FilingPeriod, type FilingScope, type ParsedFiling, type SourcedFigure } from './FilingParser';
 
 // ─── Inline XBRL facts ──────────────────────────────────────────────────────────
 
 type Context = { id: string; entity: string; scheme: string; start?: string; end?: string; instant?: string; dimensional: boolean };
-type Fact = { concept: string; context: string; unit?: string; value: number; decimals?: string };
+type Fact = { concept: string; context: string; unit?: string; value: number; decimals?: string; scale: number };
 
 const decode = (s: string) => s
     .replace(/&nbsp;|&#160;|&#xa0;/gi, ' ')
@@ -88,6 +89,7 @@ function readFacts(xhtml: string): Fact[] {
             unit: a.unitRef,
             value: (a.sign === '-' ? -1 : 1) * parsed * Math.pow(10, Number.isFinite(scale) ? scale : 0),
             decimals: a.decimals,
+            scale: Number.isFinite(scale) ? scale : 0,
         });
     }
     return facts;
@@ -104,6 +106,7 @@ type Taxonomy = {
     children: Map<string, { concept: string; weight: number }[]>;  // calculation: parent → children
     anchors: Map<string, string[]>;                                // extension concept → wider IFRS concepts
     labels: Map<string, string>;                                   // extension concept → label
+    presentation: { role: string; concepts: string[] }[];          // per presentation role, its concepts in order
 };
 
 // "…/ifrs-full-2022.xsd#ifrs-full_Borrowings" or "dom-2022.xsd#dom_Bonds" → "ifrs-full:Borrowings"
@@ -132,8 +135,41 @@ function linkbaseArcs(xml: string, arcName: string): { from: string; to: string;
     return out;
 }
 
+// Each presentation role's concepts, depth first in the filer's order.
+function presentationRoles(xml: string): { role: string; concepts: string[] }[] {
+    const roles: { role: string; concepts: string[] }[] = [];
+    for (const link of xml.matchAll(/<(?:[\w-]+:)?presentationLink\b([^>]*)>([\s\S]*?)<\/(?:[\w-]+:)?presentationLink>/g)) {
+        const locs = new Map<string, string>();
+        for (const m of link[2].matchAll(/<(?:[\w-]+:)?loc\b([^>]*)\/?>/g)) {
+            const a = attrs(m[1]);
+            locs.set(a['xlink:label'], conceptFromHref(a['xlink:href'] ?? ''));
+        }
+        const children = new Map<string, { concept: string; order: number }[]>();
+        const isChild = new Set<string>();
+        for (const m of link[2].matchAll(/<(?:[\w-]+:)?presentationArc\b([^>]*)\/?>/g)) {
+            const a = attrs(m[1]);
+            const from = locs.get(a['xlink:from']);
+            const to = locs.get(a['xlink:to']);
+            if (!from || !to) continue;
+            children.set(from, [...(children.get(from) ?? []), { concept: to, order: Number(a.order ?? 0) }]);
+            isChild.add(to);
+        }
+        const concepts: string[] = [];
+        const seen = new Set<string>();
+        const visit = (concept: string) => {
+            if (seen.has(concept)) return;
+            seen.add(concept);
+            concepts.push(concept);
+            for (const c of (children.get(concept) ?? []).sort((x, y) => x.order - y.order)) visit(c.concept);
+        };
+        for (const root of children.keys()) if (!isChild.has(root)) visit(root);
+        roles.push({ role: attrs(link[1])['xlink:role'] ?? '', concepts });
+    }
+    return roles;
+}
+
 function readTaxonomy(files: { name: string; text: () => string }[]): Taxonomy {
-    const taxonomy: Taxonomy = { children: new Map(), anchors: new Map(), labels: new Map() };
+    const taxonomy: Taxonomy = { children: new Map(), anchors: new Map(), labels: new Map(), presentation: [] };
     for (const file of files) {
         const name = file.name.toLowerCase();
         if (/_cal\.xml$/.test(name)) {
@@ -142,6 +178,8 @@ function readTaxonomy(files: { name: string; text: () => string }[]): Taxonomy {
                 if (!list.some(c => c.concept === arc.to)) list.push({ concept: arc.to, weight: arc.weight });
                 taxonomy.children.set(arc.from, list);
             }
+        } else if (/_pre\.xml$/.test(name)) {
+            taxonomy.presentation.push(...presentationRoles(file.text()));
         } else if (/_def\.xml$/.test(name)) {
             for (const arc of linkbaseArcs(file.text(), 'definitionArc')) {
                 if (!arc.arcrole.endsWith('/wider-narrower')) continue;
@@ -418,6 +456,64 @@ export function parseEsef(input: EsefInput): ParsedFiling {
         return impairment ? { value: round2(line.value - impairment.value), source: [...line.source, ...impairment.source.map(c => `−${c}`)] } : line;
     };
 
+    // Statement lines: the concepts of the package's balance sheet, income statement and cash flow roles,
+    // in the filer's order; without the package, every fact in document order.
+    const statementRoles = taxonomy ? pickStatementRoles(taxonomy, c => value(c, periods[0]) !== undefined) : undefined;
+    const calcParent = new Map<string, string>();
+    for (const [parent, kids] of taxonomy?.children ?? []) for (const k of kids) if (!calcParent.has(k.concept)) calcParent.set(k.concept, parent);
+    const rowLabels = new Map<string, string | undefined>();
+    const lineLabel = (concept: string) => {
+        if (!rowLabels.has(concept)) rowLabels.set(concept, rowLabel(xhtml, concept));
+        return rowLabels.get(concept) || label(concept) || humanize(concept);
+    };
+    const documentOrder = (p: { start: string; end: string }): [StatementName, string[]][] => {
+        const by: Record<StatementName, string[]> = { balance: [], income: [], cashFlow: [] };
+        for (const f of facts) {
+            const c = contexts.get(f.context)!;
+            const inPeriod = c.instant ? c.instant === p.end : c.start === p.start && c.end === p.end;
+            if (!inPeriod) continue;
+            const statement: StatementName = c.instant ? 'balance' : CASH_FLOW_NAME.test(f.concept) ? 'cashFlow' : 'income';
+            if (!by[statement].includes(f.concept)) by[statement].push(f.concept);
+        }
+        return Object.entries(by) as [StatementName, string[]][];
+    };
+    const linesFor = (p: { start: string; end: string }, figures: FilingPeriod['figures']): StatementLine[] => {
+        const plan: [StatementName, string[]][] = statementRoles
+            ? (['balance', 'income', 'cashFlow'] as const).map(st => [st, statementRoles[st]?.concepts ?? []])
+            : documentOrder(p);
+        const lines: StatementLine[] = [];
+        for (const [statement, concepts] of plan) {
+            const orderOf = new Map<string, number>();
+            const own: StatementLine[] = [];
+            for (const concept of concepts) {
+                const v = value(concept, p);
+                if (v === undefined || orderOf.has(concept) || /PerShare/.test(concept)) continue;   // amounts per share aren't money totals
+                const anchor = concept.startsWith('ifrs-full:') ? undefined : taxonomy?.anchors.get(concept)?.[0];
+                orderOf.set(concept, own.length);
+                own.push({ statement, order: own.length, label: lineLabel(concept), value: round2(v), code: concept, ...(anchor ? { anchor } : {}) });
+            }
+            for (const line of own) {
+                const parent = orderOf.get(calcParent.get(line.code!) ?? '');
+                if (parent !== undefined) line.parent = parent;
+            }
+            lines.push(...own);
+        }
+        // Items: from the figures first (they know a filer's swapped tags), then the concept table, which
+        // never gives an item a statement already has.
+        const byCode = (code: string) => (['income', 'balance', 'cashFlow'] as const)
+            .map(st => lines.find(l => l.statement === st && l.code === code)).find(Boolean);
+        itemsFromFigures(lines, figures, byCode);
+        for (const line of lines) {
+            if (line.item) continue;
+            // An anchor names a wider concept: the line is part of that item, which only counts where an
+            // item is made of several lines.
+            const anchored = line.anchor ? ESEF_ITEMS[line.anchor] : undefined;
+            const item = ESEF_ITEMS[line.code!] ?? (anchored && SEVERAL.has(anchored) ? anchored : undefined);
+            if (item && (SEVERAL.has(item) || !lines.some(l => l.statement === line.statement && l.item === item))) line.item = item;
+        }
+        return lines;
+    };
+
     const checks: string[] = [];
     const filingPeriods: FilingPeriod[] = periods.map((p, i) => {
         const debt = debtFor(p);
@@ -478,6 +574,8 @@ export function parseEsef(input: EsefInput): ParsedFiling {
             checks.push(`${period}: equity ${fmt(equity)} + liabilities ${fmt(liabilities)} ≠ ${fmt(equityAndLiabilities)}`);
         }
         if (assets === undefined) checks.push(`${period}: no total assets (ifrs-full:Assets) tagged`);
+        const lines = linesFor(p, figures);
+        checks.push(...lineChecks(lines, period, tolerance));
 
         return {
             column: i === 0 ? 'current' : 'previous',
@@ -485,8 +583,10 @@ export function parseEsef(input: EsefInput): ParsedFiling {
             periodEnd: p.end,
             months: monthsBetween(p.start, p.end),
             figures,
+            lines,
         };
     });
+    if (!statementRoles) notes.push('Statement lines: report without its package, so every tagged amount in document order, sorted into statements by period type and name');
 
     if (filingPeriods.some(p => p.figures.interestExpense?.source[0] === ifrs('FinanceCosts'))) {
         notes.push('Interest: no interest expense tagged, finance costs used');
@@ -516,6 +616,9 @@ export function parseEsef(input: EsefInput): ParsedFiling {
         companyName,
         lei,
         currency,
+        standard: 'ifrs',
+        presentedUnit: presentedUnit(facts),
+        lineSigns: 'tagged',
         schema: `ESEF ${input.reportName.split('/').pop() ?? ''}`.trim(),
         periods: filingPeriods,
         checks,
@@ -544,3 +647,88 @@ export function reportingEntityName(tagged: string): string {
     const name = tagged.replace(/\s+/g, ' ').trim();
     return name.match(/\s(?:jest|is)\s+(.+)$/i)?.[1] ?? name;
 }
+
+// ─── Statement lines ────────────────────────────────────────────────────────────
+
+// Items that several lines of a statement may have (current and non-current, kinds of borrowing)
+const SEVERAL = new Set<LineItem>(['provisions', 'contractLiabilities', 'borrowingsRaised', 'borrowingsRepaid', 'interestPaid']);
+
+const CASH_FLOW_NAME = /CashFlows|Adjustments|Proceeds|Payments|Purchase|IncreaseDecrease|Repayments|Paid|Received|ClassifiedAs\w*Activities|Inflows|Outflows/;
+
+// The presentation roles of the three statements: the role holding the statement's key concepts with
+// the most amounts for the year (a changes-in-equity role holds profit too, but also equity).
+function pickStatementRoles(taxonomy: Taxonomy, hasValue: (concept: string) => boolean): Partial<Record<StatementName, { role: string; concepts: string[] }>> | undefined {
+    const has = (r: { concepts: string[] }, name: string) => r.concepts.includes(ifrs(name));
+    const pick = (test: (r: { concepts: string[] }) => boolean) => taxonomy.presentation
+        .filter(test)
+        .map(r => ({ r, n: r.concepts.filter(hasValue).length }))
+        .sort((a, b) => b.n - a.n)[0]?.r;
+    const roles = {
+        balance: pick(r => has(r, 'Assets') && (has(r, 'Equity') || has(r, 'EquityAndLiabilities'))),
+        income: pick(r => has(r, 'ProfitLoss') && !has(r, 'Assets') && !has(r, 'Equity') && !has(r, 'CashFlowsFromUsedInOperatingActivities')),
+        cashFlow: pick(r => (has(r, 'CashFlowsFromUsedInOperatingActivities') || has(r, 'IncreaseDecreaseInCashAndCashEquivalents')) && !has(r, 'Assets')),
+    };
+    return roles.balance || roles.income || roles.cashFlow ? roles : undefined;
+}
+
+const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+// Words, and not a note reference ("Nota 4.2.")
+const hasWords = (s: string) => /\p{L}{2}/u.test(s) && !/^(nota|note|notes)\b[\s\d.,;-]*$/i.test(s);
+
+// The label printed next to the concept's first tagged amount: in a table, the row's first cell with
+// words; in a layout of positioned blocks, the last text with words between the previous amount and this one.
+function rowLabel(xhtml: string, concept: string): string | undefined {
+    const at = xhtml.search(new RegExp(`name="${escapeRe(concept)}"`));
+    if (at < 0) return undefined;
+    const tr = Math.max(xhtml.lastIndexOf('<tr ', at), xhtml.lastIndexOf('<tr>', at));
+    const end = xhtml.indexOf('</tr>', at);
+    if (tr >= 0 && at - tr < 50_000 && xhtml.lastIndexOf('</tr>', at) < tr && end > 0) {
+        const cells = [...xhtml.slice(tr, end).matchAll(/<t[dh]\b[^>]*>([\s\S]*?)<\/t[dh]>/g)].map(m => stripTags(m[1]).replace(/\s+/g, ' ').trim());
+        return cells.find(hasWords);
+    }
+    const tagStart = xhtml.lastIndexOf('<', at);
+    const from = Math.max(xhtml.lastIndexOf('nonFraction>', tagStart), tagStart - 5_000, 0);
+    const texts = [...xhtml.slice(from, tagStart).matchAll(/>([^<]+)</g)].map(m => decode(m[1]).replace(/\s+/g, ' ').trim()).filter(hasWords);
+    // A label wrapped over two lines: the second starts in lower case.
+    const last = texts[texts.length - 1];
+    return last && /^\p{Ll}/u.test(last) && texts.length > 1 ? `${texts[texts.length - 2]} ${last}` : last;
+}
+
+// "ifrs-full:CashAndCashEquivalents" → "Cash and cash equivalents"
+function humanize(concept: string): string {
+    const local = concept.split(':')[1] ?? concept;
+    const words = local.replace(/([a-z0-9])([A-Z])/g, '$1 $2').toLowerCase();
+    return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
+// How the report printed amounts: the most common scale of its monetary facts.
+function presentedUnit(facts: Fact[]): 1 | 1000 | 1000000 {
+    const counts = new Map<number, number>();
+    for (const f of facts) counts.set(f.scale, (counts.get(f.scale) ?? 0) + 1);
+    const scale = [...counts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? 0;
+    return scale >= 6 ? 1000000 : scale >= 3 ? 1000 : 1;
+}
+
+const ESEF_ITEMS: Record<string, LineItem> = Object.fromEntries(([
+    ['Revenue', 'revenue'], ['RevenueFromContractsWithCustomers', 'revenue'], ['CostOfSales', 'costOfSales'], ['GrossProfit', 'grossProfit'],
+    ['ProfitLossFromOperatingActivities', 'ebit'], ['FinanceCosts', 'financeCosts'], ['FinanceIncome', 'financeIncome'],
+    ['ProfitLossBeforeTax', 'profitBeforeTax'], ['IncomeTaxExpenseContinuingOperations', 'incomeTax'], ['ProfitLoss', 'netProfit'],
+    ['Assets', 'totalAssets'], ['NoncurrentAssets', 'noncurrentAssets'], ['PropertyPlantAndEquipment', 'propertyPlantEquipment'],
+    ['InvestmentProperty', 'investmentProperty'], ['IntangibleAssetsOtherThanGoodwill', 'intangibleAssets'], ['Goodwill', 'goodwill'],
+    ['CurrentAssets', 'currentAssets'], ['Inventories', 'inventory'], ['TradeAndOtherCurrentReceivables', 'tradeReceivables'],
+    ['CurrentTradeReceivables', 'tradeReceivables'], ['CashAndCashEquivalents', 'cash'],
+    ['Equity', 'equity'], ['NoncontrollingInterests', 'minorityInterests'], ['Liabilities', 'totalLiabilities'],
+    ['NoncurrentLiabilities', 'noncurrentLiabilities'], ['CurrentLiabilities', 'currentLiabilities'], ['EquityAndLiabilities', 'totalEquityAndLiabilities'],
+    ['TradeAndOtherCurrentPayables', 'tradePayables'], ['CurrentTradePayables', 'tradePayables'],
+    ['ContractLiabilities', 'contractLiabilities'], ['CurrentContractLiabilities', 'contractLiabilities'], ['NoncurrentContractLiabilities', 'contractLiabilities'],
+    ['NoncurrentProvisions', 'provisions'], ['CurrentProvisions', 'provisions'],
+    ['CashFlowsFromUsedInOperatingActivities', 'operatingCashFlow'], ['CashFlowsFromUsedInInvestingActivities', 'investingCashFlow'],
+    ['CashFlowsFromUsedInFinancingActivities', 'financingCashFlow'],
+    ['InterestPaidClassifiedAsFinancingActivities', 'interestPaid'], ['InterestPaidClassifiedAsOperatingActivities', 'interestPaid'],
+    ['DividendsPaidClassifiedAsFinancingActivities', 'dividendsPaid'],
+    ['ProceedsFromBorrowingsClassifiedAsFinancingActivities', 'borrowingsRaised'], ['ProceedsFromIssueOfBondsNotesAndDebentures', 'borrowingsRaised'],
+    ['ProceedsFromNoncurrentBorrowings', 'borrowingsRaised'], ['ProceedsFromCurrentBorrowings', 'borrowingsRaised'],
+    ['RepaymentsOfBorrowingsClassifiedAsFinancingActivities', 'borrowingsRepaid'], ['RepaymentsOfBondsNotesAndDebentures', 'borrowingsRepaid'],
+    ['RepaymentsOfNoncurrentBorrowings', 'borrowingsRepaid'], ['RepaymentsOfCurrentBorrowings', 'borrowingsRepaid'],
+] as [string, LineItem][]).map(([name, item]) => [ifrs(name), item]));

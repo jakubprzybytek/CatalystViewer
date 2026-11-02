@@ -146,9 +146,27 @@ One call per report (two with a retry), ~8k tokens in and ~10k out (≈ $0.15 wi
 npx sst shell --stage prod -- npm run check-filings                    # stored rows + re-parse of KRS XML / ESEF / IFRS text (free)
 npx sst shell --stage prod -- npm run check-filings -- --only orlen    # one issuer
 npx sst shell --stage prod -- npm run check-filings -- --pdf           # also re-read the PDFs with the model (~$0.15 each)
+npx sst shell --stage prod -- npm run check-filings -- --mark          # mark the passing years "hand-checked"
 ```
 
-Run it after any change to the parsers or the PDF prompt. When importing a new report, check its figures against the document and add it to `expected.json`.
+Run it after any change to the parsers or the PDF prompt. When importing a new report, check its figures against the document, add it to `expected.json` and run it with `--mark`. It also checks each year's statement lines (all three statements there, the total assets line equal to the figure).
+
+**Statement lines** (`statementLines.ts`): every year row also keeps every line of its balance sheet, income statement and cash flow (`lines`; 10–40 KB a row), so new metrics can be computed from stored data without the files. Per line: statement, order, label as printed, value in units of currency, the filing's own identifier (`code`: KRS line code or XBRL concept), the wider IFRS concept an ESEF extension is anchored to, the subtotal it adds up into (`parent`, KRS XML and ESEF), the page (PDF), and the app's standard item (`item`, from the list `LINE_ITEMS`: revenue, cost of sales, PP&E, trade receivables, the debt kinds, contract liabilities, interest paid, borrowings raised and repaid, …). The row also has `standard` (`ifrs` or `pl-uor`), `presentedUnit`, `lineSigns` and `review` (`parsed`, `hand-checked`, `flagged`).
+
+- **KRS XML:** every line code with an amount; labels from the Ministry of Finance schemas (`krsLineLabels.ts`, generated from `JednostkaInnaStrukturyDanychSprFin_v1-0.xsd` and its consolidated counterpart); the parent is the element a line sits in. Amounts as filed (a cost is positive).
+- **ESEF:** the concepts of the package's presentation roles for the three statements (the role holding the statement's key concepts with the most amounts; changes in equity is told apart by holding equity), in the filer's order; labels from the report's table row (or, for a layout of positioned blocks, the text before the amount), else the package label, else the concept name; the parent from the calculation tree. Amounts as tagged (a cost is positive). A report without its package gets every tagged amount in document order, sorted into statements by period type and name.
+- **IFRS text and PDF:** every row as printed (a cost in brackets is negative); PDF items are the model's classification.
+- **Items** come from the scorecard figures first (so a filer's swapped tags are handled once), then a table per format (KRS codes and labels, IFRS concepts). An ESEF extension anchored to a wider concept is part of that item, so it only gets it for items made of several lines (provisions, contract liabilities, borrowings).
+- **Checks:** where parents are known, the lines under total assets and under total equity and liabilities must add up to them (KRS XML: equity and liabilities only, assets are checked already).
+- The list reads (`getAll`, `getByIssuer`, `getByEntity`) leave `lines` out; `IssuerFinancialsTable.get` returns one year with them.
+
+Rows imported before lines were stored get them with `reparse-filings`: it parses each stored original again and adds the lines and new fields, never changing figures (a year whose re-parsed figures differ is reported and left alone):
+
+```sh
+npx sst shell --stage dev -- npm run reparse-filings -- --dry-run      # parse and compare, write nothing
+npx sst shell --stage dev -- npm run reparse-filings                   # KRS XML, ESEF, IFRS text (free); PDFs skipped
+npx sst shell --stage dev -- npm run reparse-filings -- --pdf          # PDFs too: one model read each (~$0.15)
+```
 
 Not supported: small and micro entities (`JednostkaMala`, `JednostkaMikro`), banks and insurers, scanned PDFs (no text layer).
 

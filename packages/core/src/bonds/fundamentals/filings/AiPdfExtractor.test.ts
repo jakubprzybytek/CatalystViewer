@@ -108,6 +108,16 @@ describe('transcriptToFiling', () => {
         expect(filing.periods[0].figures.financialDebt!.source).toEqual(['p. 4/Bank loans', 'p. 4/Bonds', 'p. 4/Lease liabilities']);
     });
 
+    it('keeps every printed line per year, in units, with the model\'s item', () => {
+        const filing = transcriptToFiling(transcript, pages, EXTRACTION);
+        expect(filing).toMatchObject({ standard: 'ifrs', presentedUnit: 1000000, lineSigns: 'printed' });
+        const lines = filing.periods[0].lines;
+        expect(lines.length).toBe(transcript.lines.filter(l => l.values.some(v => v.column === transcript.columns[0].id)).length);
+        expect(lines.find(l => l.label === 'Bonds')).toMatchObject({ statement: 'balance', page: 4, value: 400_000_000, item: 'debtBonds' });
+        expect(lines.filter(l => l.statement === 'balance').map(l => l.order)).toEqual(lines.filter(l => l.statement === 'balance').map((_, i) => i));
+        expect(lines.some(l => (l.item as string) === 'other')).toBe(false);
+    });
+
     it('rejects an amount that is not on the cited page', () => {
         const wrong = structuredClone(transcript);
         wrong.lines[4].values[0].printed = '75,0';

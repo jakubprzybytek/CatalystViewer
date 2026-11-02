@@ -6,6 +6,7 @@
 // Labels are matched loosely, because PDF conversions drop Polish letters ("krótkoterminowe" →
 // "krtkoterminowe"): diacritics are stripped and letters that have a Polish accented form are optional.
 import { UnsupportedFilingError, type FilingField, type FilingPeriod, type FilingScope, type ParsedFiling, type SourcedFigure } from './FilingParser';
+import { itemsFromFigures, type StatementLine } from './statementLines';
 
 type Row = { label: string; joined: string; values: [number, number | undefined] };
 type SectionName = 'balance' | 'income' | 'cashFlow';
@@ -233,6 +234,25 @@ export function parseIfrsText(html: string): ParsedFiling {
 
         const period = column === 0 ? end : `${end} (comparative)`;
         const totalRow = balance.rows.find(row => matches(row, TOTAL_EQUITY_AND_LIABILITIES, /^total (equity and liabilities|liabilities and equity)$/));
+
+        // Every row of the three statements, as printed
+        const lines: StatementLine[] = [];
+        const lineOf = new Map<string, StatementLine>();
+        const rowLine = new Map<Row, StatementLine>();
+        for (const name of ['balance', 'income', 'cashFlow'] as const) {
+            let order = 0;
+            for (const row of sections[name]?.rows ?? []) {
+                const v = row.values[columnOf(column)];
+                if (v === undefined) continue;
+                const line: StatementLine = { statement: name, order: order++, label: row.label, value: round2(v * unit) };
+                lines.push(line);
+                rowLine.set(row, line);
+                if (!lineOf.has(`${name}/${row.label}`)) lineOf.set(`${name}/${row.label}`, line);
+            }
+        }
+        if (totalRow && rowLine.has(totalRow)) rowLine.get(totalRow)!.item = 'totalEquityAndLiabilities';
+        itemsFromFigures(lines, figures, source => lineOf.get(source));
+
         const total = totalRow?.values[columnOf(column)];
         const assets = figures.totalAssets?.value;
         if (assets === undefined) checks.push(`${period}: total assets not found`);
@@ -241,7 +261,7 @@ export function parseIfrsText(html: string): ParsedFiling {
         if (!figures.equity) checks.push(`${period}: total equity not found`);
         if (!figures.revenue && !figures.netProfit) checks.push(`${period}: no income statement figures found`);
 
-        return [{ column: column === 0 ? 'current' : 'previous', periodStart: start, periodEnd: end, months: 12, figures }];
+        return [{ column: column === 0 ? 'current' : 'previous', periodStart: start, periodEnd: end, months: 12, figures, lines }];
     });
 
     // Identity: the KRS number next to "KRS" or "Rejestru Sądowego" (else --krs); the company name from the title page.
@@ -255,6 +275,9 @@ export function parseIfrsText(html: string): ParsedFiling {
         companyName,
         krs,
         currency: 'PLN',
+        standard: 'ifrs',
+        presentedUnit: unit,
+        lineSigns: 'printed',
         schema: `IFRS text (${scope === 'group' ? 'consolidated' : 'separate'} statements, untagged)`,
         unitMultiplier: unit === 1000 ? 1000 : 1,
         periods,

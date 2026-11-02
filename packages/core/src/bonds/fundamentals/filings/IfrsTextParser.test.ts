@@ -31,6 +31,19 @@ describe('parseIfrsText', () => {
         expect(figures(filing, 1)).toMatchObject({ operatingCashFlow: -200, financialDebt: 2_080, netProfit: 560 });
     });
 
+    it('keeps every row of the statements as printed, with items where the figures use them', () => {
+        expect(filing).toMatchObject({ standard: 'ifrs', presentedUnit: 1000, lineSigns: 'printed' });
+        const lines = filing.periods[0].lines;
+        expect(lines.slice(0, 3)).toEqual([
+            { statement: 'balance', order: 0, label: 'Wartości niematerialne', value: 200_000, item: 'intangibleAssets' },
+            { statement: 'balance', order: 1, label: 'Rzeczowe aktywa trwałe', value: 300_000 },
+            { statement: 'balance', order: 2, label: 'AKTYWA TRWAŁE RAZEM', value: 500_000 },
+        ]);
+        expect(lines.find(l => l.label === 'Obligacje – czść krtkoterminowa')!.item).toBe('debtBonds');
+        expect(lines.filter(l => l.item === 'totalEquityAndLiabilities')).toHaveLength(1);
+        expect(new Set(lines.map(l => l.statement))).toEqual(new Set(['balance', 'income', 'cashFlow']));
+    });
+
     it('takes borrowings, bonds and leases as debt, not interest payable or loans granted', () => {
         expect(filing.periods[0].figures.financialDebt!.source).toEqual([
             'balance/Obligacje – czść długoterminowa',

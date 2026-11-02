@@ -7,6 +7,8 @@
 // Not supported: small and micro entity structures (JednostkaMala, JednostkaMikro), banks, insurers,
 // and IFRS reporters (they file ESEF/PDF, not these structures).
 import { XMLParser } from 'fast-xml-parser';
+import { itemsFromFigures, lineChecks, type LineItem, type StatementLine, type StatementName } from './statementLines';
+import { KRS_LINE_LABELS } from './krsLineLabels';
 
 export type FilingScope = 'single' | 'group';
 
@@ -26,6 +28,7 @@ export type FilingPeriod = {
     periodEnd: string;
     months: number;                  // 12 for a full fiscal year
     figures: Partial<Record<FilingField, SourcedFigure>>;
+    lines: StatementLine[];          // every line of the primary statements for this year
 };
 
 // How a PDF was read by a model (AiPdfExtractor)
@@ -40,6 +43,11 @@ export type ParsedFiling = {
     nip?: string;
     lei?: string;                    // ESEF filings identify the company by LEI only
     currency: string;                // ISO 4217; always PLN for krs-xml
+    standard: 'ifrs' | 'pl-uor';     // IFRS, or the Polish accounting act (ustawa o rachunkowości)
+    presentedUnit: 1 | 1000 | 1000000;  // how the filing printed amounts; values are always in units
+    // Line values: 'printed' as the statement shows them (a cost in brackets is negative), or 'tagged'
+    // as the filing's data has them (XBRL facts, KRS XML amounts: a cost is positive).
+    lineSigns: 'printed' | 'tagged';
     schema: string;                  // e.g. "SFJINZ (2) 2-0E", "ESEF dom-2022-12-31-pl.xhtml"
     unitMultiplier?: 1 | 1000;       // krs-xml: filed in złoty or in thousands; figures are in units of currency
     preparedOn?: string;             // DataSporzadzenia
@@ -128,7 +136,7 @@ function findRoot(doc: Node): { name: string; node: Node } | undefined {
 
 // One statement (balance sheet, income statement, cash flow): line code → [current, previous] in PLN.
 class Section {
-    constructor(readonly label: string, private readonly node: Node | undefined, private readonly multiplier: number) {}
+    constructor(readonly label: string, readonly node: Node | undefined, readonly multiplier: number) {}
 
     get present(): boolean {
         return this.node !== undefined;
@@ -172,6 +180,81 @@ function figure(section: Section, codes: string[], column: 0 | 1, opts: { sumMis
 }
 
 const round2 = (v: number) => Math.round(v * 100) / 100;
+
+// ─── Statement lines ────────────────────────────────────────────────────────────
+
+const STATEMENT_OF: Record<string, StatementName> = {
+    Bilans: 'balance', RZiSPor: 'income', RZiSKalk: 'income', PrzeplywyPosr: 'cashFlow', PrzeplywyBezp: 'cashFlow',
+};
+
+// Items the scorecard figures don't give: [statement, code pattern, label pattern, item].
+const KRS_ITEMS: [StatementName, RegExp, RegExp, LineItem][] = [
+    ['balance', /^Aktywa_A$/, /./, 'noncurrentAssets'],
+    ['balance', /^Aktywa_A_[IV]+$/, /^Rzeczowe aktywa trwałe$/, 'propertyPlantEquipment'],
+    ['balance', /^Aktywa_A_[IV]+_1$/, /^Nieruchomości$/, 'investmentProperty'],
+    ['balance', /^Pasywa$/, /./, 'totalEquityAndLiabilities'],
+    ['balance', /^Pasywa_[BD]$/, /^Zobowiązania i rezerwy na zobowiązania$/, 'totalLiabilities'],
+    ['balance', /^Pasywa_[BD]_II$/, /^Zobowiązania długoterminowe$/, 'noncurrentLiabilities'],
+    ['balance', /^Pasywa_[BD]_I$/, /^Rezerwy na zobowiązania$/, 'provisions'],
+    ['balance', /^Aktywa_B_II_/, /^z tytułu dostaw i usług/, 'tradeReceivables'],
+    ['balance', /^Aktywa_/, /udzielone pożyczki/, 'loansGranted'],
+    ['balance', /^Pasywa_/, /^z tytułu dostaw i usług/, 'tradePayables'],
+    ['balance', /^Pasywa_/, /^zaliczki otrzymane na dostawy/, 'contractLiabilities'],
+    ['income', /^[A-Z]$/, /^Koszty sprzedanych produktów, towarów i materiałów/, 'costOfSales'],
+    ['income', /^[A-Z]$/, /^Zysk \(strata\) brutto ze sprzedaży/, 'grossProfit'],
+    ['income', /^[A-Z]$/, /^Zysk \(strata\) brutto( \(|$)/, 'profitBeforeTax'],
+    ['income', /^[A-Z]$/, /^Podatek dochodowy$/, 'incomeTax'],
+    ['income', /^[A-Z]$/, /^Przychody finansowe$/, 'financeIncome'],
+    ['income', /^[A-Z]$/, /^Koszty finansowe$/, 'financeCosts'],
+    ['cashFlow', /^B_III$/, /./, 'investingCashFlow'],
+    ['cashFlow', /^C_III$/, /./, 'financingCashFlow'],
+    ['cashFlow', /^C_I_[23]$/, /./, 'borrowingsRaised'],
+    ['cashFlow', /^C_II_2$/, /./, 'dividendsPaid'],
+    ['cashFlow', /^C_II_[45]$/, /./, 'borrowingsRepaid'],
+    ['cashFlow', /^C_II_8$/, /./, 'interestPaid'],
+];
+
+// Every line with an amount in the column, in the filing's order; a line's parent is the element it sits in.
+function krsLines(sections: { section: Section; root?: string }[], scope: FilingScope, column: 0 | 1): StatementLine[] {
+    const lines: StatementLine[] = [];
+    const count: Partial<Record<StatementName, number>> = {};
+    for (const { section, root } of sections) {
+        if (!section.node) continue;
+        const statement = STATEMENT_OF[section.label];
+        const labels = KRS_LINE_LABELS[scope][section.label] ?? {};
+        const visit = (node: Node, code: string | undefined, parent: number | undefined) => {
+            let order = parent;
+            if (code) {
+                const amounts = isNode(first(node['KwotyPozycji'])) ? first(node['KwotyPozycji']) as Node : node;
+                const raw = text(amounts[column === 0 ? 'KwotaA' : 'KwotaB']);
+                const value = raw === undefined || raw === '' ? NaN : Number(raw.replace(/\s/g, '').replace(',', '.'));
+                if (Number.isFinite(value)) {
+                    // Detail lines the filer adds (PozycjaUszczegolawiajaca) carry their own name.
+                    const ownName = text(node['NazwaPozycji']);
+                    order = count[statement] = (count[statement] ?? -1) + 1;
+                    lines.push({
+                        statement, order,
+                        label: ownName ?? labels[code] ?? code,
+                        value: round2(value * section.multiplier),
+                        ...(ownName ? {} : { code }),
+                        ...(parent !== undefined ? { parent } : {}),
+                    });
+                }
+            }
+            for (const [key, child] of Object.entries(node)) {
+                if (key.startsWith('@_') || key === '#text' || /^Kwot/.test(key) || key === 'NazwaPozycji') continue;
+                for (const c of Array.isArray(child) ? child : [child]) if (isNode(c)) visit(c, key, order);
+            }
+        };
+        // The balance sheet's root lines (Aktywa, Pasywa) are the section nodes themselves.
+        visit(section.node, root, undefined);
+    }
+    for (const line of lines) {
+        const rule = line.code && KRS_ITEMS.find(([s, code, label]) => s === line.statement && code.test(line.code!) && label.test(line.label));
+        if (rule) line.item = rule[3];
+    }
+    return lines;
+}
 
 // ─── Line codes ─────────────────────────────────────────────────────────────────
 
@@ -323,6 +406,12 @@ export function parseFiling(xml: string): ParsedFiling {
         for (const key of Object.keys(figures) as FilingField[]) {
             if (figures[key] === undefined) delete figures[key];
         }
+        const lines = krsLines([{ section: assets, root: 'Aktywa' }, { section: liabilities, root: 'Pasywa' }, { section: income }, { section: cashFlow }], scope, column);
+        const byCode = new Map(lines.filter(l => l.code).map(l => [`${l.statement}|${l.code}`, l]));
+        itemsFromFigures(lines, figures, source => {
+            const [section, code] = source.split('/');
+            return byCode.get(`${STATEMENT_OF[section]}|${code}`);
+        });
 
         // No comparative column at all (first fiscal year): only the current period.
         if (column === 1 && figures.totalAssets === undefined && figures.revenue === undefined) return [];
@@ -343,8 +432,9 @@ export function parseFiling(xml: string): ParsedFiling {
         if (netProfitIncome !== undefined && netProfitBalance !== undefined && Math.abs(netProfitIncome - netProfitBalance) > tolerance) {
             checks.push(`${label}: net profit ${fmt(netProfitIncome)} in the income statement ≠ ${fmt(netProfitBalance)} in the balance sheet`);
         }
+        checks.push(...lineChecks(lines, label, tolerance, ['totalEquityAndLiabilities']));   // assets are checked above
 
-        return [{ column: column === 0 ? 'current' : 'previous', periodStart: start, periodEnd: end, months: Math.round(monthsBetween(start, end)), figures }];
+        return [{ column: column === 0 ? 'current' : 'previous', periodStart: start, periodEnd: end, months: Math.round(monthsBetween(start, end)), figures, lines }];
     });
 
     return {
@@ -354,6 +444,9 @@ export function parseFiling(xml: string): ParsedFiling {
         krs,
         nip,
         currency: 'PLN',
+        standard: 'pl-uor',
+        presentedUnit: unitMultiplier,
+        lineSigns: 'tagged',
         schema,
         unitMultiplier,
         preparedOn: text(header?.['DataSporzadzenia']),

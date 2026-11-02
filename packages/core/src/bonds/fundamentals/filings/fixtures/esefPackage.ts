@@ -1,5 +1,5 @@
 // Builds an ESEF report package (zip) around fixtures/esef-group.xhtml for tests, with the filer's
-// calculation, definition (anchoring) and label linkbases.
+// calculation, definition (anchoring), label and presentation linkbases.
 import { readFileSync } from 'fs';
 import path from 'path';
 import { deflateRawSync } from 'zlib';
@@ -40,6 +40,28 @@ const lab = linkbase(`<link:labelLink xlink:type="extended" xlink:role="http://w
 ${loc('l1', 'testowa:BondsAndLoansCurrent')}<link:label xlink:type="resource" xlink:label="t1" xlink:role="http://www.xbrl.org/2003/role/label" xml:lang="pl">Kredyty, pożyczki i obligacje krótkoterminowe</link:label><link:labelArc xlink:type="arc" xlink:arcrole="http://www.xbrl.org/2003/arcrole/concept-label" xlink:from="l1" xlink:to="t1"/>
 ${loc('l2', 'testowa:InterestPayableOnBonds')}<link:label xlink:type="resource" xlink:label="t2" xlink:role="http://www.xbrl.org/2003/role/label" xml:lang="pl">Zobowiązania z tytułu odsetek od obligacji</link:label><link:labelArc xlink:type="arc" xlink:arcrole="http://www.xbrl.org/2003/arcrole/concept-label" xlink:from="l2" xlink:to="t2"/>
 </link:labelLink>`);
+
+// Presentation: one role per statement, a root abstract with the lines (arcs written in reverse: the order
+// attribute decides). Changes in equity too, which holds profit as well and must not be taken for the income statement.
+function presentation(role: string, concepts: string[]): string {
+    return `<link:presentationLink xlink:type="extended" xlink:role="http://testowa.pl/role/${role}">
+${loc('root', 'ifrs-full:StatementAbstract')}
+${concepts.map((c, i) => `${loc(`c${i}`, c)}<link:presentationArc xlink:type="arc" xlink:arcrole="http://www.xbrl.org/2003/arcrole/parent-child" xlink:from="root" xlink:to="c${i}" order="${i + 1}"/>`).reverse().join('\n')}
+</link:presentationLink>`;
+}
+
+const pre = linkbase([
+    presentation('SprawozdanieZSytuacjiFinansowej', ['ifrs-full:IntangibleAssetsOtherThanGoodwill', 'ifrs-full:Goodwill', 'ifrs-full:NoncurrentAssets',
+        'ifrs-full:Inventories', 'ifrs-full:CashAndCashEquivalents', 'ifrs-full:CurrentAssets', 'ifrs-full:Assets',
+        'ifrs-full:NoncontrollingInterests', 'ifrs-full:Equity',
+        'ifrs-full:LongtermBorrowings', 'ifrs-full:NoncurrentPortionOfNoncurrentBondsIssued', 'ifrs-full:NoncurrentLeaseLiabilities', 'ifrs-full:NoncurrentProvisions', 'ifrs-full:NoncurrentLiabilities',
+        'testowa:BondsAndLoansCurrent', 'testowa:InterestPayableOnBonds', 'ifrs-full:CurrentLeaseLiabilities', 'ifrs-full:TradeAndOtherCurrentPayables', 'ifrs-full:CurrentLiabilities',
+        'ifrs-full:Liabilities', 'ifrs-full:EquityAndLiabilities']),
+    presentation('ZmianyWKapitale', ['ifrs-full:ProfitLoss', 'ifrs-full:Equity']),
+    presentation('SprawozdanieZWyniku', ['ifrs-full:RevenueFromSaleOfGoods', 'testowa:RentalRevenue', 'ifrs-full:ProfitLossFromOperatingActivities', 'ifrs-full:FinanceCosts', 'ifrs-full:ProfitLoss']),
+    presentation('SprawozdanieZPrzeplywow', ['ifrs-full:ProfitLoss', 'ifrs-full:AdjustmentsForDepreciationAndAmortisationExpense', 'ifrs-full:CashFlowsFromUsedInOperatingActivities',
+        'ifrs-full:PurchaseOfPropertyPlantAndEquipmentClassifiedAsInvestingActivities', 'ifrs-full:PurchaseOfIntangibleAssetsClassifiedAsInvestingActivities']),
+].join('\n'));
 
 // Zip writer for tests: deflated entries, CRC left at 0 (the reader doesn't check it).
 export function makeZip(files: Record<string, Buffer | string>): Buffer {
@@ -85,5 +107,6 @@ export const esefPackage = makeZip({
     'testowa-2025-12-31-pl/www.testowa.pl/2025-12-31/testowa-2025-12-31_cal.xml': cal,
     'testowa-2025-12-31-pl/www.testowa.pl/2025-12-31/testowa-2025-12-31_def.xml': def,
     'testowa-2025-12-31-pl/www.testowa.pl/2025-12-31/testowa-2025-12-31_lab-pl.xml': lab,
+    'testowa-2025-12-31-pl/www.testowa.pl/2025-12-31/testowa-2025-12-31_pre.xml': pre,
     'testowa-2025-12-31-pl/reports/testowa-2025-12-31-pl.xhtml': esefReport,
 });
