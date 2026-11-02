@@ -63,6 +63,17 @@ describe('findStatementPages', () => {
         expect(findStatementPages(pages)).toEqual([2, 3, 4]);
     });
 
+    it('finds Hungarian headings (MOL)', () => {
+        const table = Array.from({ length: 14 }, (_, i) => `Tétel ${i} | 1.000 | 2.000`);
+        const pages = [
+            { page: 1, lines: ['Konszolidált pénzügyi kimutatások 2025 | 209', 'A KONSZOLIDÁLT', 'EREDMÉNYKIMUTATÁS', ...table] },
+            { page: 3, lines: ['Konszolidált pénzügyi kimutatások 2025 | 211', 'A KONSZOLIDÁLT PÉNZÜGYI', 'HELYZETRE VONATKOZÓ', 'KIMUTATÁS', ...table] },
+            { page: 5, lines: ['Konszolidált pénzügyi kimutatások 2025 | 213', 'A KONSZOLIDÁLT CASH FLOW-RA VONATKOZÓ KIMUTATÁS', ...table] },
+            { page: 6, lines: ['Megjegyzések'] },
+        ];
+        expect(findStatementPages(pages)).toEqual([1, 3, 5, 6]);
+    });
+
     it('skips a narrative page with numbers in its prose', () => {
         const prose = Array.from({ length: 20 }, (_, i) => `up ${i}% on FY24 (6.2 Euro cents), subject to approval of ${i + 1} shareholders`);
         expect(findStatementPages([{ page: 1, lines: ['Financial review', 'balance sheet strength', ...prose] }])).toEqual([]);

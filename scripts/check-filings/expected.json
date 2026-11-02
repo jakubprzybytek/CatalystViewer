@@ -258,6 +258,22 @@
       }
     },
     {
+      "issuer": "MOL Hungarian Oil & Gas PLC",
+      "entityId": "LEI:213800R83KX5FQFGXS67",
+      "period": "2025-12-31#group",
+      "file": "filings/LEI-213800R83KX5FQFGXS67/2025-12-31-group-ef330384ae37.pdf",
+      "format": "ai-pdf",
+      "currency": "HUF",
+      "thousands": {
+        "revenue": 8696283000,
+        "netProfit": 339941000,
+        "totalAssets": 8193438000,
+        "equity": 4562393000,
+        "cash": 360767000,
+        "financialDebt": 1035591000
+      }
+    },
+    {
       "issuer": "Murapol S.A.",
       "entityId": "0000275523",
       "period": "2025-12-31#group",
@@ -408,6 +424,23 @@
         "equity": 163012,
         "cash": 464357,
         "depreciation": 520438
+      }
+    },
+    {
+      "issuer": "PGE S.A.",
+      "entityId": "0000059307",
+      "period": "2025-12-31#group",
+      "file": "filings/0000059307/2025-12-31-group-215d34cf9e5f.zip",
+      "format": "esef",
+      "currency": "PLN",
+      "thousands": {
+        "revenue": 61434000,
+        "netProfit": -3394000,
+        "totalAssets": 105368000,
+        "equity": 42985000,
+        "cash": 10809000,
+        "ebit": -2460000,
+        "financialDebt": 14875000
       }
     },
     {

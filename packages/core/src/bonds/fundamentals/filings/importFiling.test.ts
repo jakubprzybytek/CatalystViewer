@@ -160,7 +160,7 @@ describe('importFiling', () => {
             expect(result).toMatchObject({ issuerName: 'Testowa Group S.A.', entityId: '0000123456', warnings: [] });
             expect(uploads).toEqual([{ key: expect.stringMatching(/^filings\/0000123456\/2025-12-31-group-[0-9a-f]{12}\.pdf$/), contentType: 'application/pdf' }]);
             expect(rows.get('0000123456|2025-12-31#group')).toMatchObject({
-                filing: { format: 'ai-pdf', extraction: { model: 'test-model', promptVersion: 'pdf-statements-3', pages: [2, 3, 4, 5] } },
+                filing: { format: 'ai-pdf', extraction: { model: 'test-model', promptVersion: 'pdf-statements-4', pages: [2, 3, 4, 5] } },
             });
         });
 

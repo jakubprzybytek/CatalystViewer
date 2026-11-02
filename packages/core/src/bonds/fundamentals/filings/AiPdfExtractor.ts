@@ -14,7 +14,7 @@ import { BedrockRuntimeClient, ConverseCommand } from '@aws-sdk/client-bedrock-r
 import { UnsupportedFilingError, type FilingExtraction, type FilingField, type FilingPeriod, type ParsedFiling, type SourcedFigure } from './FilingParser';
 import type { PdfPage } from './pdfText';
 
-export const PROMPT_VERSION = 'pdf-statements-3';
+export const PROMPT_VERSION = 'pdf-statements-4';
 
 // ─── 1. Statement pages ─────────────────────────────────────────────────────────
 
@@ -23,11 +23,11 @@ type Statement = 'balance' | 'income' | 'cashFlow';
 const fold = (s: string) => s.toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '').replace(/ł/g, 'l');
 
 // "Skonsolidowane roczne sprawozdanie / z sytuacji finansowej": up to two words between, and the
-// heading may run over two lines.
+// heading may run over two lines. Also English and Hungarian (MOL: "pénzügyi helyzetre vonatkozó kimutatás").
 const HEADINGS: Record<Statement, RegExp> = {
-    balance: /(sprawozdani\w*(?: \w+){0,2} z sytuacji finansowej|^.{0,40}\bbilans\b|statement of financial position|balance sheet)/,
-    income: /(rachunek zyskow (?:i|lub) strat|sprawozdani\w*(?: \w+){0,2} z (?:wyniku|calkowitych dochodow)|statement of (?:profit(?: or |\/)loss|comprehensive income)|profit and loss account|income statement)/,
-    cashFlow: /(sprawozdani\w*(?: \w+){0,2} z przeplywow pienieznych|rachunek przeplywow pienieznych|statement of cash flows|cash flow statement)/,
+    balance: /(sprawozdani\w*(?: \w+){0,2} z sytuacji finansowej|^.{0,40}\bbilans\b|statement of financial position|balance sheet|penzugyi helyzetre vonatkozo)/,
+    income: /(rachunek zyskow (?:i|lub) strat|sprawozdani\w*(?: \w+){0,2} z (?:wyniku|calkowitych dochodow)|statement of (?:profit(?: or |\/)loss|comprehensive income)|profit and loss account|income statement|eredmenykimutatas)/,
+    cashFlow: /(sprawozdani\w*(?: \w+){0,2} z przeplywow pienieznych|rachunek przeplywow pienieznych|statement of cash flows|cash flow statement|cash.?flow-?ra vonatkozo)/,
 };
 // Polish "1 792,2" / "1.792,2" or English "1,792.2" (thousands groups, then decimals)
 const AMOUNT = /\(?-?\d{1,3}(?:[\s.,]\d{3})*(?:[.,]\d+)?\)?/g;
@@ -126,7 +126,7 @@ Record every line of the statement of financial position, the income statement (
 - copy labels and amounts exactly as printed; don't compute, convert or round anything; a note number column is not an amount;
 - columns: the full fiscal years only (if quarters are also shown, skip them);
 - field: classify each line. Totals: totalAssets, totalEquityAndLiabilities, equity (total equity incl. non-controlling interests), etc.
-  Debt lines: debtBankLoans (bank loans, credits, borrowings), debtBonds (bonds, notes, debt securities), debtLeases (lease liabilities), debtMixed (a line combining several kinds, e.g. "financial liabilities" or "loans, borrowings and bonds", when the statement doesn't split them), debtOther (other interest-bearing financing, e.g. loans from related parties); interest payable, trade payables and derivatives are other.
+  Debt lines: debtBankLoans (bank loans, credits, borrowings), debtBonds (bonds, notes, debt securities), debtLeases (lease liabilities), debtMixed (a line combining several kinds, e.g. "financial liabilities" or "loans, borrowings and bonds", when the statement doesn't split them), debtOther (other interest-bearing financing, e.g. loans from related parties); interest payable, trade payables and derivatives are other, and so is an "other financial liabilities" line when the statement shows borrowings on their own lines.
   depreciation: every depreciation and amortisation line in the income statement or the cash flow statement, including right-of-use asset depreciation when it is a separate line. capex: purchases of property, plant and equipment and intangible assets (investing cash flow). interestExpense: interest costs if shown; financeCosts: total finance costs.
   Total fields (totalAssets, noncurrentAssets, currentAssets, totalLiabilities, noncurrentLiabilities, currentLiabilities, totalEquityAndLiabilities, equity) go on the total line only, never on the lines that make it up; when the total has no label, use the section name (e.g. "Current assets").
   When a line is a subtotal of lines you also record, still give it its field only if it is the standard total (e.g. currentAssets); otherwise other.

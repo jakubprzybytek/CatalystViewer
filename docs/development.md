@@ -126,7 +126,7 @@ How figures are derived where the format leaves a choice (the importer prints th
 
 **PDF reports** (`.pdf`, e.g. unlisted IFRS reporters like P4, or an issuer whose website only has the PDF) are read by a model and checked in code (`AiPdfExtractor.ts`):
 
-1. code reads the PDF text (pdfjs-dist) and picks the statement pages: a statement heading (Polish or English) near the top of a page that is mostly table lines (lines ending in an amount, so narrative pages with numbers in their prose don't count), plus the next page; the table of contents is skipped;
+1. code reads the PDF text (pdfjs-dist) and picks the statement pages: a statement heading (Polish, English or Hungarian) near the top of a page that is mostly table lines (lines ending in an amount, so narrative pages with numbers in their prose don't count), plus the next page; the table of contents is skipped;
 2. the model (`--model`, default the app's default model) copies every line of the balance sheet, income statement and cash flow statement through a tool with a fixed schema: label, page, the amount per fiscal-year column exactly as printed, and the standard item it is (revenue, total assets, bonds, bank loans, leases, combined financing, …). It doesn't compute anything;
 3. code turns the printed amounts into numbers and sums the figures; checks: every amount is on its page, total assets = total equity and liabilities, equity and net profit are there. A failed check refuses the import, as for other formats.
 
