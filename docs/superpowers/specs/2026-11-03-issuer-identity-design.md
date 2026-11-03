@@ -117,4 +117,4 @@ profile stays (its classification), its card merges into Orlen's. Undo: delete t
 - Best Capital FIZAN and the other Best funds merged into Best Niestandaryzowany FIZ Wierzytelności
   (RFI 1753, registered 30 January 2025), which took over their bonds: one LEI is right, confirmed.
 - Pepco: PEU (FIN) PLC is a wholly owned financing subsidiary of Pepco Group N.V., which guarantees its
-  Polish bonds: the group's figures, confirmed. Orlen Capital AB → Orlen S.A. likewise.
+  Polish bonds: the group's figures, confirmed. (Orlen Capital AB has no bonds in the app.)
