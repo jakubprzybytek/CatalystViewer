@@ -173,7 +173,7 @@ Refinancing (G green, y yellow, R red, . n/a).
 | Erbud | contractor | GRyRy.G | GRRRy.G |
 | P.A. Nova | contractor | RyRGGRG | RyRGGRG |
 | Unibep | contractor | yyyRy.G | yyyyy.G |
-| AB | consumer | GGRRGyG | GGRRGyG |
+| AB | general (override) | GGRRGyG | GGGRGyG |
 | Allegro.eu | consumer | GGyGR.G | GGGGG.G |
 | Benefit Systems | consumer | yGRGR.G | GGGGG.G |
 | Cyfrowy Polsat | consumer | RRyRy.G | yRGRG.G |
@@ -184,6 +184,6 @@ Refinancing (G green, y yellow, R red, . n/a).
 | PCC Exol | general | yGRyG.G | yGyyG.G |
 
 Unchanged: Orlen, PKN Orlen, MOL, Polenergia, Enea, PGE, Cognor, PCC Rokita. Erbud's new red is its cash
-below its advances (−1.1% of revenue). AB (an IT distributor, classified Retail) is red on operating cash
-flow / current liabilities (0.04×): a distributor's working capital is positive, so the consumer rules
-fit it less well than a shop's.
+below its advances (−1.1% of revenue). AB (an IT distributor, classified Retail) was red on operating cash
+flow / current liabilities (0.04×) under the consumer rules: a distributor's working capital is positive,
+so it's judged by the general rules instead (`RULE_SET_OVERRIDES` in `scorecard.ts`).

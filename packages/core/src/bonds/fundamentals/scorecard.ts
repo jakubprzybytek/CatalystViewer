@@ -57,8 +57,14 @@ const RULE_SET_OF: Record<string, RuleSet> = {
   Retail: 'consumer', Telecommunications: 'consumer', Media: 'consumer', Other: 'consumer',
 };
 
-export function ruleSetFor(industry: string | undefined): RuleSet {
-  return (industry && RULE_SET_OF[industry]) || 'general';
+// Issuers whose industry's rules don't fit their business model.
+const RULE_SET_OVERRIDES: Record<string, RuleSet> = {
+  // An IT distributor classified Retail: it holds stock on its own money, unlike a shop
+  'AB S.A.': 'general',
+};
+
+export function ruleSetFor(industry: string | undefined, issuerName?: string): RuleSet {
+  return (issuerName && RULE_SET_OVERRIDES[issuerName]) || (industry && RULE_SET_OF[industry]) || 'general';
 }
 
 // ─── Signal helpers ────────────────────────────────────────────────────────────

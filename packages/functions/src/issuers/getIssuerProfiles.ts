@@ -208,7 +208,7 @@ export function buildIssuerProfiles(
         if (!isInFundamentalScope(profile.industry)) {
             return { ...base, scorecard: undefined, performedAt: undefined };
         }
-        const { scorecard, financialsSource } = scorecardWithSource(profile.issuerName, filings, analysis, ruleSetFor(profile.industry));
+        const { scorecard, financialsSource } = scorecardWithSource(profile.issuerName, filings, analysis, ruleSetFor(profile.industry, profile.issuerName));
         const dimension = refi && refinancingDimension(refi);
         return {
             ...base,

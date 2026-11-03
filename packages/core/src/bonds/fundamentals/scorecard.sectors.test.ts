@@ -20,9 +20,11 @@ const m = (d: ReturnType<typeof dim>, name: string) => d.metrics.find(x => x.nam
 
 describe('rule sets', () => {
     it('chooses the rules from the industry', () => {
-        expect(['Developer', 'Construction', 'Retail', 'Telecommunications', 'Media', 'Other', 'Energy', undefined].map(ruleSetFor))
+        expect(['Developer', 'Construction', 'Retail', 'Telecommunications', 'Media', 'Other', 'Energy', undefined].map(i => ruleSetFor(i)))
             .toEqual(['developer', 'contractor', 'consumer', 'consumer', 'consumer', 'consumer', 'general', 'general']);
         expect(computeScorecard([ATAL], 'developer').ruleSet).toBe('developer');
+        expect(ruleSetFor('Retail', 'AB S.A.')).toBe('general');
+        expect(ruleSetFor('Retail', 'Pepco Group N.V.')).toBe('consumer');
     });
 
     it('judges a developer by net debt against its stock, its current ratio and interest paid', () => {
