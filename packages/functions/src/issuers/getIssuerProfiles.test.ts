@@ -131,6 +131,13 @@ describe('buildIssuerProfiles with identities', () => {
         expect(capital?.identity).toMatchObject({ country: 'SE', registeredAs: '556974-3114', otherNames: [], figuresFrom: 'ORLEN SPÓŁKA AKCYJNA' });
     });
 
+    it("names a parent with no identity of its own as its reports do", () => {
+        const pepco = buildIssuerProfiles([profile('Pepco Group NV', 'Retail')], [], [report('LEI:213800OVMJPFP79OB449', 'Pepco Group NV', '2025-09-30')],
+            [identity('Pepco Group NV', 'LEI:213800G4WKC4TX8X3R23', 'PEU (FIN) PLC', { country: 'GB', financialsEntityId: 'LEI:213800OVMJPFP79OB449', status: 'review' })])[0];
+        expect(pepco.identity?.figuresFrom).toBe('Pepco Group NV');
+        expect(pepco.financialsSource).toMatchObject({ kind: 'filing', latestPeriodEnd: '2025-09-30' });
+    });
+
     it('matches a name without an identity by name, as before', () => {
         expect(byName.get('Testowa S.A.')?.financialsSource).toMatchObject({ kind: 'filing' });
         expect(byName.get('Testowa S.A.')?.identity).toBeUndefined();

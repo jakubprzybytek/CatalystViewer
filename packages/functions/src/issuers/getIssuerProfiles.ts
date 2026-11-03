@@ -84,11 +84,11 @@ export type IssuerIdentityView = {
 // name set by hand or under review (a former name); then alphabetical.
 const cardRank = (i: DbIssuerIdentityRecord) => (i.status === 'confirmed' ? 0 : 2) + (i.source === 'manual' ? 1 : 0);
 
-export function identityView(identity: DbIssuerIdentityRecord, all: DbIssuerIdentityRecord[]): IssuerIdentityView {
+export function identityView(identity: DbIssuerIdentityRecord, all: DbIssuerIdentityRecord[], reportNames: Map<string, string> = new Map()): IssuerIdentityView {
     const company = all.filter(i => i.entityId === identity.entityId);
     const cardName = [...company].sort((a, b) => cardRank(a) - cardRank(b) || a.issuerName.localeCompare(b.issuerName))[0].issuerName;
     const figuresFrom = identity.financialsEntityId !== identity.entityId
-        ? all.find(i => i.entityId === identity.financialsEntityId)?.legalName ?? identity.financialsEntityId
+        ? all.find(i => i.entityId === identity.financialsEntityId)?.legalName ?? reportNames.get(identity.financialsEntityId) ?? identity.financialsEntityId
         : undefined;
     return {
         entityId: identity.entityId,
@@ -167,13 +167,15 @@ export function buildIssuerProfiles(
 ) {
     const analysisByIssuer = new Map(analysisSummaries.map(s => [s.issuerName, s]));
     const identityByName = new Map(identities.map(i => [i.issuerName, i]));
+    // A company's name as its reports give it, for one without an identity of its own (a financing vehicle's parent)
+    const reportNames = new Map(financials.map(f => [f.entityId, f.companyName]));
 
     return issuerProfiles.map(profile => {
         const analysis = analysisByIssuer.get(profile.issuerName);
         const identity = identityByName.get(profile.issuerName);
         const filings = reportsOf(profile.issuerName, identity, financials);
         const coverage = financialsCoverage(filings, analysis, identity);
-        const base = { ...profile, financialsCoverage: coverage, ...(identity ? { identity: identityView(identity, identities) } : {}) };
+        const base = { ...profile, financialsCoverage: coverage, ...(identity ? { identity: identityView(identity, identities, reportNames) } : {}) };
         if (!isInFundamentalScope(profile.industry)) {
             return { ...base, scorecard: undefined, performedAt: undefined };
         }
