@@ -30,7 +30,7 @@ import IssuerScorecard from './IssuerScorecard';
 import AnalysisReportModal from './AnalysisReportModal';
 import { SignalDot } from './SignalDot';
 import { triggerFundamentalAnalysis } from '@/sdk/Issuers';
-import { registrationParts, reportsLabel } from '@/bonds/fundamentals/registration';
+import { identityParts, registrationParts, reportsLabel } from '@/bonds/fundamentals/registration';
 
 const FILING_SOURCE = {
   'krs-xml': 'filed statements (KRS)',
@@ -91,7 +91,7 @@ function IssuerCard({ issuerReport, statistics, isChecked, onIssuerChecked }: Is
   const company = issuerReport.financialsCoverage?.company;
   const reports = reportsLabel(issuerReport.financialsCoverage);
   const hasFinancials = !!issuerReport.performedAt || !!filed;
-  const hasDetails = !!(issuerReport.businessSummary || issuerReport.websiteUrl || issuerReport.scorecard || company || hasFinancials);
+  const hasDetails = !!(issuerReport.businessSummary || issuerReport.websiteUrl || issuerReport.scorecard || company || hasFinancials || issuerReport.alsoIssuedAs.length);
 
   const handleTriggerAnalysis = async () => {
     setConfirmOpen(false);
@@ -236,7 +236,21 @@ function IssuerCard({ issuerReport, statistics, isChecked, onIssuerChecked }: Is
             {company && (
               <CardSectionRow>
                 <CardEntry caption='Registered' width='100%'>
-                  <CardValue>{registrationParts(company).join(' · ')}</CardValue>
+                  <CardValue>{(issuerReport.identity ? identityParts(company, issuerReport.identity.leiStatus) : registrationParts(company)).join(' · ')}</CardValue>
+                </CardEntry>
+              </CardSectionRow>
+            )}
+            {issuerReport.alsoIssuedAs.length > 0 && (
+              <CardSectionRow>
+                <CardEntry caption='Also issued as' width='100%'>
+                  <CardValue>{issuerReport.alsoIssuedAs.join(', ')}</CardValue>
+                </CardEntry>
+              </CardSectionRow>
+            )}
+            {issuerReport.identity?.figuresFrom && (
+              <CardSectionRow>
+                <CardEntry caption='Figures from' width='100%'>
+                  <CardValue>{issuerReport.identity.figuresFrom} (parent company)</CardValue>
                 </CardEntry>
               </CardSectionRow>
             )}

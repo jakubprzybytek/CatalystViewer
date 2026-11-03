@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { registrationParts, reportsLabel } from './registration';
+import { identityParts, registrationParts, reportsLabel } from './registration';
 
 describe('registrationParts', () => {
   it('names the country and the identifiers', () => {
@@ -16,5 +16,13 @@ describe('reportsLabel', () => {
     expect(reportsLabel({ filed: { latestPeriodEnd: '2025-09-30', earliestPeriodEnd: '2023-09-30', years: 3, formats: ['esef'], scopes: ['group'], lastImportedAt: '' } })).toBe('Reports 2025');
     expect(reportsLabel({ ai: { performedAt: '', years: 3 } })).toBeUndefined();
     expect(reportsLabel(undefined)).toBeUndefined();
+  });
+});
+
+describe('identityParts', () => {
+  it('leads with the legal name and marks a lapsed LEI', () => {
+    expect(identityParts({ name: 'KREDYT INKASO SPÓŁKA AKCYJNA', country: 'PL', krs: '0000270672', lei: '259400XWM5B5P4ONAG56' }, 'LAPSED'))
+      .toEqual(['KREDYT INKASO SPÓŁKA AKCYJNA', 'Poland', 'KRS 0000270672', 'LEI 259400XWM5B5P4ONAG56 (lapsed)']);
+    expect(identityParts({ name: 'ORLEN SPÓŁKA AKCYJNA', country: 'PL', lei: 'X' }, 'ISSUED')).toEqual(['ORLEN SPÓŁKA AKCYJNA', 'Poland', 'LEI X']);
   });
 });

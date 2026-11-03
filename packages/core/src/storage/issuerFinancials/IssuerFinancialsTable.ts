@@ -2,6 +2,7 @@ import { DynamoDBClient, ConditionalCheckFailedException } from '@aws-sdk/client
 import { DynamoDBDocumentClient, GetCommand, PutCommand, QueryCommand, ScanCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
 import type { DbIssuerFinancialsRecord } from '.';
 import { queryAll, scanAll } from '../utils';
+import type { DbIssuerIdentityRecord } from '../issuerProfiles';
 
 // Every attribute but `lines` (20–40 KB a row): the list reads don't need them.
 const LIST_ATTRIBUTES = ['entityId', 'krs', 'lei', 'registration', 'period', 'issuerName', 'companyName', 'scope', 'periodStart',
@@ -36,6 +37,11 @@ export class IssuerFinancialsTable {
             ExpressionAttributeValues: { ':issuerName': issuerName },
         }));
         return (result.Items ?? []) as DbIssuerFinancialsRecord[];
+    }
+
+    // An issuer's reports: those of the company whose figures it uses, else (no identity) those under its name.
+    async getForIssuer(issuerName: string, identity: DbIssuerIdentityRecord | undefined): Promise<DbIssuerFinancialsRecord[]> {
+        return identity ? this.getByEntity(identity.financialsEntityId) : this.getByIssuer(issuerName);
     }
 
     async getByEntity(entityId: string): Promise<DbIssuerFinancialsRecord[]> {

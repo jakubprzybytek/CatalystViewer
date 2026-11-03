@@ -18,6 +18,23 @@ export type FinancialsCoverage = {
   ai?: { performedAt: string; latestYear?: number; years: number };
 };
 
+// Who an issuer name is, from the LEI register (GET /api/issuers/profiles).
+export type IssuerIdentity = {
+  entityId: string;
+  legalName: string;
+  country: string;
+  lei?: string;
+  krs?: string;
+  registeredAs?: string;
+  category?: string;
+  leiStatus?: string;
+  status: 'confirmed' | 'review';
+  note?: string;
+  otherNames: string[];   // bond names of the same company
+  cardName: string;       // the name the company is shown under
+  figuresFrom?: string;   // the company whose reports are used, for a financing vehicle
+};
+
 export type IssuerProfile = {
   issuerName: string;
   industry: string;
@@ -27,6 +44,7 @@ export type IssuerProfile = {
   scorecard?: FundamentalScorecard;
   financialsSource?: FinancialsSource;
   financialsCoverage?: FinancialsCoverage;
+  identity?: IssuerIdentity;
   performedAt?: string;
 };
 

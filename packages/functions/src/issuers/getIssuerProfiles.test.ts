@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { currentScorecard, financialsCoverage, scorecardWithSource } from './getIssuerProfiles';
+import { buildIssuerProfiles, currentScorecard, financialsCoverage, scorecardWithSource } from './getIssuerProfiles';
+import type { DbIssuerIdentityRecord } from '@core/storage/issuerProfiles';
 import type { DbIssuerFinancialsRecord } from '@core/storage/issuerFinancials';
 
 const trendSignal = (scorecard: ReturnType<typeof currentScorecard>) =>
@@ -93,5 +94,45 @@ describe('scorecardWithSource', () => {
             .toEqual({ name: 'TESTOWA S.A.', country: 'PL', krs: '0000123456', lei: '259400TESTOWA0000001' });
         expect(financialsCoverage([{ ...filing, entityId: 'LEI:213800OVMJPFP79OB449', lei: '213800OVMJPFP79OB449', registration: { country: 'NL', id: '81928491' } }], undefined).company)
             .toEqual({ name: 'TESTOWA S.A.', country: 'NL', lei: '213800OVMJPFP79OB449', registeredAs: '81928491' });
+    });
+});
+
+describe('buildIssuerProfiles with identities', () => {
+    const profile = (issuerName: string, industry = 'Energy') => ({ issuerName, recordType: '#PROFILE' as const, industry, businessSummary: '', classifiedAt: '', classifiedAtTs: 0, modelId: 'm' });
+    const identity = (issuerName: string, entityId: string, legalName: string, extra: Partial<DbIssuerIdentityRecord> = {}): DbIssuerIdentityRecord => ({
+        issuerName, recordType: '#IDENTITY', entityId, legalName, country: 'PL', financialsEntityId: entityId, status: 'confirmed', source: 'isin', evidence: 'ISIN X', resolvedAt: '', ...extra,
+    });
+    const report = (entityId: string, issuerName: string, periodEnd: string): DbIssuerFinancialsRecord => ({
+        entityId, period: `${periodEnd}#group`, issuerName, companyName: issuerName, scope: 'group', periodStart: `${periodEnd.slice(0, 4)}-01-01`, periodEnd, months: 12, currency: 'PLN',
+        figures: { revenue: { value: 1e9, source: [] }, netProfit: { value: 1e8, source: [] }, totalAssets: { value: 2e9, source: [] }, equity: { value: 1e9, source: [] } },
+        column: 'current', filing: { key: 'k', sha256: 's', format: 'esef', schema: 'ESEF', checks: [] }, importedAt: '2026-11-01T00:00:00Z',
+    });
+    const identities = [
+        identity('Orlen S.A.', '0000028860', 'ORLEN SPÓŁKA AKCYJNA', { krs: '0000028860', lei: '259400VVMM70CQREJT74' }),
+        identity('PKN Orlen S.A.', '0000028860', 'ORLEN SPÓŁKA AKCYJNA', { krs: '0000028860', source: 'manual' }),
+        identity('Orlen Capital AB (publ)', 'LEI:259400MOAC94K67KZ966', 'Orlen Capital AB (publ)', { country: 'SE', register: { authority: 'RA000544', id: '556974-3114' }, financialsEntityId: '0000028860' }),
+    ];
+    const profiles = buildIssuerProfiles(
+        [profile('Orlen S.A.'), profile('PKN Orlen S.A.'), profile('Orlen Capital AB (publ)'), profile('Testowa S.A.')],
+        [], [report('0000028860', 'Orlen S.A.', '2025-12-31'), report('0000123456', 'Testowa S.A.', '2025-12-31')], identities,
+    );
+    const byName = new Map(profiles.map(p => [p.issuerName, p]));
+
+    it("gives every name of a company the company's reports and its other names", () => {
+        expect(byName.get('PKN Orlen S.A.')?.financialsSource).toMatchObject({ kind: 'filing', latestPeriodEnd: '2025-12-31' });
+        expect(byName.get('Orlen S.A.')?.identity).toMatchObject({ entityId: '0000028860', otherNames: ['PKN Orlen S.A.'], cardName: 'Orlen S.A.' });
+        expect(byName.get('PKN Orlen S.A.')?.identity?.cardName).toBe('Orlen S.A.');
+        expect(byName.get('PKN Orlen S.A.')?.financialsCoverage.company).toEqual({ name: 'ORLEN SPÓŁKA AKCYJNA', country: 'PL', krs: '0000028860' });
+    });
+
+    it("gives a financing vehicle the group's reports, and says whose", () => {
+        const capital = byName.get('Orlen Capital AB (publ)');
+        expect(capital?.financialsSource).toMatchObject({ kind: 'filing' });
+        expect(capital?.identity).toMatchObject({ country: 'SE', registeredAs: '556974-3114', otherNames: [], figuresFrom: 'ORLEN SPÓŁKA AKCYJNA' });
+    });
+
+    it('matches a name without an identity by name, as before', () => {
+        expect(byName.get('Testowa S.A.')?.financialsSource).toMatchObject({ kind: 'filing' });
+        expect(byName.get('Testowa S.A.')?.identity).toBeUndefined();
     });
 });

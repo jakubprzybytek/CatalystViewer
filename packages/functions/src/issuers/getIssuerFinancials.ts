@@ -88,7 +88,7 @@ export const handler = lambdaHandler(async (event) => {
     const issuerFinancialsTable = new IssuerFinancialsTable(dynamoDBClient, Resource.IssuerFinancials.name);
 
     const [filings, analysis] = await Promise.all([
-        issuerFinancialsTable.getByIssuer(issuerName),
+        issuerProfilesTable.getIdentity(issuerName).then(identity => issuerFinancialsTable.getForIssuer(issuerName, identity)),
         issuerProfilesTable.getLatestAnalysisSummary(issuerName),
     ]);
     const view = buildIssuerFinancials(issuerName, filings, analysis);

@@ -77,7 +77,7 @@ const getIssuerStatementsFunction = apiFunction("GetIssuerStatements", {
   handler: "packages/functions/src/issuers/getIssuerStatements.handler",
   memory: "256 MB",
   timeout: "10 seconds",
-  link: [issuerFinancialsTable],
+  link: [issuerProfilesTable, issuerFinancialsTable],
 });
 
 const getIssuerAnalysisFunction = apiFunction("GetIssuerAnalysis", {

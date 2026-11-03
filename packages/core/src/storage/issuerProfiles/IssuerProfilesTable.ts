@@ -1,6 +1,6 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, PutCommand, GetCommand, QueryCommand, ScanCommand } from '@aws-sdk/lib-dynamodb';
-import { DbIssuerProfileRecord, DbIssuerAnalysisRecord, DbIssuerAnalysisSummary } from '.';
+import { DbIssuerProfileRecord, DbIssuerAnalysisRecord, DbIssuerAnalysisSummary, DbIssuerIdentityRecord } from '.';
 import { scanAll, queryAll } from '../utils';
 
 export class IssuerProfilesTable {
@@ -30,6 +30,27 @@ export class IssuerProfilesTable {
         console.log(`IssuerProfilesTable: Returning ${result.Count ?? 0} profiles in ${endTimestamp - startTimestamp} ms.`);
 
         return result.Items ? result.Items as DbIssuerProfileRecord[] : [];
+    }
+
+    async getIdentities(): Promise<DbIssuerIdentityRecord[]> {
+        const result = await scanAll(this.dynamoDBDocumentClient, new ScanCommand({
+            TableName: this.tableName,
+            FilterExpression: 'recordType = :rt',
+            ExpressionAttributeValues: { ':rt': '#IDENTITY' },
+        }));
+        return (result.Items ?? []) as DbIssuerIdentityRecord[];
+    }
+
+    async getIdentity(issuerName: string): Promise<DbIssuerIdentityRecord | undefined> {
+        const result = await this.dynamoDBDocumentClient.send(new GetCommand({
+            TableName: this.tableName,
+            Key: { issuerName, recordType: '#IDENTITY' },
+        }));
+        return result.Item as DbIssuerIdentityRecord | undefined;
+    }
+
+    async storeIdentity(identity: DbIssuerIdentityRecord): Promise<void> {
+        await this.dynamoDBDocumentClient.send(new PutCommand({ TableName: this.tableName, Item: identity }));
     }
 
     // Kept for backwards-compat — delegates to getProfiles()

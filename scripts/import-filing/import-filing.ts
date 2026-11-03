@@ -118,9 +118,11 @@ async function main() {
   }
 
   const dynamo = new DynamoDBClient({ region: REGION });
-  const profiles = await new IssuerProfilesTable(dynamo, resources.issuerProfiles).getProfiles();
+  const profilesTable = new IssuerProfilesTable(dynamo, resources.issuerProfiles);
+  const [profiles, identities] = await Promise.all([profilesTable.getProfiles(), profilesTable.getIdentities()]);
   const deps = {
     issuerNames: profiles.map((p) => p.issuerName),
+    identities,
     financialsTable: new IssuerFinancialsTable(dynamo, resources.issuerFinancials),
     s3: new S3Client({ region: REGION }),
     bucket: resources.filings,

@@ -1,6 +1,7 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { Resource } from 'sst';
 import { IssuerFinancialsTable, type DbIssuerFinancialsRecord } from '@core/storage/issuerFinancials';
+import { IssuerProfilesTable } from '@core/storage/issuerProfiles';
 import type { FilingExtraction, ParsedFiling } from '@core/bonds/fundamentals/filings/FilingParser';
 import type { StatementLine } from '@core/bonds/fundamentals/filings/statementLines';
 import { Failure, lambdaHandler, Success } from '../HandlerProxy';
@@ -53,7 +54,8 @@ export const handler = lambdaHandler(async (event) => {
     }
     const table = new IssuerFinancialsTable(dynamoDBClient, Resource.IssuerFinancials.name);
     // The issuer's own row for that year (the issuer's company), then the row with its lines
-    const year = (await table.getByIssuer(issuerName)).find(r => r.periodEnd === periodEnd && r.scope === scope);
+    const identity = await new IssuerProfilesTable(dynamoDBClient, Resource.IssuerProfiles.name).getIdentity(issuerName);
+    const year = (await table.getForIssuer(issuerName, identity)).find(r => r.periodEnd === periodEnd && r.scope === scope);
     const row = year && await table.get(year.entityId, year.period);
     if (!row) return Failure(`No ${scope} report of ${issuerName} for ${periodEnd}`, 404);
     return Success(buildIssuerStatements(row));

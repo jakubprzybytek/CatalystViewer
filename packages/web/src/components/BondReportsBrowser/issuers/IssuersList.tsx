@@ -2,13 +2,14 @@ import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { average, min, max, sum } from 'simple-statistics';
 import Grid from "@mui/material/Grid";
 import IssuerCard from "./IssuerCard";
-import { InterestPercentilesByInterestBaseType, getInterestConstParts, groupByIssuer, groupByInterestBaseType, getNominalValues, getIssueValues } from "@/bonds/statistics";
+import { InterestPercentilesByInterestBaseType, getInterestConstParts, groupByInterestBaseType, getNominalValues, getIssueValues } from "@/bonds/statistics";
 import { BondReportsFilteringOptions } from "../filter";
 import { BondReport } from '@/sdk/Bonds';
 import { IssuerProfile } from '@/sdk/Issuers';
 import { removeElement } from '@/common/Arrays';
 import type { FundamentalScorecard } from '@/bonds/fundamentals/scorecard';
-import type { FinancialsCoverage, FinancialsSource } from '@/sdk/Issuers';
+import type { FinancialsCoverage, FinancialsSource, IssuerIdentity } from '@/sdk/Issuers';
+import { cardNames, namesOfCard } from '@/bonds/fundamentals/companies';
 
 export type IssuerReport = {
   name: string;
@@ -27,6 +28,8 @@ export type IssuerReport = {
   scorecard?: FundamentalScorecard;
   financialsSource?: FinancialsSource;
   financialsCoverage?: FinancialsCoverage;
+  identity?: IssuerIdentity;
+  alsoIssuedAs: string[];   // the company's other bond names among these bonds
   performedAt?: string;
 }
 
@@ -52,13 +55,20 @@ export default function IssuersList({ bondReports, issuerProfiles, statistics, f
     setFilteringOptionsRef.current = setFilteringOptions;
   }, [setFilteringOptions]);
 
-  const toggleIssuer = useCallback((issuerName: string, checked: boolean) => {
+  const issuerProfilesRef = useRef(issuerProfiles);
+  useEffect(() => {
+    issuerProfilesRef.current = issuerProfiles;
+  }, [issuerProfiles]);
+
+  // A card stands for all of its company's bond names
+  const toggleIssuer = useCallback((cardName: string, checked: boolean) => {
     const currentFilteringOptions = filteringOptionsRef.current;
     const currentIssuers = currentFilteringOptions.issuers;
+    const names = namesOfCard(cardName, issuerProfilesRef.current);
 
     const nextIssuers = checked
-      ? (currentIssuers.includes(issuerName) ? currentIssuers : [...currentIssuers, issuerName])
-      : removeElement(currentIssuers, issuerName);
+      ? [...currentIssuers, ...names.filter(n => !currentIssuers.includes(n))]
+      : names.reduce((issuers, n) => removeElement(issuers, n), currentIssuers);
 
     setFilteringOptionsRef.current({
       ...currentFilteringOptions,
@@ -69,7 +79,9 @@ export default function IssuersList({ bondReports, issuerProfiles, statistics, f
   const selectedIssuerNames = useMemo(() => new Set(filteringOptions.issuers), [filteringOptions.issuers]);
 
   const issuers = useMemo(() => {
-    const bondsByIssuer = groupByIssuer(bondReports);
+    // One card per company: bonds grouped by their company's card name
+    const cardOf = cardNames(issuerProfiles);
+    const bondsByIssuer = Object.groupBy(bondReports, b => cardOf(b.details.issuer)) as Record<string, BondReport[]>;
     const issuerProfileByName = new Map(issuerProfiles.map(profile => [profile.issuerName, profile]));
     const issuerReports: IssuerReport[] = [];
 
@@ -101,6 +113,8 @@ export default function IssuersList({ bondReports, issuerProfiles, statistics, f
           scorecard: issuerProfile?.scorecard,
           financialsSource: issuerProfile?.financialsSource,
           financialsCoverage: issuerProfile?.financialsCoverage,
+          identity: issuerProfile?.identity,
+          alsoIssuedAs: [...new Set(bondsByInterestVariablePart.map(b => b.details.issuer))].filter(n => n !== issuer).sort(),
           performedAt: issuerProfile?.performedAt,
         });
       });

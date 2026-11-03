@@ -10,6 +10,7 @@ import { createHash } from 'crypto';
 import axios from 'axios';
 import { PutObjectCommand, type S3Client } from '@aws-sdk/client-s3';
 import type { DbIssuerFinancialsRecord, IssuerFinancialsTable } from '../../../storage/issuerFinancials';
+import type { DbIssuerIdentityRecord } from '../../../storage/issuerProfiles';
 import { parseFiling, type ParsedFiling } from './FilingParser';
 import { looksLikeEsef, openEsef, parseEsef } from './EsefParser';
 import { parseIfrsText } from './IfrsTextParser';
@@ -21,6 +22,7 @@ export type LeiRecord = { legalName: string; krs?: string; registeredAs?: string
 
 export type ImportFilingDeps = {
     issuerNames: string[];                       // the app's issuers (IssuerProfiles)
+    identities?: DbIssuerIdentityRecord[];       // who they are (IssuerProfiles #IDENTITY rows)
     financialsTable: IssuerFinancialsTable;
     s3: S3Client;
     bucket: string;
@@ -227,6 +229,14 @@ function resolveIssuer(identity: Identity, deps: ImportFilingDeps, known: DbIssu
         }
         return requested;
     }
+    // The issuer names whose identity is this company, or whose figures come from it (a financing vehicle):
+    // its own name first, a confirmed match before one set by hand or under review
+    const rank = (i: DbIssuerIdentityRecord) => (i.entityId === identity.entityId ? 0 : 4) + (i.status === 'confirmed' ? 0 : 2) + (i.source === 'manual' ? 1 : 0);
+    const named = (deps.identities ?? [])
+        .filter(i => (i.entityId === identity.entityId || i.financialsEntityId === identity.entityId) && deps.issuerNames.includes(i.issuerName))
+        .sort((a, b) => rank(a) - rank(b) || a.issuerName.localeCompare(b.issuerName));
+    if (named.length) return named[0].issuerName;
+
     // Imported before under this company
     const previous = known.find(r => r.entityId === identity.entityId);
     if (previous) return previous.issuerName;

@@ -62,6 +62,24 @@ describe('readFiling', () => {
 });
 
 describe('importFiling', () => {
+    it("finds the issuer by its company's identity, whatever the names", async () => {
+        const { deps } = fakes([], 'TESTOWA DEWELOPER SPÓŁKA AKCYJNA');
+        deps.issuerNames.push('Old Name S.A.', 'Testowa Finance AB (publ)');
+        const identity = (issuerName: string, entityId: string, extra: object = {}) => ({
+            issuerName, recordType: '#IDENTITY' as const, entityId, legalName: 'TESTOWA DEWELOPER SPÓŁKA AKCYJNA', country: 'PL',
+            financialsEntityId: entityId, status: 'confirmed' as const, source: 'isin' as const, evidence: 'ISIN X', resolvedAt: '', ...extra,
+        });
+        // a financing vehicle using the company's figures, a former name set by hand, the bond name under review
+        deps.identities = [
+            identity('Testowa Finance AB (publ)', 'LEI:259400TESTFINANCE01', { financialsEntityId: '0000123456' }),
+            identity('Old Name S.A.', '0000123456', { source: 'manual' }),
+            identity('Inna Spółka Sp. z o.o.', '0000123456', { status: 'review' }),
+        ];
+        expect((await importFiling(deps, xml, { dryRun: true })).issuerName).toBe('Old Name S.A.');
+        deps.identities = deps.identities.slice(0, 1);
+        expect((await importFiling(deps, xml, { dryRun: true })).issuerName).toBe('Testowa Finance AB (publ)');
+    });
+
     it('matches the issuer by name and stores the file and both years', async () => {
         const { deps, rows, uploads } = fakes();
         const result = await importFiling(deps, xml);

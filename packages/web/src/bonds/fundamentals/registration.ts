@@ -19,6 +19,13 @@ export function registrationParts(company: Company): string[] {
   ].filter((p): p is string => !!p);
 }
 
+// The registration line with the legal name and the LEI's state: "ORLEN SPÓŁKA AKCYJNA · Poland · KRS … · LEI … (lapsed)"
+export function identityParts(company: Company, leiStatus?: string): string[] {
+  const parts = registrationParts(company);
+  const lapsed = leiStatus && leiStatus !== 'ISSUED' ? ` (${leiStatus.toLowerCase()})` : '';
+  return [company.name, ...parts.map(p => (p.startsWith('LEI ') ? `${p}${lapsed}` : p))].filter(Boolean);
+}
+
 // Annual reports imported: "Reports 2025" (the latest fiscal year's end year), or undefined.
 export function reportsLabel(coverage: FinancialsCoverage | undefined): string | undefined {
   const filed = coverage?.filed;

@@ -143,6 +143,18 @@ Details:
 
 One call per report (two with a retry), ~8k tokens in and ~10k out (≈ $0.15 with Sonnet 4.6). The row records the model, prompt version and pages read (`filing.extraction`). The KRS number is taken from the text (also without leading zeros) or the LEI next to "LEI"; a PDF with neither is refused before the model call unless `--krs` is given. Lines that combine loans and bonds ("financial liabilities") count as debt with no bond split.
 
+**Issuer identity** (`packages/core/src/bonds/issuers/identity.ts`, `scripts/resolve-issuers/`; design `docs/superpowers/specs/2026-11-03-issuer-identity-design.md`): each issuer name has an `#IDENTITY` row in `IssuerProfiles`: its company from the LEI register (GLEIF): LEI, legal name, country, register number (the KRS for Polish companies), LEI status, parent, and `financialsEntityId`, whose reports its scorecard uses (the group's, for a financing vehicle). Found by the bonds' ISINs, else by an exact name match; a match whose legal name differs from the bond name is kept as `review`. Names of one company show as one issuer card; reports are joined by company, not by name; imports find the issuer by its KRS number or LEI.
+
+```sh
+npx sst shell --stage prod -- npm run resolve-issuers                          # names without an identity: dry run
+npx sst shell --stage prod -- npm run resolve-issuers -- --write               # store them
+npx sst shell --stage prod -- npm run resolve-issuers -- --name "PKN Orlen S.A." --krs 0000028860 --write
+npx sst shell --stage prod -- npm run resolve-issuers -- --name "Orlen Capital AB (publ)" --financials-from parent --write
+npx sst shell --stage prod -- npm run resolve-issuers -- --name "PZU S.A." --confirm --write
+```
+
+New issuers (from the Bonds Updater) get an identity when the script is run; until then they are matched by name.
+
 **Checking the imports** (`scripts/check-filings/`): `expected.json` holds, for every imported report, the figures of its own fiscal year (revenue, net profit, total assets, equity, cash, plus a few regression figures), read by hand from the printed statements, not from the parser. The check compares them with the stored rows and with a fresh parse of the original files in the `Filings` bucket:
 
 ```sh

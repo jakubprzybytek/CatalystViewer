@@ -1,6 +1,7 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { Resource } from 'sst';
-import { IssuerProfilesTable, DbIssuerAnalysisSummary } from '@core/storage/issuerProfiles';
+import { IssuerProfilesTable, DbIssuerAnalysisSummary, type DbIssuerIdentityRecord } from '@core/storage/issuerProfiles';
+import { reportsOf } from '@core/bonds/issuers/identity';
 import { IssuerFinancialsTable, type DbIssuerFinancialsRecord } from '@core/storage/issuerFinancials';
 import { scorecardFromReportedYears, type FundamentalScorecard, type ReportedYear } from '@core/bonds/fundamentals/scorecard';
 import { filedYears } from '@core/bonds/fundamentals/filings/filedYears';
@@ -62,7 +63,51 @@ export type FinancialsCoverage = {
     ai?: { performedAt: string; latestYear?: number; years: number };
 };
 
-export function financialsCoverage(filings: DbIssuerFinancialsRecord[], analysis: DbIssuerAnalysisSummary | undefined): FinancialsCoverage {
+// Who an issuer name is (DbIssuerIdentityRecord), with the other names of the same company.
+export type IssuerIdentityView = {
+    entityId: string;
+    legalName: string;
+    country: string;
+    lei?: string;
+    krs?: string;
+    registeredAs?: string;          // local register number outside the KRS
+    category?: string;
+    leiStatus?: string;
+    status: 'confirmed' | 'review';
+    note?: string;
+    otherNames: string[];           // bond names of the same company
+    cardName: string;               // the name the company is shown under: one card for all its names
+    figuresFrom?: string;           // the company whose reports are used, when not this one (a financing vehicle)
+};
+
+// Of a company's names, the one to show it under: matched in the LEI register and confirmed, before a
+// name set by hand or under review (a former name); then alphabetical.
+const cardRank = (i: DbIssuerIdentityRecord) => (i.status === 'confirmed' ? 0 : 2) + (i.source === 'manual' ? 1 : 0);
+
+export function identityView(identity: DbIssuerIdentityRecord, all: DbIssuerIdentityRecord[]): IssuerIdentityView {
+    const company = all.filter(i => i.entityId === identity.entityId);
+    const cardName = [...company].sort((a, b) => cardRank(a) - cardRank(b) || a.issuerName.localeCompare(b.issuerName))[0].issuerName;
+    const figuresFrom = identity.financialsEntityId !== identity.entityId
+        ? all.find(i => i.entityId === identity.financialsEntityId)?.legalName ?? identity.financialsEntityId
+        : undefined;
+    return {
+        entityId: identity.entityId,
+        legalName: identity.legalName,
+        country: identity.country,
+        ...(identity.lei ? { lei: identity.lei } : {}),
+        ...(identity.krs ? { krs: identity.krs } : {}),
+        ...(!identity.krs && identity.register ? { registeredAs: identity.register.id } : {}),
+        ...(identity.category ? { category: identity.category } : {}),
+        ...(identity.leiStatus ? { leiStatus: identity.leiStatus } : {}),
+        status: identity.status,
+        ...(identity.note ? { note: identity.note } : {}),
+        otherNames: company.filter(i => i.issuerName !== identity.issuerName).map(i => i.issuerName).sort(),
+        cardName,
+        ...(figuresFrom ? { figuresFrom } : {}),
+    };
+}
+
+export function financialsCoverage(filings: DbIssuerFinancialsRecord[], analysis: DbIssuerAnalysisSummary | undefined, identity?: DbIssuerIdentityRecord): FinancialsCoverage {
     const coverage: FinancialsCoverage = {};
     if (filings.length) {
         const ends = filings.map(f => f.periodEnd).sort();
@@ -84,6 +129,16 @@ export function financialsCoverage(filings: DbIssuerFinancialsRecord[], analysis
             ...(!latest.krs && latest.registration?.id ? { registeredAs: latest.registration.id } : {}),
         };
     }
+    // Where it's registered: from its identity when it has one (every issuer, not only those with reports)
+    if (identity) {
+        coverage.company = {
+            name: identity.legalName,
+            country: identity.country,
+            ...(identity.krs ? { krs: identity.krs } : {}),
+            ...(identity.lei ? { lei: identity.lei } : {}),
+            ...(!identity.krs && identity.register ? { registeredAs: identity.register.id } : {}),
+        };
+    }
     if (analysis) {
         const years = (analysis.agentFinancials as { years?: unknown } | undefined)?.years;
         coverage.ai = { performedAt: analysis.performedAt, latestYear: latestAiYear(analysis), years: Array.isArray(years) ? years.length : 0 };
@@ -95,28 +150,37 @@ export const handler = lambdaHandler(async () => {
     const issuerProfilesTable = new IssuerProfilesTable(dynamoDBClient, Resource.IssuerProfiles.name);
     const issuerFinancialsTable = new IssuerFinancialsTable(dynamoDBClient, Resource.IssuerFinancials.name);
 
-    const [issuerProfiles, analysisSummaries, financials] = await Promise.all([
+    const [issuerProfiles, analysisSummaries, financials, identities] = await Promise.all([
         issuerProfilesTable.getProfiles(),
         issuerProfilesTable.getAllLatestAnalysisSummaries(),
         issuerFinancialsTable.getAll(),
+        issuerProfilesTable.getIdentities(),
     ]);
+    return Success({ issuerProfiles: buildIssuerProfiles(issuerProfiles, analysisSummaries, financials, identities) });
+});
 
+export function buildIssuerProfiles(
+    issuerProfiles: Awaited<ReturnType<IssuerProfilesTable['getProfiles']>>,
+    analysisSummaries: DbIssuerAnalysisSummary[],
+    financials: DbIssuerFinancialsRecord[],
+    identities: DbIssuerIdentityRecord[],
+) {
     const analysisByIssuer = new Map(analysisSummaries.map(s => [s.issuerName, s]));
-    const filingsByIssuer = Map.groupBy(financials, f => f.issuerName);
+    const identityByName = new Map(identities.map(i => [i.issuerName, i]));
 
-    const mergedProfiles = issuerProfiles.map(profile => {
+    return issuerProfiles.map(profile => {
         const analysis = analysisByIssuer.get(profile.issuerName);
-        const coverage = financialsCoverage(filingsByIssuer.get(profile.issuerName) ?? [], analysis);
+        const identity = identityByName.get(profile.issuerName);
+        const filings = reportsOf(profile.issuerName, identity, financials);
+        const coverage = financialsCoverage(filings, analysis, identity);
+        const base = { ...profile, financialsCoverage: coverage, ...(identity ? { identity: identityView(identity, identities) } : {}) };
         if (!isInFundamentalScope(profile.industry)) {
-            return { ...profile, scorecard: undefined, performedAt: undefined, financialsCoverage: coverage };
+            return { ...base, scorecard: undefined, performedAt: undefined };
         }
         return {
-            ...profile,
-            financialsCoverage: coverage,
-            ...scorecardWithSource(profile.issuerName, filingsByIssuer.get(profile.issuerName) ?? [], analysis),
+            ...base,
+            ...scorecardWithSource(profile.issuerName, filings, analysis),
             performedAt: analysis?.performedAt,
         };
     });
-
-    return Success({ issuerProfiles: mergedProfiles });
-});
+}
