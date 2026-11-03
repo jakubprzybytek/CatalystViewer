@@ -74,6 +74,15 @@ describe('scorecardWithSource', () => {
         expect(ebitMargin(result)).toBeCloseTo(0.01);
     });
 
+    it('says how much the scorecard rests on', () => {
+        const filed = scorecardWithSource('Testowa S.A.', [filing], undefined, 'general', '2026-11-03').scorecard?.confidence;
+        expect(filed).toMatchObject({ source: 'filing', periodEnd: '2025-12-31', yearsBehind: 0, years: 1 });
+        expect(filed?.facts[0]).toBe('KRS filing, single-company accounts, FY2025');
+        const fromAi = scorecardWithSource('Testowa S.A.', [], analysis, 'general', '2026-11-03').scorecard?.confidence;
+        expect(fromAi).toMatchObject({ source: 'ai', periodEnd: '2024-12-31', yearsBehind: 1 });
+        expect(fromAi?.level).toBe('low');   // revenue, EBIT and net profit only
+    });
+
     it('has no scorecard without either', () => {
         expect(scorecardWithSource('Testowa S.A.', [], undefined)).toEqual({});
     });

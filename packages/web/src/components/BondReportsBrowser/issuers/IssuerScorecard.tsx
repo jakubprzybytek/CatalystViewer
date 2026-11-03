@@ -8,12 +8,13 @@ import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
+import Box from '@mui/material/Box';
 import useMediaQuery from '@mui/material/useMediaQuery';
-import type { FundamentalScorecard, DimensionResult } from '@/bonds/fundamentals/scorecard';
+import type { FundamentalScorecard, DimensionResult, DataConfidence, ConfidenceLevel } from '@/bonds/fundamentals/scorecard';
 import { CardEntry } from '@/common/Cards';
 import { SignalDot } from './SignalDot';
 
-function MetricsList({ dimension }: { dimension: DimensionResult }) {
+function MetricsList({ dimension, thin }: { dimension: DimensionResult; thin?: boolean }) {
   return (
     <Stack spacing={0.5} sx={{ pt: 0.5 }}>
       {dimension.metrics.map(m => (
@@ -26,6 +27,9 @@ function MetricsList({ dimension }: { dimension: DimensionResult }) {
           </Typography>
         </Stack>
       ))}
+      {thin && (
+        <Typography variant='caption' sx={{ color: 'text.secondary', maxWidth: 320 }}>· coloured by one of its {dimension.metrics.filter(m => m.scored !== false).length} metrics: the others are missing</Typography>
+      )}
       {dimension.notes?.map((n, i) => (
         <Typography key={`note-${i}`} variant='caption' sx={{ color: 'text.secondary', maxWidth: 320 }}>· {n}</Typography>
       ))}
@@ -37,6 +41,16 @@ const RULE_SET_LABEL: Record<NonNullable<FundamentalScorecard['ruleSet']>, strin
   general: 'general', developer: 'developer', contractor: 'contractor', consumer: 'consumer and services',
 };
 
+const LEVEL_LABEL: Record<ConfidenceLevel, string> = { high: 'High', medium: 'Medium', low: 'Low' };
+
+function ConfidenceFacts({ confidence }: { confidence: DataConfidence }) {
+  return (
+    <Stack spacing={0.25} sx={{ py: 0.25 }}>
+      {confidence.facts.map(f => <Typography key={f} variant='caption' sx={{ maxWidth: 320 }}>{f}</Typography>)}
+    </Stack>
+  );
+}
+
 type IssuerScorecardProps = {
   scorecard: FundamentalScorecard;
 };
@@ -44,6 +58,8 @@ type IssuerScorecardProps = {
 export default function IssuerScorecard({ scorecard }: IssuerScorecardProps): React.JSX.Element {
   const [selectedDimension, setSelectedDimension] = useState<DimensionResult | null>(null);
   const isHoverDevice = useMediaQuery('(hover: hover) and (pointer: fine)');
+  const confidence = scorecard.confidence;
+  const thin = (d: DimensionResult) => !!confidence?.thinDimensions.includes(d.name);
 
   if (scorecard.dimensions.length === 0) {
     return <Typography variant='caption' sx={{ color: 'text.disabled' }}>No financial data</Typography>;
@@ -51,8 +67,16 @@ export default function IssuerScorecard({ scorecard }: IssuerScorecardProps): Re
 
   return (
     <>
-      <CardEntry caption={scorecard.ruleSet && scorecard.ruleSet !== 'general' ? `Fundamental Analysis · ${RULE_SET_LABEL[scorecard.ruleSet]} rules` : 'Fundamental Analysis'}>
-        <Grid container columns={3}>
+      <CardEntry caption={<>
+        {scorecard.ruleSet && scorecard.ruleSet !== 'general' ? `Fundamental Analysis · ${RULE_SET_LABEL[scorecard.ruleSet]} rules` : 'Fundamental Analysis'}
+        {confidence && <>
+          {' · '}
+          <Tooltip title={<ConfidenceFacts confidence={confidence} />} placement='top' arrow enterTouchDelay={0} leaveTouchDelay={6000}>
+            <Box component='span' sx={{ textDecoration: 'underline dotted', cursor: 'help' }}>{LEVEL_LABEL[confidence.level]} confidence</Box>
+          </Tooltip>
+        </>}
+      </>}>
+        <Grid container columns={3} sx={confidence?.level === 'low' ? { opacity: 0.5 } : undefined}>
           {scorecard.dimensions.map(d => {
             const cell = (
               <Stack
@@ -79,7 +103,7 @@ export default function IssuerScorecard({ scorecard }: IssuerScorecardProps): Re
             return (
               <Grid key={d.name} size={1}>
                 {isHoverDevice ? (
-                  <Tooltip title={<MetricsList dimension={d} />} placement='top' arrow>
+                  <Tooltip title={<MetricsList dimension={d} thin={thin(d)} />} placement='top' arrow>
                     {cell}
                   </Tooltip>
                 ) : cell}
@@ -107,7 +131,7 @@ export default function IssuerScorecard({ scorecard }: IssuerScorecardProps): Re
               </IconButton>
             </DialogTitle>
             <DialogContent>
-              <MetricsList dimension={selectedDimension} />
+              <MetricsList dimension={selectedDimension} thin={thin(selectedDimension)} />
             </DialogContent>
           </>
         )}

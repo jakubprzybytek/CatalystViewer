@@ -173,7 +173,8 @@ function IssuerCard({ issuerReport, statistics, isChecked, onIssuerChecked }: Is
                   variant='outlined'
                   label={
                     <Stack direction='row' spacing={0} sx={{
-                      alignItems: 'center'
+                      alignItems: 'center',
+                      ...(issuerReport.scorecard.confidence?.level === 'low' ? { opacity: 0.5 } : {}),
                     }}>
                       <QueryStatsOutlinedIcon sx={{ fontSize: '0.85rem', mr: 0.25 }} />
                       {issuerReport.scorecard.dimensions.map((d, i) => (

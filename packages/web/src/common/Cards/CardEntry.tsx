@@ -4,7 +4,7 @@ import Typography from "@mui/material/Typography";
 import { ColorCode, colorMarkers } from "../ColorCodes";
 
 type BondCardEntryParam = {
-  caption: string;
+  caption: React.ReactNode;
   width?: string;
   textAlign?: 'left' | 'center' | 'end';
   flexGrow?: number,

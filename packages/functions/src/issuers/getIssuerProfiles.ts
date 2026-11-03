@@ -8,6 +8,7 @@ import { filedYears } from '@core/bonds/fundamentals/filings/filedYears';
 import { isInFundamentalScope } from '@core/bonds/fundamentals/scope';
 import { latestReport, refinancing, refinancingDimension, type ListedBond, type Rates } from '@core/bonds/fundamentals/maturities';
 import { nbpRates } from '@core/bonds/fx/nbp';
+import { dataConfidence, type ConfidenceSource } from '@core/bonds/fundamentals/confidence';
 import { BondDetailsTable } from '@core/storage/bondDetails';
 import { lambdaHandler, Success } from '../HandlerProxy';
 
@@ -30,10 +31,15 @@ export type FinancialsSource =
     | { kind: 'filing'; format: 'krs-xml' | 'esef' | 'ifrs-text' | 'ai-pdf'; scope: 'single' | 'group'; latestPeriodEnd: string; years: number }
     | { kind: 'ai'; performedAt: string };
 
+// The fiscal years in the AI-collected figures.
+function aiYears(analysis: DbIssuerAnalysisSummary | undefined): number[] {
+    const years = (analysis?.agentFinancials as { years?: { year?: unknown }[] } | undefined)?.years;
+    return (Array.isArray(years) ? years : []).map(y => Number(y.year)).filter(Number.isFinite);
+}
+
 // The latest fiscal year in the AI-collected figures, if any.
 function latestAiYear(analysis: DbIssuerAnalysisSummary | undefined): number | undefined {
-    const years = (analysis?.agentFinancials as { years?: { year?: unknown }[] } | undefined)?.years;
-    const numbers = (Array.isArray(years) ? years : []).map(y => Number(y.year)).filter(Number.isFinite);
+    const numbers = aiYears(analysis);
     return numbers.length ? Math.max(...numbers) : undefined;
 }
 
@@ -44,17 +50,28 @@ export function scorecardWithSource(
     filings: DbIssuerFinancialsRecord[],
     analysis: DbIssuerAnalysisSummary | undefined,
     rules: RuleSet = 'general',
+    today: string = new Date().toISOString().slice(0, 10),
 ): { scorecard?: FundamentalScorecard; financialsSource?: FinancialsSource } {
     const filed = filedYears(filings);
     const aiYear = latestAiYear(analysis);
     if (filed && (aiYear === undefined || Number(filed.latestPeriodEnd.slice(0, 4)) >= aiYear)) {
+        const scorecard = scorecardFromReportedYears(issuerName, filed.years, rules);
+        const source: ConfidenceSource = { kind: 'filing', format: filed.format, scope: filed.scope, periodEnd: filed.latestPeriodEnd, years: filed.years.length };
         return {
-            scorecard: scorecardFromReportedYears(issuerName, filed.years, rules),
+            scorecard: { ...scorecard, confidence: dataConfidence(scorecard, source, today) },
             financialsSource: { kind: 'filing', format: filed.format, scope: filed.scope, latestPeriodEnd: filed.latestPeriodEnd, years: filed.years.length },
         };
     }
     if (analysis) {
-        return { scorecard: currentScorecard(analysis, rules), financialsSource: { kind: 'ai', performedAt: analysis.performedAt } };
+        const scorecard = currentScorecard(analysis, rules);
+        // AI-collected years are calendar years
+        const source: ConfidenceSource | undefined = aiYear !== undefined
+            ? { kind: 'ai', performedAt: analysis.performedAt, periodEnd: `${aiYear}-12-31`, years: new Set(aiYears(analysis)).size }
+            : undefined;
+        return {
+            scorecard: scorecard && source && scorecard.dimensions.length ? { ...scorecard, confidence: dataConfidence(scorecard, source, today) } : scorecard,
+            financialsSource: { kind: 'ai', performedAt: analysis.performedAt },
+        };
     }
     return {};
 }
@@ -208,7 +225,7 @@ export function buildIssuerProfiles(
         if (!isInFundamentalScope(profile.industry)) {
             return { ...base, scorecard: undefined, performedAt: undefined };
         }
-        const { scorecard, financialsSource } = scorecardWithSource(profile.issuerName, filings, analysis, ruleSetFor(profile.industry, profile.issuerName));
+        const { scorecard, financialsSource } = scorecardWithSource(profile.issuerName, filings, analysis, ruleSetFor(profile.industry, profile.issuerName), maturities.today);
         const dimension = refi && refinancingDimension(refi);
         return {
             ...base,

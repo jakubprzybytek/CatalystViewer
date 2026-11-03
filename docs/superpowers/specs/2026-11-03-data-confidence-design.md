@@ -1,6 +1,6 @@
 # Data confidence: design
 
-Roadmap phase 2 ("Data confidence", section 3). Status: proposed 2026-11-03.
+Roadmap phase 2 ("Data confidence", section 3). Status: approved and built 2026-11-03.
 
 ## Why
 
@@ -63,11 +63,12 @@ Polska Grupa Farmaceutyczna).
 
 ## How it's built
 
-- Core: `bonds/fundamentals/confidence.ts`, `dataConfidence(scorecard, source, years, today)` returns
-  `{ level, source, periodEnd, yearsBehind, metrics: { computed, scored }, missing, years, thinDimensions }`.
+- Core: `bonds/fundamentals/confidence.ts`, `dataConfidence(scorecard, source, today)` returns
+  `{ level, source, periodEnd, yearsBehind, metrics: { computed, scored }, missing, years, thinDimensions, facts }`.
   Tests on the issuers above (Atal high, KGHM medium, Domesta low, BBI medium for being behind).
-- API: `getIssuerProfiles` adds `confidence` next to `scorecard`, computed at read time like the rest. Nothing
-  is stored, and there are no AI calls or new resources.
+- API: `getIssuerProfiles` adds `confidence` to the scorecard (`scorecard.confidence`), computed at read time
+  like the rest, so the issuer list and the report window get it without changes. Nothing is stored, and
+  there are no AI calls or new resources.
 - Web: the caption, tooltip and faded dots in `IssuerScorecard`; the `IssuerProfile.confidence` type in the SDK.
 
 ## Not now

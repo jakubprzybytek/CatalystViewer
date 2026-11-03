@@ -1,3 +1,5 @@
+import type { DataConfidence } from './confidence';
+
 export type Signal = 'green' | 'yellow' | 'red' | 'na';
 
 export type FinancialYearData = {
@@ -44,6 +46,7 @@ export type DimensionResult = {
 export type FundamentalScorecard = {
   dimensions: DimensionResult[];
   ruleSet?: RuleSet;
+  confidence?: DataConfidence;   // added by the API, from the figures' source
 };
 
 // ─── Rule sets ────────────────────────────────────────────────────────────────
