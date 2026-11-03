@@ -21,7 +21,9 @@ function MetricsList({ dimension }: { dimension: DimensionResult }) {
           alignItems: 'center'
         }}>
           <SignalDot signal={m.signal} />
-          <Typography variant='caption'>{m.name}: {m.formattedValue}</Typography>
+          <Typography variant='caption' sx={m.scored === false ? { color: 'text.secondary' } : undefined}>
+            {m.name}: {m.formattedValue}{m.scored === false && ' (not scored)'}
+          </Typography>
         </Stack>
       ))}
       {dimension.notes?.map((n, i) => (
@@ -30,6 +32,10 @@ function MetricsList({ dimension }: { dimension: DimensionResult }) {
     </Stack>
   );
 }
+
+const RULE_SET_LABEL: Record<NonNullable<FundamentalScorecard['ruleSet']>, string> = {
+  general: 'general', developer: 'developer', contractor: 'contractor', consumer: 'consumer and services',
+};
 
 type IssuerScorecardProps = {
   scorecard: FundamentalScorecard;
@@ -45,7 +51,7 @@ export default function IssuerScorecard({ scorecard }: IssuerScorecardProps): Re
 
   return (
     <>
-      <CardEntry caption='Fundamental Analysis'>
+      <CardEntry caption={scorecard.ruleSet && scorecard.ruleSet !== 'general' ? `Fundamental Analysis · ${RULE_SET_LABEL[scorecard.ruleSet]} rules` : 'Fundamental Analysis'}>
         <Grid container columns={3}>
           {scorecard.dimensions.map(d => {
             const cell = (

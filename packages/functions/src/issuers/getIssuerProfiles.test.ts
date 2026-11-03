@@ -158,6 +158,8 @@ describe('buildIssuerProfiles with identities', () => {
         expect(orlen.refinancing?.bonds.map(b => b.name)).toEqual(['ORC0327', 'ORL1127', 'PKN0628']);
         expect(orlen.refinancing?.report).toMatchObject({ due12: 1.4e9, due24: 1.9e9, cash: 2e9 });
         expect(orlen.scorecard?.dimensions.at(-1)).toMatchObject({ name: 'Refinancing', signal: 'yellow' });
+        expect(orlen.scorecard?.ruleSet).toBe('general');
+        expect(buildIssuerProfiles([profile('Testowa S.A.', 'Developer')], [], [report('0000123456', 'Testowa S.A.', '2025-12-31')], [])[0].scorecard?.ruleSet).toBe('developer');
         expect(all[1].refinancing?.report?.due24).toBe(1.9e9);
         // A Finance issuer gets the schedule, without a scorecard
         expect(all[2].refinancing?.report?.due12).toBe(1e8);

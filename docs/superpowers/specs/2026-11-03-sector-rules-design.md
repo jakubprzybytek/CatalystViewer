@@ -1,6 +1,6 @@
 # Sector rules: developers, contractors, consumer and services
 
-Roadmap phase 2 ("Rules per sector", section 3). Status: proposal, 2026-11-03.
+Roadmap phase 2 ("Rules per sector", section 3). Status: approved and built 2026-11-03.
 
 ## Why
 
@@ -107,8 +107,13 @@ So the scorecard gets these line items without reading the lines (they're left o
 - **Item totals stored:** each row gets an `items` map, the sum per line item in units of the
   currency with the sign normalised (paid amounts positive). It's computed whenever lines are stored
   (import, `reparse-filings`).
-- **`impairment` added** to the line item vocabulary: ESEF impairment concepts and KRS write-down codes
-  in code, and the PDF prompt (version 7: one more item in the list).
+- **`impairment` added** to the line item vocabulary, found by code in every format (`markWriteDowns`:
+  the label or concept of an income-statement line names a write-down, and not of receivables, loans or
+  other financial assets, nor a reversal or a subtotal). As built, the PDF prompt is unchanged (still
+  version 6): the same rule finds write-downs in PDF lines, so all formats are judged alike and no AI call
+  changes. A write-down is added back only when the depreciation figure doesn't already include it
+  (PGE, Allegro, Pepco and MOL report "depreciation, amortisation and impairment" as one line; Cyfrowy
+  Polsat's takes the goodwill write-down out again).
 - **Backfill:** a script fills `items` for the 59 stored years from their lines. Rows whose items change
   only gain the new attribute; figures stay as they are. Impairment lines in PDF reports are found by
   label in the backfill; new PDF imports get them from the prompt. Before writing, the script prints
@@ -150,3 +155,35 @@ stored but the `items` backfill.
 - Contractors' order backlog (notes).
 - Finance rules: only Kruk has a report.
 - Data confidence per scorecard.
+
+## As built: before and after (prod, 2026-11-03)
+
+Dimensions in order: Debt Burden, Debt Service, Liquidity, Profitability, Asset Coverage, Trend, then
+Refinancing (G green, y yellow, R red, . n/a).
+
+| Issuer | Rules | Before | After |
+|---|---|---|---|
+| Atal | developer | RGRGG.G | yGGGG.G |
+| Dom Development | developer | GGRGG.G | GGyGy.G |
+| Echo Investment | developer | RRRRy.G | RRyRy.G |
+| Inpro | developer | GGRGG.G | GGGGG.G |
+| Marvipol | developer | yGGGG.G | yyGGG.G |
+| Murapol | developer | yGRGy.G | yGGGy.G |
+| Dekpol | contractor | GGyyG.G | GGGGG.G |
+| Erbud | contractor | GRyRy.G | GRRRy.G |
+| P.A. Nova | contractor | RyRGGRG | RyRGGRG |
+| Unibep | contractor | yyyRy.G | yyyyy.G |
+| AB | consumer | GGRRGyG | GGRRGyG |
+| Allegro.eu | consumer | GGyGR.G | GGGGG.G |
+| Benefit Systems | consumer | yGRGR.G | GGGGG.G |
+| Cyfrowy Polsat | consumer | RRyRy.G | yRGRG.G |
+| P4 | consumer | RyRGR.G | yyGGR.G |
+| Pepco | consumer | RyRRR.G | GyyRR.G |
+| Żabka | consumer | RyRyR.G | Gyyyy.G |
+| KGHM | general | G.RGG.G | G.yGG.G |
+| PCC Exol | general | yGRyG.G | yGyyG.G |
+
+Unchanged: Orlen, PKN Orlen, MOL, Polenergia, Enea, PGE, Cognor, PCC Rokita. Erbud's new red is its cash
+below its advances (−1.1% of revenue). AB (an IT distributor, classified Retail) is red on operating cash
+flow / current liabilities (0.04×): a distributor's working capital is positive, so the consumer rules
+fit it less well than a shop's.

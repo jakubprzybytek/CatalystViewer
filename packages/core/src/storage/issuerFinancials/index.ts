@@ -1,7 +1,7 @@
 export * from './IssuerFinancialsTable';
 
 import type { FilingExtraction, FilingField, FilingScope, ParsedFiling, SourcedFigure } from '../../bonds/fundamentals/filings/FilingParser';
-import type { StatementLine } from '../../bonds/fundamentals/filings/statementLines';
+import type { ItemTotals, StatementLine } from '../../bonds/fundamentals/filings/statementLines';
 
 // parsed: as imported; hand-checked: in the test set (scripts/check-filings); flagged: someone noted a problem
 export type ReviewStatus = 'parsed' | 'hand-checked' | 'flagged';
@@ -27,6 +27,7 @@ export type DbIssuerFinancialsRecord = {
     lineSigns?: ParsedFiling['lineSigns'];
     figures: Partial<Record<FilingField, SourcedFigure>>;
     lines?: StatementLine[];      // every line of the primary statements; left out by the list reads
+    items?: ItemTotals;           // the lines' sum per line item (itemTotals), for reads without the lines
     review?: { status: ReviewStatus; note?: string; at?: string };
     linesExtraction?: FilingExtraction;  // PDF lines added later (reparse-filings): the model read they came from
     column: 'current' | 'previous';

@@ -187,6 +187,14 @@ A PDF re-read is a new model read, so its lines are recorded with the read they 
 
 Not supported: small and micro entities (`JednostkaMala`, `JednostkaMikro`), banks and insurers, scanned PDFs (no text layer).
 
+**Item totals:** each year also stores `items`, the sum of its lines per line item (`itemTotals` in `statementLines.ts`), so the scorecard's sector rules get leases, buyer advances, interest paid and write-downs without reading the lines. Import and `reparse-filings` write it with the lines; `item-totals` recomputes it for the stored years (dry run unless `--write`; it compares the totals with the figures made of the same lines):
+
+```bash
+npx sst shell --stage dev -- npm run item-totals [-- --write] [-- --only "<issuer>"]
+```
+
+Write-downs of non-financial assets (line item `impairment`) are found by code in every format (`markWriteDowns`), not asked of the PDF model. The scorecard rules per sector (developer, contractor, consumer and services, general) are in `scorecard.ts`; design: `docs/superpowers/specs/2026-11-03-sector-rules-design.md`.
+
 **Viewing the figures:** an issuer card with imported reports shows a *Reports <year>* chip (click it for the figures) and, expanded, where the company is registered (country, KRS or local register number, LEI; stored with each row as `registration` on import). The card's *Financials* button opens the yearly figures (`GET /api/issuers/{name}/financials`, `getIssuerFinancials.ts`): every imported year with its source, notes, checks and a 15-minute link to the original file, plus the AI analysis's years. Its *Full statements* switch shows one imported year's stored lines as the report printed them (balance sheet, income statement, cash flow; subtotals indented from the parent chain and bold, the standard item per line, the PDF page; `GET /api/issuers/{name}/statements?period=YYYY-MM-DD&scope=group|single`, `getIssuerStatements.ts`), loaded only when picked. Code: `packages/core/src/bonds/fundamentals/filings/`, `scripts/import-filing/`.
 
 ## Delivery

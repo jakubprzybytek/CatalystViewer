@@ -3,7 +3,7 @@ import { Resource } from 'sst';
 import { IssuerProfilesTable, DbIssuerAnalysisSummary, type DbIssuerIdentityRecord } from '@core/storage/issuerProfiles';
 import { reportsOf } from '@core/bonds/issuers/identity';
 import { IssuerFinancialsTable, type DbIssuerFinancialsRecord } from '@core/storage/issuerFinancials';
-import { scorecardFromReportedYears, type FundamentalScorecard, type ReportedYear } from '@core/bonds/fundamentals/scorecard';
+import { ruleSetFor, scorecardFromReportedYears, type FundamentalScorecard, type ReportedYear, type RuleSet } from '@core/bonds/fundamentals/scorecard';
 import { filedYears } from '@core/bonds/fundamentals/filings/filedYears';
 import { isInFundamentalScope } from '@core/bonds/fundamentals/scope';
 import { latestReport, refinancing, refinancingDimension, type ListedBond, type Rates } from '@core/bonds/fundamentals/maturities';
@@ -16,10 +16,10 @@ const rates = nbpRates();
 
 // Recomputed from the stored figures, so fixes to the scoring rules reach existing analyses
 // without new (paid) runs. Falls back to the stored scorecard for records without figures.
-export function currentScorecard(summary: DbIssuerAnalysisSummary): FundamentalScorecard | undefined {
+export function currentScorecard(summary: DbIssuerAnalysisSummary, rules: RuleSet = 'general'): FundamentalScorecard | undefined {
     const years = (summary.agentFinancials as { years?: unknown } | undefined)?.years;
     if (Array.isArray(years)) {
-        return scorecardFromReportedYears(summary.issuerName, years as ReportedYear[]);
+        return scorecardFromReportedYears(summary.issuerName, years as ReportedYear[], rules);
     }
     return summary.scorecard;
 }
@@ -43,17 +43,18 @@ export function scorecardWithSource(
     issuerName: string,
     filings: DbIssuerFinancialsRecord[],
     analysis: DbIssuerAnalysisSummary | undefined,
+    rules: RuleSet = 'general',
 ): { scorecard?: FundamentalScorecard; financialsSource?: FinancialsSource } {
     const filed = filedYears(filings);
     const aiYear = latestAiYear(analysis);
     if (filed && (aiYear === undefined || Number(filed.latestPeriodEnd.slice(0, 4)) >= aiYear)) {
         return {
-            scorecard: scorecardFromReportedYears(issuerName, filed.years),
+            scorecard: scorecardFromReportedYears(issuerName, filed.years, rules),
             financialsSource: { kind: 'filing', format: filed.format, scope: filed.scope, latestPeriodEnd: filed.latestPeriodEnd, years: filed.years.length },
         };
     }
     if (analysis) {
-        return { scorecard: currentScorecard(analysis), financialsSource: { kind: 'ai', performedAt: analysis.performedAt } };
+        return { scorecard: currentScorecard(analysis, rules), financialsSource: { kind: 'ai', performedAt: analysis.performedAt } };
     }
     return {};
 }
@@ -207,11 +208,11 @@ export function buildIssuerProfiles(
         if (!isInFundamentalScope(profile.industry)) {
             return { ...base, scorecard: undefined, performedAt: undefined };
         }
-        const { scorecard, financialsSource } = scorecardWithSource(profile.issuerName, filings, analysis);
+        const { scorecard, financialsSource } = scorecardWithSource(profile.issuerName, filings, analysis, ruleSetFor(profile.industry));
         const dimension = refi && refinancingDimension(refi);
         return {
             ...base,
-            ...(scorecard ? { scorecard: dimension ? { dimensions: [...scorecard.dimensions, dimension] } : scorecard } : {}),
+            ...(scorecard ? { scorecard: dimension ? { ...scorecard, dimensions: [...scorecard.dimensions, dimension] } : scorecard } : {}),
             ...(financialsSource ? { financialsSource } : {}),
             performedAt: analysis?.performedAt,
         };

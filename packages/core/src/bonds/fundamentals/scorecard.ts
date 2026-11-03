@@ -16,6 +16,14 @@ export type FinancialYearData = {
   currentAssets?: number;
   inventory?: number;
   currentLiabilities?: number;
+  // From imported reports only (statement lines); the AI-collected figures don't have them
+  operatingCashFlow?: number;
+  capex?: number;              // paid, positive
+  investmentProperty?: number;
+  contractLiabilities?: number;  // customer and buyer advances
+  leases?: number;             // lease liabilities, part of financialDebt
+  interestPaid?: number;       // cash flow, positive
+  writeDowns?: number;         // write-downs of non-financial assets in EBIT, not in depreciation
 };
 
 export type MetricResult = {
@@ -23,6 +31,7 @@ export type MetricResult = {
   value: number | null;
   formattedValue: string;
   signal: Signal;
+  scored?: false;      // shown for context, not counted in the dimension's signal
 };
 
 export type DimensionResult = {
@@ -34,7 +43,23 @@ export type DimensionResult = {
 
 export type FundamentalScorecard = {
   dimensions: DimensionResult[];
+  ruleSet?: RuleSet;
 };
+
+// ─── Rule sets ────────────────────────────────────────────────────────────────
+
+// Which metrics and thresholds a company is judged by, from its industry (design: 2026-11-03-sector-rules-design.md).
+export type RuleSet = 'general' | 'developer' | 'contractor' | 'consumer';
+
+const RULE_SET_OF: Record<string, RuleSet> = {
+  Developer: 'developer',
+  Construction: 'contractor',
+  Retail: 'consumer', Telecommunications: 'consumer', Media: 'consumer', Other: 'consumer',
+};
+
+export function ruleSetFor(industry: string | undefined): RuleSet {
+  return (industry && RULE_SET_OF[industry]) || 'general';
+}
 
 // ─── Signal helpers ────────────────────────────────────────────────────────────
 
@@ -64,137 +89,140 @@ function mult(value: number | null, decimals = 2): string {
   return `${value.toFixed(decimals)}×`;
 }
 
+// EBITDA and EBIT before write-downs of non-financial assets (a non-cash one-off, e.g. a goodwill write-down)
+function ebitBeforeWriteDowns(year: FinancialYearData): number | undefined {
+  return year.ebit == null ? undefined : year.ebit + Math.max(0, year.writeDowns ?? 0);
+}
+function ebitdaOf(year: FinancialYearData): number | undefined {
+  const ebit = ebitBeforeWriteDowns(year);
+  return ebit != null && year.depreciation != null ? ebit + year.depreciation : undefined;
+}
+function netDebtOf(year: FinancialYearData): number | undefined {
+  return year.financialDebt != null && year.cash != null ? year.financialDebt - year.cash : undefined;
+}
+function writeDownNote(year: FinancialYearData): string[] {
+  return year.writeDowns != null && year.writeDowns > 0
+    ? [`EBIT and EBITDA before a ${year.writeDowns.toLocaleString('en-US', { maximumFractionDigits: 0 })} m write-down of non-financial assets`]
+    : [];
+}
+
+const metric = (name: string, value: number | null, formattedValue: string, signal: Signal): MetricResult => ({ name, value, formattedValue, signal });
+const shown = (name: string, value: number | null, formattedValue: string): MetricResult => ({ name, value, formattedValue, signal: 'na', scored: false });
+const dimension = (name: string, metrics: MetricResult[], notes: string[] = []): DimensionResult => ({
+  name, signal: worstSignal(metrics.filter(m => m.scored !== false)), metrics, ...(notes.length ? { notes } : {}),
+});
+const lower = (green: number, yellow: number) => (v: number | null) => signalFromValue(v, x => x < green, x => x <= yellow);
+const higher = (green: number, yellow: number) => (v: number | null) => signalFromValue(v, x => x > green, x => x >= yellow);
+
 // ─── Dimension 1 — Debt Burden ────────────────────────────────────────────────
 
-function computeDebtBurden(year: FinancialYearData): DimensionResult {
-  const de = div(year.financialDebt, year.equity);
-  const ebitda = year.ebit != null && year.depreciation != null
-    ? year.ebit + year.depreciation
-    : undefined;
-  const netDebt = year.financialDebt != null && year.cash != null
-    ? year.financialDebt - year.cash
-    : undefined;
-  const ndEbitda = div(netDebt, ebitda);
-
+function deMetric(year: FinancialYearData, name = 'D/E', green = 1.0, yellow = 2.0, debt = year.financialDebt): MetricResult {
+  const de = div(debt, year.equity);
   // Negative equity means the company owes more than it owns — always red
-  const deSignal: Signal =
-    de == null ? 'na'
-    : year.equity != null && year.equity <= 0 ? 'red'
-    : signalFromValue(de, v => v < 1.0, v => v <= 2.0);
+  const signal: Signal = de == null ? 'na' : year.equity != null && year.equity <= 0 ? 'red' : lower(green, yellow)(de);
+  return metric(name, de, mult(de), signal);
+}
 
-  const deMetric: MetricResult = {
-    name: 'D/E',
-    value: de,
-    formattedValue: mult(de),
-    signal: deSignal,
-  };
-
+function ndEbitdaMetric(year: FinancialYearData, name: string, green: number, yellow: number, netDebt = netDebtOf(year)): MetricResult {
+  const ebitda = ebitdaOf(year);
+  const value = div(netDebt, ebitda);
   // Negative EBITDA means no operating cash generation — always red
-  const ndEbitdaSignal: Signal =
-    ndEbitda == null ? 'na'
-    : ebitda != null && ebitda <= 0 ? 'red'
-    : signalFromValue(ndEbitda, v => v < 2.5, v => v <= 4.0);
+  const signal: Signal = value == null ? 'na' : ebitda != null && ebitda <= 0 ? 'red' : lower(green, yellow)(value);
+  return metric(name, value, mult(value), signal);
+}
 
-  const ndMetric: MetricResult = {
-    name: 'Net Debt/EBITDA',
-    value: ndEbitda,
-    formattedValue: mult(ndEbitda),
-    signal: ndEbitdaSignal,
-  };
-
-  const metrics = [deMetric, ndMetric];
-  return { name: 'Debt Burden', signal: worstSignal(metrics), metrics };
+function computeDebtBurden(year: FinancialYearData, rules: RuleSet): DimensionResult {
+  const notes = writeDownNote(year);
+  if (rules === 'developer') {
+    const netDebt = netDebtOf(year);
+    const stock = year.inventory != null ? year.inventory + (year.investmentProperty ?? 0) : undefined;
+    const ndStock = div(netDebt, stock);
+    return dimension('Debt Burden', [
+      metric('Net Debt/(Inventory + Investment Property)', ndStock, mult(ndStock), lower(0.3, 0.6)(ndStock)),
+      deMetric(year, 'Net Debt/Equity', 0.5, 1.0, netDebt),
+    ]);
+  }
+  if (rules === 'consumer') {
+    const netDebt = netDebtOf(year);
+    const exLeases = netDebt != null && year.leases != null ? netDebt - year.leases : undefined;
+    const exLeasesRatio = div(exLeases, ebitdaOf(year));
+    const fcf = year.operatingCashFlow != null && year.capex != null ? year.operatingCashFlow - Math.abs(year.capex) : undefined;
+    const fcfToDebt = netDebt != null && netDebt <= 0 && fcf != null ? null : div(fcf, netDebt);
+    const fcfSignal: Signal = netDebt != null && netDebt <= 0 && fcf != null ? 'green' : higher(0.15, 0.05)(fcfToDebt);
+    return dimension('Debt Burden', [
+      ndEbitdaMetric(year, 'Net Debt incl. Leases/EBITDA', 3.0, 4.5),
+      shown('Net Debt excl. Leases/EBITDA', exLeasesRatio, mult(exLeasesRatio)),
+      metric('Free Cash Flow/Net Debt', fcfToDebt, netDebt != null && netDebt <= 0 && fcf != null ? 'net cash' : pct(fcfToDebt), fcfSignal),
+    ], notes);
+  }
+  return dimension('Debt Burden', [deMetric(year), ndEbitdaMetric(year, 'Net Debt/EBITDA', 2.5, 4.0)], notes);
 }
 
 // ─── Dimension 2 — Debt Service ───────────────────────────────────────────────
 
-function computeDebtService(year: FinancialYearData): DimensionResult {
-  const icr = div(year.ebit, year.interestExpense);
-
-  const icrMetric: MetricResult = {
-    name: 'ICR',
-    value: icr,
-    formattedValue: mult(icr),
-    signal: signalFromValue(icr, v => v > 3.0, v => v >= 1.5),
-  };
-
-  return { name: 'Debt Service', signal: worstSignal([icrMetric]), metrics: [icrMetric] };
+function computeDebtService(year: FinancialYearData, rules: RuleSet): DimensionResult {
+  // Developers add interest to the cost of the flats: the interest paid is what they owe
+  const paid = rules === 'developer' && year.interestPaid != null && year.interestPaid > 0;
+  const icr = div(ebitBeforeWriteDowns(year), paid ? year.interestPaid : year.interestExpense);
+  return dimension('Debt Service', [metric(paid ? 'ICR (interest paid)' : 'ICR', icr, mult(icr), higher(3.0, 1.5)(icr))], writeDownNote(year));
 }
 
 // ─── Dimension 3 — Liquidity ──────────────────────────────────────────────────
 
-function computeLiquidity(year: FinancialYearData): DimensionResult {
+function computeLiquidity(year: FinancialYearData, rules: RuleSet): DimensionResult {
   const cr = div(year.currentAssets, year.currentLiabilities);
-  const liquidAssets = year.currentAssets != null && year.inventory != null
-    ? year.currentAssets - year.inventory
-    : undefined;
-  const qr = div(liquidAssets, year.currentLiabilities);
-
-  const crMetric: MetricResult = {
-    name: 'Current Ratio',
-    value: cr,
-    formattedValue: mult(cr),
-    signal: signalFromValue(cr, v => v > 1.5, v => v >= 1.0),
-  };
-  const qrMetric: MetricResult = {
-    name: 'Quick Ratio',
-    value: qr,
-    formattedValue: mult(qr),
-    signal: signalFromValue(qr, v => v > 1.2, v => v >= 0.8),
-  };
-
-  const metrics = [crMetric, qrMetric];
-  return { name: 'Liquidity', signal: worstSignal(metrics), metrics };
+  const crMetric = (green: number, yellow: number) => metric('Current Ratio', cr, mult(cr), higher(green, yellow)(cr));
+  if (rules === 'developer') {
+    const presales = div(year.contractLiabilities, year.inventory);
+    return dimension('Liquidity', [crMetric(2.0, 1.3), shown('Buyer Advances/Inventory', presales, pct(presales))]);
+  }
+  if (rules === 'contractor') {
+    const netOfAdvances = year.cash != null && year.contractLiabilities != null ? div(year.cash - year.contractLiabilities, year.revenue) : null;
+    return dimension('Liquidity', [crMetric(1.2, 1.0), metric('Cash net of Advances/Revenue', netOfAdvances, pct(netOfAdvances), signalFromValue(netOfAdvances, v => v > 0.05, v => v >= 0))]);
+  }
+  if (rules === 'consumer') {
+    const ocfCl = div(year.operatingCashFlow, year.currentLiabilities);
+    return dimension('Liquidity', [metric('Operating Cash Flow/Current Liabilities', ocfCl, mult(ocfCl), higher(0.5, 0.3)(ocfCl)), shown('Current Ratio', cr, mult(cr))]);
+  }
+  return dimension('Liquidity', [crMetric(1.5, 1.0)]);
 }
 
 // ─── Dimension 4 — Profitability ──────────────────────────────────────────────
 
-function computeProfitability(year: FinancialYearData): DimensionResult {
+const MARGINS: Record<RuleSet, { ebit: [number, number]; net: [number, number] }> = {
+  general: { ebit: [0.10, 0.05], net: [0.05, 0.01] },
+  consumer: { ebit: [0.10, 0.05], net: [0.05, 0.01] },
+  developer: { ebit: [0.15, 0.08], net: [0.10, 0.05] },
+  contractor: { ebit: [0.04, 0.02], net: [0.025, 0.005] },
+};
+
+function computeProfitability(year: FinancialYearData, rules: RuleSet): DimensionResult {
   const ebitMargin = div(year.ebit, year.revenue);
   const netMargin = div(year.netProfit, year.revenue);
-
-  const emMetric: MetricResult = {
-    name: 'EBIT Margin',
-    value: ebitMargin,
-    formattedValue: pct(ebitMargin),
-    signal: signalFromValue(ebitMargin, v => v > 0.10, v => v >= 0.05),
-  };
-  const nmMetric: MetricResult = {
-    name: 'Net Margin',
-    value: netMargin,
-    formattedValue: pct(netMargin),
-    signal: signalFromValue(netMargin, v => v > 0.05, v => v >= 0.01),
-  };
-
-  const metrics = [emMetric, nmMetric];
-  return { name: 'Profitability', signal: worstSignal(metrics), metrics };
+  const { ebit, net } = MARGINS[rules];
+  return dimension('Profitability', [
+    metric('EBIT Margin', ebitMargin, pct(ebitMargin), higher(...ebit)(ebitMargin)),
+    metric('Net Margin', netMargin, pct(netMargin), higher(...net)(netMargin)),
+  ]);
 }
 
 // ─── Dimension 5 — Asset Coverage ────────────────────────────────────────────
 
-function computeAssetCoverage(year: FinancialYearData): DimensionResult {
+const EQUITY_RATIO: Record<RuleSet, [number, number]> = {
+  general: [0.30, 0.15], contractor: [0.30, 0.15], developer: [0.35, 0.25], consumer: [0.20, 0.10],
+};
+
+function computeAssetCoverage(year: FinancialYearData, rules: RuleSet): DimensionResult {
   const tangibleNetAssets =
     year.totalAssets != null && year.intangibleAssets != null && year.currentLiabilities != null
       ? year.totalAssets - year.intangibleAssets - year.currentLiabilities
       : undefined;
   const acr = div(tangibleNetAssets, year.financialDebt);
   const equityRatio = div(year.equity, year.totalAssets);
-
-  const acrMetric: MetricResult = {
-    name: 'Asset Coverage Ratio',
-    value: acr,
-    formattedValue: mult(acr),
-    signal: signalFromValue(acr, v => v > 1.5, v => v >= 1.0),
-  };
-  const erMetric: MetricResult = {
-    name: 'Equity Ratio',
-    value: equityRatio,
-    formattedValue: pct(equityRatio),
-    signal: signalFromValue(equityRatio, v => v > 0.30, v => v >= 0.15),
-  };
-
-  const metrics = [acrMetric, erMetric];
-  return { name: 'Asset Coverage', signal: worstSignal(metrics), metrics };
+  return dimension('Asset Coverage', [
+    rules === 'consumer' ? shown('Asset Coverage Ratio', acr, mult(acr)) : metric('Asset Coverage Ratio', acr, mult(acr), higher(1.5, 1.0)(acr)),
+    metric('Equity Ratio', equityRatio, pct(equityRatio), higher(...EQUITY_RATIO[rules])(equityRatio)),
+  ]);
 }
 
 // ─── Dimension 6 — Financial Trend ───────────────────────────────────────────
@@ -244,9 +272,10 @@ function computeTrend(years: FinancialYearData[]): DimensionResult {
   const ebitdaMargins = sorted
     .slice()
     .reverse() // oldest first for slope
-    .map(y => y.ebit != null && y.depreciation != null && y.revenue != null && y.revenue > 0
-      ? (y.ebit + y.depreciation) / y.revenue
-      : null)
+    .map(y => {
+      const ebitda = ebitdaOf(y);
+      return ebitda != null && y.revenue != null && y.revenue > 0 ? ebitda / y.revenue : null;
+    })
     .filter((v): v is number => v !== null);
 
   let ebitdaMarginSignal: Signal = 'na';
@@ -272,8 +301,8 @@ function computeTrend(years: FinancialYearData[]): DimensionResult {
     .slice()
     .reverse() // oldest first
     .map(y => {
-      const ebitda = y.ebit != null && y.depreciation != null ? y.ebit + y.depreciation : null;
-      const nd = y.financialDebt != null && y.cash != null ? y.financialDebt - y.cash : null;
+      const ebitda = ebitdaOf(y) ?? null;
+      const nd = netDebtOf(y) ?? null;
       return ebitda != null && nd != null && ebitda > 0 ? nd / ebitda : null;
     })
     .filter((v): v is number => v !== null);
@@ -322,9 +351,9 @@ function worstSignal(metrics: MetricResult[]): Signal {
 
 // ─── Entry point ──────────────────────────────────────────────────────────────
 
-export function computeScorecard(years: FinancialYearData[]): FundamentalScorecard {
+export function computeScorecard(years: FinancialYearData[], rules: RuleSet = 'general'): FundamentalScorecard {
   if (years.length === 0) {
-    return { dimensions: [] };
+    return { dimensions: [], ruleSet: rules };
   }
 
   // Use most recent year for snapshot dimensions
@@ -332,15 +361,15 @@ export function computeScorecard(years: FinancialYearData[]): FundamentalScoreca
   const current = sorted[0];
 
   const dimensions: DimensionResult[] = [
-    computeDebtBurden(current),
-    computeDebtService(current),
-    computeLiquidity(current),
-    computeProfitability(current),
-    computeAssetCoverage(current),
+    computeDebtBurden(current, rules),
+    computeDebtService(current, rules),
+    computeLiquidity(current, rules),
+    computeProfitability(current, rules),
+    computeAssetCoverage(current, rules),
     computeTrend(sorted),
   ];
 
-  return { dimensions };
+  return { dimensions, ruleSet: rules };
 }
 
 // Scorecard from figures as the analysis agent reports them (null = not found).
@@ -349,7 +378,7 @@ export type ReportedYear = { year: number } & {
   [K in Exclude<keyof FinancialYearData, 'issuerName' | 'year'>]?: number | null;
 };
 
-export function scorecardFromReportedYears(issuerName: string, years: ReportedYear[]): FundamentalScorecard {
+export function scorecardFromReportedYears(issuerName: string, years: ReportedYear[], rules: RuleSet = 'general'): FundamentalScorecard {
   return computeScorecard(years.map(y => {
     const data: FinancialYearData = { issuerName, year: y.year };
     for (const [key, value] of Object.entries(y)) {
@@ -358,5 +387,5 @@ export function scorecardFromReportedYears(issuerName: string, years: ReportedYe
       }
     }
     return data;
-  }));
+  }), rules);
 }

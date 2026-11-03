@@ -21,6 +21,7 @@
     "import-filing": "esrun --send-code-mode=temporaryFile scripts/import-filing/import-filing.ts",
     "check-filings": "esrun --send-code-mode=temporaryFile scripts/check-filings/check-filings.ts",
     "reparse-filings": "esrun --send-code-mode=temporaryFile scripts/reparse-filings/reparse-filings.ts",
+    "item-totals": "esrun --send-code-mode=temporaryFile scripts/item-totals/item-totals.ts",
     "resolve-issuers": "esrun --send-code-mode=temporaryFile scripts/resolve-issuers/resolve-issuers.ts"
   },
   "devDependencies": {

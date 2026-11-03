@@ -8,7 +8,7 @@ export type StatementName = 'balance' | 'income' | 'cashFlow';
 export const LINE_ITEMS = [
     // income statement
     'revenue', 'costOfSales', 'grossProfit', 'ebit', 'depreciation', 'interestExpense', 'financeCosts', 'financeIncome',
-    'profitBeforeTax', 'incomeTax', 'netProfit',
+    'profitBeforeTax', 'incomeTax', 'netProfit', 'impairment',
     // balance sheet: assets
     'totalAssets', 'noncurrentAssets', 'propertyPlantEquipment', 'investmentProperty', 'intangibleAssets', 'goodwill',
     'loansGranted', 'currentAssets', 'inventory', 'tradeReceivables', 'cash',
@@ -91,4 +91,51 @@ export function lineChecks(lines: StatementLine[], label: string, tolerance: num
         }
     }
     return checks;
+}
+
+// ─── Write-downs and item totals ───────────────────────────────────────────────
+
+// A write-down of non-financial assets (goodwill, property, intangibles) in the income statement, by
+// its label or concept: not of receivables, loans or other financial assets, not a reversal (a gain),
+// not a subtotal or a depreciation line that includes it.
+const WRITE_DOWN = /impairment|writedown|write-down|utrat\w* wartości|odpis\w* aktualizując|aktualizacja wartości aktywów niefinansowych|értékveszt/i;
+const NOT_WRITE_DOWN = /(?<!nie)finansow|(?<!non-)financial|należno|pożycz|instrument|receivabl|loan|kredyt|udział|before|przed|ebitda|operating profit|zysk operac|amortyz|amortis|depreci|értékcsökken/i;
+const REVERSAL = /^\W*(odwróc|reversal|reversed|zysk|gain)/i;
+
+export function isWriteDown(line: Pick<StatementLine, 'statement' | 'label' | 'code'>): boolean {
+    const text = `${line.label} ${line.code ?? ''}`;
+    return line.statement === 'income' && WRITE_DOWN.test(text) && !NOT_WRITE_DOWN.test(text) && !REVERSAL.test(line.label);
+}
+
+// Gives the income statement's write-down lines the impairment item, where they have no item yet.
+export function markWriteDowns(lines: StatementLine[]): void {
+    for (const line of lines) if (!line.item && isWriteDown(line)) line.item = 'impairment';
+}
+
+export type ItemTotals = Partial<Record<LineItem, number>>;
+
+// The statement an item's total comes from (cash and net profit also appear in the others).
+const INCOME_ITEMS = new Set<LineItem>(LINE_ITEMS.slice(0, LINE_ITEMS.indexOf('impairment') + 1));
+const CASH_FLOW_ITEMS = new Set<LineItem>(LINE_ITEMS.slice(LINE_ITEMS.indexOf('operatingCashFlow')));
+export const statementOf = (item: LineItem): StatementName => INCOME_ITEMS.has(item) ? 'income' : CASH_FLOW_ITEMS.has(item) ? 'cashFlow' : 'balance';
+
+// Paid amounts and costs, shown as positive totals whatever sign the statement prints them with.
+const OUTFLOWS = new Set<LineItem>(['capex', 'interestPaid', 'dividendsPaid', 'borrowingsRepaid']);
+
+// The sum of each line item over a year's lines, in units of the currency. A line under a subtotal of
+// the same item isn't counted again. Outflows are positive; a write-down is positive for a loss (tagged
+// lines are signed that way, printed ones are taken as losses).
+export function itemTotals(lines: StatementLine[], lineSigns: 'printed' | 'tagged' | undefined): ItemTotals {
+    const key = (l: StatementLine) => `${l.statement}#${l.order}`;
+    const byKey = new Map(lines.map(l => [key(l), l]));
+    const totals: ItemTotals = {};
+    for (const line of lines) {
+        if (!line.item || line.statement !== statementOf(line.item)) continue;
+        const parent = line.parent !== undefined ? byKey.get(`${line.statement}#${line.parent}`) : undefined;
+        if (parent?.item === line.item) continue;
+        const value = line.item === 'impairment' && lineSigns !== 'tagged' ? Math.abs(line.value) : line.value;
+        totals[line.item] = (totals[line.item] ?? 0) + value;
+    }
+    for (const item of OUTFLOWS) if (totals[item] !== undefined) totals[item] = Math.abs(totals[item]!);
+    return totals;
 }

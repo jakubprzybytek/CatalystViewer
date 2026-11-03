@@ -3,11 +3,29 @@
 import type { DbIssuerFinancialsRecord } from '../../../storage/issuerFinancials';
 import type { ReportedYear } from '../scorecard';
 import type { FilingField, FilingScope, ParsedFiling } from './FilingParser';
+import type { LineItem } from './statementLines';
 
 const SCORECARD_FIELDS: FilingField[] = [
     'revenue', 'ebit', 'depreciation', 'interestExpense', 'netProfit', 'totalAssets', 'intangibleAssets',
-    'equity', 'financialDebt', 'cash', 'currentAssets', 'inventory', 'currentLiabilities',
+    'equity', 'financialDebt', 'cash', 'currentAssets', 'inventory', 'currentLiabilities', 'operatingCashFlow', 'capex',
 ];
+
+// Inputs of the sector rules taken from the statement lines' item totals
+const ITEM_INPUTS: [keyof ReportedYear, LineItem][] = [
+    ['investmentProperty', 'investmentProperty'], ['contractLiabilities', 'contractLiabilities'],
+    ['leases', 'debtLeases'], ['interestPaid', 'interestPaid'],
+];
+
+// The depreciation figure already includes write-downs when one of its sources does (a "depreciation,
+// amortisation and impairment" line) and none takes a write-down out again (Cyfrowy Polsat).
+const IMPAIRMENT_SOURCE = /impair|utrat|odpis|értékveszt/i;
+export function writeDownsOutsideDepreciation(record: Pick<DbIssuerFinancialsRecord, 'items' | 'figures'>): number | undefined {
+    const writeDowns = record.items?.impairment;
+    if (writeDowns === undefined) return undefined;
+    const sources = record.figures.depreciation?.source ?? [];
+    const included = sources.some(s => !s.startsWith('−') && IMPAIRMENT_SOURCE.test(s)) && !sources.some(s => s.startsWith('−') && IMPAIRMENT_SOURCE.test(s));
+    return included ? 0 : writeDowns;
+}
 const MAX_YEARS = 5;
 
 export type FiledYears = {
@@ -38,6 +56,12 @@ export function filedYears(records: DbIssuerFinancialsRecord[]): FiledYears | un
                 const figure = r.figures[field];
                 (year as Record<string, number | null>)[field] = figure ? figure.value / 1_000_000 : null;
             }
+            for (const [field, item] of ITEM_INPUTS) {
+                const total = r.items?.[item];
+                if (total !== undefined) (year as Record<string, number | null>)[field] = total / 1_000_000;
+            }
+            const writeDowns = writeDownsOutsideDepreciation(r);
+            if (writeDowns !== undefined) year.writeDowns = writeDowns / 1_000_000;
             return year;
         }),
     };

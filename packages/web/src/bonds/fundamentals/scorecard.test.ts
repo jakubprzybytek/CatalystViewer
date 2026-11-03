@@ -128,13 +128,9 @@ describe('computeScorecard', () => {
       expect(cr.signal).toBe('red');
     });
 
-    it('Quick Ratio: yellow when 0.8–1.2', () => {
-      // Polmech: (16000 - 4500) / 9800 = 11500 / 9800 = 1.173
-      const sc = computeScorecard(exampleA);
-      const d3 = sc.dimensions.find(d => d.name === 'Liquidity')!;
-      const qr = d3.metrics.find(m => m.name === 'Quick Ratio')!;
-      expect(qr.value).toBeCloseTo(1.173, 2);
-      expect(qr.signal).toBe('yellow');
+    it('has no quick ratio: inventory is a fair current asset for most companies (KGHM, developers)', () => {
+      const d3 = computeScorecard(exampleA).dimensions.find(d => d.name === 'Liquidity')!;
+      expect(d3.metrics.map(m => m.name)).toEqual(['Current Ratio']);
     });
   });
 
