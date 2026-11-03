@@ -110,10 +110,11 @@ profile stays (its classification), its card merges into Orlen's. Undo: delete t
 4. Web: merged cards, registration line for every issuer.
 5. Import resolves the issuer through identities.
 
-## To decide with you during step 2
+## Decided (2026-11-03, from the companies' filings)
 
-- Kredyt Inkaso's bonds map to Best S.A.'s LEI and Kredyt Inkaso's own LEI has lapsed: merged, so one
-  company?
-- "Best Capital FIZAN" and "Best Niestandaryzowany FIZ Wierzytelności" map to one LEI: two funds or one?
-- Financing vehicles: PEU (FIN) PLC → Pepco Group NV, Orlen Capital AB → Orlen S.A. (any others the
-  report finds).
+- Kredyt Inkaso merged into Best S.A. (takeover, registered in the KRS on 1 April 2025; Best took over its
+  bonds): one company, confirmed.
+- Best Capital FIZAN and the other Best funds merged into Best Niestandaryzowany FIZ Wierzytelności
+  (RFI 1753, registered 30 January 2025), which took over their bonds: one LEI is right, confirmed.
+- Pepco: PEU (FIN) PLC is a wholly owned financing subsidiary of Pepco Group N.V., which guarantees its
+  Polish bonds: the group's figures, confirmed. Orlen Capital AB → Orlen S.A. likewise.
