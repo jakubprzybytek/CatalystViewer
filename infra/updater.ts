@@ -52,6 +52,13 @@ const classifyIssuerFunction = new sst.aws.Function("ClassifyIssuer", {
   ],
 });
 
+// After classification: the issuer's company in the LEI register (GLEIF, public API), as its #IDENTITY row.
+const resolveIssuerIdentityFunction = new sst.aws.Function("ResolveIssuerIdentity", {
+  handler: "packages/functions/src/issuers/resolveIssuerIdentity.handler",
+  timeout: "1 minute",
+  link: [bondDetailsTable, issuerProfilesTable],
+});
+
 const sendReportFunction = new sst.aws.Function("SendReport", {
   handler: "packages/functions/src/emails/sendReport.handler",
   timeout: "30 seconds",
@@ -100,7 +107,22 @@ const classifyIssuer = SF.lambdaInvoke({
   name: "ClassifyIssuer",
   function: classifyIssuerFunction,
   payload: { issuerName: jsonata("$issuerName") },
+  assign: { classification: jsonata("$states.result.Payload") },
   output: jsonata("$states.result.Payload"),
+});
+
+// Then its company (LEI register). A failure here only notes it in the issuer's result: the
+// classification is already stored.
+const resolveIssuerIdentity = SF.lambdaInvoke({
+  name: "ResolveIssuerIdentity",
+  function: resolveIssuerIdentityFunction,
+  payload: { issuerName: jsonata("$issuerName") },
+  output: jsonata(`$merge([$classification, { "identity": $states.result.Payload }])`),
+});
+
+const identityFailed = SF.pass({
+  name: "HandleIdentityFailure",
+  output: jsonata(`$merge([$classification, { "identity": { "found": false, "reason": $states.input.Cause } }])`),
 });
 
 const classificationFailed = SF.pass({
@@ -109,6 +131,7 @@ const classificationFailed = SF.pass({
 });
 
 rememberIssuer.next(classifyIssuer).catch(classificationFailed);
+classifyIssuer.next(resolveIssuerIdentity).catch(identityFailed);
 
 const classifyIssuers = SF.map({
   name: "ClassifyIssuers",

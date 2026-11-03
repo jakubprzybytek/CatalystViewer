@@ -20,7 +20,7 @@ import { Resource } from "sst";
 import { BondDetailsTable } from "../../packages/core/src/storage/bondDetails";
 import { IssuerProfilesTable, type DbIssuerIdentityRecord } from "../../packages/core/src/storage/issuerProfiles";
 import { IssuerFinancialsTable } from "../../packages/core/src/storage/issuerFinancials";
-import { entityIdOf, gleifClient, identityRecord, namesAgree, resolveIssuer, type LeiEntity } from "../../packages/core/src/bonds/issuers/identity";
+import { entityIdOf, gleifClient, identityRecord, resolveIdentity, type LeiEntity } from "../../packages/core/src/bonds/issuers/identity";
 
 const REGION = "eu-west-1";
 
@@ -113,25 +113,18 @@ async function main() {
   const review: string[] = [];
   const made: DbIssuerIdentityRecord[] = [];
   for (const n of names) {
-    const r = await resolveIssuer(n, isins.get(n) ?? [], gleif);
-    if (!r.found) {
-      console.log(`✗ ${n}: ${r.reason}`);
+    const outcome = await resolveIdentity(n, isins.get(n) ?? [], gleif, now);
+    if (!outcome.found) {
+      console.log(`✗ ${n}: ${outcome.reason}`);
       unresolved.push(n);
       continue;
     }
-    // A foreign or reviewed match may be a financing vehicle: its parent, when the register has one
-    const parentLei = r.entity.jurisdiction !== "PL" || r.status === "review" ? await gleif.directParent(r.entity.lei) : undefined;
-    // The bond name is the parent's (the bonds are issued by its financing vehicle): its figures are the parent's
-    const parent = parentLei ? await gleif.byLei(parentLei) : undefined;
-    const parentId = parent && entityIdOf(parent).entityId;
-    const nameIsParents = !!parent && r.status === "review" && namesAgree(n, parent);
-    const note = nameIsParents ? `issued by ${r.entity.legalName}, a vehicle of ${parent!.legalName}, whose figures are used` : r.note;
-    const record = identityRecord(n, r.entity, { source: r.source, evidence: r.evidence, status: r.status, note, parentLei, ...(nameIsParents ? { financialsEntityId: parentId } : {}) }, now);
+    const { record, parent } = outcome;
     await store(record);
     made.push(record);
-    if (r.status === "review") review.push(`${n}: ${note}`);
-    if (parent && parentId && !nameIsParents && withReports.has(parentId)) {
-      console.log(`    parent ${parent.legalName} (${parentId}) has imported reports: --name "${n}" --financials-from parent`);
+    if (record.status === "review") review.push(`${n}: ${record.note}`);
+    if (parent && record.financialsEntityId === record.entityId && withReports.has(parent.entityId)) {
+      console.log(`    parent ${parent.legalName} (${parent.entityId}) has imported reports: --name "${n}" --financials-from parent`);
     }
   }
 

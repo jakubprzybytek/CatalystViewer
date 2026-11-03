@@ -28,7 +28,16 @@ export type ClassifyIssuerInput = {
     issuerName: string;
 };
 
-export type ClassifiedIssuerResult = ClassifiedIssuer & { success: true };
+export type ResolveIdentityInput = {
+    issuerName: string;
+};
+
+// The issuer's company in the LEI register, as the ResolveIssuerIdentity step found it
+export type IdentitySummary =
+    | { found: true; existing: boolean; legalName: string; entityId: string; status: 'confirmed' | 'review'; note?: string }
+    | { found: false; reason: string };
+
+export type ClassifiedIssuerResult = ClassifiedIssuer & { success: true; identity?: IdentitySummary };
 export type FailedIssuerResult = { issuerName: string; errorReason: string; success: false };
 export type ClassifyIssuerResult = ClassifiedIssuerResult | FailedIssuerResult;
 

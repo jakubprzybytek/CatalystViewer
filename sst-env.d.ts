@@ -114,6 +114,10 @@ declare module "sst" {
       "name": string
       "type": "sst.aws.Dynamo"
     }
+    "ResolveIssuerIdentity": {
+      "name": string
+      "type": "sst.aws.Function"
+    }
     "SelectIssuers": {
       "name": string
       "type": "sst.aws.Function"

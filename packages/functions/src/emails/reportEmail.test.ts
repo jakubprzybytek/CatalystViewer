@@ -36,7 +36,7 @@ describe('htmlToText', () => {
             dateTime: new Date('2026-10-25T08:53:00Z'),
             newBonds: [bond],
             bondsDeactivated: [],
-            classifiedIssuers: [{ issuerName: 'Rutkowski Group Sp. z o.o.', industry: 'Developer', businessSummary: 'Developer.', websiteUrl: 'https://r.pl' }],
+            classifiedIssuers: [{ issuerName: 'Rutkowski Group Sp. z o.o.', industry: 'Developer', businessSummary: 'Developer.', websiteUrl: 'https://r.pl', identity: { found: true, existing: false, legalName: 'RUTKOWSKI GROUP SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ', entityId: '0001044425', status: 'confirmed' } }],
             failedIssuers: [],
         });
 
@@ -57,6 +57,7 @@ describe('htmlToText', () => {
             'Summary:',
             'Developer.',
             'Website: https://r.pl',
+            'Company: RUTKOWSKI GROUP SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ (0001044425)',
         ].join('\n'));
     });
 });

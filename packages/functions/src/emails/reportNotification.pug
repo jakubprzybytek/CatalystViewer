@@ -192,6 +192,14 @@ html
                     span(class="label") Website:
                     | 
                     a(href=issuer.websiteUrl) #{issuer.websiteUrl}
+                if issuer.identity
+                  div(class="row")
+                    span(class="label") Company:
+                    | 
+                    if issuer.identity.found
+                      span(class="value") #{issuer.identity.legalName} (#{issuer.identity.entityId})#{issuer.identity.status === 'review' ? ', to review: ' + (issuer.identity.note || '') : ''}
+                    else
+                      span(class="value") not found in the LEI register: #{issuer.identity.reason}
       if failedIssuers.length > 0
         div(class="section")
           h2 Failed Issuer Classifications (#{failedIssuers.length})

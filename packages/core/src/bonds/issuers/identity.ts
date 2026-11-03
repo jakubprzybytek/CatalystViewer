@@ -170,3 +170,24 @@ export function companies(identities: DbIssuerIdentityRecord[]): Map<string, DbI
 export function reportsOf<T extends { entityId: string; issuerName: string }>(issuerName: string, identity: DbIssuerIdentityRecord | undefined, rows: T[]): T[] {
     return identity ? rows.filter(r => r.entityId === identity.financialsEntityId) : rows.filter(r => r.issuerName === issuerName);
 }
+
+export type IdentityOutcome =
+    | { found: true; record: DbIssuerIdentityRecord; parent?: { legalName: string; entityId: string } }
+    | { found: false; reason: string };
+
+// One issuer name: its company, and for a foreign or reviewed match the direct parent. When the bond
+// name is the parent's (its bonds are issued by the parent's financing vehicle), the parent's figures are used.
+export async function resolveIdentity(issuerName: string, isins: string[], gleif: Gleif, now: Date): Promise<IdentityOutcome> {
+    const r = await resolveIssuer(issuerName, isins, gleif);
+    if (!r.found) return r;
+    const parentLei = r.entity.jurisdiction !== 'PL' || r.status === 'review' ? await gleif.directParent(r.entity.lei) : undefined;
+    const parentEntity = parentLei ? await gleif.byLei(parentLei) : undefined;
+    const parent = parentEntity ? { legalName: parentEntity.legalName, entityId: entityIdOf(parentEntity).entityId } : undefined;
+    const nameIsParents = !!parentEntity && r.status === 'review' && namesAgree(issuerName, parentEntity);
+    const note = nameIsParents ? `issued by ${r.entity.legalName}, a vehicle of ${parentEntity!.legalName}, whose figures are used` : r.note;
+    const record = identityRecord(issuerName, r.entity, {
+        source: r.source, evidence: r.evidence, status: r.status, note, parentLei,
+        ...(nameIsParents ? { financialsEntityId: parent!.entityId } : {}),
+    }, now);
+    return { found: true, record, ...(parent ? { parent } : {}) };
+}

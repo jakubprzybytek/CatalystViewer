@@ -92,9 +92,9 @@ type DbIssuerIdentityRecord = {
   manual cases.
 - GLEIF requests at about one per second (its limit is 60 a minute); a full run is ~250 requests, ~5
   minutes.
-- New issuers appear when the Bonds Updater finds new bonds. For now the script is run by hand (the
-  report lists names without an identity); running it in the issuer classification step would change
-  a state machine, which is a separate decision.
+- New issuers appear when the Bonds Updater finds new bonds: its `ResolveIssuerIdentity` step runs
+  after each classification (added 2026-11-03, with the owner's yes), with its own catch so a GLEIF
+  failure doesn't fail the classification; the report email shows the result.
 
 ## Data in prod
 

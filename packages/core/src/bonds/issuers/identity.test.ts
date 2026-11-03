@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { entityIdOf, gleifClient, identityName, identityRecord, namesAgree, resolveIssuer, searchText, type Gleif, type LeiEntity } from './identity';
+import { entityIdOf, gleifClient, identityName, identityRecord, namesAgree, resolveIdentity, resolveIssuer, searchText, type Gleif, type LeiEntity } from './identity';
 
 // Answers as GLEIF gave them (trimmed)
 const ORLEN: LeiEntity = { lei: '259400X5T1L2MBS7DS05', legalName: 'ORLEN SPÓŁKA AKCYJNA', otherNames: [], jurisdiction: 'PL', registeredAt: 'RA000484', registeredAs: '0000028860', category: 'GENERAL', status: 'ISSUED' };
@@ -109,5 +109,29 @@ describe('gleifClient', () => {
             '/lei-records?filter[entity.registeredAs]=0000028860',
             `/lei-records/${ORLEN.lei}/direct-parent`,
         ]);
+    });
+});
+
+describe('resolveIdentity', () => {
+    const PEPCO: LeiEntity = { lei: '213800OVMJPFP79OB449', legalName: 'PEPCO GROUP N.V.', otherNames: [], jurisdiction: 'NL', registeredAt: 'RA000463', registeredAs: '81928491', status: 'ISSUED' };
+    const withParent = (gleif: Gleif, parents: Record<string, LeiEntity>): Gleif => ({
+        ...gleif,
+        directParent: async lei => (lei === PEU.lei ? PEPCO.lei : undefined),
+        byLei: async lei => parents[lei],
+    });
+
+    it("uses the parent's figures when the bond name is the parent's (a financing vehicle)", async () => {
+        const outcome = await resolveIdentity('Pepco Group NV', ['XS2000000001'], withParent(fakeGleif({ XS2000000001: PEU }), { [PEPCO.lei]: PEPCO }), new Date('2026-11-03T10:00:00Z'));
+        expect(outcome).toMatchObject({
+            found: true,
+            parent: { legalName: 'PEPCO GROUP N.V.', entityId: `LEI:${PEPCO.lei}` },
+            record: { entityId: `LEI:${PEU.lei}`, financialsEntityId: `LEI:${PEPCO.lei}`, parentLei: PEPCO.lei, status: 'review', note: 'issued by PEU (FIN) PLC, a vehicle of PEPCO GROUP N.V., whose figures are used' },
+        });
+    });
+
+    it("doesn't ask for the parent of a confirmed Polish company", async () => {
+        const gleif = fakeGleif({ PLORLEN00041: ORLEN });
+        const outcome = await resolveIdentity('Orlen S.A.', ['PLORLEN00041'], { ...gleif, directParent: async () => { throw new Error('asked'); } }, new Date());
+        expect(outcome).toMatchObject({ found: true, record: { entityId: '0000028860', financialsEntityId: '0000028860' } });
     });
 });

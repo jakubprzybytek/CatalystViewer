@@ -153,7 +153,7 @@ npx sst shell --stage prod -- npm run resolve-issuers -- --name "Orlen Capital A
 npx sst shell --stage prod -- npm run resolve-issuers -- --name "PZU S.A." --confirm --write
 ```
 
-New issuers (from the Bonds Updater) get an identity when the script is run; until then they are matched by name.
+New issuers get theirs in the Bonds Updater: after an issuer's classification, the `ResolveIssuerIdentity` step looks it up the same way and stores it (an existing identity is left alone, so hand-set and confirmed ones stay); the report email shows the company found, or why none was. A failure there only notes it in the report. The script is for the manual cases and for names classified before this step.
 
 **Checking the imports** (`scripts/check-filings/`): `expected.json` holds, for every imported report, the figures of its own fiscal year (revenue, net profit, total assets, equity, cash, plus a few regression figures), read by hand from the printed statements, not from the parser. The check compares them with the stored rows and with a fresh parse of the original files in the `Filings` bucket:
 
