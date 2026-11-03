@@ -317,6 +317,7 @@ function IssuerCard({ issuerReport, statistics, isChecked, onIssuerChecked }: Is
       </Paper>
       <AnalysisReportModal
         issuerName={issuerReport.name}
+        refinancing={issuerReport.refinancing}
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         hasAnalysis={!!issuerReport.performedAt}

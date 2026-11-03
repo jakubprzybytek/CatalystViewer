@@ -1,6 +1,9 @@
 import { get, post } from "aws-amplify/api";
 import { fetchAuthSession } from "aws-amplify/auth";
 import type { FundamentalScorecard } from '@/bonds/fundamentals/scorecard';
+import type { Refinancing } from '@core/bonds/fundamentals/maturities';
+
+export type { Refinancing };
 
 const ISSUER_PROFILES_PATH = '/api/issuers/profiles';
 const ISSUER_ANALYSIS_PATH = (name: string) => `/api/issuers/${encodeURIComponent(name)}/analysis`;
@@ -45,6 +48,7 @@ export type IssuerProfile = {
   financialsSource?: FinancialsSource;
   financialsCoverage?: FinancialsCoverage;
   identity?: IssuerIdentity;
+  refinancing?: Refinancing;   // listed bonds due vs the latest report's cash
   performedAt?: string;
 };
 

@@ -1,6 +1,6 @@
 # Bond maturities vs cash: design
 
-Roadmap phase 2, first item ("Upcoming bond maturities vs cash", section 3). Status: proposal, 2026-11-03.
+Roadmap phase 2, first item ("Upcoming bond maturities vs cash", section 3). Status: approved and built 2026-11-03.
 
 ## Why
 
@@ -73,10 +73,13 @@ without an imported report get the schedule alone. Without a cash figure the rat
 - Core: `bonds/fundamentals/maturities.ts`, a pure function (bonds, latest year's figures, today, rates)
   → schedule, covers, signal, notes. Tested on the issuers above.
 - An NBP rate client (`bonds/fx/nbp.ts`), cached in the Lambda, with a test on a recorded answer.
-- API: `getIssuerProfiles` already reads active bonds and financials. It adds `refinancing` to each
-  profile, computed at read time like the scorecard, so nothing is stored and rule changes apply at once.
-  `getIssuerFinancials` adds the schedule.
-- Web: the dimension in `IssuerScorecard`, the table in the Financials view.
+- API: `getIssuerProfiles` also reads the active corporate bonds (a query on the bond type; municipal,
+  treasury and covered bonds' issuers have no reports) and adds `refinancing` to each profile, computed
+  at read time like the scorecard, so nothing is stored and rule changes apply at once. The bonds counted
+  are those of every name whose figures come from the same company (its other names, and a group's
+  financing vehicle), since the group's cash covers them all.
+- Web: the dimension in `IssuerScorecard` (with its notes in the tooltip), and a "Bond maturities" view
+  next to Summary and Full statements in the Financials view, from the profile's `refinancing`.
 
 No new resources, no data written, no AI calls. The only new outside call is the NBP rate, at most once
 a day per Lambda instance.
@@ -87,3 +90,9 @@ a day per Lambda instance.
   phase 2's "debt maturity schedule" from the notes.
 - Undrawn credit lines, developers' escrow accounts: with the developer and finance rules.
 - Amount outstanding after redemptions: GPW doesn't publish it per bond in the data we read.
+
+## First results (prod data, 2026-11-03)
+
+Of the 28 issuers with a report: red Atal (130 m due in 12 months against 146 m cash, operating cash flow
+−657 m) and Kruk (no dot: Finance); yellow Echo Investment (758 m due in 24 months, 377 m cash); the rest
+green, most with nothing due within 24 months. The issuer list response, with the schedules, is about 350 KB.

@@ -15,11 +15,12 @@ import { useTheme } from '@mui/material/styles';
 import CloseOutlinedIcon from '@mui/icons-material/CloseOutlined';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { getIssuerAnalysis, type AgentEvent } from '@/sdk/Issuers';
+import { getIssuerAnalysis, type AgentEvent, type Refinancing } from '@/sdk/Issuers';
 import IssuerFinancialsTable from './IssuerFinancialsTable';
 
 type AnalysisReportModalProps = {
   issuerName: string;
+  refinancing?: Refinancing;
   open: boolean;
   onClose: () => void;
   hasAnalysis: boolean;   // the AI analysis tabs (report, agent logs)
@@ -109,7 +110,7 @@ function AgentLogs({ events }: { events: AgentEvent[] }): React.JSX.Element {
   );
 }
 
-export default function AnalysisReportModal({ issuerName, open, onClose, hasAnalysis }: AnalysisReportModalProps): React.JSX.Element {
+export default function AnalysisReportModal({ issuerName, refinancing, open, onClose, hasAnalysis }: AnalysisReportModalProps): React.JSX.Element {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
@@ -157,7 +158,7 @@ export default function AnalysisReportModal({ issuerName, open, onClose, hasAnal
         {hasAnalysis && <Tab label='Agent Logs' value='logs' />}
       </Tabs>
       <DialogContent dividers sx={{ p: { xs: 1.5, sm: 3 } }}>
-        {open && activeTab === 'financials' && <IssuerFinancialsTable issuerName={issuerName} />}
+        {open && activeTab === 'financials' && <IssuerFinancialsTable issuerName={issuerName} refinancing={refinancing} />}
         {activeTab !== 'financials' && loading && (
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
             <CircularProgress />

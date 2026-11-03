@@ -8,7 +8,7 @@ import { BondReport } from '@/sdk/Bonds';
 import { IssuerProfile } from '@/sdk/Issuers';
 import { removeElement } from '@/common/Arrays';
 import type { FundamentalScorecard } from '@/bonds/fundamentals/scorecard';
-import type { FinancialsCoverage, FinancialsSource, IssuerIdentity } from '@/sdk/Issuers';
+import type { FinancialsCoverage, FinancialsSource, IssuerIdentity, Refinancing } from '@/sdk/Issuers';
 import { cardNames, namesOfCard } from '@/bonds/fundamentals/companies';
 
 export type IssuerReport = {
@@ -29,6 +29,7 @@ export type IssuerReport = {
   financialsSource?: FinancialsSource;
   financialsCoverage?: FinancialsCoverage;
   identity?: IssuerIdentity;
+  refinancing?: Refinancing;
   alsoIssuedAs: string[];   // the company's other bond names among these bonds
   performedAt?: string;
 }
@@ -114,6 +115,7 @@ export default function IssuersList({ bondReports, issuerProfiles, statistics, f
           financialsSource: issuerProfile?.financialsSource,
           financialsCoverage: issuerProfile?.financialsCoverage,
           identity: issuerProfile?.identity,
+          refinancing: issuerProfile?.refinancing,
           alsoIssuedAs: [...new Set(bondsByInterestVariablePart.map(b => b.details.issuer))].filter(n => n !== issuer).sort(),
           performedAt: issuerProfile?.performedAt,
         });

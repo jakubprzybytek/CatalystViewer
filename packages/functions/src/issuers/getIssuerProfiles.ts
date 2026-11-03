@@ -6,9 +6,13 @@ import { IssuerFinancialsTable, type DbIssuerFinancialsRecord } from '@core/stor
 import { scorecardFromReportedYears, type FundamentalScorecard, type ReportedYear } from '@core/bonds/fundamentals/scorecard';
 import { filedYears } from '@core/bonds/fundamentals/filings/filedYears';
 import { isInFundamentalScope } from '@core/bonds/fundamentals/scope';
+import { latestReport, refinancing, refinancingDimension, type ListedBond, type Rates } from '@core/bonds/fundamentals/maturities';
+import { nbpRates } from '@core/bonds/fx/nbp';
+import { BondDetailsTable } from '@core/storage/bondDetails';
 import { lambdaHandler, Success } from '../HandlerProxy';
 
 const dynamoDBClient = new DynamoDBClient({});
+const rates = nbpRates();
 
 // Recomputed from the stored figures, so fixes to the scoring rules reach existing analyses
 // without new (paid) runs. Falls back to the stored scorecard for records without figures.
@@ -150,38 +154,65 @@ export const handler = lambdaHandler(async () => {
     const issuerProfilesTable = new IssuerProfilesTable(dynamoDBClient, Resource.IssuerProfiles.name);
     const issuerFinancialsTable = new IssuerFinancialsTable(dynamoDBClient, Resource.IssuerFinancials.name);
 
-    const [issuerProfiles, analysisSummaries, financials, identities] = await Promise.all([
+    const [issuerProfiles, analysisSummaries, financials, identities, bonds, fx] = await Promise.all([
         issuerProfilesTable.getProfiles(),
         issuerProfilesTable.getAllLatestAnalysisSummaries(),
         issuerFinancialsTable.getAll(),
         issuerProfilesTable.getIdentities(),
+        new BondDetailsTable(dynamoDBClient, Resource.BondDetails.name).getActive(CORPORATE_BONDS),
+        rates(),
     ]);
-    return Success({ issuerProfiles: buildIssuerProfiles(issuerProfiles, analysisSummaries, financials, identities) });
+    const listed = bonds.map(b => ({ issuer: b.issuer, isin: b.isin, name: b.name, currency: b.currency, issueValue: b.issueValue, maturityDay: b.maturityDay.toISOString().slice(0, 10) }));
+    const today = new Date().toISOString().slice(0, 10);
+    return Success({ issuerProfiles: buildIssuerProfiles(issuerProfiles, analysisSummaries, financials, identities, { bonds: listed, rates: fx, today }) });
 });
+
+// The bond type whose issuers have reports (municipal, treasury and covered bonds have none)
+const CORPORATE_BONDS = 'Corporate bonds';
+
+export type MaturitiesInput = { bonds: (ListedBond & { issuer: string })[]; rates: Rates; today: string };
 
 export function buildIssuerProfiles(
     issuerProfiles: Awaited<ReturnType<IssuerProfilesTable['getProfiles']>>,
     analysisSummaries: DbIssuerAnalysisSummary[],
     financials: DbIssuerFinancialsRecord[],
     identities: DbIssuerIdentityRecord[],
+    maturities: MaturitiesInput = { bonds: [], rates: {}, today: new Date().toISOString().slice(0, 10) },
 ) {
     const analysisByIssuer = new Map(analysisSummaries.map(s => [s.issuerName, s]));
     const identityByName = new Map(identities.map(i => [i.issuerName, i]));
     // A company's name as its reports give it, for one without an identity of its own (a financing vehicle's parent)
     const reportNames = new Map(financials.map(f => [f.entityId, f.companyName]));
+    const bondsByName = Map.groupBy(maturities.bonds, b => b.issuer);
+    // The listed bonds a name's reports have to cover: those of every name whose figures come from the
+    // same company (its other names, and a financing vehicle of the group)
+    const companyBonds = (issuerName: string, identity: DbIssuerIdentityRecord | undefined) => {
+        const names = identity ? identities.filter(i => i.financialsEntityId === identity.financialsEntityId).map(i => i.issuerName) : [issuerName];
+        return [...new Set([issuerName, ...names])].flatMap(n => bondsByName.get(n) ?? []);
+    };
 
     return issuerProfiles.map(profile => {
         const analysis = analysisByIssuer.get(profile.issuerName);
         const identity = identityByName.get(profile.issuerName);
         const filings = reportsOf(profile.issuerName, identity, financials);
         const coverage = financialsCoverage(filings, analysis, identity);
-        const base = { ...profile, financialsCoverage: coverage, ...(identity ? { identity: identityView(identity, identities, reportNames) } : {}) };
+        const bonds = companyBonds(profile.issuerName, identity);
+        const report = latestReport(filings);
+        const refi = bonds.length || report ? refinancing(bonds, report, maturities.today, maturities.rates) : undefined;
+        const base = {
+            ...profile, financialsCoverage: coverage,
+            ...(identity ? { identity: identityView(identity, identities, reportNames) } : {}),
+            ...(refi ? { refinancing: refi } : {}),
+        };
         if (!isInFundamentalScope(profile.industry)) {
             return { ...base, scorecard: undefined, performedAt: undefined };
         }
+        const { scorecard, financialsSource } = scorecardWithSource(profile.issuerName, filings, analysis);
+        const dimension = refi && refinancingDimension(refi);
         return {
             ...base,
-            ...scorecardWithSource(profile.issuerName, filings, analysis),
+            ...(scorecard ? { scorecard: dimension ? { dimensions: [...scorecard.dimensions, dimension] } : scorecard } : {}),
+            ...(financialsSource ? { financialsSource } : {}),
             performedAt: analysis?.performedAt,
         };
     });

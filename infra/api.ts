@@ -61,7 +61,7 @@ const getIssuerProfilesFunction = apiFunction("GetIssuerProfiles", {
   handler: "packages/functions/src/issuers/getIssuerProfiles.handler",
   memory: "256 MB",
   timeout: "10 seconds",
-  link: [issuerProfilesTable, issuerFinancialsTable],
+  link: [issuerProfilesTable, issuerFinancialsTable, bondDetailsTable],
 });
 
 // An issuer's yearly figures from every source, with temporary links to the original filings.

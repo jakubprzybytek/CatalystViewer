@@ -110,7 +110,7 @@ function IssuerDetails({ profile, onBack }: { profile: IssuerProfile; onBack?: (
           )}
         </Box>
       </Stack>
-      <IssuerFinancialsTable issuerName={profile.issuerName} />
+      <IssuerFinancialsTable issuerName={profile.issuerName} refinancing={profile.refinancing} />
     </Box>
   );
 }

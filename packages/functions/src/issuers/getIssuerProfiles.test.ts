@@ -142,4 +142,25 @@ describe('buildIssuerProfiles with identities', () => {
         expect(byName.get('Testowa S.A.')?.financialsSource).toMatchObject({ kind: 'filing' });
         expect(byName.get('Testowa S.A.')?.identity).toBeUndefined();
     });
+
+    it("compares the bonds of all the names the group's report covers with its cash", () => {
+        const bonds = [
+            { issuer: 'Orlen S.A.', isin: 'PL1', name: 'ORL1127', currency: 'PLN', issueValue: 1e9, maturityDay: '2027-11-01' },
+            { issuer: 'PKN Orlen S.A.', isin: 'PL2', name: 'PKN0628', currency: 'PLN', issueValue: 5e8, maturityDay: '2028-06-01' },
+            { issuer: 'Orlen Capital AB (publ)', isin: 'XS3', name: 'ORC0327', currency: 'EUR', issueValue: 1e8, maturityDay: '2027-03-01' },
+            { issuer: 'Testowa S.A.', isin: 'PL4', name: 'TES0127', currency: 'PLN', issueValue: 1e8, maturityDay: '2027-01-01' },
+        ];
+        const withCash = { ...report('0000028860', 'Orlen S.A.', '2025-12-31') };
+        withCash.figures = { ...withCash.figures, cash: { value: 2e9, source: [] }, operatingCashFlow: { value: 1e9, source: [] } };
+        const all = buildIssuerProfiles([profile('Orlen S.A.'), profile('Orlen Capital AB (publ)'), profile('Testowa S.A.', 'Finance')], [], [withCash, report('0000123456', 'Testowa S.A.', '2025-12-31')], identities,
+            { bonds, rates: { EUR: 4 }, today: '2026-11-03' });
+        const orlen = all[0];
+        expect(orlen.refinancing?.bonds.map(b => b.name)).toEqual(['ORC0327', 'ORL1127', 'PKN0628']);
+        expect(orlen.refinancing?.report).toMatchObject({ due12: 1.4e9, due24: 1.9e9, cash: 2e9 });
+        expect(orlen.scorecard?.dimensions.at(-1)).toMatchObject({ name: 'Refinancing', signal: 'yellow' });
+        expect(all[1].refinancing?.report?.due24).toBe(1.9e9);
+        // A Finance issuer gets the schedule, without a scorecard
+        expect(all[2].refinancing?.report?.due12).toBe(1e8);
+        expect(all[2].scorecard).toBeUndefined();
+    });
 });

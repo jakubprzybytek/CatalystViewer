@@ -29,6 +29,7 @@ export type DimensionResult = {
   name: string;
   signal: Signal;
   metrics: MetricResult[];
+  notes?: string[];   // caveats shown with the metrics
 };
 
 export type FundamentalScorecard = {

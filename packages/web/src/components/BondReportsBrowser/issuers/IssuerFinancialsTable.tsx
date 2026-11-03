@@ -15,8 +15,9 @@ import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import OpenInNewOutlinedIcon from '@mui/icons-material/OpenInNewOutlined';
-import { getIssuerFinancials, type FilingFormat, type FinancialField, type IssuerFinancials } from '@/sdk/Issuers';
+import { getIssuerFinancials, type FilingFormat, type FinancialField, type IssuerFinancials, type Refinancing } from '@/sdk/Issuers';
 import IssuerStatements from './IssuerStatements';
+import IssuerMaturities from './IssuerMaturities';
 import { buildColumns, disagreement, valueOf, type FinancialsColumn } from '@/bonds/fundamentals/financialColumns';
 
 export const FORMAT_LABEL: Record<FilingFormat, string> = {
@@ -215,10 +216,12 @@ export function FinancialsView({ data }: { data: IssuerFinancials }): React.JSX.
   );
 }
 
-export default function IssuerFinancialsTable({ issuerName }: { issuerName: string }): React.JSX.Element {
+type View = 'summary' | 'statements' | 'maturities';
+
+export default function IssuerFinancialsTable({ issuerName, refinancing }: { issuerName: string; refinancing?: Refinancing }): React.JSX.Element {
   const [data, setData] = useState<IssuerFinancials | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [view, setView] = useState<'summary' | 'statements'>('summary');
+  const [view, setView] = useState<View>('summary');
 
   useEffect(() => {
     setData(null);
@@ -233,13 +236,16 @@ export default function IssuerFinancialsTable({ issuerName }: { issuerName: stri
   if (!data) return <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}><CircularProgress /></Box>;
   return (
     <Box>
-      {data.filed.length > 0 && (
-        <ToggleButtonGroup size='small' exclusive value={view} onChange={(_, v: 'summary' | 'statements' | null) => v && setView(v)} sx={{ mb: 1.5 }} aria-label='financials view'>
+      {(data.filed.length > 0 || refinancing) && (
+        <ToggleButtonGroup size='small' exclusive value={view} onChange={(_, v: View | null) => v && setView(v)} sx={{ mb: 1.5 }} aria-label='financials view'>
           <ToggleButton value='summary' sx={{ py: 0.25, px: 1.5 }}>Summary</ToggleButton>
-          <ToggleButton value='statements' sx={{ py: 0.25, px: 1.5 }}>Full statements</ToggleButton>
+          {data.filed.length > 0 && <ToggleButton value='statements' sx={{ py: 0.25, px: 1.5 }}>Full statements</ToggleButton>}
+          {refinancing && <ToggleButton value='maturities' sx={{ py: 0.25, px: 1.5 }}>Bond maturities</ToggleButton>}
         </ToggleButtonGroup>
       )}
-      {view === 'summary' ? <FinancialsView data={data} /> : <IssuerStatements issuerName={issuerName} years={data.filed} />}
+      {view === 'summary' && <FinancialsView data={data} />}
+      {view === 'statements' && <IssuerStatements issuerName={issuerName} years={data.filed} />}
+      {view === 'maturities' && refinancing && <IssuerMaturities refinancing={refinancing} />}
     </Box>
   );
 }

@@ -24,6 +24,9 @@ function MetricsList({ dimension }: { dimension: DimensionResult }) {
           <Typography variant='caption'>{m.name}: {m.formattedValue}</Typography>
         </Stack>
       ))}
+      {dimension.notes?.map((n, i) => (
+        <Typography key={`note-${i}`} variant='caption' sx={{ color: 'text.secondary', maxWidth: 320 }}>· {n}</Typography>
+      ))}
     </Stack>
   );
 }
