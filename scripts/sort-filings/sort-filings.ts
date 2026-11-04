@@ -114,7 +114,11 @@ const slug = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").r
 async function main() {
   const { folder, to, mode } = parseArgs(process.argv.slice(2));
   if (!existsSync(folder)) throw new Error(`No such folder: ${folder}`);
-  const checklist: Expected[] = JSON.parse(readFileSync(join(__dirname, "checklist.json"), "utf-8"));
+  // esrun runs a temporary copy of this file: __dirname is this folder on Linux but the project root on Windows
+  const checklistPath = [join(__dirname, "checklist.json"), join(__dirname, "scripts", "sort-filings", "checklist.json"),
+    join(process.cwd(), "scripts", "sort-filings", "checklist.json")].find(p => existsSync(p));
+  if (!checklistPath) throw new Error("checklist.json not found: run from the repository root");
+  const checklist: Expected[] = JSON.parse(readFileSync(checklistPath, "utf-8"));
 
   const found: Found[] = [];
   for (const c of candidates(folder, to)) found.push(await examine(c));

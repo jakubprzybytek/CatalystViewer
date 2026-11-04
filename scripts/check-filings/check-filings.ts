@@ -11,7 +11,7 @@
 // the figure). With --mark, a report that passes gets review status "hand-checked" on its stored row.
 // Exits with 1 when any figure differs. Run it after changing the parsers or the PDF prompt.
 
-import { readFileSync } from "fs";
+import { existsSync, readFileSync } from "fs";
 import path from "path";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
@@ -65,7 +65,11 @@ async function main() {
   const withPdf = argv.includes("--pdf");
   const mark = argv.includes("--mark");
   const only = argv.includes("--only") ? argv[argv.indexOf("--only") + 1]?.toLowerCase() : undefined;
-  const { reports } = JSON.parse(readFileSync(path.join(__dirname, "expected.json"), "utf8")) as { reports: Expected[] };
+  // esrun runs a temporary copy of this file: __dirname is this folder on Linux but the project root on Windows
+  const expectedPath = [path.join(__dirname, "expected.json"), path.join(__dirname, "scripts", "check-filings", "expected.json"),
+    path.join(process.cwd(), "scripts", "check-filings", "expected.json")].find(p => existsSync(p));
+  if (!expectedPath) throw new Error("expected.json not found: run from the repository root");
+  const { reports } = JSON.parse(readFileSync(expectedPath, "utf8")) as { reports: Expected[] };
 
   let bucket: string, table: string;
   try {
