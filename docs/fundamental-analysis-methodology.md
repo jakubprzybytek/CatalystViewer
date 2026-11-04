@@ -752,7 +752,9 @@ Lessons from imports so far. Check here before treating a strange result as the 
 Results on 2026-11-04, prod: 34 issuers scored from reports (added that day: art.Locum and Ronson from the
 KRS, Develia, Archicom, BBI, Cavatina and Lokum from Bankier's ESEF packages), 11 from AI-collected figures,
 29 in scope with no scorecard yet; Finance issuers with reports stored for the coming finance rules: Kruk,
-Best, Vindexus, Corpus Iuris, Vehis, IFL, Indos. Refinancing is red for Atal (130m PLN due in 12 months, 146m cash,
+Best, Vindexus, Corpus Iuris, Vehis, IFL, Indos, MCI Management, AOW Faktoring. After the KRS FY2024 reports
+(same day), 20 issuers have 3 or more years, so their trend is computed (Atal, Archicom, Cavatina, Echo, Lokum
+and Marvipol trend red). Refinancing is red for Atal (130m PLN due in 12 months, 146m cash,
 operating cash flow −657m) and yellow for Echo.
 
 ---
@@ -768,9 +770,9 @@ In the order the roadmap would take them:
    - For debt collectors: cash collections, cash EBITDA, net debt / cash EBITDA, and portfolio
      purchases vs collections.
    - Needs their reports imported (only Kruk so far).
-2. **More reports:** the FY2024 report of the 2-year issuers, from the KRS (the checklist page), so the
-   trend fills in (now also for Develia, Archicom, BBI, Cavatina, Lokum); PragmaGO's FY2025 PDF (collected,
-   not imported); Indos FY2025, AOW, MCI Management.
+2. **More reports:** the FY2024 report of Murapol, P4, Benefit Systems, Enea, PGE, Polenergia, KGHM,
+   Cognor, PCC Rokita and PCC Exol, from the KRS (the checklist page), so their trend fills in; PragmaGO's
+   FY2025 PDF (collected, not imported); Indos FY2025.
 3. **From the notes, by a model with quotes checked in code:**
    - the debt maturity schedule, including loans;
    - covenants, collateral, guarantees and ranking;
