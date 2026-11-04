@@ -19,6 +19,8 @@ import { readFiling } from "../../packages/core/src/bonds/fundamentals/filings/i
 import { isZip, readZip } from "../../packages/core/src/bonds/fundamentals/filings/zip";
 import { looksLikeEsef } from "../../packages/core/src/bonds/fundamentals/filings/EsefParser";
 import type { ParsedFiling } from "../../packages/core/src/bonds/fundamentals/filings/FilingParser";
+import { readPdfPages } from "../../packages/core/src/bonds/fundamentals/filings/pdfText";
+import { findKrs, findLei } from "../../packages/core/src/bonds/fundamentals/filings/AiPdfExtractor";
 
 type Expected = { company: string; krs: string; year: number; scope: "single" | "group"; optional?: boolean };
 
@@ -30,6 +32,9 @@ type Found = Candidate & {
   reason?: string;
   filing?: ParsedFiling;
   krs?: string;
+  lei?: string;
+  company?: string;
+  scope?: "single" | "group";
   year?: number;
   months?: number;
   sha?: string;
@@ -91,17 +96,42 @@ async function krsOfLei(lei: string): Promise<string | undefined> {
   return krs;
 }
 
+// A PDF isn't parsed (the statements are read by a model on import), but its text tells, for free, whose it is
+// and which year: the KRS number or LEI, the fiscal year end, whether it's the group's.
+const MONTH_END = /\b(3[01])(?:[.\-/ ]+)(12|grudnia|december|0?9|wrze[sś]nia|september|0?6|czerwca|june|0?3|marca|march)(?:[.\-/ ]+)(20\d\d)\b/i;
+async function pdfFacts(c: Candidate): Promise<Partial<Found>> {
+  try {
+    const all = await readPdfPages(c.data);
+    const pages = all.slice(0, 6);
+    const text = pages.map(p => p.lines.join(" ")).join(" ");
+    const year = Number(text.match(MONTH_END)?.[3] ?? c.name.match(/(?:za rok|rok obrotowy|FY|_)\s*(20\d\d)/i)?.[1]) || undefined;
+    const group = /skonsolidowan|consolidated/i.test(c.name + " " + text.slice(0, 4000));
+    const lei = findLei(pages) ?? findLei(all);
+    return { krs: findKrs(pages) ?? findKrs(all) ?? (lei ? await krsOfLei(lei) : undefined), lei, year, scope: group ? "group" : "single" };
+  } catch (e) {
+    return { reason: "its text can't be read: " + (e as Error).message.slice(0, 80) };
+  }
+}
+
+// Signals that a file carries a statement even if it couldn't be parsed
+const STATEMENT_HINT = /Jednostka(Inna|Mala|Mikro)|Skonsolidowan|SprawozdanieFinansowe|Bilans/;
+
 async function examine(c: Candidate): Promise<Found> {
+  const kb = Math.round(c.data.length / 1024);
   if (SKIP.test(c.name) || !STATEMENT.test(c.name) && !isZip(c.data)) return { ...c, kind: "skipped", reason: "not a statement file" };
-  if (/\.pdf$/i.test(c.name) || c.data.subarray(0, 5).toString() === "%PDF-") return { ...c, kind: "pdf", sha: sha(c.data) };
+  if (/\.pdf$/i.test(c.name) || c.data.subarray(0, 5).toString() === "%PDF-") return { ...c, kind: "pdf", sha: sha(c.data), ...(await pdfFacts(c)) };
   try {
     const { filing } = readFiling(c.data, c.name);
     const current = filing.periods[0];
     const krs = filing.krs?.padStart(10, "0") ?? (filing.lei ? await krsOfLei(filing.lei) : undefined);
-    return { ...c, kind: "statement", filing, krs, year: Number(current.periodEnd.slice(0, 4)), months: current.months, sha: sha(c.data) };
+    return { ...c, kind: "statement", filing, krs, lei: filing.lei, company: filing.companyName, scope: filing.scope,
+      year: Number(current.periodEnd.slice(0, 4)), months: current.months, sha: sha(c.data) };
   } catch (e) {
-    if (/\.xades$/i.test(c.name)) return { ...c, kind: "skipped", reason: "a signature only" };
-    return { ...c, kind: "unreadable", reason: (e as Error).message.split("\n")[0].slice(0, 160) };
+    const message = (e as Error).message.split("\n")[0].slice(0, 160);
+    const text = c.data.subarray(0, 2_000_000).toString("utf-8");
+    // a signature file is skipped only when nothing in it looks like a statement
+    if (/\.xades$/i.test(c.name) && !STATEMENT_HINT.test(text) && kb < 64) return { ...c, kind: "skipped", reason: `a signature only, ${kb} KB` };
+    return { ...c, kind: "unreadable", reason: `${message} (${kb} KB${STATEMENT_HINT.test(text) ? ", looks like it holds a statement: please send this file" : ""})` };
   }
 }
 
@@ -109,7 +139,8 @@ const label = (f: Candidate) => (f.fromZip ? f.fromZip + " › " + f.name : f.na
 const sha = (d: Buffer) => createHash("sha256").update(d).digest("hex");
 const millions = (v?: number) => (v === undefined ? "—" : (v / 1_000_000).toLocaleString("en-US", { maximumFractionDigits: 1 }));
 const slug = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ł/g, "l").replace(/Ł/g, "L")
-  .replace(/[^A-Za-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40);
+  .replace(/^(Grupa Kapitalowa|Grupa Kapitałowa|GK)\s+/i, "").replace(/[^A-Za-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40);
+const scopeName = (s?: string) => (s === "group" ? "group" : s === "single" ? "single company" : "scope ?");
 
 async function main() {
   const { folder, to, mode } = parseArgs(process.argv.slice(2));
@@ -119,62 +150,80 @@ async function main() {
     join(process.cwd(), "scripts", "sort-filings", "checklist.json")].find(p => existsSync(p));
   if (!checklistPath) throw new Error("checklist.json not found: run from the repository root");
   const checklist: Expected[] = JSON.parse(readFileSync(checklistPath, "utf-8"));
+  const companyOf = (krs?: string) => checklist.find(e => e.krs === krs)?.company;
 
   const found: Found[] = [];
   for (const c of candidates(folder, to)) found.push(await examine(c));
-  const statements = found.filter(f => f.kind === "statement");
+  const usable = found.filter(f => f.kind === "statement" || f.kind === "pdf");
 
-  console.log(`\n${folder}: ${found.length} file(s), ${statements.length} statement(s)\n`);
-  const seen = new Map<string, Found>();
+  console.log(`\n${folder}: ${found.length} file(s), ${found.filter(f => f.kind === "statement").length} statement(s), ${found.filter(f => f.kind === "pdf").length} PDF(s)\n`);
+  const seen = new Map<string, Found>();      // first file per company, year and scope
+  const bySha = new Map<string, Found>();
+  const keep: Found[] = [];
   for (const f of found) {
     const where = label(f);
     if (f.kind === "skipped") { console.log(`  · ${where}: skipped (${f.reason})`); continue; }
     if (f.kind === "unreadable") { console.log(`  ✗ ${where}: can't be read: ${f.reason}`); continue; }
-    if (f.kind === "pdf") { console.log(`  ? ${where}: PDF, not checked here (read by the model on import, ~$0.15)`); continue; }
-    const p = f.filing!;
-    const cur = p.periods[0];
-    const key = `${f.krs ?? p.lei}#${cur.periodEnd}#${p.scope}`;
-    const dup = seen.get(key);
+    const p = f.filing;
+    const company = p?.companyName ?? companyOf(f.krs) ?? "company ?";
+    const same = f.sha ? bySha.get(f.sha) : undefined;
+    const key = f.krs && f.year && f.scope ? `${f.krs}#${f.year}#${f.scope}` : undefined;
+    const dup = key ? seen.get(key) : undefined;
     const exp = checklist.find(e => e.krs === f.krs && e.year === f.year);
     const other = exp ? undefined : checklist.find(e => e.krs === f.krs);
-    const notes = !exp && !other && f.krs ? ["not on the checklist: fine to import if it's newer than what the app has"] : [];
     const flags = [
-      p.checks.length ? `checks failed: ${p.checks.join("; ")}` : "",
-      f.months !== 12 ? `${f.months}-month period, not a full year` : "",
-      dup ? "same company, year and scope as " + label(dup) + (dup.sha === f.sha ? " (identical file)" : "") : "",
-      exp && exp.scope !== p.scope ? "the checklist asks for the " + (exp.scope === "group" ? "group (Skonsolidowane)" : "single-company") + " report" : "",
-      !exp && other ? "wrong year: the checklist asks for FY" + other.year + " (this is FY" + f.year + ")" : "",
-      !f.krs ? "no KRS number found" + (p.lei ? " (LEI " + p.lei + " not in the KRS, or GLEIF unreachable)" : "") : "",
+      p?.checks.length ? `checks failed: ${p.checks.join("; ")}` : "",
+      p && f.months !== 12 ? `${f.months}-month period, not a full year` : "",
+      same ? "identical to " + label(same) : dup ? "same company, year and scope as " + label(dup) + ": keep the better one" : "",
+      exp && f.scope && exp.scope !== f.scope ? (exp.scope === "group"
+        ? "the checklist asks for the group report (Skonsolidowane): take it if the company files one"
+        : "the checklist asks for the single-company report") : "",
+      !f.krs ? "no KRS number found" + (f.lei ? " (LEI " + f.lei + " not in the KRS, or GLEIF unreachable)" : "") : "",
+      f.kind === "pdf" && !f.year ? "fiscal year not found in the text" : "",
+      f.kind === "pdf" && /draft|projekt/i.test(f.name) ? "the file name says draft: check it's the final, audited version" : "",
     ].filter(Boolean);
-    if (!dup) seen.set(key, f);
-    console.log(`  ${flags.length ? "!" : "✓"} ${where}`);
-    console.log("      " + [p.companyName, "KRS " + (f.krs ?? "?"), ...(p.lei ? ["LEI " + p.lei] : []), p.scope === "group" ? "group" : "single company", "FY ending " + cur.periodEnd, p.format + ", " + p.currency].join(" · "));
-    console.log(`      revenue ${millions(cur.figures.revenue?.value)} m · net profit ${millions(cur.figures.netProfit?.value)} m · total assets ${millions(cur.figures.totalAssets?.value)} m · ${p.periods.length} year(s) in the file`);
+    const notes = [
+      f.kind === "pdf" ? "PDF: read by the model on import (~$0.15); the figures aren't checked here" : "",
+      !exp && other && f.year ? (f.year < other.year ? `an earlier year than the checklist's FY${other.year}: adds history` : `a later year than the checklist's FY${other.year}`) : "",
+      !exp && !other && f.krs ? "not on the checklist: fine to import if it's newer than what the app has" : "",
+    ].filter(Boolean);
+    if (f.sha && !same) bySha.set(f.sha, f);
+    if (key && !dup) seen.set(key, f);
+    if (!same && !dup) keep.push(f);
+    console.log(`  ${flags.length ? "!" : f.kind === "pdf" ? "?" : "✓"} ${where}`);
+    console.log("      " + [company, "KRS " + (f.krs ?? "?"), ...(f.lei ? ["LEI " + f.lei] : []), scopeName(f.scope),
+      f.year ? (p ? "FY ending " + p.periods[0].periodEnd : "FY" + f.year) : "year ?", p ? p.format + ", " + p.currency : "pdf"].join(" · "));
+    if (p) {
+      const cur = p.periods[0];
+      console.log(`      revenue ${millions(cur.figures.revenue?.value)} m · net profit ${millions(cur.figures.netProfit?.value)} m · total assets ${millions(cur.figures.totalAssets?.value)} m · ${p.periods.length} year(s) in the file`);
+    }
+    if (f.reason) console.log("      · " + f.reason);
     for (const fl of flags) console.log("      ! " + fl);
     for (const n of notes) console.log("      · " + n);
   }
 
-  // What the checklist still needs
-  const have = new Set(statements.map(f => `${f.krs}#${f.year}#${f.filing!.scope}`));
+  // What the checklist still needs (a PDF counts: it can be imported, at a model call's cost)
+  const have = new Set(usable.map(f => `${f.krs}#${f.year}#${f.scope}`));
   const missing = checklist.filter(e => !have.has(`${e.krs}#${e.year}#${e.scope}`));
   console.log(`\nChecklist: ${checklist.length - missing.length} of ${checklist.length} here.` +
     (missing.length ? ` Still missing: ${missing.filter(m => !m.optional).length} required, ${missing.filter(m => m.optional).length} optional.` : ""));
   for (const m of missing.filter(m => !m.optional)) console.log(`  - ${m.company} (KRS ${m.krs}) FY${m.year} ${m.scope}`);
 
   if (mode === "report") {
-    console.log(`\nNothing copied. Add --copy (or --move) to sort the statements into ${to}`);
+    console.log(`\nNothing copied. Add --copy (or --move) to sort the files into ${to}`);
     return;
   }
   mkdirSync(to, { recursive: true });
   let written = 0;
-  for (const f of seen.values()) {
-    const p = f.filing!;
-    const ext = isZip(f.data) ? (extname(f.name).toLowerCase() === ".xbri" ? ".xbri" : ".zip") : extname(f.name).toLowerCase() || ".xml";
-    const dir = join(to, (f.krs ?? "LEI-" + p.lei) + "-" + slug(p.companyName));
+  for (const f of keep) {
+    const company = f.filing?.companyName ?? companyOf(f.krs) ?? "unknown";
+    const ext = f.kind === "pdf" ? ".pdf" : isZip(f.data) ? (extname(f.name).toLowerCase() === ".xbri" ? ".xbri" : ".zip") : extname(f.name).toLowerCase() || ".xml";
+    const dir = join(to, f.krs || f.lei ? (f.krs ?? "LEI-" + f.lei) + "-" + slug(company) : "unknown");
     mkdirSync(dir, { recursive: true });
-    let dest = join(dir, `FY${f.year}-${p.scope}${ext}`);
+    const stem = f.year ? `FY${f.year}-${f.scope ?? "scope"}` : basename(f.name, extname(f.name));
+    let dest = join(dir, stem + ext);
     if (existsSync(dest) && sha(readFileSync(dest)) === f.sha) { console.log(`  = ${dest} (already there)`); continue; }
-    for (let n = 2; existsSync(dest); n++) dest = join(dir, `FY${f.year}-${p.scope}-${n}${ext}`);
+    for (let n = 2; existsSync(dest); n++) dest = join(dir, `${stem}-${n}${ext}`);
     if (f.fromZip) writeFileSync(dest, f.data);
     else if (mode === "move") {
       // a move to another drive can't be a rename (EXDEV on Windows or Linux)
@@ -184,7 +233,8 @@ async function main() {
     written++;
     console.log(`  → ${dest}`);
   }
-  console.log(`\n${written} statement(s) ${mode === "move" ? "moved" : "copied"} to ${to}. Next: npm run import-filing -- --dry-run <files>, inside sst shell for the issuer match.`);
+  console.log(`\n${written} file(s) ${mode === "move" ? "moved" : "copied"} to ${to}. Next: npm run import-filing -- --dry-run <files>, inside sst shell for the issuer match.`);
 }
 
-main().catch(e => { console.error(e instanceof Error ? e.message : e); process.exit(1); });
+// exit explicitly: the PDF reader can leave handles open, which hangs the runner (esrun) at the end
+main().then(() => process.exit(0), e => { console.error(e instanceof Error ? e.message : e); process.exit(1); });
