@@ -6,7 +6,7 @@ import { IssuerFinancialsTable, type DbIssuerFinancialsRecord } from '@core/stor
 import { ruleSetFor, scorecardFromReportedYears, type FundamentalScorecard, type ReportedYear, type RuleSet } from '@core/bonds/fundamentals/scorecard';
 import { filedYears } from '@core/bonds/fundamentals/filings/filedYears';
 import { isInFundamentalScope } from '@core/bonds/fundamentals/scope';
-import { latestReport, refinancing, refinancingDimension, type ListedBond, type Rates } from '@core/bonds/fundamentals/maturities';
+import { amountOwed, latestReport, refinancing, refinancingDimension, type ListedBond, type Rates } from '@core/bonds/fundamentals/maturities';
 import { nbpRates } from '@core/bonds/fx/nbp';
 import { dataConfidence, type ConfidenceSource } from '@core/bonds/fundamentals/confidence';
 import { BondDetailsTable } from '@core/storage/bondDetails';
@@ -180,7 +180,10 @@ export const handler = lambdaHandler(async () => {
         new BondDetailsTable(dynamoDBClient, Resource.BondDetails.name).getActive(CORPORATE_BONDS),
         rates(),
     ]);
-    const listed = bonds.map(b => ({ issuer: b.issuer, isin: b.isin, name: b.name, currency: b.currency, issueValue: b.issueValue, maturityDay: b.maturityDay.toISOString().slice(0, 10) }));
+    const listed = bonds.map(b => {
+        const { owed, issued } = amountOwed(b.issueValue, b.nominalValue, b.issuedNominal);
+        return { issuer: b.issuer, isin: b.isin, name: b.name, currency: b.currency, issueValue: owed, ...(issued !== undefined ? { issued } : {}), maturityDay: b.maturityDay.toISOString().slice(0, 10) };
+    });
     const today = new Date().toISOString().slice(0, 10);
     return Success({ issuerProfiles: buildIssuerProfiles(issuerProfiles, analysisSummaries, financials, identities, { bonds: listed, rates: fx, today }) });
 });

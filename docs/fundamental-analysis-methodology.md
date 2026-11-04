@@ -102,8 +102,8 @@ Each step below says what to do, where the data is, the rules, and the traps fou
 The nominal value of a bond isn't fixed. Read it **from Catalyst's daily statistics file on the day
 you need it**, never once at listing. Found on 2026-11-04 (from PortfolioTracker's work and a check of
 prod): 53 of 1,051 listed bonds had a nominal different from the one CatalystViewer stored when it first
-saw them. **CatalystViewer stores the nominal once and never updates it**, so yields, accrued interest
-and the amount outstanding are wrong for these bonds (section 15).
+saw them. Until 2026-11-04 CatalystViewer stored the nominal once and never updated it, so yields,
+accrued interest and the amount outstanding were wrong for these bonds. It now updates it on every run.
 
 **Instalment redemptions (amortising bonds).** Part of the principal is repaid before maturity, so the
 nominal per bond falls:
@@ -112,8 +112,14 @@ nominal per bond falls:
 - more were probably first seen after an instalment (corporate bonds with nominals of 500, 550, 600).
 
 For these:
-- **Amount outstanding** = issue value × current nominal / original nominal. KRU0228: 350m PLN issued,
-  192.5m outstanding.
+- **Amount outstanding** = issue value × current nominal / the nominal on the day the issue value was
+  read. KRU0228: prod read 350m PLN at nominal 1,000, dev read 192.5m at 550, both 192.5m outstanding now.
+  **Built (2026-11-04):** the Bonds Updater stores the current nominal from the Catalyst file on every run
+  and keeps the issue-day one (`issuedNominal`); Refinancing counts the amount owed (`amountOwed` in
+  `maturities.ts`).
+- obligacje.pl's "Wartość emisji w obrocie" is the amount **in circulation on the day it's read**. It
+  also changes with new tranches (taps) and buy-backs. The app reads it once, so those go unseen. IZ0836
+  read 1.1bn PLN in prod and 24.2bn on dev, because the Treasury keeps issuing it.
 - **Instalments are payments due before maturity.** For refinancing, they belong in the 12 and 24
   month windows on their own dates (from the terms of issue), not only the final redemption.
 - **Interest and accrued interest** run on the current nominal.
@@ -543,9 +549,12 @@ its business makes, or does it depend on refinancing? **Built**, for every issue
   - listed bonds vs the balance sheet's bond line when they differ by more than 5%. Cyfrowy Polsat lists
     2,670m PLN against 4,020m in its balance sheet: not all its bonds are on Catalyst.
 
-Not included yet: bank loans due, undrawn credit lines, developers' escrow accounts; and instalment
-redemptions (the amount outstanding is issue value × current nominal / original nominal, and each
-instalment is due on its own date: step 1, "A bond's nominal value can change"; section 15).
+Bonds repaid in instalments are counted at the amount still owed (step 1, "A bond's nominal value can
+change"). Since the dates of later instalments aren't in any data the app has, the whole remainder is
+counted at maturity, and the card names those bonds.
+
+Not included yet: bank loans due, undrawn credit lines, developers' escrow accounts, the dates of later
+instalments, new tranches and buy-backs after the bond was first seen (section 15).
 
 ---
 
@@ -694,7 +703,7 @@ Lessons from imports so far. Check here before treating a strange result as the 
 | Allegro.eu, Żabka Group | registered in Luxembourg | under the LEI |
 | Echo Investment | developer with investment property; EUR bonds | developer rules count investment property in the stock; NBP rates for the EUR bonds |
 | WB Electronics | no LEI | no identity |
-| Kruk KRU0228, Resi Capital RES0228 | instalment redemptions: nominal 1,000 → 550 and → 709.27 | amount outstanding from the current nominal (not built yet) |
+| Kruk KRU0228, Resi Capital RES0228 | instalment redemptions: nominal 1,000 → 550 and → 709.27 | amount owed from the current nominal; the remainder counted at maturity |
 | IZ0831, IZ0836 (State Treasury) | inflation-indexed nominal | current nominal from the Catalyst file; formula in step 1 |
 
 Results on 2026-11-03/04, prod: 27 issuers scored from reports, 16 from AI-collected figures, 31 in
@@ -727,11 +736,10 @@ In the order the roadmap would take them:
 4. **Developers:** escrow accounts and pre-sales from the notes, land bank. **Contractors:** order
    backlog.
 5. **Undrawn credit lines** and bank loans due, in Refinancing.
-6. **Current nominal and instalments:**
-    - update each bond's nominal from the daily Catalyst file. Today it's stored once, so yields, accrued
-      interest and the "high nominal" marker are off for 53 bonds;
-    - give Refinancing the amount outstanding and the instalment dates (from the terms of issue);
-    - value IZ bonds on the indexed nominal.
+6. **Instalment dates and amounts in circulation:**
+    - the current nominal and the amount owed are built (2026-11-04);
+    - left: the dates of later instalments (from the terms of issue), and re-reading the amount in
+      circulation for new tranches and buy-backs.
 7. **Trailing 12 months** from half-year and quarterly reports, instead of the last full year.
 8. **Calibration** of the thresholds on past Catalyst defaults (GetBack 2018 and others), compared with
    Polish bankruptcy models. The sample is small, so this is calibration, not machine learning.

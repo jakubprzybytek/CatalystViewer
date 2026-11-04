@@ -3,7 +3,17 @@
 import type { DimensionResult, Signal } from './scorecard';
 import type { DbIssuerFinancialsRecord } from '../../storage/issuerFinancials';
 
-export type ListedBond = { isin: string; name: string; currency: string; issueValue: number; maturityDay: string };
+// issueValue: the amount still owed (issued, less instalments already repaid); issued: as issued, when more
+export type ListedBond = { isin: string; name: string; currency: string; issueValue: number; maturityDay: string; issued?: number };
+
+// What a bond still owes: the issue value at its current nominal. An instalment redemption lowers the nominal
+// (Kruk KRU0228: 1,000 → 550), so 350m issued is 192.5m owed; `issued` is set then. An indexed nominal
+// (IZ treasury bonds) rises with inflation: the owed amount follows it, with no instalments.
+export function amountOwed(issueValue: number, nominal: number, issuedNominal: number | undefined): { owed: number; issued?: number } {
+    if (!issuedNominal || !(nominal > 0) || Math.abs(nominal - issuedNominal) < 0.005) return { owed: issueValue };
+    const owed = issueValue * nominal / issuedNominal;
+    return nominal < issuedNominal ? { owed, issued: issueValue } : { owed };
+}
 
 // PLN per one unit of a currency (NBP table A); PLN itself is 1.
 export type Rates = Record<string, number>;
@@ -13,7 +23,8 @@ export type ScheduledBond = {
     name: string;
     maturityDay: string;      // YYYY-MM-DD
     currency: string;
-    amount: number;           // issued, units of its currency
+    amount: number;           // owed, units of its currency
+    issued?: number;          // as issued, when instalments have been repaid
     inReportCurrency?: number;  // undefined when there's no rate for its currency
 };
 
@@ -65,6 +76,7 @@ export function refinancing(bonds: ListedBond[], report: DbIssuerFinancialsRecor
             const to = rate(reportCurrency);
             return {
                 isin: b.isin, name: b.name, maturityDay: b.maturityDay.slice(0, 10), currency: b.currency, amount: b.issueValue,
+                ...(b.issued !== undefined ? { issued: b.issued } : {}),
                 ...(from && to ? { inReportCurrency: b.issueValue * from / to } : {}),
             };
         })
@@ -96,7 +108,9 @@ export function refinancing(bonds: ListedBond[], report: DbIssuerFinancialsRecor
     }
 
     notes.push(`cash from the report at ${report.periodEnd}; bonds due counted from ${today}`);
-    notes.push('listed bonds only, as issued: loans, unlisted bonds and early redemptions are not included');
+    notes.push('listed bonds only, as issued less instalments repaid: loans, unlisted bonds and bonds bought back are not included');
+    const instalments = scheduled.filter(b => b.issued !== undefined);
+    if (instalments.length) notes.push(`${instalments.map(b => b.name).join(', ')}: repaid in instalments, the amount still owed is counted at maturity (the dates of later instalments aren't known)`);
     if (balanceSheetBonds !== undefined && balanceSheetBonds > 0 && Math.abs(listed - balanceSheetBonds) > 0.05 * balanceSheetBonds) {
         notes.push(`listed bonds ${fmt(listed)} m vs ${fmt(balanceSheetBonds)} m of bonds in the balance sheet`);
     }

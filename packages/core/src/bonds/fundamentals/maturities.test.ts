@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { latestReport, refinancing, refinancingDimension, type ListedBond } from './maturities';
+import { amountOwed, latestReport, refinancing, refinancingDimension, type ListedBond } from './maturities';
 import { nbpRates, parseNbpTable } from '../fx/nbp';
 import type { DbIssuerFinancialsRecord } from '../../storage/issuerFinancials';
 
@@ -80,6 +80,29 @@ describe('refinancing', () => {
             'Cash + operating cash flow cover, 24 months: -2.72×',
         ]);
         expect(d.notes).toContain('cash from the report at 2025-12-31; bonds due counted from 2026-11-03');
+    });
+});
+
+describe('amountOwed', () => {
+    it('counts a bond repaid in instalments at its current nominal (Kruk KRU0228: 1,000 → 550)', () => {
+        expect(amountOwed(350 * M, 550, 1000)).toEqual({ owed: 192.5 * M, issued: 350 * M });
+    });
+
+    it('follows an indexed nominal up, with no instalments (IZ0836)', () => {
+        expect(amountOwed(1000 * M, 1109.02, 1023.34)).toEqual({ owed: 1000 * M * 1109.02 / 1023.34 });
+    });
+
+    it('keeps the issue value when the nominal is unchanged or the issue-day nominal unknown', () => {
+        expect(amountOwed(100 * M, 1000, 1000)).toEqual({ owed: 100 * M });
+        expect(amountOwed(100 * M, 550, undefined)).toEqual({ owed: 100 * M });
+    });
+
+    it('in refinancing, counts what is owed and says which bonds are repaid in instalments', () => {
+        const kru = { ...bond('KRU0228', '2028-02-10', 192.5), issued: 350 * M };
+        const r = refinancing([kru], report({ cash: 213, operatingCashFlow: 293 }), TODAY, {});
+        expect(r.report!.due24).toBe(192.5 * M);
+        expect(r.bonds[0]).toMatchObject({ amount: 192.5 * M, issued: 350 * M });
+        expect(r.notes).toContain("KRU0228: repaid in instalments, the amount still owed is counted at maturity (the dates of later instalments aren't known)");
     });
 });
 

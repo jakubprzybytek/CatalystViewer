@@ -8,8 +8,9 @@ export type DbBondDetails = {
     market: string;
     issuer: string;
     type: string;
-    nominalValue: number;
-    issueValue: number;
+    nominalValue: number;      // current, from the Catalyst file (falls with instalment redemptions; IZ bonds: indexed)
+    issueValue: number;        // from obligacje.pl when the bond was first seen, at that day's nominal
+    issuedNominal?: number;    // the nominal on that day: bonds in circulation = issueValue / issuedNominal
     currency: string;
     maturityDay: Date;
     maturityDayTs: number;

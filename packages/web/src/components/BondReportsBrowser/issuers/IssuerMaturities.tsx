@@ -44,7 +44,7 @@ export default function IssuerMaturities({ refinancing }: { refinancing: Refinan
               <TableRow>
                 <TableCell>Year</TableCell>
                 <TableCell>Bonds</TableCell>
-                <TableCell align='right'>Issued, m {currency}</TableCell>
+                <TableCell align='right'>Owed, m {currency}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -55,6 +55,7 @@ export default function IssuerMaturities({ refinancing }: { refinancing: Refinan
                     {y.bonds.map(b => (
                       <Typography key={b.isin} variant='caption' component='div'>
                         {b.name} · {b.maturityDay}{b.currency !== currency && ` · ${m(b.amount)} m ${b.currency}`}
+                        {b.issued !== undefined && ` · instalments: ${m(b.amount)} of ${m(b.issued)} m ${b.currency} still owed`}
                       </Typography>
                     ))}
                   </TableCell>

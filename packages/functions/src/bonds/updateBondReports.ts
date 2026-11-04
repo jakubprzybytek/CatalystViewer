@@ -71,6 +71,9 @@ export async function handler(input: UpdateBondsInput | undefined, context: Cont
         updatedBondsToStore.push({
           ...storedBondDetails,
           updatedTs: currentTime.getTime(),
+          // The nominal changes (instalment redemptions, IZ indexation); the one the issue value was read at stays
+          nominalValue: bondStats.nominalValue,
+          issuedNominal: storedBondDetails.issuedNominal ?? storedBondDetails.nominalValue,
           currentInterestRate: bondStats.currentInterestRate,
           accuredInterest: bondStats.accuredInterest,
           referencePrice: bondQuote.referencePrice,
@@ -100,6 +103,7 @@ export async function handler(input: UpdateBondsInput | undefined, context: Cont
           type: bondStats.type,
           nominalValue: bondStats.nominalValue,
           issueValue: bondInformation.issueValue,
+          issuedNominal: bondStats.nominalValue,
           currency: bondStats.tradingCurrency,
           maturityDay: bondStats.maturityDay,
           maturityDayTs: bondStats.maturityDay.getTime(),
