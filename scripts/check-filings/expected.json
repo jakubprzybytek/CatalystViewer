@@ -487,6 +487,66 @@
         "equity": 2493708,
         "cash": 1078992
       }
+    },
+    {
+      "issuer": "art.Locum S.A.",
+      "entityId": "0000291818",
+      "period": "2025-12-31#group",
+      "file": "filings/0000291818/2025-12-31-group-2967784fba76.pdf",
+      "format": "ai-pdf",
+      "currency": "PLN",
+      "thousands": {
+        "revenue": 102021,
+        "netProfit": 13289,
+        "totalAssets": 368092,
+        "equity": 239372,
+        "cash": 63620
+      }
+    },
+    {
+      "issuer": "art.Locum S.A.",
+      "entityId": "0000291818",
+      "period": "2024-12-31#group",
+      "file": "filings/0000291818/2024-12-31-group-2715355d1876.pdf",
+      "format": "ai-pdf",
+      "currency": "PLN",
+      "thousands": {
+        "revenue": 62048,
+        "netProfit": 8628,
+        "totalAssets": 342722,
+        "equity": 230235,
+        "cash": 51287
+      }
+    },
+    {
+      "issuer": "Ronson Development SE",
+      "entityId": "0000755299",
+      "period": "2025-12-31#group",
+      "file": "filings/0000755299/2025-12-31-group-a4cf2fd79810.pdf",
+      "format": "ai-pdf",
+      "currency": "PLN",
+      "thousands": {
+        "revenue": 430727,
+        "netProfit": 76266,
+        "totalAssets": 1404966,
+        "equity": 630715,
+        "cash": 181228
+      }
+    },
+    {
+      "issuer": "Ronson Development SE",
+      "entityId": "0000755299",
+      "period": "2024-12-31#group",
+      "file": "filings/0000755299/2024-12-31-group-b97fac89bc21.pdf",
+      "format": "ai-pdf",
+      "currency": "PLN",
+      "thousands": {
+        "revenue": 387678,
+        "netProfit": 67602,
+        "totalAssets": 1275201,
+        "equity": 553824,
+        "cash": 289178
+      }
     }
   ]
 }
