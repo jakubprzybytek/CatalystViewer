@@ -26,6 +26,7 @@ export type FinancialYearData = {
   leases?: number;             // lease liabilities, part of financialDebt
   interestPaid?: number;       // cash flow, positive
   writeDowns?: number;         // write-downs of non-financial assets in EBIT, not in depreciation
+  ebitDerived?: number;        // 1 when EBIT is profit before tax and net finance costs: the income statement prints no operating profit
 };
 
 export type MetricResult = {
@@ -109,10 +110,13 @@ function ebitdaOf(year: FinancialYearData): number | undefined {
 function netDebtOf(year: FinancialYearData): number | undefined {
   return year.financialDebt != null && year.cash != null ? year.financialDebt - year.cash : undefined;
 }
-function writeDownNote(year: FinancialYearData): string[] {
-  return year.writeDowns != null && year.writeDowns > 0
-    ? [`EBIT and EBITDA before a ${year.writeDowns.toLocaleString('en-US', { maximumFractionDigits: 0 })} m write-down of non-financial assets`]
-    : [];
+function ebitNotes(year: FinancialYearData): string[] {
+  return [
+    ...(year.ebitDerived ? ['EBIT derived as profit before tax plus net finance costs (no operating profit line in the report); it includes results of associates and joint ventures'] : []),
+    ...(year.writeDowns != null && year.writeDowns > 0
+      ? [`EBIT and EBITDA before a ${year.writeDowns.toLocaleString('en-US', { maximumFractionDigits: 0 })} m write-down of non-financial assets`]
+      : []),
+  ];
 }
 
 const metric = (name: string, value: number | null, formattedValue: string, signal: Signal): MetricResult => ({ name, value, formattedValue, signal });
@@ -141,7 +145,7 @@ function ndEbitdaMetric(year: FinancialYearData, name: string, green: number, ye
 }
 
 function computeDebtBurden(year: FinancialYearData, rules: RuleSet): DimensionResult {
-  const notes = writeDownNote(year);
+  const notes = ebitNotes(year);
   if (rules === 'developer') {
     const netDebt = netDebtOf(year);
     const stock = year.inventory != null ? year.inventory + (year.investmentProperty ?? 0) : undefined;
@@ -173,7 +177,7 @@ function computeDebtService(year: FinancialYearData, rules: RuleSet): DimensionR
   // Developers add interest to the cost of the flats: the interest paid is what they owe
   const paid = rules === 'developer' && year.interestPaid != null && year.interestPaid > 0;
   const icr = div(ebitBeforeWriteDowns(year), paid ? year.interestPaid : year.interestExpense);
-  return dimension('Debt Service', [metric(paid ? 'ICR (interest paid)' : 'ICR', icr, mult(icr), higher(3.0, 1.5)(icr))], writeDownNote(year));
+  return dimension('Debt Service', [metric(paid ? 'ICR (interest paid)' : 'ICR', icr, mult(icr), higher(3.0, 1.5)(icr))], ebitNotes(year));
 }
 
 // ─── Dimension 3 — Liquidity ──────────────────────────────────────────────────
@@ -212,7 +216,7 @@ function computeProfitability(year: FinancialYearData, rules: RuleSet): Dimensio
   return dimension('Profitability', [
     metric('EBIT Margin', ebitMargin, pct(ebitMargin), higher(...ebit)(ebitMargin)),
     metric('Net Margin', netMargin, pct(netMargin), higher(...net)(netMargin)),
-  ]);
+  ], year.ebitDerived ? ebitNotes(year).slice(0, 1) : []);
 }
 
 // ─── Dimension 5 — Asset Coverage ────────────────────────────────────────────

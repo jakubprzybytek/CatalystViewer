@@ -26,6 +26,16 @@ export function writeDownsOutsideDepreciation(record: Pick<DbIssuerFinancialsRec
     const included = sources.some(s => !s.startsWith('−') && IMPAIRMENT_SOURCE.test(s)) && !sources.some(s => s.startsWith('−') && IMPAIRMENT_SOURCE.test(s));
     return included ? 0 : writeDowns;
 }
+
+// EBIT for an income statement without an operating profit line (KGHM, Polenergia): profit before tax
+// with the finance costs added back and the finance income taken out. Amounts in units, signs as printed
+// or as costs, so both are taken as sizes.
+export function ebitFromProfitBeforeTax(items: DbIssuerFinancialsRecord['items']): number | undefined {
+    const pbt = items?.profitBeforeTax;
+    if (pbt === undefined || (items?.financeCosts === undefined && items?.financeIncome === undefined)) return undefined;
+    return pbt + Math.abs(items.financeCosts ?? 0) - Math.abs(items.financeIncome ?? 0);
+}
+
 const MAX_YEARS = 5;
 
 export type FiledYears = {
@@ -59,6 +69,11 @@ export function filedYears(records: DbIssuerFinancialsRecord[]): FiledYears | un
             for (const [field, item] of ITEM_INPUTS) {
                 const total = r.items?.[item];
                 if (total !== undefined) (year as Record<string, number | null>)[field] = total / 1_000_000;
+            }
+            const derivedEbit = r.figures.ebit ? undefined : ebitFromProfitBeforeTax(r.items);
+            if (derivedEbit !== undefined) {
+                year.ebit = derivedEbit / 1_000_000;
+                year.ebitDerived = 1;
             }
             const writeDowns = writeDownsOutsideDepreciation(r);
             if (writeDowns !== undefined) year.writeDowns = writeDowns / 1_000_000;

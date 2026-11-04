@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { DbIssuerFinancialsRecord } from '../../../storage/issuerFinancials';
-import { filedYears } from './filedYears';
+import { ebitFromProfitBeforeTax, filedYears } from './filedYears';
 
 function row(periodEnd: string, scope: 'single' | 'group', revenue: number, months = 12): DbIssuerFinancialsRecord {
     return {
@@ -33,5 +33,22 @@ describe('filedYears', () => {
         const result = filedYears(rows);
         expect(result?.scope).toBe('single');
         expect(result?.years.map(y => y.year)).toEqual([2025, 2024, 2023, 2022, 2021]);
+    });
+
+    it('derives EBIT from profit before tax when the report prints no operating profit (Polenergia FY2025)', () => {
+        const polenergia = { ...row('2025-12-31', 'group', 4_225_771_000), items: { profitBeforeTax: -59_124_000, financeCosts: -299_817_000, financeIncome: 75_466_000 } };
+        const year = filedYears([polenergia])!.years[0];
+        expect(year.ebit).toBeCloseTo(165.227, 3);
+        expect(year.ebitDerived).toBe(1);
+        // costs printed as positive amounts give the same
+        expect(ebitFromProfitBeforeTax({ profitBeforeTax: -59_124_000, financeCosts: 299_817_000, financeIncome: 75_466_000 })).toBe(165_227_000);
+    });
+
+    it('keeps a printed EBIT, and derives nothing without profit before tax or finance lines', () => {
+        const printed = { ...row('2025-12-31', 'group', 100), figures: { ebit: { value: 20_000_000, source: ['x'] } }, items: { profitBeforeTax: 1, financeCosts: -1 } };
+        expect(filedYears([printed])!.years[0]).toMatchObject({ ebit: 20 });
+        expect(filedYears([printed])!.years[0].ebitDerived).toBeUndefined();
+        expect(ebitFromProfitBeforeTax({ profitBeforeTax: 5 })).toBeUndefined();
+        expect(ebitFromProfitBeforeTax({ financeCosts: -5 })).toBeUndefined();
     });
 });

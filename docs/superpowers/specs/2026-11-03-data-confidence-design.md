@@ -73,7 +73,7 @@ Polska Grupa Farmaceutyczna).
 
 ## Not now
 
-- **Derived EBIT** for income statements without an operating profit line (KGHM, Polenergia).
+- ~~Derived EBIT for income statements without an operating profit line (KGHM, Polenergia).~~ Done 2026-11-04: both are now high.
 - **A third year for the 23 two-year reports**, by importing each previous report. That's a data task, the
   same importer.
 - **Re-running the 10 FY2024 AI analyses**, which are paid AI calls. Better: import their reports (Develia,
