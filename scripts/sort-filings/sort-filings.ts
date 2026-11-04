@@ -22,7 +22,8 @@ import type { ParsedFiling } from "../../packages/core/src/bonds/fundamentals/fi
 import { readPdfPages } from "../../packages/core/src/bonds/fundamentals/filings/pdfText";
 import { findKrs, findLei } from "../../packages/core/src/bonds/fundamentals/filings/AiPdfExtractor";
 
-type Expected = { company: string; krs: string; year: number; scope: "single" | "group"; optional?: boolean };
+// scope "any": group accounts if the company files them, else its own (small companies often have no group)
+type Expected = { company: string; krs: string; year: number; scope: "single" | "group" | "any"; optional?: boolean };
 
 // A statement found: a file, or an entry of a zip that isn't itself an ESEF package
 type Candidate = { source: string; name: string; data: Buffer; fromZip?: string };
@@ -38,6 +39,7 @@ type Found = Candidate & {
   year?: number;
   months?: number;
   sha?: string;
+  text?: string;   // a PDF's text, for finding its company when no KRS number is printed
 };
 
 const SKIP = /\.(sig|p7s|txt|html?|docx?|xlsx?|jpe?g|png)$/i;
@@ -107,7 +109,8 @@ async function pdfFacts(c: Candidate): Promise<Partial<Found>> {
     const year = Number(text.match(MONTH_END)?.[3] ?? c.name.match(/(?:za rok|rok obrotowy|FY|_)\s*(20\d\d)/i)?.[1]) || undefined;
     const group = /skonsolidowan|consolidated/i.test(c.name + " " + text.slice(0, 4000));
     const lei = findLei(pages) ?? findLei(all);
-    return { krs: findKrs(pages) ?? findKrs(all) ?? (lei ? await krsOfLei(lei) : undefined), lei, year, scope: group ? "group" : "single" };
+    return { krs: findKrs(pages) ?? findKrs(all) ?? (lei ? await krsOfLei(lei) : undefined), lei, year, scope: group ? "group" : "single",
+      text: all.map(p => p.lines.join(" ")).join(" ") };
   } catch (e) {
     return { reason: "its text can't be read: " + (e as Error).message.slice(0, 80) };
   }
@@ -135,7 +138,8 @@ async function examine(c: Candidate): Promise<Found> {
   }
 }
 
-const label = (f: Candidate) => (f.fromZip ? f.fromZip + " › " + f.name : f.name);
+const decoded = (n: string) => { try { return decodeURIComponent(n); } catch { return n; } };
+const label = (f: Candidate) => (f.fromZip ? f.fromZip + " › " + decoded(f.name) : decoded(f.name));
 const sha = (d: Buffer) => createHash("sha256").update(d).digest("hex");
 const millions = (v?: number) => (v === undefined ? "—" : (v / 1_000_000).toLocaleString("en-US", { maximumFractionDigits: 1 }));
 const slug = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ł/g, "l").replace(/Ł/g, "L")
@@ -151,9 +155,19 @@ async function main() {
   if (!checklistPath) throw new Error("checklist.json not found: run from the repository root");
   const checklist: Expected[] = JSON.parse(readFileSync(checklistPath, "utf-8"));
   const companyOf = (krs?: string) => checklist.find(e => e.krs === krs)?.company;
+  const scopeFits = (e: Expected, scope?: string) => e.scope === "any" || e.scope === scope;
 
   const found: Found[] = [];
   for (const c of candidates(folder, to)) found.push(await examine(c));
+  // A PDF without a KRS number: the checklist company whose KRS number or name its text gives (just one)
+  const plain = (t: string) => t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ł/gi, "l").toLowerCase().replace(/[^a-z0-9]+/g, " ");
+  const nameCore = (n: string) => plain(n).replace(/\b(s a|sa|se|sp z o o|spolka akcyjna|grupa kapitalowa)\b/g, " ").trim();
+  for (const f of found) {
+    if (f.kind !== "pdf" || f.krs || !f.text) continue;
+    const t = " " + plain(f.text) + " ";
+    const hits = [...new Set(checklist.filter(e => f.text!.includes(e.krs) || t.includes(" " + nameCore(e.company) + " ")).map(e => e.krs))];
+    if (hits.length === 1) { f.krs = hits[0]; f.reason = "company found by its name or number in the text (no KRS line)"; }
+  }
   const usable = found.filter(f => f.kind === "statement" || f.kind === "pdf");
 
   console.log(`\n${folder}: ${found.length} file(s), ${found.filter(f => f.kind === "statement").length} statement(s), ${found.filter(f => f.kind === "pdf").length} PDF(s)\n`);
@@ -175,7 +189,7 @@ async function main() {
       p?.checks.length ? `checks failed: ${p.checks.join("; ")}` : "",
       p && f.months !== 12 ? `${f.months}-month period, not a full year` : "",
       same ? "identical to " + label(same) : dup ? "same company, year and scope as " + label(dup) + ": keep the better one" : "",
-      exp && f.scope && exp.scope !== f.scope ? (exp.scope === "group"
+      exp && f.scope && !scopeFits(exp, f.scope) ? (exp.scope === "group"
         ? "the checklist asks for the group report (Skonsolidowane): take it if the company files one"
         : "the checklist asks for the single-company report") : "",
       !f.krs ? "no KRS number found" + (f.lei ? " (LEI " + f.lei + " not in the KRS, or GLEIF unreachable)" : "") : "",
@@ -203,11 +217,10 @@ async function main() {
   }
 
   // What the checklist still needs (a PDF counts: it can be imported, at a model call's cost)
-  const have = new Set(usable.map(f => `${f.krs}#${f.year}#${f.scope}`));
-  const missing = checklist.filter(e => !have.has(`${e.krs}#${e.year}#${e.scope}`));
+  const missing = checklist.filter(e => !usable.some(f => f.krs === e.krs && f.year === e.year && scopeFits(e, f.scope)));
   console.log(`\nChecklist: ${checklist.length - missing.length} of ${checklist.length} here.` +
     (missing.length ? ` Still missing: ${missing.filter(m => !m.optional).length} required, ${missing.filter(m => m.optional).length} optional.` : ""));
-  for (const m of missing.filter(m => !m.optional)) console.log(`  - ${m.company} (KRS ${m.krs}) FY${m.year} ${m.scope}`);
+  for (const m of missing.filter(m => !m.optional)) console.log(`  - ${m.company} (KRS ${m.krs}) FY${m.year} ${m.scope === "any" ? "group, or single if none" : m.scope}`);
 
   if (mode === "report") {
     console.log(`\nNothing copied. Add --copy (or --move) to sort the files into ${to}`);

@@ -78,6 +78,8 @@ const parser = new XMLParser({
     attributeNamePrefix: '@_',
     parseTagValue: false,
     trimValues: true,
+    // Some filers nest deeper than the default 100 (Vehis Finanse's 1.4 MB statement, 2026-11-04)
+    maxNestedTags: 1000,
 });
 
 function isNode(value: unknown): value is Node {
@@ -312,7 +314,19 @@ function shiftYear(date: string, years: number): string {
 
 export class UnsupportedFilingError extends Error {}
 
+// A statement inside a binary signature file (CAdES / PKCS#7, e.g. "….xml.cfg.xades" from the KRS browser):
+// the XML is stored as it is between binary headers, so it's cut out from its first tag to the root's end.
+export function embeddedStatementXml(text: string): string | undefined {
+    if (text.replace(/^\uFEFF/, '').trimStart().startsWith('<')) return undefined;
+    const start = text.search(/<\?xml|<(?:[\w-]+:)?(?:Skonsolidowana)?Jednostka\w*[\s>]/);
+    if (start < 0) return undefined;
+    const ends = [...text.slice(start).matchAll(/<\/(?:[\w-]+:)?(?:Skonsolidowana)?Jednostka\w*>/g)];
+    const last = ends.at(-1);
+    return last ? text.slice(start, start + last.index + last[0].length) : undefined;
+}
+
 export function parseFiling(xml: string): ParsedFiling {
+    xml = embeddedStatementXml(xml) ?? xml;
     let doc = parser.parse(xml) as Node;
     let root = findRoot(doc);
 

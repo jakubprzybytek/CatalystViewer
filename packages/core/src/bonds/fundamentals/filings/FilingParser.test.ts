@@ -151,6 +151,18 @@ describe('parseFiling', () => {
         expect(parseFiling(signed).krs).toBe('0000123456');
     });
 
+    it('reads a statement stored as it is inside a binary signature (CAdES)', () => {
+        const binary = (n: number) => Buffer.from(Array.from({ length: n }, (_, i) => (i * 37 + 11) % 256)).toString('latin1');
+        const signed = binary(40) + fixture('single-comparative-pln.xml') + binary(300);
+        expect(parseFiling(signed).krs).toBe('0000123456');
+    });
+
+    it('reads a statement nested deeper than 100 elements', () => {
+        const deep = '<a>'.repeat(150) + 'x' + '</a>'.repeat(150);
+        const xml = fixture('single-comparative-pln.xml').replace('<tns:Naglowek>', `<tns:Extra>${deep}</tns:Extra><tns:Naglowek>`);
+        expect(parseFiling(xml).krs).toBe('0000123456');
+    });
+
     it('rejects structures it does not map', () => {
         expect(() => parseFiling('<JednostkaMala><Naglowek/></JednostkaMala>')).toThrow(UnsupportedFilingError);
         expect(() => parseFiling('<JednostkaMala><Naglowek/></JednostkaMala>')).toThrow(/JednostkaMala/);
