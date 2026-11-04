@@ -1,37 +1,7 @@
 [
   {
-    "company": "Ronson Development SE",
-    "krs": "0000755299",
-    "year": 2025,
-    "scope": "group"
-  },
-  {
-    "company": "art.Locum S.A.",
-    "krs": "0000291818",
-    "year": 2025,
-    "scope": "group"
-  },
-  {
     "company": "Indos S.A.",
     "krs": "0000343763",
-    "year": 2025,
-    "scope": "any"
-  },
-  {
-    "company": "Grupa Corpus Iuris S.A.",
-    "krs": "0000442287",
-    "year": 2025,
-    "scope": "group"
-  },
-  {
-    "company": "Vehis Finanse Sp. z o.o.",
-    "krs": "0000791146",
-    "year": 2025,
-    "scope": "any"
-  },
-  {
-    "company": "Internetowy Fundusz Leasingowy S.A.",
-    "krs": "0000508663",
     "year": 2025,
     "scope": "any"
   },
@@ -80,6 +50,36 @@
   {
     "company": "Murapol S.A.",
     "krs": "0000275523",
+    "year": 2024,
+    "scope": "group"
+  },
+  {
+    "company": "Develia S.A.",
+    "krs": "0000253077",
+    "year": 2024,
+    "scope": "group"
+  },
+  {
+    "company": "Archicom S.A.",
+    "krs": "0000555355",
+    "year": 2024,
+    "scope": "group"
+  },
+  {
+    "company": "BBI Development S.A.",
+    "krs": "0000033065",
+    "year": 2024,
+    "scope": "group"
+  },
+  {
+    "company": "Cavatina Holding S.A.",
+    "krs": "0000690167",
+    "year": 2024,
+    "scope": "group"
+  },
+  {
+    "company": "Lokum Deweloper S.A.",
+    "krs": "0000392828",
     "year": 2024,
     "scope": "group"
   },
@@ -160,41 +160,6 @@
     "krs": "0000306150",
     "year": 2024,
     "scope": "group"
-  },
-  {
-    "company": "Develia S.A.",
-    "krs": "0000253077",
-    "year": 2024,
-    "scope": "group",
-    "optional": true
-  },
-  {
-    "company": "Archicom S.A.",
-    "krs": "0000555355",
-    "year": 2024,
-    "scope": "group",
-    "optional": true
-  },
-  {
-    "company": "BBI Development S.A.",
-    "krs": "0000033065",
-    "year": 2024,
-    "scope": "group",
-    "optional": true
-  },
-  {
-    "company": "Cavatina Holding S.A.",
-    "krs": "0000690167",
-    "year": 2024,
-    "scope": "group",
-    "optional": true
-  },
-  {
-    "company": "Lokum Deweloper S.A.",
-    "krs": "0000392828",
-    "year": 2024,
-    "scope": "group",
-    "optional": true
   },
   {
     "company": "Best S.A.",
