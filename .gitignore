@@ -27,3 +27,6 @@ infra/github/private/
 
 # E2E session of the test user (tests/e2e/global-setup.ts)
 tests/e2e/.auth/
+
+# Claude Code worktrees of other sessions
+.claude/worktrees/
