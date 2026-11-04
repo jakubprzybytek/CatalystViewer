@@ -2,7 +2,7 @@
 
 Everything worked out so far about judging whether a bond issuer can pay its bonds back, written so
 that an analyst, Claude, or the app's AI agent can do the whole analysis from nothing but a bond name.
-State on 2026-11-04 (release v1.57). What the app already does is marked **built**; what is decided
+State on 2026-11-04 (release v1.57), with bond-terms knowledge from PortfolioTracker. What the app already does is marked **built**; what is decided
 but not built is marked **planned**.
 
 The design records behind it are in `docs/superpowers/specs/` (listed at the end). When this document
@@ -93,6 +93,64 @@ Each step below says what to do, where the data is, the rules, and the traps fou
 - Currency: about 8% of active bonds are in EUR (Kruk, Echo, Orlen); the rest in PLN.
 - An issuer's **other bonds** matter as much as this one: maturities are judged over all the
   company's listed bonds, under all its names (step 8).
+
+### A bond's nominal value can change
+
+The nominal value of a bond isn't fixed. Read it **from Catalyst's daily statistics file on the day
+you need it**, never once at listing. Found on 2026-11-04 (from PortfolioTracker's work and a check of
+prod): 53 of 1,051 listed bonds had a nominal different from the one CatalystViewer stored when it first
+saw them. **CatalystViewer stores the nominal once and never updates it**, so yields, accrued interest
+and the amount outstanding are wrong for these bonds (section 15).
+
+**Instalment redemptions (amortising bonds).** Part of the principal is repaid before maturity, so the
+nominal per bond falls:
+- 45 municipal bonds (e.g. Kraków KRA0528 1,000 → 500, Radomsko RMS1126 940 → 200);
+- 2 corporate: Kruk KRU0228 (1,000 → 550) and Resi Capital RES0228 (1,000 → 709.27);
+- more were probably first seen after an instalment (corporate bonds with nominals of 500, 550, 600).
+
+For these:
+- **Amount outstanding** = issue value × current nominal / original nominal. KRU0228: 350m PLN issued,
+  192.5m outstanding.
+- **Instalments are payments due before maturity.** For refinancing, they belong in the 12 and 24
+  month windows on their own dates (from the terms of issue), not only the final redemption.
+- **Interest and accrued interest** run on the current nominal.
+
+**Inflation-linked treasury bonds (IZ series: IZ0831, IZ0836).** Nominal = 1,000 PLN × the index ratio,
+which follows CPI with a three-month lag:
+
+```
+W(n)       = ROUND(100 × Π (1 + WR_k), 5)          monthly reference index chained from 2003-07; WR_k = CPI m/m of month k
+Ref(d)     = W(M−3) + (day−1)/daysInMonth(M) × (W(M−2) − W(M−3))     for a date d in month M
+ratio(d)   = ROUND(Ref(d) / BaseRef, 5)            BaseRef of IZ0836 = 194.28509 (= Ref of its issue date, 2023-08-25)
+nominal(d) = 1000 × ratio(d)
+accrued(d) = ROUND(1000 × coupon × days since coupon start / days in coupon period × ratio(d), 2)   IZ0836: 2 %, from 25 Aug
+```
+
+- The formula reproduced every published Ministry of Finance value checked (PortfolioTracker, 11 of 11).
+- It is taken at the **settlement date** (T+2 working days, Polish holidays excluded). Catalyst's file on
+  the session of 2026-11-03 gave IZ0831 1,079.85 and IZ0836 1,109.02, the Ministry's ratios for
+  2026-11-05.
+- The **gpw.pl archive's "Cena nominalna" column is unreliable for IZ**: since 2025-09-29 it mostly
+  shows 1,000.
+- A month of negative CPI lowers the nominal three months later.
+- Treasury bonds are outside the scorecard, but a yield or value for an IZ bond must use the indexed
+  nominal.
+
+### Coupons and accrued interest
+
+- **Prices are clean**, in % of nominal. Value = clean price × nominal + accrued interest.
+- **Corporate coupons:** ACT/365. Per bond: nominal × rate × days since the period started / 365,
+  rounded to the grosz.
+- Counted to the **settlement day** of a trade (T+2) as Catalyst quotes it.
+- From the **record day** the whole coupon goes to whoever holds the bond that day. A bond bought on
+  the record day, or the business day before, doesn't get it.
+- **Fixed coupons** ("stałe 7.5%") have one rate for every period.
+- **Floating coupons** (WIBOR 3M/6M, or WIRON, + margin) have a new rate each period. obligacje.pl shows
+  only the current period's rate, never past ones, and no free WIBOR/WIRON fixing source was found.
+- **obligacje.pl has had errors.** On 2026-10-14 the last two record days of PLY1227 were listed a period
+  early. Treat a record day outside its period (more than 31 days before the payment) as wrong. A new
+  period's rate can show the old rate for a few days.
+- **Fixed-rate treasury bonds** (DS, PS, WZ): terms from the Ministry's calculator (sheet "Stałe").
 
 ---
 
@@ -229,6 +287,23 @@ A new override needs a stated reason (`RULE_SET_OVERRIDES` in `scorecard.ts`).
 - rate-limit requests;
 - keep each download in its own directory;
 - treat files as untrusted data.
+
+### Bond market data and terms (from PortfolioTracker, verified there in October 2026)
+
+| Source | What | Notes |
+|---|---|---|
+| **Catalyst daily statistics file** (catalyst.gpw.pl, XLS) | every listed bond: ISIN, market, type, **current nominal**, maturity, coupon, accrued interest | what CatalystViewer reads three times a day; the reliable current nominal, IZ included |
+| **gpwcatalyst.pl** quotes `notowania-obligacji-obligacje-korporacyjne`, instruments `o-instrumentach-instrumenty-notowane`, interest tables `statystyki-tabele-odsetkowe` | ~280 corporate bonds on one page: reference, last, bid/ask, turnover; every listed bond with its **current nominal and accrued interest** | latest session only, no archive (a missed day is lost). Cells don't line up with headers (bid/ask hold sub-values): read by position. Unreachable from PortfolioTracker's environment since 2026-10-12 (TLS hangs) |
+| **BiznesRadar** `biznesradar.pl/notowania-historyczne/<CODE>[,<page>]`, `/notowania/<CODE>` | daily OHLC (clean, % of nominal) and volume of every listed Catalyst bond since listing, 50 sessions a page; the latest quote, 15 minutes delayed | the only working free source of corporate bond **price history**. Lags a day. A redeemed bond answers 404. Personal use: one page every 2 s |
+| **gpw.pl archive** `gpw.pl/archiwum-notowan?fetch=1&type=13&instrument=<CODE>` | treasury and state-guaranteed bonds only (DS, IZ, PS, WZ …): full daily history per bond, or one XLS for a day with `date=dd-mm-yyyy`; indices with `type=1` (WIG …) | no corporate bonds. "Cena nominalna" is unreliable for IZ. The server resets connections after a few dozen requests in minutes |
+| **obligacje.pl** `/pl/obligacja/<CODE>` | issuer, ISIN, nominal, coupon type, current rate, first days of interest periods, record days, payment days, maturity, issue value | past floating rates aren't shown; known errors (above) |
+| **Ministry of Finance calculator** `kalkulatorodsetek.xlsm` (gov.pl/web/finanse/kalkulatory2), monthly | CPI reference index `W(n)` since 2003-07; every IZ series (ISIN, dates, BaseRef, coupon); every fixed-rate treasury series | read as data; its VBA macros aren't run |
+| **Ministry of Finance index ratios** gov.pl/web/finanse/wspolczynniki-indeksacji2 | daily IZ ratio and accrued interest, current and next month | cross-check |
+| **Ministry of Finance retail bonds file** (gov.pl/web/finanse/obligacje-detaliczne1, XLS, monthly) | retail treasury series (EDO, COI, ROD, ROS, TOS, ROR, DOR): rates per year, margin, issue price | not traded on Catalyst |
+| **GUS CPI** (stat.gov.pl, "Miesięczne wskaźniki cen … od 1982 roku", CSV, Windows-1250, `;`) | monthly CPI in five bases | published around the 15th; the file name changes, find the link on the page. GUS revises January later; the Ministry keeps the first figure |
+| **NBP** `api.nbp.pl/api/exchangerates/rates/a/{code}/{from}/{to}/` | table A history, at most 93 days a request | CatalystViewer uses the current table |
+| Bossa EOD files, Stooq | | gone (Bossa's files) or behind a JavaScript challenge (Stooq, 2026): not usable |
+| Cbonds (trial), GPW paid history (1,900 PLN per year of data) | Catalyst history | only if the free sources fail |
 
 ### Formats
 
@@ -465,8 +540,9 @@ its business makes, or does it depend on refinancing? **Built**, for every issue
   - listed bonds vs the balance sheet's bond line when they differ by more than 5%. Cyfrowy Polsat lists
     2,670m PLN against 4,020m in its balance sheet: not all its bonds are on Catalyst.
 
-Not included yet: bank loans due, undrawn credit lines, developers' escrow accounts, amounts outstanding
-after redemptions (section 15).
+Not included yet: bank loans due, undrawn credit lines, developers' escrow accounts; and instalment
+redemptions (the amount outstanding is issue value × current nominal / original nominal, and each
+instalment is due on its own date: step 1, "A bond's nominal value can change"; section 15).
 
 ---
 
@@ -532,6 +608,10 @@ ratios.
   restructuring proceedings, Catalyst suspensions. These are in ESPI/EBI current reports.
 - **Market signals** the app has: a price falling well below par, a widening spread, collapsing
   liquidity. Not proof, but a reason to look (planned: mismatch alerts).
+- **A bond's price history** shows when the market started to doubt the issuer. BiznesRadar's
+  history pages cover every listed corporate bond from its listing (section 6, "Bond market data").
+- A bond that stops trading or disappears from the quote pages (BiznesRadar answers 404 for a redeemed or
+  delisted bond) before its maturity needs an explanation.
 
 ### Benchmarks to compare with (planned)
 
@@ -611,6 +691,8 @@ Lessons from imports so far. Check here before treating a strange result as the 
 | Allegro.eu, Żabka Group | registered in Luxembourg | under the LEI |
 | Echo Investment | developer with investment property; EUR bonds | developer rules count investment property in the stock; NBP rates for the EUR bonds |
 | WB Electronics | no LEI | no identity |
+| Kruk KRU0228, Resi Capital RES0228 | instalment redemptions: nominal 1,000 → 550 and → 709.27 | amount outstanding from the current nominal (not built yet) |
+| IZ0831, IZ0836 (State Treasury) | inflation-indexed nominal | current nominal from the Catalyst file; formula in step 1 |
 
 Results on 2026-11-03/04, prod: 27 issuers scored from reports, 16 from AI-collected figures, 31 in
 scope with no scorecard yet. Refinancing is red for Atal (130m PLN due in 12 months, 146m cash,
@@ -642,15 +724,20 @@ In the order the roadmap would take them:
 4. **Developers:** escrow accounts and pre-sales from the notes, land bank. **Contractors:** order
    backlog.
 5. **Undrawn credit lines** and bank loans due, in Refinancing.
-6. **Trailing 12 months** from half-year and quarterly reports, instead of the last full year.
-7. **Calibration** of the thresholds on past Catalyst defaults (GetBack 2018 and others), compared with
+6. **Current nominal and instalments:**
+    - update each bond's nominal from the daily Catalyst file. Today it's stored once, so yields, accrued
+      interest and the "high nominal" marker are off for 53 bonds;
+    - give Refinancing the amount outstanding and the instalment dates (from the terms of issue);
+    - value IZ bonds on the indexed nominal.
+7. **Trailing 12 months** from half-year and quarterly reports, instead of the last full year.
+8. **Calibration** of the thresholds on past Catalyst defaults (GetBack 2018 and others), compared with
    Polish bankruptcy models. The sample is small, so this is calibration, not machine learning.
-8. **Holding-company flag** (structural subordination).
-9. **With market data:**
+9. **Holding-company flag** (structural subordination).
+10. **With market data:**
    - a risk vs yield chart;
    - mismatch alerts (price drop with no fundamental news);
    - risk band filters, an issuer page, peer ranking.
-10. **Monitoring:** re-run on new reports; alerts (late report, auditor change, covenant breach, a
+11. **Monitoring:** re-run on new reports; alerts (late report, auditor change, covenant breach, a
     dimension changing colour); a watchlist from holdings.
 
 ---
