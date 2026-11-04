@@ -743,13 +743,16 @@ Lessons from imports so far. Check here before treating a strange result as the 
 | art.Locum S.A. | IFRS group statements as signed PDFs in the KRS, in złoty | read by hand |
 | Vehis Finanse | KRS XML in thousands under `JednostkaInnaWTys`, FY2025 in the 2025 envelope with a 1.4 MB attachment; funded by securitisation (not in debt); FY2024 revenue 118.1m in its own report, 78.8m as restated in FY2025's | parsed; the FY2024 report's own figures are kept for FY2024 |
 | Indos | the KRS list holds a signed Symfonia settings file (`.xml.cfg.xades`) for FY2025, not the statement | FY2025 still to download |
+| BBI Development | a developer working through joint ventures: 174m PLN of equity-accounted investments, 3.4m of inventory, so net debt / stock reads 21× | the developer rule doesn't fit; needs a holding-company view (section 15) |
+| Vindexus | debt collector whose bonds sit in "other financial liabilities" (72.4m + 28.2m PLN) next to separate loan lines, so they're left out of debt (2.2m) | fix with the finance rules |
 | Grupa Corpus Iuris, Internetowy Fundusz Leasingowy | debt collector (net profit above revenue: portfolio gains aren't revenue), leasing (single company, no group) | stored for the finance rules |
 | Kruk KRU0228, Resi Capital RES0228 | instalment redemptions: nominal 1,000 → 550 and → 709.27 | amount owed from the current nominal; the remainder counted at maturity |
 | IZ0831, IZ0836 (State Treasury) | inflation-indexed nominal | current nominal from the Catalyst file; formula in step 1 |
 
-Results on 2026-11-04, prod: 29 issuers scored from reports (art.Locum and Ronson added that day, both
-high confidence), 15 from AI-collected figures, 30 in scope with no scorecard yet; Finance issuers with
-reports stored for the coming finance rules: Kruk, Corpus Iuris, Vehis, IFL, Indos. Refinancing is red for Atal (130m PLN due in 12 months, 146m cash,
+Results on 2026-11-04, prod: 34 issuers scored from reports (added that day: art.Locum and Ronson from the
+KRS, Develia, Archicom, BBI, Cavatina and Lokum from Bankier's ESEF packages), 11 from AI-collected figures,
+29 in scope with no scorecard yet; Finance issuers with reports stored for the coming finance rules: Kruk,
+Best, Vindexus, Corpus Iuris, Vehis, IFL, Indos. Refinancing is red for Atal (130m PLN due in 12 months, 146m cash,
 operating cash flow −657m) and yellow for Echo.
 
 ---
@@ -765,9 +768,9 @@ In the order the roadmap would take them:
    - For debt collectors: cash collections, cash EBITDA, net debt / cash EBITDA, and portfolio
      purchases vs collections.
    - Needs their reports imported (only Kruk so far).
-2. **More reports:** import the FY2025 packages collected from Bankier (Develia, Archicom, BBI, Cavatina,
-   Lokum, Best, Vindexus, and PragmaGO's PDF; not imported yet); the FY2024 report of the 2-year issuers,
-   from the KRS (the checklist page), so the trend fills in; Indos FY2025, AOW, MCI Management.
+2. **More reports:** the FY2024 report of the 2-year issuers, from the KRS (the checklist page), so the
+   trend fills in (now also for Develia, Archicom, BBI, Cavatina, Lokum); PragmaGO's FY2025 PDF (collected,
+   not imported); Indos FY2025, AOW, MCI Management.
 3. **From the notes, by a model with quotes checked in code:**
    - the debt maturity schedule, including loans;
    - covenants, collateral, guarantees and ranking;
@@ -786,7 +789,8 @@ In the order the roadmap would take them:
 7. **Trailing 12 months** from half-year and quarterly reports, instead of the last full year.
 8. **Calibration** of the thresholds on past Catalyst defaults (GetBack 2018 and others), compared with
    Polish bankruptcy models. The sample is small, so this is calibration, not machine learning.
-9. **Holding-company flag** (structural subordination).
+9. **Holding-company flag** (structural subordination), and a holding view for developers working through
+   joint ventures (BBI Development).
 10. **With market data:**
    - a risk vs yield chart;
    - mismatch alerts (price drop with no fundamental news);
