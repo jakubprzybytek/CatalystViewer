@@ -80,7 +80,10 @@ Each step below says what to do, where the data is, the rules, and the traps fou
   trading currency, current coupon, accrued interest, quotes. The app reads them three times a working
   day.
 - **obligacje.pl**: `https://obligacje.pl/pl/obligacja/<BOND NAME>`. It gives the issuer name, the
-  issue value and the interest schedule (fixed, or WIBOR/EURIBOR + margin).
+  issue value ("Wartość emisji w obrocie") and the interest schedule (fixed, or WIBOR/EURIBOR + margin).
+  **Its robots.txt blocks AI crawlers and assistants (ClaudeBot, Claude-User, GPTBot, …): an AI agent
+  must not fetch it.** Use the app's stored bond data (`BondDetails`, filled by the Bonds Updater), the
+  Catalyst file, or the issuer's terms of issue instead.
 - In the app: the `BondDetails` table (`getActive('Corporate bonds')`).
 
 **Rules:**
@@ -296,7 +299,7 @@ A new override needs a stated reason (`RULE_SET_OVERRIDES` in `scorecard.ts`).
 | **gpwcatalyst.pl** quotes `notowania-obligacji-obligacje-korporacyjne`, instruments `o-instrumentach-instrumenty-notowane`, interest tables `statystyki-tabele-odsetkowe` | ~280 corporate bonds on one page: reference, last, bid/ask, turnover; every listed bond with its **current nominal and accrued interest** | latest session only, no archive (a missed day is lost). Cells don't line up with headers (bid/ask hold sub-values): read by position. Unreachable from PortfolioTracker's environment since 2026-10-12 (TLS hangs) |
 | **BiznesRadar** `biznesradar.pl/notowania-historyczne/<CODE>[,<page>]`, `/notowania/<CODE>` | daily OHLC (clean, % of nominal) and volume of every listed Catalyst bond since listing, 50 sessions a page; the latest quote, 15 minutes delayed | the only working free source of corporate bond **price history**. Lags a day. A redeemed bond answers 404. Personal use: one page every 2 s |
 | **gpw.pl archive** `gpw.pl/archiwum-notowan?fetch=1&type=13&instrument=<CODE>` | treasury and state-guaranteed bonds only (DS, IZ, PS, WZ …): full daily history per bond, or one XLS for a day with `date=dd-mm-yyyy`; indices with `type=1` (WIG …) | no corporate bonds. "Cena nominalna" is unreliable for IZ. The server resets connections after a few dozen requests in minutes |
-| **obligacje.pl** `/pl/obligacja/<CODE>` | issuer, ISIN, nominal, coupon type, current rate, first days of interest periods, record days, payment days, maturity, issue value | past floating rates aren't shown; known errors (above) |
+| **obligacje.pl** `/pl/obligacja/<CODE>` | issuer, ISIN, nominal, coupon type, current rate, first days of interest periods, record days, payment days, maturity, issue value | **robots.txt blocks AI assistants: not for an AI agent.** Past floating rates aren't shown; known errors (above); no instalment schedule |
 | **Ministry of Finance calculator** `kalkulatorodsetek.xlsm` (gov.pl/web/finanse/kalkulatory2), monthly | CPI reference index `W(n)` since 2003-07; every IZ series (ISIN, dates, BaseRef, coupon); every fixed-rate treasury series | read as data; its VBA macros aren't run |
 | **Ministry of Finance index ratios** gov.pl/web/finanse/wspolczynniki-indeksacji2 | daily IZ ratio and accrued interest, current and next month | cross-check |
 | **Ministry of Finance retail bonds file** (gov.pl/web/finanse/obligacje-detaliczne1, XLS, monthly) | retail treasury series (EDO, COI, ROD, ROS, TOS, ROR, DOR): rates per year, margin, issue price | not traded on Catalyst |
