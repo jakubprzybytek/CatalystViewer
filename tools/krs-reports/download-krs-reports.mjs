@@ -33,7 +33,8 @@ Options:
   --out <dir>    Output directory (default: ./krs-<number>)
   --headed       Show the browser window (useful for CAPTCHAs or debugging)
   --years <N>    How many most recent years to download (default: 2)
-  --all          Download all documents, not just annual financial statements`
+  --all          Download all documents, not just annual financial statements
+  --debug        Save debug files (screenshot, HTML, API responses) to output dir`
   );
   process.exit(1);
 }
@@ -45,6 +46,7 @@ let outDir = null;
 let headed = false;
 let maxYears = 2;
 let downloadAll = false;
+let debug = false;
 
 for (let i = 0; i < args.length; i++) {
   const a = args[i];
@@ -60,6 +62,8 @@ for (let i = 0; i < args.length; i++) {
     }
   } else if (a === "--all") {
     downloadAll = true;
+  } else if (a === "--debug") {
+    debug = true;
   } else if (!krsRaw && /^\d{1,10}$/.test(a)) {
     krsRaw = a;
   } else {
@@ -183,6 +187,7 @@ function getPeriod(item) {
 }
 
 async function saveDebug(page, dir, apiResponses) {
+  if (!debug) return;
   try {
     await page.screenshot({
       path: join(dir, "_debug_screenshot.png"),
@@ -266,7 +271,7 @@ try {
 
   if (!input) {
     await saveDebug(page, outDir, apiResponses);
-    die("Could not find the search input. Debug files saved. Try --headed.");
+    die("Could not find the search input. Try --headed or --debug.");
   }
 
   await input.click({ clickCount: 3 });
@@ -301,17 +306,14 @@ try {
     allDocuments = await collectFromPage(page, outDir);
   }
 
-  // Always save API responses for debugging / field-name discovery
-  await saveDebug(page, outDir, apiResponses);
-
   if (allDocuments.length === 0) {
+    await saveDebug(page, outDir, apiResponses);
     die(
       `No documents found for KRS ${krsNumber}.\n` +
         "Possible reasons:\n" +
         "  - The company has no financial documents in the KRS repository\n" +
         "  - The portal structure may have changed\n" +
-        "  - WAF blocked the request (try --headed)\n" +
-        "Debug files saved to output directory."
+        "  - WAF blocked the request (try --headed or --debug)"
     );
   }
 
@@ -391,7 +393,7 @@ try {
 } catch (err) {
   await saveDebug(page, outDir, apiResponses);
   console.error(`\nFatal: ${err.message}`);
-  console.error("Debug files saved. Try --headed.");
+  console.error("Try --headed or --debug.");
   process.exit(1);
 } finally {
   await browser.close();

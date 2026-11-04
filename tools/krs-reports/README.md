@@ -42,6 +42,7 @@ node download-krs-reports.mjs 12345 --headed
 | `--headed` | Show the browser window for debugging or solving CAPTCHAs |
 | `--years <N>` | How many most recent years to download (default: 2) |
 | `--all` | Download all documents, not just annual financial statements |
+| `--debug` | Save debug files (screenshot, HTML, API responses) to output dir |
 
 ## How it works
 
@@ -57,6 +58,5 @@ node download-krs-reports.mjs 12345 --headed
 
 - **Must run from a residential IP** — the site's WAF blocks datacenter/VPN IPs.
 - **Use `--headed` the first time** — if the WAF presents a challenge or CAPTCHA, solve it once in the visible browser.
-- The script always saves `_api_responses.json` to the output directory with the raw API metadata — useful for debugging if field names change.
-- If something goes wrong, it also saves `_debug_screenshot.png` and `_debug_page.html`.
+- Use `--debug` to save `_api_responses.json`, `_debug_screenshot.png`, and `_debug_page.html` to the output directory — useful if field names change or something goes wrong.
 - Documents are typically XML (Polish Accounting Standards schema, 2018 or 2025 vintage), XHTML, or PDF. Pre-2018 filings are PDF scans.
