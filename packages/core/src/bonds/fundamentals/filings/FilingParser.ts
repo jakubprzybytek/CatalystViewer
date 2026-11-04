@@ -64,6 +64,12 @@ type Node = Record<string, unknown>;
 const ROOTS: Record<string, FilingScope> = {
     JednostkaInna: 'single',
     SkonsolidowanaJednostkaInna: 'group',
+    // The e-sprawozdania app names the root by its unit too (Vehis Finanse FY2024–2025: JednostkaInnaWTys, the
+    // 2025 one inside a Dokument/TrescDokumentu envelope); the unit itself is read from KodSprawozdania.
+    JednostkaInnaWTys: 'single',
+    JednostkaInnaWZlotych: 'single',
+    SkonsolidowanaJednostkaInnaWTys: 'group',
+    SkonsolidowanaJednostkaInnaWZlotych: 'group',
 };
 const UNSUPPORTED_ROOTS = [
     'JednostkaMala', 'JednostkaMikro', 'JednostkaOp', 'Bank', 'ZakladUbezpieczen', 'ZakladReasekuracji',
@@ -330,13 +336,21 @@ export function parseFiling(xml: string): ParsedFiling {
     let doc = parser.parse(xml) as Node;
     let root = findRoot(doc);
 
-    // A signed file (XAdES) can carry the statement base64-encoded inside the signature.
-    if (!root) {
-        const embedded = allTexts(doc).find(t => t.length > 200 && /^[A-Za-z0-9+/=\s]+$/.test(t));
-        if (embedded) {
-            doc = parser.parse(Buffer.from(embedded.replace(/\s/g, ''), 'base64').toString('utf-8')) as Node;
-            root = findRoot(doc);
+    // A signed file (XAdES) can carry the statement base64-encoded inside the signature. The signature value
+    // and certificates are base64 too, so every long block is tried, longest first, and the one that decodes to a
+    // statement is used (Vehis Finanse's KRS files: the signature value comes first). A signature can wrap another.
+    for (let depth = 0; !root && depth < 3; depth++) {
+        const blocks = allTexts(doc).filter(t => t.length > 200 && /^[A-Za-z0-9+/=\s]+$/.test(t)).sort((a, b) => b.length - a.length);
+        let inner: Node | undefined;
+        for (const block of blocks) {
+            const text = Buffer.from(block.replace(/\s/g, ''), 'base64').toString('utf-8');
+            if (!/<(?:[\w-]+:)?(?:Skonsolidowana)?Jednostka\w*[\s>]|<(?:[\w-]+:)?Signature[\s>]/.test(text)) continue;
+            inner = parser.parse(text) as Node;
+            break;
         }
+        if (!inner) break;
+        doc = inner;
+        root = findRoot(doc);
     }
     if (!root) {
         throw new UnsupportedFilingError('Not a financial statement in the Ministry of Finance XML structure (JednostkaInna / SkonsolidowanaJednostkaInna)');

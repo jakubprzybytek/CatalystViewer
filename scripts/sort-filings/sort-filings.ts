@@ -132,6 +132,9 @@ async function examine(c: Candidate): Promise<Found> {
   } catch (e) {
     const message = (e as Error).message.split("\n")[0].slice(0, 160);
     const text = c.data.subarray(0, 2_000_000).toString("utf-8");
+    // A signed export settings file of the accounting program (Symfonia's sage:Config), filed next to the statement
+    if (/<(?:[\w-]+:)?Config[\s>][\s\S]*CreationParameters/.test(text) || /\.cfg(\.xades)?$/i.test(c.name))
+      return { ...c, kind: "skipped", reason: "the accounting program's export settings (Symfonia), not the statement: download the company's other document for this year" };
     // a signature file is skipped only when nothing in it looks like a statement
     if (/\.xades$/i.test(c.name) && !STATEMENT_HINT.test(text) && kb < 64) return { ...c, kind: "skipped", reason: `a signature only, ${kb} KB` };
     return { ...c, kind: "unreadable", reason: `${message} (${kb} KB${STATEMENT_HINT.test(text) ? ", looks like it holds a statement: please send this file" : ""})` };

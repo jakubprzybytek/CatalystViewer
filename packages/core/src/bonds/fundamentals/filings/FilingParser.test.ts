@@ -151,6 +151,19 @@ describe('parseFiling', () => {
         expect(parseFiling(signed).krs).toBe('0000123456');
     });
 
+    it('reads the statement block of a signature whose signature value comes first (Vehis Finanse)', () => {
+        const noise = Buffer.from('x'.repeat(400)).toString('base64');
+        const signed = `<ds:Signature xmlns:ds="http://www.w3.org/2000/09/xmldsig#"><ds:SignatureValue>${noise}</ds:SignatureValue><ds:Object>${
+            Buffer.from(fixture('single-comparative-pln.xml')).toString('base64')}</ds:Object></ds:Signature>`;
+        expect(parseFiling(signed).krs).toBe('0000123456');
+    });
+
+    it('reads a root named by its unit, inside a document envelope (e-sprawozdania 2025, Vehis Finanse)', () => {
+        const xml = fixture('single-comparative-pln.xml').replace(/tns:JednostkaInna\b/g, 'tns:JednostkaInnaWZlotych').replace(/^<\?xml[^>]*>/, '');
+        const wrapped = `<?xml version="1.0"?><d:Dokument xmlns:d="http://crd.gov.pl/wzor/2025/08/04/13810/"><d:TrescDokumentu>${xml}</d:TrescDokumentu></d:Dokument>`;
+        expect(parseFiling(wrapped)).toMatchObject({ krs: '0000123456', scope: 'single' });
+    });
+
     it('reads a statement stored as it is inside a binary signature (CAdES)', () => {
         const binary = (n: number) => Buffer.from(Array.from({ length: n }, (_, i) => (i * 37 + 11) % 256)).toString('latin1');
         const signed = binary(40) + fixture('single-comparative-pln.xml') + binary(300);
