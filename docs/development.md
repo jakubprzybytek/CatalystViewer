@@ -109,6 +109,8 @@ npx sst shell --stage prod -- npm run import-filing -- annual-report.pdf --issue
 | `--dry-run` | everything but the writes (a PDF still costs its model call) |
 | `--force` | store a filing whose consistency checks failed, or one of a second company for the same issuer |
 | `--model <alias>` | PDFs only: the model that reads the statements (default: the app's default model, now `sonnet_4.6`), e.g. `opus_4.6` |
+| `--print-prompt <file>` | PDFs only: write the statement pages and instructions the model would get to a file and stop, with no model call, so they can be read by hand (e.g. by Claude in a chat) |
+| `--transcript <file>` | PDFs only: take the reading from a file (the `record_statements` answer as JSON) instead of a model call; the same checks run on it. `--transcript-by "<who>"` is stored as the extraction's model |
 
 Several files can be imported in one run; `--issuer`, `--krs` and `--lei` work with one file at a time. Without `sst shell`, only `--dry-run` works, and only parses (no issuer matching, no registers).
 

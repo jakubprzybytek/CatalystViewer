@@ -15,16 +15,21 @@
 // --dry-run  parse, match and check, but write nothing
 // --force    store a filing whose consistency checks failed, or a second company for an issuer
 // --model    model alias for PDFs (default: the app's default model), e.g. sonnet_4.6, opus_4.6
+// --print-prompt <file>  PDF only: write the statement pages and instructions the model would get to <file>, and stop
+//                        (no model call); someone (e.g. Claude in a chat) can then answer it by hand
+// --transcript <file>    PDF only: use this answer (the record_statements tool's input, as JSON) instead of a model call;
+//                        the same checks run on it. --transcript-by names who read it (stored as the extraction's model)
 //
 // Without `sst shell` and with --dry-run, it only parses and prints the figures.
 // See docs/development.md and packages/core/src/bonds/fundamentals/filings/importFiling.ts.
 
-import { readFileSync } from "fs";
+import { readFileSync, writeFileSync } from "fs";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { S3Client } from "@aws-sdk/client-s3";
 import { BedrockRuntimeClient } from "@aws-sdk/client-bedrock-runtime";
 import { DEFAULT_MODEL_ALIAS, MODEL_ALIASES, resolveModelId, type ModelAlias } from "../../packages/core/src/ai/models";
-import { bedrockTranscriber } from "../../packages/core/src/bonds/fundamentals/filings/AiPdfExtractor";
+import { bedrockTranscriber, findStatementPages, statementsPrompt, type Transcriber } from "../../packages/core/src/bonds/fundamentals/filings/AiPdfExtractor";
+import { readPdfPages } from "../../packages/core/src/bonds/fundamentals/filings/pdfText";
 import { Resource } from "sst";
 import { IssuerProfilesTable } from "../../packages/core/src/storage/issuerProfiles";
 import { IssuerFinancialsTable } from "../../packages/core/src/storage/issuerFinancials";
@@ -41,6 +46,9 @@ function parseArgs(argv: string[]) {
   let dryRun = false;
   let force = false;
   let model: ModelAlias = DEFAULT_MODEL_ALIAS;
+  let printPrompt: string | undefined;
+  let transcript: string | undefined;
+  let transcriptBy = "transcribed by hand";
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     if (arg === "--issuer") issuerName = argv[++i];
@@ -48,6 +56,9 @@ function parseArgs(argv: string[]) {
     else if (arg === "--lei") lei = argv[++i];
     else if (arg === "--dry-run") dryRun = true;
     else if (arg === "--force") force = true;
+    else if (arg === "--print-prompt") printPrompt = argv[++i];
+    else if (arg === "--transcript") transcript = argv[++i];
+    else if (arg === "--transcript-by") transcriptBy = argv[++i];
     else if (arg === "--model") {
       const alias = argv[++i] as ModelAlias;
       if (!MODEL_ALIASES.includes(alias)) throw new Error(`--model: one of ${MODEL_ALIASES.join(", ")}`);
@@ -58,7 +69,8 @@ function parseArgs(argv: string[]) {
   }
   if (files.length === 0) throw new Error('Usage: npm run import-filing -- <file>... [--issuer "<name>"] [--krs <number>] [--lei <code>] [--dry-run] [--force]');
   if ((issuerName || krs || lei) && files.length > 1) throw new Error("--issuer, --krs and --lei work with one file at a time");
-  return { files, issuerName, krs, lei, dryRun, force, model };
+  if ((printPrompt || transcript) && files.length > 1) throw new Error("--print-prompt and --transcript work with one file at a time");
+  return { files, issuerName, krs, lei, dryRun, force, model, printPrompt, transcript, transcriptBy };
 }
 
 const ROWS: [FilingField, string][] = [
@@ -97,9 +109,19 @@ function linkedResources() {
 }
 
 async function main() {
-  const { files, issuerName, krs, lei, dryRun, force, model } = parseArgs(process.argv.slice(2));
+  const { files, issuerName, krs, lei, dryRun, force, model, printPrompt, transcript, transcriptBy } = parseArgs(process.argv.slice(2));
   const resources = linkedResources();
-  const transcribe = bedrockTranscriber(new BedrockRuntimeClient({ region: REGION }), resolveModelId(model), model);
+  if (printPrompt) {
+    const pages = await readPdfPages(readFileSync(files[0]));
+    const chosen = findStatementPages(pages);
+    if (chosen.length === 0) throw new Error("No financial statement pages found in this PDF");
+    writeFileSync(printPrompt, statementsPrompt(pages, chosen));
+    console.log(`Statement pages ${chosen.join(", ")} of ${pages.length}: prompt written to ${printPrompt} (no model call)`);
+    return;
+  }
+  const transcribe: Transcriber = transcript
+    ? async () => ({ input: JSON.parse(readFileSync(transcript, "utf-8")), model: transcriptBy })
+    : bedrockTranscriber(new BedrockRuntimeClient({ region: REGION }), resolveModelId(model), model);
 
   if (!resources) {
     if (!dryRun) throw new Error("Run inside `sst shell --stage <stage>` to import (or add --dry-run to only parse)");
