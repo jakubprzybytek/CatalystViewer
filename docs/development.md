@@ -78,6 +78,8 @@ The CLI runs through `esrun --send-code-mode=temporaryFile` (see `package.json`)
 
 ## Importing filed statements (KRS)
 
+The whole method, from a bond name to a judgement (identity, industry, reports, rules, refinancing, confidence, known exceptions), is in [fundamental-analysis-methodology.md](fundamental-analysis-methodology.md). Keep it current with every rule or source change.
+
 The scorecard uses an issuer's own annual statements instead of the AI-collected figures whenever the issuer has any: they're read in code, every figure keeps the statement lines or XBRL concepts it came from, and the statement is checked for consistency. Four formats, detected from the file:
 
 | Format | Who files it | Where to get it | Read by |
