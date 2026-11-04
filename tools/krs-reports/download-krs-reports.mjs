@@ -101,6 +101,26 @@ const CONSOLIDATED_RE = /skonsolidowane\s+roczne\s+sprawozdanie\s+finansowe/i;
 const STANDALONE_RE = /^roczne\s+sprawozdanie\s+finansowe$/i;
 const ANY_SPRAWOZDANIE_RE = /sprawozdanie\s+finansowe/i;
 
+const RODZAJ_MAP = {
+  "2": "Sprawozdanie finansowe (starszy format)",
+  "3": "Uchwała lub postanowienie o zatwierdzeniu rocznego sprawozdania finansowego",
+  "4": "Uchwała o podziale zysku bądź pokryciu straty",
+  "5": "Sprawozdanie z działalności (starszy format)",
+  "8": "Opinia biegłego rewidenta (starszy format)",
+  "9": "Uchwała lub postanowienie o zatwierdzeniu skonsolidowanego rocznego sprawozdania finansowego",
+  "10": "Skonsolidowane sprawozdanie finansowe (starszy format)",
+  "11": "Sprawozdanie z działalności grupy kapitałowej (starszy format)",
+  "18": "Roczne sprawozdanie finansowe",
+  "19": "Opinia biegłego rewidenta / Sprawozdanie z badania rocznego sprawozdania finansowego",
+  "20": "Sprawozdanie z działalności",
+  "22": "Skonsolidowane roczne sprawozdanie finansowe",
+  "23": "Opinia biegłego rewidenta / Sprawozdanie z badania skonsolidowanego rocznego sprawozdania finansowego grupy kapitałowej",
+  "24": "Sprawozdanie z działalności grupy kapitałowej (wariant)",
+  "26": "Sprawozdanie z atestacji sprawozdawczości zrównoważonego rozwoju",
+  "34": "Sprawozdanie z działalności grupy kapitałowej",
+  "36": "Raport na temat informacji niefinansowych",
+};
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -157,36 +177,41 @@ function findField(obj, ...keys) {
 }
 
 function getDocType(item) {
-  return (
-    findField(
-      item,
-      "rodzajDokumentu",
-      "typDokumentu",
-      "type",
-      "nazwa",
-      "documentType",
-      "name",
-      "nazwaTypuDokumentu"
-    ) || ""
+  const explicit = findField(
+    item,
+    "rodzajDokumentu",
+    "typDokumentu",
+    "type",
+    "nazwa",
+    "documentType",
+    "name",
+    "nazwaTypuDokumentu"
   );
+  if (explicit) return explicit;
+
+  const code = findField(item, "rodzaj");
+  if (code != null && RODZAJ_MAP[String(code)]) return RODZAJ_MAP[String(code)];
+  if (code != null) return `rodzaj:${code}`;
+
+  return "";
 }
 
 function getYear(item) {
   return (
     extractYear(findField(item, "rokObrotowy", "fiscalYear")) ||
-    extractYear(findField(item, "okresDo", "dataDo", "periodEnd", "do")) ||
-    extractYear(findField(item, "okresOd", "dataOd", "periodStart", "od")) ||
+    extractYear(findField(item, "okresSprawozdawczyKoniec", "okresDo", "dataDo", "periodEnd", "do")) ||
+    extractYear(findField(item, "okresSprawozdawczyPoczatek", "okresOd", "dataOd", "periodStart", "od")) ||
     null
   );
 }
 
 function getPeriod(item) {
-  const from = findField(item, "okresOd", "dataOd", "periodStart", "od") || "";
-  const to = findField(item, "okresDo", "dataDo", "periodEnd", "do") || "";
+  const from = findField(item, "okresSprawozdawczyPoczatek", "okresOd", "dataOd", "periodStart", "od") || "";
+  const to = findField(item, "okresSprawozdawczyKoniec", "okresDo", "dataDo", "periodEnd", "do") || "";
   return { from: String(from), to: String(to) };
 }
 
-async function saveDebug(page, dir, apiResponses) {
+async function saveDebug(page, dir, apiResponses, apiRequests) {
   if (!debug) return;
   try {
     await page.screenshot({
@@ -195,11 +220,12 @@ async function saveDebug(page, dir, apiResponses) {
     });
     await writeFile(join(dir, "_debug_page.html"), await page.content());
   } catch {}
-  if (apiResponses.length > 0) {
+  const hasData = apiResponses.length > 0 || (apiRequests && apiRequests.length > 0);
+  if (hasData) {
     try {
       await writeFile(
         join(dir, "_api_responses.json"),
-        JSON.stringify(apiResponses, null, 2)
+        JSON.stringify({ requests: apiRequests || [], responses: apiResponses }, null, 2)
       );
     } catch {}
   }
@@ -225,6 +251,13 @@ const context = await browser.newContext({
 const page = await context.newPage();
 
 const apiResponses = [];
+const apiRequests = [];
+page.on("request", (req) => {
+  const url = req.url();
+  if (url.includes("/services/")) {
+    apiRequests.push({ url, method: req.method(), postData: req.postData() });
+  }
+});
 page.on("response", async (res) => {
   const url = res.url();
   const ct = res.headers()["content-type"] || "";
@@ -270,7 +303,7 @@ try {
   ]);
 
   if (!input) {
-    await saveDebug(page, outDir, apiResponses);
+    await saveDebug(page, outDir, apiResponses, apiRequests);
     die("Could not find the search input. Try --headed or --debug.");
   }
 
@@ -300,14 +333,17 @@ try {
   // -------------------------------------------------------------------
   // 3. Collect document metadata
   // -------------------------------------------------------------------
-  let allDocuments = collectFromApi(apiResponses);
+  let allDocuments = await collectFromApi(apiResponses, apiRequests, page);
 
   if (allDocuments.length === 0) {
     allDocuments = await collectFromPage(page, outDir);
   }
 
+  // Always save API responses for debugging / field-name discovery
+  await saveDebug(page, outDir, apiResponses, apiRequests);
+
   if (allDocuments.length === 0) {
-    await saveDebug(page, outDir, apiResponses);
+    await saveDebug(page, outDir, apiResponses, apiRequests);
     die(
       `No documents found for KRS ${krsNumber}.\n` +
         "Possible reasons:\n" +
@@ -391,7 +427,7 @@ try {
 
   console.log(`\nDone. ${downloaded}/${seen.size} document(s) saved to ${outDir}`);
 } catch (err) {
-  await saveDebug(page, outDir, apiResponses);
+  await saveDebug(page, outDir, apiResponses, apiRequests);
   console.error(`\nFatal: ${err.message}`);
   console.error("Try --headed or --debug.");
   process.exit(1);
@@ -460,44 +496,87 @@ function filterAnnualReports(allDocs, years) {
 // Document collection: API interception
 // ---------------------------------------------------------------------------
 
-function collectFromApi(apiResponses) {
+function parseItems(data) {
+  const items =
+    data.dokumenty ||
+    data.content ||
+    data.items ||
+    data.results ||
+    data.data ||
+    (Array.isArray(data) ? data : null);
+
+  if (!items || !Array.isArray(items)) return [];
+
   const docs = [];
+  for (const item of items) {
+    const docId =
+      findField(item, "id", "dokumentId", "docId") ||
+      (item.id != null ? item.id : null);
+    if (docId == null) continue;
+
+    const type = getDocType(item);
+    const year = getYear(item);
+    const period = getPeriod(item);
+    const label = [type || "sprawozdanie", period.from, period.to]
+      .filter(Boolean)
+      .join("_");
+
+    docs.push({
+      url: `${BASE}/services/rdf/przegladarka-dokumentow-finansowych/dokumenty/${docId}/tresc?bezPodpisu=false`,
+      label,
+      docId,
+      type,
+      year,
+      raw: item,
+    });
+  }
+  return docs;
+}
+
+async function collectFromApi(apiResponses, apiRequests, page) {
+  const docs = [];
+  let searchPostData = null;
+  let totalPages = 1;
 
   for (const resp of apiResponses) {
     if (resp.status !== 200 || !resp.body) continue;
-    const data = resp.body;
+    docs.push(...parseItems(resp.body));
 
-    const items =
-      data.dokumenty ||
-      data.content ||
-      data.items ||
-      data.results ||
-      data.data ||
-      (Array.isArray(data) ? data : null);
+    const meta = resp.body.metadaneWynikow;
+    if (meta && meta.liczbaStron > 1) {
+      totalPages = meta.liczbaStron;
+    }
+  }
 
-    if (!items || !Array.isArray(items)) continue;
+  if (totalPages > 1 && apiRequests) {
+    for (const req of apiRequests) {
+      if (req.url.includes("dokumenty/wyszukiwanie") && req.postData) {
+        searchPostData = req.postData;
+        break;
+      }
+    }
+  }
 
-    for (const item of items) {
-      const docId =
-        findField(item, "id", "dokumentId", "docId") ||
-        (item.id != null ? item.id : null);
-      if (docId == null) continue;
+  if (totalPages > 1 && searchPostData) {
+    console.log(`API returned page 1/${totalPages} (${docs.length} docs). Fetching remaining pages...`);
+    const basePayload = JSON.parse(searchPostData);
 
-      const type = getDocType(item);
-      const year = getYear(item);
-      const period = getPeriod(item);
-      const label = [type || "sprawozdanie", period.from, period.to]
-        .filter(Boolean)
-        .join("_");
-
-      docs.push({
-        url: `${BASE}/services/rdf/przegladarka-dokumentow-finansowych/dokumenty/${docId}/tresc?bezPodpisu=false`,
-        label,
-        docId,
-        type,
-        year,
-        raw: item,
-      });
+    for (let pg = 1; pg < totalPages; pg++) {
+      basePayload.metadaneStronicowania.numerStrony = pg;
+      try {
+        const resp = await page.request.post(
+          `${BASE}/services/rdf/przegladarka-dokumentow-finansowych/dokumenty/wyszukiwanie`,
+          { data: basePayload, timeout: 30_000 }
+        );
+        if (resp.ok()) {
+          const body = await resp.json();
+          const pageDocs = parseItems(body);
+          docs.push(...pageDocs);
+          process.stdout.write(`  page ${pg + 1}/${totalPages}: ${pageDocs.length} docs\n`);
+        }
+      } catch (err) {
+        console.log(`  page ${pg + 1}/${totalPages}: failed (${err.message})`);
+      }
     }
   }
 
