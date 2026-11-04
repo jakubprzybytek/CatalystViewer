@@ -2,7 +2,7 @@
 
 Everything worked out so far about judging whether a bond issuer can pay its bonds back, written so
 that an analyst, Claude, or the app's AI agent can do the whole analysis from nothing but a bond name.
-State on 2026-11-04 (release v1.57), with bond-terms knowledge from PortfolioTracker. What the app already does is marked **built**; what is decided
+State on 2026-11-04 (release v1.63), with bond-terms knowledge from PortfolioTracker and what the first real KRS downloads taught. What the app already does is marked **built**; what is decided
 but not built is marked **planned**.
 
 The design records behind it are in `docs/superpowers/specs/` (listed at the end). When this document
@@ -284,14 +284,39 @@ A new override needs a stated reason (`RULE_SET_OVERRIDES` in `scorecard.ts`).
 
 | Source | What | Access |
 |---|---|---|
-| **KRS financial documents repository**, https://rdf-przegladarka.ms.gov.pl | every Polish company's filed annual accounts since 2018: KRS XML for Polish GAAP filers, and the ESEF package (zip) for listed IFRS filers | search by KRS number. **No API, and Imperva bot protection:** download by hand only, never work around it |
+| **KRS financial documents repository**, https://rdf-przegladarka.ms.gov.pl | every Polish company's filed annual accounts since 2018: KRS XML for Polish GAAP filers, and the ESEF package (zip) or PDF for IFRS filers | search by KRS number. **No API, and Imperva bot protection:** download by hand only, never work around it (also not with a script someone else runs). Paid APIs with the same documents: MGBI, Transparent Data. What the downloads look like: "Downloading by hand", below |
 | **The issuer's investor relations site** | annual reports (ESEF zip, XHTML, PDF) | usually "Relacje inwestorskie" → "Raporty okresowe". Some sites reject automated downloads (Orlen, PGE): download by hand, don't work around it |
 | **ESPI / EBI** (the GPW current and periodic report systems) | listed and Catalyst issuers' periodic reports and current reports (defaults, rating changes, bond buy-backs) | via the issuer's site or GPW |
 | **filings.xbrl.org** | ESEF packages, older years | `https://filings.xbrl.org/api/filings?filter[entity.identifier]=<LEI>`. Polish filings there stop at FY2022 |
-| **Bankier.pl** `bankier.pl/static/att/…` | mirrors of ESPI/EBI current and periodic reports, with their attachments (annual report PDFs and others) | robots.txt (checked 2026-11-04) blocks only training crawlers (GPTBot, CCBot, Google-Extended, Bard); assistants may read the attachments. Rate-limit |
+| **Bankier.pl** | mirrors of ESPI periodic reports with their attachments, for **listed** companies: the annual report's ESEF package (`.zip` or `.xbri`), PDFs, the auditor's report | robots.txt (checked 2026-11-04) blocks only training crawlers (GPTBot, CCBot, Google-Extended, Bard); assistants may read it. A company's filings: `bankier.pl/gielda/notowania/akcje/<SLUG>/komunikaty[/<page>]` (slug e.g. `DEVELIA`, `ARCHICOM`, `BBIDEV`); the annual report is titled "<NAME> Wyniki finansowe SRR <year>" (group) or "RR <year>" (single) since 2026, "<NAME> wyniki finansowe" before (the text says SRR/RR). Attachments are served from `bonnier.pl/static/att/…` (no robots.txt); **files older than about a year answer 404** (on 2026-11-04 every FY2024 attachment was gone). The page also links other companies' attachments: a filing's own files share its number in their names. Bond-only (EBI) issuers aren't listed this way. One request every 2 s. Used 2026-11-04 for Develia, Archicom, BBI, Cavatina, Lokum, Best, Vindexus (FY2025) |
 | **money.pl** | mirrors of ESPI filings | robots.txt allows assistants (ChatGPT-User, Perplexity-User) but disallows every `.pdf` for everyone: don't fetch its PDFs |
 | **obligacje.pl** | bond terms | robots.txt blocks assistants by name (Claude-User …) and signals `ai-input=no` for all: not for an AI agent |
 | biznesradar.pl, stockwatch.pl | summarised financials of listed companies | fallback only (step 6) |
+
+### Downloading by hand from the KRS browser (built: checklist page and `sort-filings`)
+
+- **What's missing** is kept in `scripts/sort-filings/checklist.json` and on the "KRS report checklist"
+  page (company, KRS number, year, group or single). Small lenders take their own accounts when they
+  file no group ones (`"scope": "any"`).
+- **What the browser hands out:** `Dokumenty.zip`, `Dokumenty (1).zip`… each with one document of the
+  company's list. Inside, seen so far:
+  - KRS XML, plain or **signed**: `….xml.xades` (XAdES) with the statement base64-encoded in a
+    `ds:Object` (the signature value and certificates are base64 too: take the block that decodes to a
+    statement), or a binary CAdES file with the XML inside as is;
+  - roots named by their unit, `JednostkaInnaWTys` / `…WZlotych` (e-sprawozdania app), and since 2025 inside
+    a `Dokument` → `TrescDokumentu` envelope with base64 attachments (`Zawartosc`, e.g. the notes as PDF);
+    nesting deeper than 100 elements;
+  - **signed PDFs** (`…-sig-sig-sig.pdf`) from IFRS filers (art.Locum, Ronson): the KRS number may be
+    missing from the text (Ronson); the company is then found by name;
+  - **not a statement:** `….xml.cfg.xades`, the accounting program's signed export settings
+    (Symfonia's `sage:Config`, Indos FY2025): the statement is another document in the list.
+  - The same document downloaded twice (identical files) happens easily.
+- **`npm run sort-filings -- <folder> [--copy | --move]`** (free, no stage, Windows paths work) reads every
+  file and zip entry, identifies company, KRS, year and scope from the content (PDFs from their text),
+  flags failed checks, duplicates, part years, drafts and a wrong year or scope against the checklist, and
+  files them as `sorted/<KRS>-<company>/FY<year>-<scope>.<ext>`.
+- **For an AI agent on a server:** the person uploads the folder to the dev Filings bucket under `tmp/`
+  (`aws s3 sync`), the agent downloads it, imports, and deletes the uploads one by one.
 
 **Rules for any download:**
 - respect robots.txt and bot protection;
@@ -320,10 +345,10 @@ A new override needs a stated reason (`RULE_SET_OVERRIDES` in `scorecard.ts`).
 
 | Format | Who files it | Notes |
 |---|---|---|
-| **KRS XML** | companies under the Polish accounting act (most unlisted issuers) | fixed line codes from the Ministry of Finance schemas (`JednostkaInna…`, `SkonsolidowanaJednostkaInna…`, schema versions 1-2 and 2-0E). In złoty or thousands. Small and micro entities (`JednostkaMala`, `JednostkaMikro`) aren't supported |
+| **KRS XML** | companies under the Polish accounting act (most unlisted issuers) | fixed line codes from the Ministry of Finance schemas (`JednostkaInna…`, `SkonsolidowanaJednostkaInna…`, also named by unit `…WTys`/`…WZlotych`; schema versions 1-2, 1-3, 2-0E and the 2025 "(2) 1-0E"). In złoty or thousands (from `KodSprawozdania`). Signed (XAdES, CAdES) or not; the 2025 `Dokument` envelope too. Small and micro entities (`JednostkaMala`, `JednostkaMikro`) aren't supported |
 | **ESEF package** (`.zip`) | listed companies reporting under IFRS; the consolidated statements are tagged with inline XBRL | prefer the package over the bare `.xhtml`: it carries the filer's calculation tree, anchors and labels, needed for the filer's own debt concepts |
 | **IFRS text** (`.xhtml`) | listed companies' separate statements (not tagged) | read by labels; best effort only, not extended further |
-| **PDF** | unlisted IFRS reporters (P4), foreign issuers (Allegro.eu, Pepco, MOL), issuers with only a PDF | read by a model, checked in code (step 5). Polish, English or Hungarian. Scanned PDFs (no text layer) aren't supported |
+| **PDF** | unlisted IFRS reporters (P4, art.Locum, Ronson in the KRS), foreign issuers (Allegro.eu, Pepco, MOL), issuers with only a PDF | read by a model (or by hand), checked in code (step 5). Polish, English or Hungarian. Scanned PDFs (no text layer) aren't supported |
 
 ---
 
@@ -379,7 +404,7 @@ XML, ESEF) a cost is positive. Treat the size and look at the label.
 | Interest expense | interest costs; ESEF filers rarely tag them, so total finance costs are used (this overstates interest) |
 | Interest paid | cash flow line, positive |
 | Net profit | for the period, including minorities |
-| Financial debt | interest-bearing debt to third parties: bank loans, bonds, other borrowings, **leases**, bills of exchange. Not trade payables, provisions or other operating liabilities. KRS XML can't separate debt owed to related parties, so it's left out. A line combining loans and bonds ("financial liabilities", P4) counts as debt with no bond split. A balance sheet in order of liquidity (financial companies) takes the debt lines under total liabilities |
+| Financial debt | interest-bearing debt to third parties: bank loans, bonds, other borrowings, **leases**, bills of exchange. Not trade payables, provisions or other operating liabilities. KRS XML can't separate debt owed to related parties, so it's left out. A line combining loans and bonds ("financial liabilities", P4) counts as debt with no bond split. A balance sheet in order of liquidity (financial companies) takes the debt lines under total liabilities. **Not counted yet: securitisation liabilities** (Vehis Finanse: 437m PLN of debt against 3.2bn of assets), which matters for the finance rules |
 | Cash | cash and cash equivalents |
 | Current assets / liabilities | totals; when only totals excluding assets held for sale are tagged, add the held-for-sale lines |
 | Inventory | for developers this is land, work in progress and finished flats |
@@ -417,6 +442,13 @@ Cost and reproducibility:
 - About $0.15 per report with Sonnet 4.6.
 - The model doesn't answer identically every time, so a re-read whose figures differ is left alone.
 
+**Read by hand instead of a model call (built 2026-11-04):** `import-filing <pdf> --print-prompt <file>`
+writes the statement pages and instructions the model would get, with no model call. Whoever reads them
+(Claude in a chat did for art.Locum and Ronson FY2024–2025) writes the `record_statements` answer as JSON;
+`import-filing <pdf> --transcript <file.json> --transcript-by "<who>"` then runs the same checks and stores it,
+with the reader as the extraction's model. Labels stay exactly as printed (repeated labels are fine);
+amounts are copied, never computed.
+
 ### Company check on import
 
 - KRS XML and IFRS text carry the KRS number.
@@ -427,7 +459,7 @@ Cost and reproducibility:
 
 ### Quality control (built)
 
-A known-answers set (`scripts/check-filings/expected.json`) covers 32 reports. Its figures were read
+A known-answers set (`scripts/check-filings/expected.json`) covers 36 reports. Its figures were read
 by hand from the printed statements and are compared with the stored rows and with a fresh parse. Run
 it after any parser or prompt change. Each new report gets its hand-read figures added.
 
@@ -616,6 +648,8 @@ ratios.
 - **Covenant breaches,** waivers, and debt reclassified to current because of a breach.
 - **Bond terms:** collateral and security, guarantees (a financing vehicle's guarantor), ranking,
   cross-default clauses, and whether the bonds are secured on assets or unsecured.
+- **Pledges and owners' debt:** the issuer's shares pledged for its owner's bonds (Ronson: all shares, for
+  Luzon Ronson N.V.'s bonds) tie the issuer to its parent's finances.
 - **Related-party transactions:** loans to owners, sales to related companies, receivables from
   related parties (KRS XML can't separate related-party debt).
 - **Defaults and restructurings:** missed coupons, extended maturities, bond buy-backs below par,
@@ -705,11 +739,17 @@ Lessons from imports so far. Check here before treating a strange result as the 
 | Allegro.eu, Żabka Group | registered in Luxembourg | under the LEI |
 | Echo Investment | developer with investment property; EUR bonds | developer rules count investment property in the stock; NBP rates for the EUR bonds |
 | WB Electronics | no LEI | no identity |
+| Ronson Development SE | its KRS file is a signed PDF named "…_draft.pdf" (the text is the final PwC-audited version; slips in the changes in equity); no KRS line in the text; land held for development shown as non-current; all shares pledged for the parent's bonds | read by hand; KRS passed with `--krs`; the land counts as inventory |
+| art.Locum S.A. | IFRS group statements as signed PDFs in the KRS, in złoty | read by hand |
+| Vehis Finanse | KRS XML in thousands under `JednostkaInnaWTys`, FY2025 in the 2025 envelope with a 1.4 MB attachment; funded by securitisation (not in debt); FY2024 revenue 118.1m in its own report, 78.8m as restated in FY2025's | parsed; the FY2024 report's own figures are kept for FY2024 |
+| Indos | the KRS list holds a signed Symfonia settings file (`.xml.cfg.xades`) for FY2025, not the statement | FY2025 still to download |
+| Grupa Corpus Iuris, Internetowy Fundusz Leasingowy | debt collector (net profit above revenue: portfolio gains aren't revenue), leasing (single company, no group) | stored for the finance rules |
 | Kruk KRU0228, Resi Capital RES0228 | instalment redemptions: nominal 1,000 → 550 and → 709.27 | amount owed from the current nominal; the remainder counted at maturity |
 | IZ0831, IZ0836 (State Treasury) | inflation-indexed nominal | current nominal from the Catalyst file; formula in step 1 |
 
-Results on 2026-11-03/04, prod: 27 issuers scored from reports, 16 from AI-collected figures, 31 in
-scope with no scorecard yet. Refinancing is red for Atal (130m PLN due in 12 months, 146m cash,
+Results on 2026-11-04, prod: 29 issuers scored from reports (art.Locum and Ronson added that day, both
+high confidence), 15 from AI-collected figures, 30 in scope with no scorecard yet; Finance issuers with
+reports stored for the coming finance rules: Kruk, Corpus Iuris, Vehis, IFL, Indos. Refinancing is red for Atal (130m PLN due in 12 months, 146m cash,
 operating cash flow −657m) and yellow for Echo.
 
 ---
@@ -725,8 +765,9 @@ In the order the roadmap would take them:
    - For debt collectors: cash collections, cash EBITDA, net debt / cash EBITDA, and portfolio
      purchases vs collections.
    - Needs their reports imported (only Kruk so far).
-2. **More reports:** the developers without one (Develia, Archicom, Ronson, BBI, Cavatina, Lokum,
-   art.Locum), and the FY2024 report for the 2-year issuers, so the trend fills in.
+2. **More reports:** import the FY2025 packages collected from Bankier (Develia, Archicom, BBI, Cavatina,
+   Lokum, Best, Vindexus, and PragmaGO's PDF; not imported yet); the FY2024 report of the 2-year issuers,
+   from the KRS (the checklist page), so the trend fills in; Indos FY2025, AOW, MCI Management.
 3. **From the notes, by a model with quotes checked in code:**
    - the debt maturity schedule, including loans;
    - covenants, collateral, guarantees and ranking;
