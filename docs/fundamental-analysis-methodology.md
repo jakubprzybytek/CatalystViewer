@@ -288,7 +288,9 @@ A new override needs a stated reason (`RULE_SET_OVERRIDES` in `scorecard.ts`).
 | **The issuer's investor relations site** | annual reports (ESEF zip, XHTML, PDF) | usually "Relacje inwestorskie" → "Raporty okresowe". Some sites reject automated downloads (Orlen, PGE): download by hand, don't work around it |
 | **ESPI / EBI** (the GPW current and periodic report systems) | listed and Catalyst issuers' periodic reports and current reports (defaults, rating changes, bond buy-backs) | via the issuer's site or GPW |
 | **filings.xbrl.org** | ESEF packages, older years | `https://filings.xbrl.org/api/filings?filter[entity.identifier]=<LEI>`. Polish filings there stop at FY2022 |
-| **Bankier.pl, money.pl** | mirrors of ESPI filings | **their robots.txt blocks AI crawlers: don't use them** |
+| **Bankier.pl** `bankier.pl/static/att/…` | mirrors of ESPI/EBI current and periodic reports, with their attachments (annual report PDFs and others) | robots.txt (checked 2026-11-04) blocks only training crawlers (GPTBot, CCBot, Google-Extended, Bard); assistants may read the attachments. Rate-limit |
+| **money.pl** | mirrors of ESPI filings | robots.txt allows assistants (ChatGPT-User, Perplexity-User) but disallows every `.pdf` for everyone: don't fetch its PDFs |
+| **obligacje.pl** | bond terms | robots.txt blocks assistants by name (Claude-User …) and signals `ai-input=no` for all: not for an AI agent |
 | biznesradar.pl, stockwatch.pl | summarised financials of listed companies | fallback only (step 6) |
 
 **Rules for any download:**
