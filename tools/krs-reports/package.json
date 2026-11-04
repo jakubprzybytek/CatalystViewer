@@ -1,0 +1,16 @@
+{
+  "name": "krs-reports",
+  "version": "1.0.0",
+  "description": "Download yearly financial reports from the Polish KRS (rdf-przegladarka.ms.gov.pl)",
+  "type": "module",
+  "bin": {
+    "krs-reports": "download-krs-reports.mjs"
+  },
+  "scripts": {
+    "start": "node download-krs-reports.mjs",
+    "setup": "npx playwright install chromium"
+  },
+  "dependencies": {
+    "playwright": "^1.64.1"
+  }
+}
