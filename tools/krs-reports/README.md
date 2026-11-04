@@ -2,7 +2,9 @@
 
 Download yearly financial reports from the Polish KRS Repository of Financial Documents ([rdf-przegladarka.ms.gov.pl](https://rdf-przegladarka.ms.gov.pl/wyszukaj-podmiot)).
 
-Uses Playwright (real Chromium browser) to navigate the Angular SPA, bypass the Incapsula/Imperva WAF, and download all available financial documents for a given KRS number.
+Uses Playwright (real Chromium browser) to navigate the Angular SPA, bypass the Incapsula/Imperva WAF, and download financial documents for a given KRS number.
+
+By default it downloads only annual financial statements for the last 2 years, preferring consolidated (`Skonsolidowane roczne sprawozdanie finansowe`) over standalone (`Roczne sprawozdanie finansowe`).
 
 ## Setup
 
@@ -15,8 +17,14 @@ npx playwright install chromium
 ## Usage
 
 ```bash
-# Downloads to ./krs-0000012345/
+# Downloads last 2 years of annual statements to ./krs-0000012345/
 node download-krs-reports.mjs 12345
+
+# Last 3 years
+node download-krs-reports.mjs 12345 --years 3
+
+# Download all documents (no filtering)
+node download-krs-reports.mjs 12345 --all
 
 # Custom output directory
 node download-krs-reports.mjs 0000012345 --out ~/Downloads/reports
@@ -32,6 +40,8 @@ node download-krs-reports.mjs 12345 --headed
 | `<KRS_NUMBER>` | KRS number (up to 10 digits; leading zeros added automatically) |
 | `--out <dir>` | Output directory (default: `./krs-<number>`) |
 | `--headed` | Show the browser window for debugging or solving CAPTCHAs |
+| `--years <N>` | How many most recent years to download (default: 2) |
+| `--all` | Download all documents, not just annual financial statements |
 
 ## How it works
 
@@ -39,12 +49,14 @@ node download-krs-reports.mjs 12345 --headed
 2. Enters the KRS number and submits the search
 3. Intercepts the Angular app's backend API responses to find document metadata
 4. Falls back to scraping download links from the page if API interception misses
-5. Downloads all financial documents using the browser's authenticated session
-6. Saves files (XML, XHTML, PDF) with descriptive names to the output directory
+5. Filters for annual financial statements (consolidated preferred, standalone fallback)
+6. Downloads using the browser's authenticated session
+7. Saves files (XML, XHTML, PDF) with unique names to the output directory
 
 ## Notes
 
 - **Must run from a residential IP** — the site's WAF blocks datacenter/VPN IPs.
 - **Use `--headed` the first time** — if the WAF presents a challenge or CAPTCHA, solve it once in the visible browser.
-- If something goes wrong, the script saves `_debug_screenshot.png`, `_debug_page.html`, and `_debug_api_responses.json` to the output directory.
+- The script always saves `_api_responses.json` to the output directory with the raw API metadata — useful for debugging if field names change.
+- If something goes wrong, it also saves `_debug_screenshot.png` and `_debug_page.html`.
 - Documents are typically XML (Polish Accounting Standards schema, 2018 or 2025 vintage), XHTML, or PDF. Pre-2018 filings are PDF scans.

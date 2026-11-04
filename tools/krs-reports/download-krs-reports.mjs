@@ -4,7 +4,7 @@
 // Repository of Financial Documents (rdf-przegladarka.ms.gov.pl)
 //
 // Usage:
-//   node download-krs-reports.mjs <KRS_NUMBER> [--out <dir>] [--headed]
+//   node download-krs-reports.mjs <KRS_NUMBER> [--out <dir>] [--headed] [--years N] [--all]
 //
 // Setup (once):
 //   cd tools/krs-reports
@@ -25,11 +25,15 @@ const args = process.argv.slice(2);
 
 function usage() {
   console.error(
-    `Usage: node download-krs-reports.mjs <KRS_NUMBER> [--out <dir>] [--headed]
+    `Usage: node download-krs-reports.mjs <KRS_NUMBER> [options]
 
   <KRS_NUMBER>   KRS number (up to 10 digits; leading zeros added automatically)
+
+Options:
   --out <dir>    Output directory (default: ./krs-<number>)
-  --headed       Show the browser window (useful for CAPTCHAs or debugging)`
+  --headed       Show the browser window (useful for CAPTCHAs or debugging)
+  --years <N>    How many most recent years to download (default: 2)
+  --all          Download all documents, not just annual financial statements`
   );
   process.exit(1);
 }
@@ -39,6 +43,8 @@ if (args.length === 0 || args[0] === "--help" || args[0] === "-h") usage();
 let krsRaw = null;
 let outDir = null;
 let headed = false;
+let maxYears = 2;
+let downloadAll = false;
 
 for (let i = 0; i < args.length; i++) {
   const a = args[i];
@@ -46,6 +52,14 @@ for (let i = 0; i < args.length; i++) {
     outDir = args[++i];
   } else if (a === "--headed") {
     headed = true;
+  } else if (a === "--years" && args[i + 1]) {
+    maxYears = parseInt(args[++i], 10);
+    if (isNaN(maxYears) || maxYears < 1) {
+      console.error("--years must be a positive integer");
+      process.exit(1);
+    }
+  } else if (a === "--all") {
+    downloadAll = true;
   } else if (!krsRaw && /^\d{1,10}$/.test(a)) {
     krsRaw = a;
   } else {
@@ -64,7 +78,11 @@ outDir = resolve(outDir || `krs-${krsNumber}`);
 if (!existsSync(outDir)) await mkdir(outDir, { recursive: true });
 
 console.log(`KRS number : ${krsNumber}`);
-console.log(`Output dir : ${outDir}\n`);
+console.log(`Output dir : ${outDir}`);
+console.log(
+  `Mode       : ${downloadAll ? "all documents" : `annual financial statements, last ${maxYears} year(s)`}`
+);
+console.log();
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -74,6 +92,10 @@ const BASE = "https://rdf-przegladarka.ms.gov.pl";
 const SEARCH_PAGE = `${BASE}/wyszukaj-podmiot`;
 const NAV_TIMEOUT = 90_000;
 const SEARCH_TIMEOUT = 60_000;
+
+const CONSOLIDATED_RE = /skonsolidowane\s+roczne\s+sprawozdanie\s+finansowe/i;
+const STANDALONE_RE = /^roczne\s+sprawozdanie\s+finansowe$/i;
+const ANY_SPRAWOZDANIE_RE = /sprawozdanie\s+finansowe/i;
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -95,24 +117,87 @@ function guessExt(contentType, body) {
   if (contentType.includes("html")) return ".html";
   if (body && body.length > 2) {
     const head = body.subarray(0, 4);
-    if (head[0] === 0x3c) return ".xml"; // '<'
-    if (head[0] === 0x25 && head[1] === 0x50) return ".pdf"; // '%P'
-    if (head[0] === 0x50 && head[1] === 0x4b) return ".zip"; // 'PK'
+    if (head[0] === 0x3c) return ".xml";
+    if (head[0] === 0x25 && head[1] === 0x50) return ".pdf";
+    if (head[0] === 0x50 && head[1] === 0x4b) return ".zip";
   }
   return ".bin";
 }
 
+function uniquePath(dir, filename) {
+  let candidate = join(dir, filename);
+  if (!existsSync(candidate)) return candidate;
+
+  const dot = filename.lastIndexOf(".");
+  const base = dot > 0 ? filename.substring(0, dot) : filename;
+  const ext = dot > 0 ? filename.substring(dot) : "";
+  let n = 2;
+  while (existsSync(join(dir, `${base}_${n}${ext}`))) n++;
+  return join(dir, `${base}_${n}${ext}`);
+}
+
+function extractYear(value) {
+  if (!value) return null;
+  const m = String(value).match(/(\d{4})/);
+  return m ? parseInt(m[1], 10) : null;
+}
+
+// Walk an object to find a value for any of the given keys (case-insensitive)
+function findField(obj, ...keys) {
+  if (!obj || typeof obj !== "object") return undefined;
+  const lower = keys.map((k) => k.toLowerCase());
+  for (const [k, v] of Object.entries(obj)) {
+    if (lower.includes(k.toLowerCase())) return v;
+  }
+  return undefined;
+}
+
+function getDocType(item) {
+  return (
+    findField(
+      item,
+      "rodzajDokumentu",
+      "typDokumentu",
+      "type",
+      "nazwa",
+      "documentType",
+      "name",
+      "nazwaTypuDokumentu"
+    ) || ""
+  );
+}
+
+function getYear(item) {
+  return (
+    extractYear(findField(item, "rokObrotowy", "fiscalYear")) ||
+    extractYear(findField(item, "okresDo", "dataDo", "periodEnd", "do")) ||
+    extractYear(findField(item, "okresOd", "dataOd", "periodStart", "od")) ||
+    null
+  );
+}
+
+function getPeriod(item) {
+  const from = findField(item, "okresOd", "dataOd", "periodStart", "od") || "";
+  const to = findField(item, "okresDo", "dataDo", "periodEnd", "do") || "";
+  return { from: String(from), to: String(to) };
+}
+
 async function saveDebug(page, dir, apiResponses) {
   try {
-    await page.screenshot({ path: join(dir, "_debug_screenshot.png"), fullPage: true });
+    await page.screenshot({
+      path: join(dir, "_debug_screenshot.png"),
+      fullPage: true,
+    });
     await writeFile(join(dir, "_debug_page.html"), await page.content());
-    if (apiResponses.length > 0) {
+  } catch {}
+  if (apiResponses.length > 0) {
+    try {
       await writeFile(
-        join(dir, "_debug_api_responses.json"),
+        join(dir, "_api_responses.json"),
         JSON.stringify(apiResponses, null, 2)
       );
-    }
-  } catch {}
+    } catch {}
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -134,7 +219,6 @@ const context = await browser.newContext({
 
 const page = await context.newPage();
 
-// Collect every JSON API response from the backend
 const apiResponses = [];
 page.on("response", async (res) => {
   const url = res.url();
@@ -151,9 +235,11 @@ try {
   // 1. Navigate to the search page
   // -------------------------------------------------------------------
   console.log("Opening KRS financial documents portal...");
-  await page.goto(SEARCH_PAGE, { waitUntil: "domcontentloaded", timeout: NAV_TIMEOUT });
+  await page.goto(SEARCH_PAGE, {
+    waitUntil: "domcontentloaded",
+    timeout: NAV_TIMEOUT,
+  });
 
-  // Wait for Angular to bootstrap
   await page.waitForFunction(
     () =>
       document.querySelector("input") !== null ||
@@ -201,35 +287,63 @@ try {
   }
 
   console.log("Search submitted. Waiting for results...");
-  await page.waitForLoadState("networkidle", { timeout: SEARCH_TIMEOUT }).catch(() => {});
+  await page
+    .waitForLoadState("networkidle", { timeout: SEARCH_TIMEOUT })
+    .catch(() => {});
   await page.waitForTimeout(3000);
 
   // -------------------------------------------------------------------
-  // 3. Collect document metadata (API interception + page scraping)
+  // 3. Collect document metadata
   // -------------------------------------------------------------------
-  let documents = collectFromApi(apiResponses);
+  let allDocuments = collectFromApi(apiResponses);
 
-  if (documents.length === 0) {
-    // Try clicking through to the entity detail page
-    documents = await collectFromPage(page, outDir);
+  if (allDocuments.length === 0) {
+    allDocuments = await collectFromPage(page, outDir);
   }
 
-  if (documents.length === 0) {
-    await saveDebug(page, outDir, apiResponses);
+  // Always save API responses for debugging / field-name discovery
+  await saveDebug(page, outDir, apiResponses);
+
+  if (allDocuments.length === 0) {
     die(
       `No documents found for KRS ${krsNumber}.\n` +
         "Possible reasons:\n" +
         "  - The company has no financial documents in the KRS repository\n" +
         "  - The portal structure may have changed\n" +
         "  - WAF blocked the request (try --headed)\n" +
-        "Debug files saved."
+        "Debug files saved to output directory."
     );
   }
 
   // -------------------------------------------------------------------
-  // 4. Download each document
+  // 4. Filter documents
   // -------------------------------------------------------------------
-  console.log(`\nFound ${documents.length} document(s). Downloading...\n`);
+  let documents;
+
+  if (downloadAll) {
+    documents = allDocuments;
+    console.log(`\n${documents.length} document(s) selected (--all).`);
+  } else {
+    documents = filterAnnualReports(allDocuments, maxYears);
+  }
+
+  if (documents.length === 0) {
+    console.log("\nAll available documents:");
+    for (const doc of allDocuments) {
+      console.log(
+        `  - [${doc.year || "?"}] ${doc.type || "(no type)"} — ${doc.label}`
+      );
+    }
+    die(
+      `\nNo matching annual financial statements found for the last ${maxYears} year(s).\n` +
+        "Use --all to download everything, or check _api_responses.json for the raw metadata."
+    );
+  }
+
+  // -------------------------------------------------------------------
+  // 5. Download
+  // -------------------------------------------------------------------
+  console.log(`\nDownloading ${documents.length} document(s)...\n`);
 
   let downloaded = 0;
   const seen = new Set();
@@ -263,9 +377,10 @@ try {
         filename = sanitize(label) + guessExt(ct, body);
       }
 
-      const filePath = join(outDir, filename);
+      const filePath = uniquePath(outDir, filename);
       await writeFile(filePath, body);
-      console.log(`${(body.length / 1024).toFixed(1)} KB → ${filename}`);
+      const savedName = filePath.split("/").pop();
+      console.log(`${(body.length / 1024).toFixed(1)} KB → ${savedName}`);
       downloaded++;
     } catch (err) {
       console.log(`FAILED: ${err.message}`);
@@ -283,7 +398,64 @@ try {
 }
 
 // ---------------------------------------------------------------------------
-// Document collection strategies
+// Filtering: pick annual financial statements for the last N years
+// ---------------------------------------------------------------------------
+
+function filterAnnualReports(allDocs, years) {
+  const consolidated = [];
+  const standalone = [];
+  const otherSprawozdanie = [];
+
+  console.log(`\n${allDocs.length} total document(s). Filtering for annual financial statements...\n`);
+
+  for (const doc of allDocs) {
+    const t = doc.type || "";
+    console.log(`  [${doc.year || "?"}] ${t || "(no type)"}`);
+
+    if (CONSOLIDATED_RE.test(t)) {
+      consolidated.push(doc);
+    } else if (STANDALONE_RE.test(t)) {
+      standalone.push(doc);
+    } else if (ANY_SPRAWOZDANIE_RE.test(t)) {
+      otherSprawozdanie.push(doc);
+    }
+  }
+
+  // Per-year: prefer consolidated, then standalone, then any sprawozdanie
+  const byYear = new Map();
+  const sources = [consolidated, standalone, otherSprawozdanie];
+  for (const group of sources) {
+    for (const doc of group) {
+      if (doc.year && !byYear.has(doc.year)) {
+        byYear.set(doc.year, doc);
+      }
+    }
+  }
+
+  if (byYear.size === 0) {
+    console.log("\n  No typed matches found.");
+    return [];
+  }
+
+  const sorted = [...byYear.entries()]
+    .sort((a, b) => b[0] - a[0])
+    .slice(0, years);
+
+  console.log();
+  for (const [year, doc] of sorted) {
+    const kind = CONSOLIDATED_RE.test(doc.type || "")
+      ? "consolidated"
+      : STANDALONE_RE.test(doc.type || "")
+        ? "standalone"
+        : "other";
+    console.log(`  -> ${year}: ${kind} (${doc.type})`);
+  }
+
+  return sorted.map(([, doc]) => doc);
+}
+
+// ---------------------------------------------------------------------------
+// Document collection: API interception
 // ---------------------------------------------------------------------------
 
 function collectFromApi(apiResponses) {
@@ -293,7 +465,6 @@ function collectFromApi(apiResponses) {
     if (resp.status !== 200 || !resp.body) continue;
     const data = resp.body;
 
-    // Try various response shapes
     const items =
       data.dokumenty ||
       data.content ||
@@ -305,25 +476,25 @@ function collectFromApi(apiResponses) {
     if (!items || !Array.isArray(items)) continue;
 
     for (const item of items) {
-      const docId = item.id || item.dokumentId || item.docId;
-      if (!docId) continue;
+      const docId =
+        findField(item, "id", "dokumentId", "docId") ||
+        (item.id != null ? item.id : null);
+      if (docId == null) continue;
 
-      const period =
-        item.okresOd || item.rokObrotowy || item.period || item.dataOd || "";
-      const periodEnd = item.okresDo || item.dataDo || "";
-      const type =
-        item.rodzajDokumentu ||
-        item.typDokumentu ||
-        item.type ||
-        item.nazwa ||
-        "sprawozdanie";
-
-      const label = [type, period, periodEnd].filter(Boolean).join("_");
+      const type = getDocType(item);
+      const year = getYear(item);
+      const period = getPeriod(item);
+      const label = [type || "sprawozdanie", period.from, period.to]
+        .filter(Boolean)
+        .join("_");
 
       docs.push({
         url: `${BASE}/services/rdf/przegladarka-dokumentow-finansowych/dokumenty/${docId}/tresc?bezPodpisu=false`,
         label,
         docId,
+        type,
+        year,
+        raw: item,
       });
     }
   }
@@ -334,10 +505,13 @@ function collectFromApi(apiResponses) {
   return docs;
 }
 
+// ---------------------------------------------------------------------------
+// Document collection: page scraping fallback
+// ---------------------------------------------------------------------------
+
 async function collectFromPage(page, debugDir) {
   const docs = [];
 
-  // First: see if there's an entity link to click through
   const entitySelectors = [
     "a[href*=podmiot]",
     "a[href*=entity]",
@@ -360,7 +534,7 @@ async function collectFromPage(page, debugDir) {
     }
   }
 
-  // Expand all collapsed sections
+  // Expand collapsed sections
   const expandables = await page.$$(
     'button[aria-expanded="false"], details:not([open]) summary, [class*="expand"], [class*="toggle"], .accordion-button.collapsed'
   );
@@ -372,13 +546,22 @@ async function collectFromPage(page, debugDir) {
   }
   await page.waitForTimeout(1000);
 
-  // Gather all links that look like document downloads
   const allLinks = await page.$$eval("a[href]", (els) =>
     els.map((a) => ({
       href: a.href,
       text: (a.textContent || "").trim().substring(0, 200),
       download: a.getAttribute("download") || "",
       ariaLabel: a.getAttribute("aria-label") || "",
+      context: (() => {
+        let el = a.parentElement;
+        for (let i = 0; i < 5 && el; i++) {
+          const t = el.textContent || "";
+          if (t.length > (a.textContent || "").length + 10 && t.length < 500)
+            return t.trim();
+          el = el.parentElement;
+        }
+        return "";
+      })(),
     }))
   );
 
@@ -392,12 +575,30 @@ async function collectFromPage(page, debugDir) {
       link.download;
 
     if (isDoc) {
-      const label = link.download || link.text || link.ariaLabel || "document";
-      docs.push({ url: link.href, label: sanitize(label) });
+      const ctx = link.context || "";
+
+      let type = "";
+      if (CONSOLIDATED_RE.test(ctx))
+        type = "Skonsolidowane roczne sprawozdanie finansowe";
+      else if (STANDALONE_RE.test(ctx))
+        type = "Roczne sprawozdanie finansowe";
+      else if (ANY_SPRAWOZDANIE_RE.test(ctx)) type = "Sprawozdanie finansowe";
+
+      const yearMatch = ctx.match(/20[12]\d/);
+      const year = yearMatch ? parseInt(yearMatch[0], 10) : null;
+
+      const label = [
+        type || link.download || link.text || link.ariaLabel || "document",
+        year,
+      ]
+        .filter(Boolean)
+        .join("_");
+
+      docs.push({ url: link.href, label: sanitize(label), type, year });
     }
   }
 
-  // Also check for Playwright download triggers (buttons that trigger file downloads)
+  // Fallback: trigger actual downloads via button clicks
   if (docs.length === 0) {
     const downloadBtns = await page.$$(
       'button:has-text("Pobierz"), button:has-text("pobierz dokument"), a:has-text("Pobierz dokument")'
@@ -410,8 +611,9 @@ async function collectFromPage(page, debugDir) {
           downloadBtns[i].click(),
         ]);
 
-        const suggestedName = download.suggestedFilename() || `document_${i + 1}`;
-        const filePath = join(debugDir, "..", sanitize(suggestedName));
+        const suggestedName =
+          download.suggestedFilename() || `document_${i + 1}`;
+        const filePath = uniquePath(debugDir, sanitize(suggestedName));
         await download.saveAs(filePath);
         console.log(`  Downloaded via button: ${suggestedName}`);
       } catch {}
