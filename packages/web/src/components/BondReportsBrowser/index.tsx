@@ -15,12 +15,13 @@ import Condition from "@/common/Condition";
 import MainNavigation from "../MainNavigation";
 import BondsStats from "./bonds/BondsStats";
 import IssuersList from "./issuers/IssuersList";
-import BondReportsFilterDrawer, { BondReportsFilteringOptions, filterUsing } from "./filter";
+import BondReportsFilterDrawer, { BondReportsFilteringOptions, CORPORATE_BONDS, filterUsing } from "./filter";
 import BondReportsSortMenu, { BondReportsSortOrder, getBondReportsSortingFunction } from "./sort";
 import { BondReport, getBondReports } from "@/sdk/Bonds";
 import { IssuerProfile, getIssuerProfiles } from "@/sdk/Issuers";
 import { computeStatisticsForInterestBaseTypes } from "@/bonds/statistics";
 import BondsList from "./bonds/BondsList";
+import { NONE, industryCounts, industryOfIssuer } from "@/bonds/fundamentals/industries";
 
 export enum BondReportsView {
   Issuers,
@@ -56,7 +57,9 @@ export const DEFAULT_FILTERIN_OPTIONS_SETTING: BondReportsFilteringOptions = {
   markets: ['GPW ASO', 'GPW RR'],
   interestBaseTypes: ['WIBOR 3M', 'WIBOR 6M'],
   issuers: [],
-  treasuryBondTypes: []
+  treasuryBondTypes: [],
+  industries: [],
+  financeGroups: []
 };
 export const DEFAULT_SORT_ORDER_SETTING = BondReportsSortOrder.Name;
 
@@ -125,22 +128,31 @@ export default function BondReportsBrowser({ settings, setSettings }: BondReport
   // Dependencies by field: filteringOptions is a new object on every render (useSettings), and the
   // bond type reloads the reports instead.
   /* oxlint-disable react/exhaustive-deps */
+  const industryOf = useMemo(() => industryOfIssuer(issuerProfiles), [issuerProfiles]);
+  const industries = filteringOptions.industries ?? NONE;
+  const financeGroups = filteringOptions.financeGroups ?? NONE;
+
+  // Companies per industry among the bonds the other filters leave (shown on the industry chips)
+  const industriesAvailable = useMemo(() =>
+    industryCounts(filterUsing({ ...filteringOptions, issuers: [] })(allBondReports), issuerProfiles, industryOf)
+    , [allBondReports, issuerProfiles, industryOf, filteringOptions.maxNominal, filteringOptions.currencies, filteringOptions.markets, filteringOptions.interestBaseTypes, filteringOptions.treasuryBondTypes]);
+
   // first, filter without issuers - it will be used to display all issuers
   const filteredBondReportsWithoutIssuers = useMemo(() =>
-    filterUsing({ ...filteringOptions, issuers: [] })(allBondReports)
-    , [allBondReports, filteringOptions.maxNominal, filteringOptions.markets, filteringOptions.interestBaseTypes, filteringOptions.treasuryBondTypes]);
+    filterUsing({ ...filteringOptions, issuers: [] }, industryOf)(allBondReports)
+    , [allBondReports, industryOf, filteringOptions.maxNominal, filteringOptions.currencies, filteringOptions.markets, filteringOptions.interestBaseTypes, filteringOptions.treasuryBondTypes, industries, financeGroups]);
 
   // Perform bonds filtering
   const filteredBondReports = useMemo(() => {
     // console.log(`Applying filters: ${JSON.stringify(filteringOptions)} to ${allBondReports.length} bond reports`);
 
-    const filterBondReports = filterUsing(filteringOptions);
+    const filterBondReports = filterUsing(filteringOptions, industryOf);
     const filteredBondReports = filterBondReports(allBondReports);
 
     //console.log(`Filtering result: ${filteredBondReports.length} bond reports`);
 
     return filteredBondReports;
-  }, [allBondReports, filteringOptions.maxNominal, filteringOptions.currencies, filteringOptions.markets, filteringOptions.interestBaseTypes, filteringOptions.issuers, filteringOptions.treasuryBondTypes]);
+  }, [allBondReports, industryOf, filteringOptions.maxNominal, filteringOptions.currencies, filteringOptions.markets, filteringOptions.interestBaseTypes, filteringOptions.issuers, filteringOptions.treasuryBondTypes, industries, financeGroups]);
   /* oxlint-enable react/exhaustive-deps */
 
   const filteredAndSortedBondsReports = useMemo(() =>
@@ -148,26 +160,29 @@ export default function BondReportsBrowser({ settings, setSettings }: BondReport
 
   const bondReportsStatistics = useMemo(() => computeStatisticsForInterestBaseTypes(allBondReports), [allBondReports]);
 
-  const title = `${filteredBondReports.length} ${filteringOptions.bondType}`;
+  const industryFilter = filteringOptions.bondType === CORPORATE_BONDS && industries.length > 0
+    ? ` · ${industries.map(i => i === 'Finance' && financeGroups.length ? `Finance (${financeGroups.join(', ')})` : i).join(', ')}` : '';
+  const title = `${filteredBondReports.length} ${filteringOptions.bondType}${industryFilter}`;
 
   return (
     <>
       <MainNavigation title={title}>
         <>
-          <IconButton color='inherit' disabled={isLoading}
+          <IconButton color='inherit' disabled={isLoading} aria-label='Refresh'
             onClick={() => { setIsLoading(true); fetchData(filteringOptions.bondType); }}>
             <Refresh />
           </IconButton>
-          <IconButton color='inherit' disabled={isLoading}
+          <IconButton color='inherit' disabled={isLoading} aria-label='Filter bonds'
             onClick={() => setFilteringDrawerOpen(true)}>
             <FilterAlt />
           </IconButton>
-          <IconButton color='inherit' disabled={isLoading}
+          <IconButton color='inherit' disabled={isLoading} aria-label='Sort'
             onClick={(event: React.MouseEvent<HTMLButtonElement>) => setSortMenuTriggerEl(event.currentTarget)}>
             <Sort />
           </IconButton>
           <BondReportsSortMenu anchorEl={sortMenuTriggerEl} selectedBondReportsSortOrder={sortOrder} setBondReportsSortOrder={selectBondReportsSortOrder} />
-          <BondReportsFilterDrawer open={filteringDrawerOpen} onClose={() => setFilteringDrawerOpen(false)} allBondReports={allBondReports} allBondTypes={allBondTypes} filteringOptions={filteringOptions} setFilteringOptions={setFilteringOptions} filteredBondReports={filteredBondReports} />
+          <BondReportsFilterDrawer open={filteringDrawerOpen} onClose={() => setFilteringDrawerOpen(false)} allBondReports={allBondReports} allBondTypes={allBondTypes} filteringOptions={filteringOptions} setFilteringOptions={setFilteringOptions} filteredBondReports={filteredBondReports}
+            industriesAvailable={industriesAvailable} industryOf={industryOf} />
         </>
       </MainNavigation>
       <Box sx={{ height: 48 }} />

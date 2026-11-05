@@ -10,6 +10,7 @@ import { removeElement } from '@/common/Arrays';
 import type { FundamentalScorecard } from '@/bonds/fundamentals/scorecard';
 import type { FinancialsCoverage, FinancialsSource, IssuerIdentity, Refinancing } from '@/sdk/Issuers';
 import { cardNames, namesOfCard } from '@/bonds/fundamentals/companies';
+import { industriesModifiers, CORPORATE_BONDS } from "../filter";
 
 export type IssuerReport = {
   name: string;
@@ -77,6 +78,17 @@ export default function IssuersList({ bondReports, issuerProfiles, statistics, f
     });
   }, []);
 
+  // The card's industry chip: picks that industry alone, or clears the filter when it's the one shown
+  const toggleIndustryFromCard = useCallback((industry: string) => {
+    const current = filteringOptionsRef.current;
+    const chosen = current.industries ?? [];
+    const { clearIndustries } = industriesModifiers(current, setFilteringOptionsRef.current);
+    if (chosen.length === 1 && chosen[0] === industry) clearIndustries();
+    else setFilteringOptionsRef.current({ ...current, industries: [industry], financeGroups: [] });
+  }, []);
+  const isCorporate = filteringOptions.bondType === CORPORATE_BONDS;
+  const chosenIndustries = filteringOptions.industries ?? [];
+
   const selectedIssuerNames = useMemo(() => new Set(filteringOptions.issuers), [filteringOptions.issuers]);
 
   const issuers = useMemo(() => {
@@ -136,6 +148,8 @@ export default function IssuersList({ bondReports, issuerProfiles, statistics, f
             statistics={statistics}
             isChecked={selectedIssuerNames.has(issuerReport.name)}
             onIssuerChecked={toggleIssuer}
+            industrySelected={issuerReport.industry !== undefined && chosenIndustries.includes(issuerReport.industry)}
+            onIndustryClicked={isCorporate ? toggleIndustryFromCard : undefined}
           />
         </Grid>
       ))}

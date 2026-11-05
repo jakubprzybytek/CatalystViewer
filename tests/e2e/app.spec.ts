@@ -33,3 +33,27 @@ test('bonds view lists the updated and the new bonds, not the deactivated one', 
   }
   await expect(cards.filter({ hasText: 'ARH0329' })).toHaveCount(0);
 });
+
+test('filters issuers by industry, from the filter drawer and from a card', async ({ page }) => {
+  await page.goto('/');
+  const cards = page.locator('.issuer-card');
+  await expect(cards).toHaveCount(7, { timeout: 20_000 });
+
+  // The card's industry chip shows that industry alone, and a second click shows all again
+  const allegro = cards.filter({ hasText: 'Allegro.eu SA' });
+  await allegro.getByText('Retail', { exact: true }).click();
+  await expect(cards).toHaveCount(1);
+  await expect(page.getByText(/Corporate bonds · Retail/)).toBeVisible();
+  await cards.filter({ hasText: 'Allegro.eu SA' }).getByText('Retail', { exact: true }).click();
+  await expect(cards).toHaveCount(7);
+
+  // The drawer's chips, with the number of companies each
+  await page.getByRole('button', { name: 'Filter bonds' }).click();
+  const developer = page.getByRole('button', { name: /^Developer \d+$/ });
+  await expect(developer).toBeVisible();
+  const developers = Number((await developer.textContent())!.match(/\d+$/)![0]);
+  await developer.click();
+  await page.getByRole('button', { name: 'close filters' }).click();
+  await expect(cards).toHaveCount(developers);
+  for (const card of await cards.all()) await expect(card.getByText('Developer', { exact: true })).toBeVisible();
+});

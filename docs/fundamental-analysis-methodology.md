@@ -773,6 +773,11 @@ defaults, GetBack 2018 first, to calibrate the thresholds.
     tooltip. Rule set labels: developer, contractor, consumer and services, debt collector, leasing and
     factoring, investment firm (general isn't named);
   - the analysis button only for issuers in AI scope.
+- **Industry filter** (corporate bonds): the filter drawer's Industry chips (companies per industry among
+  the bonds the other filters leave), with a "Kind of financial company" row when Finance is chosen (debt
+  collector, leasing & factoring, investment firm, banks & other, from `FINANCE_RULE_SETS`); a card's
+  industry chip shows that industry alone. It filters both views, and the page title names it
+  (`packages/web/src/bonds/fundamentals/industries.ts`).
 - **Source line:** "Figures from the annual report (ESEF, IFRS), group accounts, fiscal year ending
   2025-12-31 and 1 earlier", or AI-collected.
 - **Registration line:** country, KRS or local register number, LEI, "LEI lapsed".

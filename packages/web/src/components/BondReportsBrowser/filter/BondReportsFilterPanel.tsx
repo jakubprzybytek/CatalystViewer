@@ -5,8 +5,9 @@ import Box from "@mui/material/Box";
 import Divider from "@mui/material/Divider";
 import { getUniqueInterestBaseTypes, getUniqueIssuers, getUniqueMarkets, getUniqueCurrencies, sortStrings } from "@/bonds/statistics";
 import { BondReport } from "@/sdk/Bonds";
-import { BondReportsFilteringOptions, marketsModifiers, interestBaseTypesModifiers, issuersModifiers, bondTypeModifier, maxNominalValueModifier, currenciesModifiers, treasuryBondTypesModifiers, POLISH_TREASURY_ISSUER } from ".";
-import { NominalValueFilter, StringFilter, MultiStringFilter } from "./fields";
+import { BondReportsFilteringOptions, marketsModifiers, interestBaseTypesModifiers, issuersModifiers, bondTypeModifier, maxNominalValueModifier, currenciesModifiers, treasuryBondTypesModifiers, industriesModifiers, POLISH_TREASURY_ISSUER, CORPORATE_BONDS } from ".";
+import { NominalValueFilter, StringFilter, MultiStringFilter, ChipFilter, type ChipOption } from "./fields";
+import { FINANCE, NONE, isInIndustries, type IssuerIndustry } from "@/bonds/fundamentals/industries";
 import IssuersSelector from "./IssuersSelector";
 
 const TREASURY_BOND_TYPES = [
@@ -24,13 +25,20 @@ type BondReportsFilterPanelParams = {
   allBondTypes: string[];
   filteringOptions: BondReportsFilteringOptions;
   setFilteringOptions: (param: BondReportsFilteringOptions) => void;
+  industriesAvailable: { industries: ChipOption[]; financeGroups: ChipOption[] };
+  industryOf: (issuerName: string) => IssuerIndustry;
 };
 
-export function BondReportsFilterPanel({ allBondReports, allBondTypes, filteringOptions, setFilteringOptions }: BondReportsFilterPanelParams): React.JSX.Element {
+export function BondReportsFilterPanel({ allBondReports, allBondTypes, filteringOptions, setFilteringOptions, industriesAvailable, industryOf }: BondReportsFilterPanelParams): React.JSX.Element {
   const allMarkets = useMemo(() => sortStrings(getUniqueMarkets(allBondReports)), [allBondReports]);
   const allInterestBaseTypes = useMemo(() => sortStrings(getUniqueInterestBaseTypes(allBondReports)), [allBondReports]);
   const allCurrencies = useMemo(() => getUniqueCurrencies(allBondReports), [allBondReports]);
-  const allIssuers = useMemo(() => getUniqueIssuers(allBondReports), [allBondReports]);
+  const industries = filteringOptions.industries ?? NONE;
+  const financeGroups = filteringOptions.financeGroups ?? NONE;
+  const isCorporate = filteringOptions.bondType === CORPORATE_BONDS;
+  // The issuers to pick from: those of the chosen industries
+  const allIssuers = useMemo(() => getUniqueIssuers(isCorporate ? allBondReports.filter(isInIndustries(industries, financeGroups, industryOf)) : allBondReports),
+    [allBondReports, isCorporate, industries, financeGroups, industryOf]);
 
   const setBondType = bondTypeModifier(filteringOptions, setFilteringOptions);
   const setMaxNominal = maxNominalValueModifier(filteringOptions, setFilteringOptions);
@@ -39,6 +47,7 @@ export function BondReportsFilterPanel({ allBondReports, allBondTypes, filtering
   const { addCurrency, removeCurrency } = currenciesModifiers(filteringOptions, setFilteringOptions);
   const { addIssuer, removeIssuer, removeAllIssuers } = issuersModifiers(filteringOptions, setFilteringOptions);
   const { addtreasuryBondType, removetreasuryBondType } = treasuryBondTypesModifiers(filteringOptions, setFilteringOptions);
+  const { toggleIndustry, toggleFinanceGroup } = industriesModifiers(filteringOptions, setFilteringOptions);
 
   const isTreasuryBondsSelected = filteringOptions.issuers.includes(POLISH_TREASURY_ISSUER);
 
@@ -69,9 +78,20 @@ export function BondReportsFilterPanel({ allBondReports, allBondTypes, filtering
         </Grid>
       </Grid>
       <Divider>Issuers</Divider>
+      {isCorporate && industriesAvailable.industries.length > 0 && (
+        <Box sx={{ padding: 1, paddingTop: 0 }}>
+          <ChipFilter label='Industry' all={industriesAvailable.industries} selected={industries} toggle={toggleIndustry} />
+        </Box>
+      )}
       <Box sx={{ padding: 1, paddingTop: 0 }}>
         <IssuersSelector allIssuers={allIssuers} selectedIssuers={filteringOptions.issuers} addIssuer={addIssuer} removeIssuer={removeIssuer} removeAllIssuers={removeAllIssuers} />
       </Box>
+      {isCorporate && industries.includes(FINANCE) && industriesAvailable.financeGroups.length > 0 && <>
+        <Divider>Finance</Divider>
+        <Box sx={{ padding: 1, paddingTop: 0 }}>
+          <ChipFilter label='Kind of financial company' all={industriesAvailable.financeGroups} selected={financeGroups} toggle={toggleFinanceGroup} />
+        </Box>
+      </>}
       {isTreasuryBondsSelected && <>
         <Divider>Skarb Państwa</Divider>
         <Box sx={{ padding: 1, paddingTop: 0 }}>

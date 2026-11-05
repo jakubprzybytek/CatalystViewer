@@ -76,9 +76,11 @@ type IssuerCardParam = {
   statistics: InterestPercentilesByInterestBaseType;
   isChecked: boolean;
   onIssuerChecked: (issuerName: string, checked: boolean) => void;
+  industrySelected?: boolean;               // the industry filter includes this card's industry
+  onIndustryClicked?: (industry: string) => void;
 }
 
-function IssuerCard({ issuerReport, statistics, isChecked, onIssuerChecked }: IssuerCardParam): React.JSX.Element {
+function IssuerCard({ issuerReport, statistics, isChecked, onIssuerChecked, industrySelected, onIndustryClicked }: IssuerCardParam): React.JSX.Element {
   const [expanded, setExpanded] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -159,11 +161,15 @@ function IssuerCard({ issuerReport, statistics, isChecked, onIssuerChecked }: Is
                 <Chip
                   size='small'
                   label={issuerReport.industry}
+                  title={onIndustryClicked ? (industrySelected ? `Show all industries` : `Show only ${issuerReport.industry}`) : undefined}
+                  {...(onIndustryClicked ? { clickable: true, onClick: () => onIndustryClicked(issuerReport.industry!) } : {})}
                   sx={{
                     backgroundColor: industryColors.backgroundColor,
                     color: industryColors.color,
                     filter: 'saturate(85%)',
                     fontWeight: 400,
+                    ...(industrySelected ? { outline: '2px solid currentColor', outlineOffset: '1px' } : {}),
+                    ...(onIndustryClicked ? { '&:hover': { backgroundColor: industryColors.backgroundColor, filter: 'saturate(120%)' } } : {}),
                   }}
                 />
               )}
@@ -348,5 +354,7 @@ function IssuerCard({ issuerReport, statistics, isChecked, onIssuerChecked }: Is
 export default memo(IssuerCard, (prevProps, nextProps) => {
   return prevProps.issuerReport === nextProps.issuerReport
     && prevProps.statistics === nextProps.statistics
-    && prevProps.isChecked === nextProps.isChecked;
+    && prevProps.isChecked === nextProps.isChecked
+    && prevProps.industrySelected === nextProps.industrySelected
+    && prevProps.onIndustryClicked === nextProps.onIndustryClicked;
 });

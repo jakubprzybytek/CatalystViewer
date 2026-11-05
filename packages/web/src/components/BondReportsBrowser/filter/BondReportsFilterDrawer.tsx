@@ -8,6 +8,8 @@ import Typography from "@mui/material/Typography";
 import CloseIcon from "@mui/icons-material/Close";
 import { BondReportsFilterPanel, BondReportsFilteringOptions } from ".";
 import { BondReport } from "@/sdk/Bonds";
+import type { IssuerIndustry } from "@/bonds/fundamentals/industries";
+import type { ChipOption } from "./fields";
 
 type BondReportsFilterDrawerParams = {
   open: boolean;
@@ -17,9 +19,11 @@ type BondReportsFilterDrawerParams = {
   filteringOptions: BondReportsFilteringOptions;
   setFilteringOptions: (param: BondReportsFilteringOptions) => void;
   filteredBondReports: BondReport[];
+  industriesAvailable: { industries: ChipOption[]; financeGroups: ChipOption[] };
+  industryOf: (issuerName: string) => IssuerIndustry;
 };
 
-export default function BondReportsFilterDrawer({ open, onClose, allBondReports, allBondTypes, filteringOptions, setFilteringOptions, filteredBondReports }: BondReportsFilterDrawerParams): React.JSX.Element {
+export default function BondReportsFilterDrawer({ open, onClose, allBondReports, allBondTypes, filteringOptions, setFilteringOptions, filteredBondReports, industriesAvailable, industryOf }: BondReportsFilterDrawerParams): React.JSX.Element {
   return (
     <Box component="nav">
       <Drawer anchor='top' open={open}
@@ -36,7 +40,8 @@ export default function BondReportsFilterDrawer({ open, onClose, allBondReports,
             </IconButton>
           </Toolbar>
           <Divider />
-          <BondReportsFilterPanel allBondReports={allBondReports} allBondTypes={allBondTypes} filteringOptions={filteringOptions} setFilteringOptions={setFilteringOptions} />
+          <BondReportsFilterPanel allBondReports={allBondReports} allBondTypes={allBondTypes} filteringOptions={filteringOptions} setFilteringOptions={setFilteringOptions}
+            industriesAvailable={industriesAvailable} industryOf={industryOf} />
           <Divider />
           <Typography sx={{ padding: 1 }}>Listing {filteredBondReports.length} bond(s)</Typography>
         </Stack>
