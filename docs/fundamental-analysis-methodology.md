@@ -459,7 +459,7 @@ amounts are copied, never computed.
 
 ### Quality control (built)
 
-A known-answers set (`scripts/check-filings/expected.json`) covers 39 reports. Its figures were read
+A known-answers set (`scripts/check-filings/expected.json`) covers 40 reports. Its figures were read
 by hand from the printed statements and are compared with the stored rows and with a fresh parse. Run
 it after any parser or prompt change. Each new report gets its hand-read figures added.
 
@@ -745,6 +745,8 @@ Lessons from imports so far. Check here before treating a strange result as the 
 | Indos | the KRS list holds only a signed Symfonia settings file (`.xml.cfg.xades`) for FY2025, not the statement; the annual report is on indos.pl, but under `/api/`, which its robots.txt disallows. The FY2025 report restates 2024: net profit −19k PLN instead of the 3.93m first reported (a 3.95m charge, receivables lower by the same) | FY2025 PDF downloaded by the owner, read by hand; FY2024 keeps the figures of its own (original) report |
 | Vindexus FY2024 | the KRS entry for the group report holds the untagged single-company statement (pdf2htmlEX); the group ESEF package is in `Raport_roczny_2024.zip` on gpm-vindexus.pl (investor relations → reports), which tags the bonds as bonds (debt 114.6m PLN; the FY2025 report's tagging gives 2.4m for the same year) | imported from the company's site |
 | P4, Cognor FY2024 | IFRS statements as PDFs in the KRS | read by hand (FY2023 column of P4 is restated) |
+| MOL FY2024 | `ifrs-consolidated-fs-eng-esef.pdf` on molgroup.info is the auditor's report only; the ESEF zip isn't linked at a fixed address. The statements are in the integrated annual report (pages 51–55, HUF million, costs printed as positive amounts) | read by hand from the integrated report |
+| Allegro.eu, Żabka FY2024 | ESEF packages inside the companies' reporting packages (`Q4-2024-Reporting-package-…zip` on about.allegro.eu, `Annual-Reporting-Package-2024-Zabka-Group.zip` on zabkagroup.com) | imported |
 | BBI Development | a developer working through joint ventures: 174m PLN of equity-accounted investments, 3.4m of inventory, so net debt / stock reads 21× | the developer rule doesn't fit; needs a holding-company view (section 15) |
 | Vindexus | debt collector whose bonds sit in "other financial liabilities" (72.4m + 28.2m PLN) next to separate loan lines, so they're left out of debt (2.2m) | fix with the finance rules |
 | Grupa Corpus Iuris, Internetowy Fundusz Leasingowy | debt collector (net profit above revenue: portfolio gains aren't revenue), leasing (single company, no group) | stored for the finance rules |
@@ -755,8 +757,8 @@ Results on 2026-11-04, prod: 34 issuers scored from reports (added that day: art
 KRS, Develia, Archicom, BBI, Cavatina and Lokum from Bankier's ESEF packages), 11 from AI-collected figures,
 29 in scope with no scorecard yet; Finance issuers with reports stored for the coming finance rules: Kruk,
 Best, Vindexus, Corpus Iuris, Vehis, IFL, Indos, MCI Management, AOW Faktoring. After the KRS FY2024 reports
-(4–5 November), 30 of the 34 have 3 or more years, so their trend is computed; only the four foreign issuers
-(Pepco, Żabka, MOL, Allegro.eu) still have two. Trend red: Atal, Archicom, Benefit Systems, Cavatina, Cognor,
+(4–5 November), 30 of the 34 have 3 or more years, so their trend is computed; by 5 November all but Pepco
+(Allegro.eu, Żabka and MOL FY2024 fetched from their own sites). Trend red: Atal, Archicom, Benefit Systems, Cavatina, Cognor,
 Echo, Lokum, Marvipol, PCC Exol, PCC Rokita, Polenergia. Refinancing is red for Atal (130m PLN due in 12 months, 146m cash,
 operating cash flow −657m) and yellow for Echo.
 
@@ -773,7 +775,7 @@ In the order the roadmap would take them:
    - For debt collectors: cash collections, cash EBITDA, net debt / cash EBITDA, and portfolio
      purchases vs collections.
    - Needs their reports imported (only Kruk so far).
-2. **More reports:** the FY2024 report of the four foreign issuers (their own sites), for their trend;
+2. **More reports:** Pepco's FY2024 annual report (its site now lists only FY2025), for its trend;
    PragmaGO's FY2025 PDF (collected, not imported); the 29
    in-scope issuers with no scorecard yet; FY2025 reports for the 11 scored from AI-collected figures.
 3. **From the notes, by a model with quotes checked in code:**

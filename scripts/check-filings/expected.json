@@ -592,6 +592,21 @@
         "equity": 37484,
         "cash": 11913
       }
+    },
+    {
+      "issuer": "MOL Hungarian Oil & Gas PLC",
+      "entityId": "LEI:213800R83KX5FQFGXS67",
+      "period": "2024-12-31#group",
+      "file": "filings/LEI-213800R83KX5FQFGXS67/2024-12-31-group-9c2fc1a23f32.pdf",
+      "format": "ai-pdf",
+      "currency": "HUF",
+      "thousands": {
+        "revenue": 9178677000,
+        "netProfit": 355810000,
+        "totalAssets": 8474001000,
+        "equity": 4659108000,
+        "cash": 433610000
+      }
     }
   ]
 }
