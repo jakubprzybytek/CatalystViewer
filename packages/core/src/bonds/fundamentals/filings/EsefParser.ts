@@ -8,7 +8,7 @@
 // and the filer's own (extension) concepts are classified by the IFRS concept they're anchored to, or by
 // their label. With the .xhtml alone, it falls back to the standard IFRS debt concepts.
 import { readZip, isZip } from './zip';
-import { itemsFromFigures, lineChecks, type LineItem, type StatementLine, type StatementName, markWriteDowns } from './statementLines';
+import { itemsFromFigures, lineChecks, type LineItem, type StatementLine, type StatementName, markLineItems } from './statementLines';
 import { UnsupportedFilingError, type FilingField, type FilingPeriod, type FilingScope, type ParsedFiling, type SourcedFigure } from './FilingParser';
 
 // ─── Inline XBRL facts ──────────────────────────────────────────────────────────
@@ -511,7 +511,7 @@ export function parseEsef(input: EsefInput): ParsedFiling {
             const item = ESEF_ITEMS[line.code!] ?? (anchored && SEVERAL.has(anchored) ? anchored : undefined);
             if (item && (SEVERAL.has(item) || !lines.some(l => l.statement === line.statement && l.item === item))) line.item = item;
         }
-        markWriteDowns(lines);
+        markLineItems(lines);
         return lines;
     };
 

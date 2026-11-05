@@ -13,7 +13,7 @@
 import { BedrockRuntimeClient, ConverseCommand } from '@aws-sdk/client-bedrock-runtime';
 import { UnsupportedFilingError, type FilingExtraction, type FilingField, type FilingPeriod, type ParsedFiling, type SourcedFigure } from './FilingParser';
 import type { PdfPage } from './pdfText';
-import { LINE_ITEMS, markWriteDowns, type StatementLine } from './statementLines';
+import { LINE_ITEMS, markLineItems, type StatementLine } from './statementLines';
 
 export const PROMPT_VERSION = 'pdf-statements-6';
 
@@ -69,8 +69,11 @@ export function findStatementPages(pages: PdfPage[]): number[] {
 // ─── 2. Transcription ───────────────────────────────────────────────────────────
 
 // The model classifies each line as one of the standard line items, or other.
-// Write-downs (impairment) are found by code (markWriteDowns), not asked of the model.
-export const LINE_FIELDS = [...LINE_ITEMS.filter((i): i is Exclude<typeof i, 'impairment'> => i !== 'impairment'), 'other'] as const;
+// Write-downs (impairment) and the finance lines (securitisation, other financial liabilities) are found
+// by code (markLineItems), not asked of the model, so the prompt stays as it is.
+type ByCode = 'impairment' | 'debtSecuritisation' | 'otherFinancialLiabilities';
+const BY_CODE: readonly string[] = ['impairment', 'debtSecuritisation', 'otherFinancialLiabilities'];
+export const LINE_FIELDS = [...LINE_ITEMS.filter((i): i is Exclude<typeof i, ByCode> => !BY_CODE.includes(i)), 'other'] as const;
 export type LineField = typeof LINE_FIELDS[number];
 
 export type Transcript = {
@@ -308,7 +311,7 @@ export function transcriptToFiling(transcript: Transcript, pages: PdfPage[], ext
                 ...(line.field && line.field !== 'other' && (LINE_ITEMS as readonly string[]).includes(line.field) ? { item: line.field } : {}),
             });
         }
-        markWriteDowns(lines);
+        markLineItems(lines);
 
         const end = isoDate(column.periodEnd);
         if (!end) throw new UnsupportedFilingError(`The model gave an unreadable date for column ${column.id}: "${column.periodEnd}"`);

@@ -7,7 +7,7 @@
 // Not supported: small and micro entity structures (JednostkaMala, JednostkaMikro), banks, insurers,
 // and IFRS reporters (they file ESEF/PDF, not these structures).
 import { XMLParser } from 'fast-xml-parser';
-import { itemsFromFigures, lineChecks, type LineItem, type StatementLine, type StatementName, markWriteDowns } from './statementLines';
+import { itemsFromFigures, lineChecks, type LineItem, type StatementLine, type StatementName, markLineItems } from './statementLines';
 import { KRS_LINE_LABELS } from './krsLineLabels';
 
 export type FilingScope = 'single' | 'group';
@@ -261,7 +261,7 @@ function krsLines(sections: { section: Section; root?: string }[], scope: Filing
         const rule = line.code && KRS_ITEMS.find(([s, code, label]) => s === line.statement && code.test(line.code!) && label.test(line.label));
         if (rule) line.item = rule[3];
     }
-    markWriteDowns(lines);
+    markLineItems(lines);
     return lines;
 }
 

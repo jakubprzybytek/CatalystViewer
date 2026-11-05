@@ -1,6 +1,6 @@
 # Finance rules: debt collectors, leasing and factoring, investment firms
 
-Roadmap phase 2 ("Rules per sector", follow-up). Status: design, for approval (2026-11-05).
+Roadmap phase 2 ("Rules per sector", follow-up). Status: approved and built 2026-11-05.
 
 ## Why
 
@@ -150,3 +150,38 @@ Things the table shows that need a look before release:
 - **Kredyt Inkaso and Best FIZ** reports: not collected yet.
 - **PragmaGO FY2025** (PDF collected, not imported).
 - **Banks and insurers**: capital ratios come from regulatory disclosures, not the statements.
+
+## As built (prod data, 2026-11-05)
+
+Changes from the design:
+
+- **Interest cover** for lenders is (profit before tax + interest) / interest, with EBIT / interest only
+  when there's no profit before tax. Under the Polish accounting act a lender's portfolio income is often
+  finance income, below EBIT: Corpus Iuris's EBIT cover was 0.53, its pre-tax cover is 6.53.
+- **"Other financial liabilities" as bonds** applies to lenders only. Counting them for every issuer with
+  listed bonds turned Atal's debt burden red (443m PLN of something else).
+- **Lenders are scored from reports only**: Best FIZ's AI analysis from May 2026 isn't used, so it has no
+  card until its reports are imported.
+- **Kredyt Inkaso**'s bonds resolve to Best S.A. (confirmed 2026-11-03), so it shows Best's figures.
+- **Debt due within 12 months** is n/a for Kruk and Best (no current/non-current split). Item totals
+  handle a section total printed under its lines (PDFs: "Zobowiązania krótkoterminowe razem").
+- The new items are found by code, not by the PDF prompt (still version 6). Securitisation lines exist
+  only at Vehis among the 128 stored years.
+
+Signals (Debt Burden, Debt Service, Liquidity, Profitability, Asset Coverage, Trend, Refinancing):
+
+| Issuer | Rules | Signals | Notes |
+|---|---|---|---|
+| Kruk | collector | GG.GGRR | |
+| Best, Kredyt Inkaso | collector | Gy.yGRR | |
+| Vindexus | collector | GGGyGRR | bonds from other financial liabilities, 100.6m |
+| Grupa Corpus Iuris | collector | GGGGGRG | net profit above revenue |
+| Indos | collector | GyGyyRy | |
+| Internetowy Fundusz Leasingowy | leasing | GGGGGGG | |
+| PragmaGO (FY2024) | leasing | GyRyG.R | cash 0.08× debt due within a year |
+| AOW Faktoring | leasing | GyRRGRR | |
+| Vehis | leasing | RRyRRyR | 2,395m securitisation, 85% of debt |
+| MCI Management | investment | G.R.GyG | |
+
+The item totals with the new items are written by `scripts/item-totals` (`--write`); before that, prod
+shows the lenders without securitisation, the Vindexus fix and debt due within a year.

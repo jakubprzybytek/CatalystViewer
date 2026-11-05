@@ -3,7 +3,7 @@ import { Resource } from 'sst';
 import { IssuerProfilesTable, DbIssuerAnalysisSummary, type DbIssuerIdentityRecord } from '@core/storage/issuerProfiles';
 import { reportsOf } from '@core/bonds/issuers/identity';
 import { IssuerFinancialsTable, type DbIssuerFinancialsRecord } from '@core/storage/issuerFinancials';
-import { ruleSetFor, scorecardFromReportedYears, type FundamentalScorecard, type ReportedYear, type RuleSet } from '@core/bonds/fundamentals/scorecard';
+import { financeRuleSetFor, ruleSetFor, scorecardFromReportedYears, type FundamentalScorecard, type ReportedYear, type RuleSet } from '@core/bonds/fundamentals/scorecard';
 import { filedYears } from '@core/bonds/fundamentals/filings/filedYears';
 import { isInFundamentalScope } from '@core/bonds/fundamentals/scope';
 import { amountOwed, latestReport, refinancing, refinancingDimension, type ListedBond, type Rates } from '@core/bonds/fundamentals/maturities';
@@ -51,8 +51,9 @@ export function scorecardWithSource(
     analysis: DbIssuerAnalysisSummary | undefined,
     rules: RuleSet = 'general',
     today: string = new Date().toISOString().slice(0, 10),
+    bondsMayBeInOtherFinancialLiabilities = false,
 ): { scorecard?: FundamentalScorecard; financialsSource?: FinancialsSource } {
-    const filed = filedYears(filings);
+    const filed = filedYears(filings, bondsMayBeInOtherFinancialLiabilities);
     const aiYear = latestAiYear(analysis);
     if (filed && (aiYear === undefined || Number(filed.latestPeriodEnd.slice(0, 4)) >= aiYear)) {
         const scorecard = scorecardFromReportedYears(issuerName, filed.years, rules);
@@ -225,16 +226,21 @@ export function buildIssuerProfiles(
             ...(identity ? { identity: identityView(identity, identities, reportNames) } : {}),
             ...(refi ? { refinancing: refi } : {}),
         };
-        if (!isInFundamentalScope(profile.industry)) {
+        // Lenders listed in the finance rule sets are scored from their reports (they get no AI analysis)
+        if (!isInFundamentalScope(profile.industry) && !financeRuleSetFor(profile.issuerName)) {
             return { ...base, scorecard: undefined, performedAt: undefined };
         }
-        const { scorecard, financialsSource } = scorecardWithSource(profile.issuerName, filings, analysis, ruleSetFor(profile.industry, profile.issuerName), maturities.today);
+        // A lender is scored from its reports only (an old AI analysis of one isn't used), and its bonds may sit
+        // in "other financial liabilities" (filedYears)
+        const lender = financeRuleSetFor(profile.issuerName) !== undefined;
+        const { scorecard, financialsSource } = scorecardWithSource(profile.issuerName, filings, lender ? undefined : analysis,
+            ruleSetFor(profile.industry, profile.issuerName), maturities.today, lender && bonds.length > 0);
         const dimension = refi && refinancingDimension(refi);
         return {
             ...base,
             ...(scorecard ? { scorecard: dimension ? { ...scorecard, dimensions: [...scorecard.dimensions, dimension] } : scorecard } : {}),
             ...(financialsSource ? { financialsSource } : {}),
-            performedAt: analysis?.performedAt,
+            performedAt: lender ? undefined : analysis?.performedAt,
         };
     });
 }

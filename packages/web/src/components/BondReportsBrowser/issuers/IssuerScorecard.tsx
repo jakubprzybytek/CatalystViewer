@@ -39,6 +39,7 @@ function MetricsList({ dimension, thin }: { dimension: DimensionResult; thin?: b
 
 const RULE_SET_LABEL: Record<NonNullable<FundamentalScorecard['ruleSet']>, string> = {
   general: 'general', developer: 'developer', contractor: 'contractor', consumer: 'consumer and services',
+  collector: 'debt collector', leasing: 'leasing and factoring', investment: 'investment firm',
 };
 
 const LEVEL_LABEL: Record<ConfidenceLevel, string> = { high: 'High', medium: 'Medium', low: 'Low' };

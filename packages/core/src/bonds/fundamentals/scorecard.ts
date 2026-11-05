@@ -27,6 +27,12 @@ export type FinancialYearData = {
   interestPaid?: number;       // cash flow, positive
   writeDowns?: number;         // write-downs of non-financial assets in EBIT, not in depreciation
   ebitDerived?: number;        // 1 when EBIT is profit before tax and net finance costs: the income statement prints no operating profit
+  // Lenders' inputs, from imported reports only
+  profitBeforeTax?: number;
+  bonds?: number;              // bonds lines, part of financialDebt
+  securitisation?: number;     // securitisation funding, part of financialDebt
+  debtDueWithinYear?: number;  // debt lines under current liabilities
+  bondsInOtherFinancialLiabilities?: number;  // bonds read from "other financial liabilities" (no bonds line)
 };
 
 export type MetricResult = {
@@ -53,7 +59,31 @@ export type FundamentalScorecard = {
 // ─── Rule sets ────────────────────────────────────────────────────────────────
 
 // Which metrics and thresholds a company is judged by, from its industry (design: 2026-11-03-sector-rules-design.md).
-export type RuleSet = 'general' | 'developer' | 'contractor' | 'consumer';
+export type RuleSet = 'general' | 'developer' | 'contractor' | 'consumer' | FinanceRuleSet;
+
+// Lenders' rule sets (design: 2026-11-05-finance-rules-design.md). Industry "Finance" doesn't tell a debt
+// collector from a bank, so they're chosen by name; a Finance issuer not listed has no scorecard.
+export type FinanceRuleSet = 'collector' | 'leasing' | 'investment';
+const FINANCE_RULE_SETS: Record<string, FinanceRuleSet> = {
+  'Kruk S.A.': 'collector',
+  'Best S.A.': 'collector',
+  'Best Niestandaryzowany FIZ Wierzytelności': 'collector',
+  'Kredyt Inkaso S.A.': 'collector',
+  'Vindexus Giełda Praw Majątkowych S.A.': 'collector',
+  'Grupa Corpus Iuris S.A.': 'collector',
+  'Indos S.A.': 'collector',
+  'Vehis Finanse Sp. z o.o.': 'leasing',
+  'Internetowy Fundusz Leasingowy S.A.': 'leasing',
+  'AOW Faktoring S.A.': 'leasing',
+  'PragmaGO S.A.': 'leasing',
+  'MCI Management Sp. z o.o.': 'investment',
+};
+
+export function financeRuleSetFor(issuerName: string | undefined): FinanceRuleSet | undefined {
+  return issuerName ? FINANCE_RULE_SETS[issuerName] : undefined;
+}
+
+const isLender = (rules: RuleSet): rules is FinanceRuleSet => rules === 'collector' || rules === 'leasing' || rules === 'investment';
 
 const RULE_SET_OF: Record<string, RuleSet> = {
   Developer: 'developer',
@@ -68,7 +98,7 @@ const RULE_SET_OVERRIDES: Record<string, RuleSet> = {
 };
 
 export function ruleSetFor(industry: string | undefined, issuerName?: string): RuleSet {
-  return (issuerName && RULE_SET_OVERRIDES[issuerName]) || (industry && RULE_SET_OF[industry]) || 'general';
+  return financeRuleSetFor(issuerName) || (issuerName && RULE_SET_OVERRIDES[issuerName]) || (industry && RULE_SET_OF[industry]) || 'general';
 }
 
 // ─── Signal helpers ────────────────────────────────────────────────────────────
@@ -114,7 +144,7 @@ function ebitNotes(year: FinancialYearData): string[] {
   return [
     ...(year.ebitDerived ? ['EBIT derived as profit before tax plus net finance costs (no operating profit line in the report); it includes results of associates and joint ventures'] : []),
     ...(year.writeDowns != null && year.writeDowns > 0
-      ? [`EBIT and EBITDA before a ${year.writeDowns.toLocaleString('en-US', { maximumFractionDigits: 0 })} m write-down of non-financial assets`]
+      ? [`EBIT and EBITDA before a ${year.writeDowns.toLocaleString('en-US', { maximumFractionDigits: year.writeDowns < 10 ? 1 : 0 })} m write-down of non-financial assets`]
       : []),
   ];
 }
@@ -144,7 +174,29 @@ function ndEbitdaMetric(year: FinancialYearData, name: string, green: number, ye
   return metric(name, value, mult(value), signal);
 }
 
+function lenderDebtNotes(year: FinancialYearData): string[] {
+  const m = (v: number) => v.toLocaleString('en-US', { maximumFractionDigits: 1 });
+  return [
+    ...(year.securitisation ? [`Debt includes ${m(year.securitisation)} m of securitisation funding${year.financialDebt ? ` (${pct(year.securitisation / year.financialDebt)} of debt)` : ''}; bondholders rank behind it`] : []),
+    ...(year.bondsInOtherFinancialLiabilities ? [`Bonds taken from "other financial liabilities" (${m(year.bondsInOtherFinancialLiabilities)} m): the report has no bonds line`] : []),
+  ];
+}
+
+function computeLenderDebtBurden(year: FinancialYearData, rules: FinanceRuleSet): DimensionResult {
+  const netDebt = netDebtOf(year) ?? year.financialDebt;   // no cash figure: gross debt
+  const notes = [...lenderDebtNotes(year), ...(netDebtOf(year) == null && year.financialDebt != null ? ['No cash figure: net debt is gross debt'] : [])];
+  const bondsShare = div(year.bonds, year.financialDebt);
+  const bondsMetric = shown('Bonds/Financial Debt', bondsShare, pct(bondsShare));
+  if (rules === 'investment') {
+    const ltv = div(netDebt, year.totalAssets);
+    return dimension('Debt Burden', [metric('Net Debt/Total Assets', ltv, pct(ltv), lower(0.25, 0.40)(ltv)), bondsMetric], notes);
+  }
+  const [green, yellow] = rules === 'collector' ? [1.5, 2.5] : [4.0, 6.0];
+  return dimension('Debt Burden', [deMetric(year, 'Net Debt/Equity', green, yellow, netDebt), bondsMetric], notes);
+}
+
 function computeDebtBurden(year: FinancialYearData, rules: RuleSet): DimensionResult {
+  if (isLender(rules)) return computeLenderDebtBurden(year, rules);
   const notes = ebitNotes(year);
   if (rules === 'developer') {
     const netDebt = netDebtOf(year);
@@ -177,6 +229,17 @@ function computeDebtService(year: FinancialYearData, rules: RuleSet): DimensionR
   // Developers add interest to the cost of the flats: the interest paid is what they owe
   const paid = rules === 'developer' && year.interestPaid != null && year.interestPaid > 0;
   const icr = div(ebitBeforeWriteDowns(year), paid ? year.interestPaid : year.interestExpense);
+  if (isLender(rules)) {
+    // A lender's income from its portfolios and loans is often finance income, below EBIT (Polish accounting
+    // rules): its interest cover is profit before tax plus interest, over interest
+    const interest = year.interestExpense != null ? Math.abs(year.interestExpense) : undefined;
+    const pbtCover = year.profitBeforeTax != null && interest ? (year.profitBeforeTax + interest) / interest : null;
+    const lenderIcr = pbtCover ?? icr;
+    const name = pbtCover != null ? 'ICR (profit before tax + interest)' : 'ICR';
+    if (rules === 'investment') return dimension('Debt Service', [shown(name, lenderIcr, mult(lenderIcr))]);
+    const [green, yellow] = rules === 'collector' ? [2.5, 1.5] : [1.5, 1.2];
+    return dimension('Debt Service', [metric(name, lenderIcr, mult(lenderIcr), higher(green, yellow)(lenderIcr))], pbtCover != null ? [] : ebitNotes(year));
+  }
   return dimension('Debt Service', [metric(paid ? 'ICR (interest paid)' : 'ICR', icr, mult(icr), higher(3.0, 1.5)(icr))], ebitNotes(year));
 }
 
@@ -185,6 +248,16 @@ function computeDebtService(year: FinancialYearData, rules: RuleSet): DimensionR
 function computeLiquidity(year: FinancialYearData, rules: RuleSet): DimensionResult {
   const cr = div(year.currentAssets, year.currentLiabilities);
   const crMetric = (green: number, yellow: number) => metric('Current Ratio', cr, mult(cr), higher(green, yellow)(cr));
+  if (isLender(rules)) {
+    // Buying portfolios or writing leases is an operating outflow: operating cash flow is shown, not scored
+    const due = year.debtDueWithinYear;
+    const cashToDue = due === 0 && year.cash != null ? null : div(year.cash, due);
+    const signal: Signal = due === 0 && year.cash != null ? 'green' : rules === 'leasing' ? higher(0.3, 0.1)(cashToDue) : higher(0.5, 0.2)(cashToDue);
+    return dimension('Liquidity', [
+      metric('Cash/Debt due within 12 Months', cashToDue, due === 0 && year.cash != null ? 'none due' : mult(cashToDue), signal),
+      shown('Operating Cash Flow', year.operatingCashFlow ?? null, year.operatingCashFlow == null ? 'n/a' : `${year.operatingCashFlow.toLocaleString('en-US', { maximumFractionDigits: 1 })} m`),
+    ]);
+  }
   if (rules === 'developer') {
     const presales = div(year.contractLiabilities, year.inventory);
     return dimension('Liquidity', [crMetric(2.0, 1.3), shown('Buyer Advances/Inventory', presales, pct(presales))]);
@@ -202,14 +275,32 @@ function computeLiquidity(year: FinancialYearData, rules: RuleSet): DimensionRes
 
 // ─── Dimension 4 — Profitability ──────────────────────────────────────────────
 
-const MARGINS: Record<RuleSet, { ebit: [number, number]; net: [number, number] }> = {
+const MARGINS: Record<Exclude<RuleSet, FinanceRuleSet>, { ebit: [number, number]; net: [number, number] }> = {
   general: { ebit: [0.10, 0.05], net: [0.05, 0.01] },
   consumer: { ebit: [0.10, 0.05], net: [0.05, 0.01] },
   developer: { ebit: [0.15, 0.08], net: [0.10, 0.05] },
   contractor: { ebit: [0.04, 0.02], net: [0.025, 0.005] },
 };
 
-function computeProfitability(year: FinancialYearData, rules: RuleSet): DimensionResult {
+// Return on equity over the average of the year's and the previous year's equity, when there is one
+function computeLenderProfitability(year: FinancialYearData, previous: FinancialYearData | undefined, rules: FinanceRuleSet): DimensionResult {
+  const averageEquity = year.equity != null && previous?.equity != null && previous.year === year.year - 1 ? (year.equity + previous.equity) / 2 : year.equity;
+  const roe = averageEquity != null && averageEquity <= 0 ? null : div(year.netProfit, averageEquity);
+  const roa = div(year.netProfit, year.totalAssets);
+  if (rules === 'investment') {
+    return dimension('Profitability', [shown('Return on Equity', roe, pct(roe)), shown('Return on Assets', roa, pct(roa))],
+      ['An investment firm\'s profit is mostly revaluation of its holdings: shown, not scored']);
+  }
+  const roeSignal: Signal = averageEquity != null && averageEquity <= 0 ? 'red' : higher(0.12, 0.06)(roe);
+  return dimension('Profitability', [
+    metric('Return on Equity', roe, pct(roe), roeSignal),
+    metric('Return on Assets', roa, pct(roa), rules === 'collector' ? higher(0.05, 0.02)(roa) : higher(0.015, 0.0075)(roa)),
+  ], year.netProfit != null && year.revenue != null && year.revenue > 0 && year.netProfit > year.revenue
+    ? ['Net profit above revenue: a one-off or a revaluation is likely in it'] : []);
+}
+
+function computeProfitability(year: FinancialYearData, rules: RuleSet, previous?: FinancialYearData): DimensionResult {
+  if (isLender(rules)) return computeLenderProfitability(year, previous, rules);
   const ebitMargin = div(year.ebit, year.revenue);
   const netMargin = div(year.netProfit, year.revenue);
   const { ebit, net } = MARGINS[rules];
@@ -223,6 +314,7 @@ function computeProfitability(year: FinancialYearData, rules: RuleSet): Dimensio
 
 const EQUITY_RATIO: Record<RuleSet, [number, number]> = {
   general: [0.30, 0.15], contractor: [0.30, 0.15], developer: [0.35, 0.25], consumer: [0.20, 0.10],
+  collector: [0.35, 0.25], leasing: [0.15, 0.10], investment: [0.50, 0.35],
 };
 
 function computeAssetCoverage(year: FinancialYearData, rules: RuleSet): DimensionResult {
@@ -232,6 +324,10 @@ function computeAssetCoverage(year: FinancialYearData, rules: RuleSet): Dimensio
       : undefined;
   const acr = div(tangibleNetAssets, year.financialDebt);
   const equityRatio = div(year.equity, year.totalAssets);
+  if (isLender(rules)) {
+    // A lender's assets are its loans and portfolios, which the equity ratio already weighs against debt
+    return dimension('Asset Coverage', [metric('Equity Ratio', equityRatio, pct(equityRatio), higher(...EQUITY_RATIO[rules])(equityRatio))]);
+  }
   return dimension('Asset Coverage', [
     rules === 'consumer' ? shown('Asset Coverage Ratio', acr, mult(acr)) : metric('Asset Coverage Ratio', acr, mult(acr), higher(1.5, 1.0)(acr)),
     metric('Equity Ratio', equityRatio, pct(equityRatio), higher(...EQUITY_RATIO[rules])(equityRatio)),
@@ -377,7 +473,7 @@ export function computeScorecard(years: FinancialYearData[], rules: RuleSet = 'g
     computeDebtBurden(current, rules),
     computeDebtService(current, rules),
     computeLiquidity(current, rules),
-    computeProfitability(current, rules),
+    computeProfitability(current, rules, sorted[1]),
     computeAssetCoverage(current, rules),
     computeTrend(sorted),
   ];

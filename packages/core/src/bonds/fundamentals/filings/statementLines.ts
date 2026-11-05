@@ -14,7 +14,7 @@ export const LINE_ITEMS = [
     'loansGranted', 'currentAssets', 'inventory', 'tradeReceivables', 'cash',
     // balance sheet: equity and liabilities
     'equity', 'minorityInterests', 'totalLiabilities', 'noncurrentLiabilities', 'currentLiabilities', 'totalEquityAndLiabilities',
-    'debtBankLoans', 'debtBonds', 'debtLeases', 'debtMixed', 'debtOther', 'tradePayables', 'contractLiabilities', 'provisions',
+    'debtBankLoans', 'debtBonds', 'debtLeases', 'debtMixed', 'debtOther', 'debtSecuritisation', 'otherFinancialLiabilities', 'tradePayables', 'contractLiabilities', 'provisions',
     // cash flow
     'operatingCashFlow', 'capex', 'investingCashFlow', 'financingCashFlow', 'interestPaid', 'dividendsPaid',
     'borrowingsRaised', 'borrowingsRepaid',
@@ -107,12 +107,33 @@ export function isWriteDown(line: Pick<StatementLine, 'statement' | 'label' | 'c
     return line.statement === 'income' && WRITE_DOWN.test(text) && !NOT_WRITE_DOWN.test(text) && !REVERSAL.test(line.label);
 }
 
-// Gives the income statement's write-down lines the impairment item, where they have no item yet.
-export function markWriteDowns(lines: StatementLine[]): void {
-    for (const line of lines) if (!line.item && isWriteDown(line)) line.item = 'impairment';
+// Balance sheet lines the parsers leave out of debt, found by label or concept: a lessor's securitisation
+// funding (Vehis), and "other financial liabilities", where some lenders put their bonds (Vindexus FY2025).
+const SECURITISATION = /sekurytyz|securiti[sz]/i;
+const OTHER_FINANCIAL = /(pozosta\S*|inne) (krótkoterminowe |długoterminowe )?zobowiązania finansowe|other (current |non-?current )?financial liabilities|:Other(Current|Noncurrent)?FinancialLiabilities/i;
+
+export function financeItem(line: Pick<StatementLine, 'statement' | 'label' | 'code'>): LineItem | undefined {
+    if (line.statement !== 'balance') return undefined;
+    const text = `${line.label} ${line.code ?? ''}`;
+    if (SECURITISATION.test(text)) return 'debtSecuritisation';
+    if (OTHER_FINANCIAL.test(text)) return 'otherFinancialLiabilities';
+    return undefined;
 }
 
-export type ItemTotals = Partial<Record<LineItem, number>>;
+// Gives lines the items found by label rather than by the figures: the income statement's write-downs
+// (impairment) and the finance lines above, where they have no item yet.
+export function markLineItems(lines: StatementLine[]): void {
+    for (const line of lines) {
+        if (line.item) continue;
+        const item = isWriteDown(line) ? 'impairment' : financeItem(line);
+        if (item) line.item = item;
+    }
+}
+
+// Item totals, plus the debt due within 12 months (debt lines under current liabilities).
+export type ItemTotals = Partial<Record<LineItem | 'debtDueWithinYear' | 'otherFinancialDueWithinYear', number>>;
+
+const DEBT_ITEMS = new Set<LineItem>(['debtBankLoans', 'debtBonds', 'debtLeases', 'debtMixed', 'debtOther', 'debtSecuritisation']);
 
 // The statement an item's total comes from (cash and net profit also appear in the others).
 const INCOME_ITEMS = new Set<LineItem>(LINE_ITEMS.slice(0, LINE_ITEMS.indexOf('impairment') + 1));
@@ -137,5 +158,42 @@ export function itemTotals(lines: StatementLine[], lineSigns: 'printed' | 'tagge
         totals[line.item] = (totals[line.item] ?? 0) + value;
     }
     for (const item of OUTFLOWS) if (totals[item] !== undefined) totals[item] = Math.abs(totals[item]!);
+    const current = currentLiabilityLines(lines);
+    if (current) {
+        const sum = (items: Set<LineItem>) => {
+            const counted = current.filter(l => items.has(l.item!) && !(l.parent !== undefined && current.some(p => p.order === l.parent && p.item === l.item)));
+            return counted.length ? counted.reduce((a, l) => a + l.value, 0) : undefined;
+        };
+        const debt = sum(DEBT_ITEMS), other = sum(new Set(['otherFinancialLiabilities']));
+        totals.debtDueWithinYear = debt ?? 0;
+        if (other !== undefined) totals.otherFinancialDueWithinYear = other;
+    }
     return totals;
 }
+
+// The balance sheet lines under current liabilities: by the lines' parents when the section's lines
+// have them, otherwise the lines after the current liabilities line up to the next section (non-current
+// liabilities, or the total of equity and liabilities). Undefined when there's no such line.
+function currentLiabilityLines(lines: StatementLine[]): StatementLine[] | undefined {
+    const balance = lines.filter(l => l.statement === 'balance').sort((a, b) => a.order - b.order);
+    const head = balance.find(l => l.item === 'currentLiabilities');
+    if (!head) return undefined;
+    const byOrder = new Map(balance.map(l => [l.order, l]));
+    const under = (l: StatementLine): boolean => {
+        for (let p = l.parent, depth = 0; p !== undefined && depth < 10; p = byOrder.get(p)?.parent, depth++) if (p === head.order) return true;
+        return false;
+    };
+    const byParent = balance.filter(under);
+    if (byParent.length) return byParent;
+    const boundary = (l: StatementLine) => l.item === 'noncurrentLiabilities' || l.item === 'totalEquityAndLiabilities' || l.item === 'equity' || l.item === 'totalLiabilities';
+    // A section total printed under its lines ("Zobowiązania krótkoterminowe razem", "Total current liabilities")
+    if (SECTION_TOTAL.test(head.label)) {
+        const before = balance.filter(l => l.order < head.order);
+        const start = before.findLastIndex(boundary);
+        return before.slice(start + 1);
+    }
+    const after = balance.filter(l => l.order > head.order);
+    const end = after.findIndex(boundary);
+    return end < 0 ? after : after.slice(0, end);
+}
+const SECTION_TOTAL = /razem|ogółem|^\W*(total|suma)\b|összesen/i;

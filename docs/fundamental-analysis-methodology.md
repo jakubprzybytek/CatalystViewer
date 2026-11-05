@@ -57,7 +57,7 @@ written judgement.
 bond name (e.g. "ATA0128") or ISIN
   1. bond        → ISIN, issuer name as listed, type, amount, currency, maturity       (Catalyst, obligacje.pl)
   2. company     → LEI, KRS, legal name, country; group or financing vehicle            (GLEIF, KRS API)
-  3. industry    → rule set (developer / contractor / consumer / general), or out of scope
+  3. industry    → rule set (developer / contractor / consumer / general; lenders: collector / leasing / investment), or out of scope
   4. reports     → latest full-year annual report(s), group accounts first             (KRS repository, issuer site, ESPI/EBI)
   5. read        → statement lines → figures, checked (balance ties, net profit ties)
   6. no report?  → AI-collected figures as a fallback, marked as such
@@ -235,14 +235,25 @@ The classification also stores a 2–3 sentence business summary and the officia
 | Industry | Scorecard | Why |
 |---|---|---|
 | Finance (banks, mortgage banks, insurers, state bodies) | none | regulated or state-backed; an operating-company scorecard misleads |
-| Finance: non-bank lenders (debt collectors, leasing, factoring, lending, investment firms) | none yet (planned: finance rules) | borrowing is their business. Net debt / EBITDA is always high, revenue isn't meaningful, and operating cash flow is negative while they grow (portfolio purchases are operating outflows) |
+| Finance: non-bank lenders listed in `FINANCE_RULE_SETS` (debt collectors, leasing and factoring, investment firms) | yes, finance rules, **from reports only** (no AI analysis) | borrowing is their business. Net debt / EBITDA is always high, revenue isn't meaningful, and operating cash flow is negative while they grow (portfolio purchases are operating outflows), so they have rules of their own |
 | Municipal | none | public bodies |
 | everything else, and unclassified | yes | |
 
 Out-of-scope issuers still get the bond schedule and the identity, just no colours.
 
-**Finance subcategories (planned):** debt collector; leasing, factoring and lending; investment firm or
-fund; bank; insurer; state or public institution. Only the first three would be scored.
+**Finance sub-types (built, design `2026-11-05-finance-rules-design.md`):** chosen by issuer name in
+`FINANCE_RULE_SETS` (`scorecard.ts`), since industry "Finance" doesn't tell a debt collector from a bank.
+A Finance issuer not listed has no scorecard. The analysis button and the scheduled AI analysis still skip
+Finance (`isInFundamentalScope`), so a lender costs no AI calls.
+
+| Sub-type | Issuers |
+|---|---|
+| debt collector (`collector`) | Kruk, Best, Best FIZ, Kredyt Inkaso (its bonds resolve to Best S.A.), Vindexus, Grupa Corpus Iuris, Indos |
+| leasing and factoring (`leasing`) | Vehis, Internetowy Fundusz Leasingowy, AOW Faktoring, PragmaGO |
+| investment firm (`investment`) | MCI Management |
+| none (out of scope) | banks, mortgage banks, insurers, EIB, PFR, BGK, State Treasury |
+
+A new lender is added to the map by hand, with its sub-type.
 
 Catalyst's largest default, GetBack (2018), was a debt collector, so these matter.
 
@@ -533,6 +544,25 @@ to the second. For "higher is better" metrics, green is above the first and yell
 Asset coverage ratio = (total assets − intangibles − current liabilities) / financial debt. Equity
 ratio = equity / total assets.
 
+Lenders (finance rules):
+
+| Dimension | Debt collector | Leasing and factoring | Investment firm |
+|---|---|---|---|
+| **1 Debt Burden** | Net debt / equity < 1.5 / ≤ 2.5 · Bonds / financial debt shown | Net debt / equity < 4.0 / ≤ 6.0 · Bonds / debt shown | Net debt / total assets < 25% / ≤ 40% · Bonds / debt shown |
+| **2 Debt Service** | ICR = (profit before tax + interest) / interest > 2.5 / ≥ 1.5; EBIT / interest without profit before tax | > 1.5 / ≥ 1.2 | shown |
+| **3 Liquidity** | Cash / debt due within 12 months > 0.5 / ≥ 0.2 (none due = green) · OCF shown | > 0.3 / ≥ 0.1 · OCF shown | > 0.5 / ≥ 0.2 |
+| **4 Profitability** | ROE (net profit / average equity) > 12% / ≥ 6% · ROA > 5% / ≥ 2% | ROE as collector · ROA > 1.5% / ≥ 0.75% | shown (revaluations) |
+| **5 Asset Coverage** | Equity ratio > 35% / ≥ 25% | > 15% / ≥ 10% | > 50% / ≥ 35% |
+| **6, 7** | as General | as General | as General |
+
+Interest cover for lenders starts from profit before tax because their income from portfolios and loans
+is often finance income, below EBIT, under the Polish accounting act (Corpus Iuris: EBIT 3.5m, profit
+before tax 36.5m). Debt due within 12 months is the debt lines under current liabilities (by the lines'
+parents, or the section's order; a section total printed under its lines, "… razem", is handled). Kruk
+and Best print a balance sheet in order of liquidity with no current/non-current split, so their
+liquidity is n/a. With no cash figure net debt is gross debt, noted. A net profit above revenue is noted
+(a one-off or revaluation).
+
 ### Why each rule set differs
 
 - **Developers:**
@@ -736,7 +766,7 @@ Lessons from imports so far. Check here before treating a strange result as the 
 | Cyfrowy Polsat | depreciation line includes impairment, and a 2,717m PLN goodwill write-down; only part of its bonds is on Catalyst | impairment taken off depreciation and added back to EBIT; note listed vs balance sheet bonds |
 | PGE, Allegro, Pepco, MOL | depreciation line includes impairment | write-downs not added back a second time |
 | P4 | one "financial liabilities" line for loans and bonds | debt with no bond split |
-| Kruk | financial company: no revenue total, balance sheet in order of liquidity; Finance, out of scope | operating income total as revenue; debt lines under total liabilities |
+| Kruk | financial company: no revenue total, balance sheet in order of liquidity | operating income total as revenue; debt lines under total liabilities; collector rules, liquidity n/a |
 | Cognor | several amortisation lines | all count |
 | Dekpol | consolidated statements only as a .7z archive | unpacked by hand |
 | Erbud | bare ESEF report, no package | filer debt lines by name |
@@ -746,7 +776,7 @@ Lessons from imports so far. Check here before treating a strange result as the 
 | WB Electronics | no LEI | no identity |
 | Ronson Development SE | its KRS file is a signed PDF named "…_draft.pdf" (the text is the final PwC-audited version; slips in the changes in equity); no KRS line in the text; land held for development shown as non-current; all shares pledged for the parent's bonds | read by hand; KRS passed with `--krs`; the land counts as inventory |
 | art.Locum S.A. | IFRS group statements as signed PDFs in the KRS, in złoty | read by hand |
-| Vehis Finanse | KRS XML in thousands under `JednostkaInnaWTys`, FY2025 in the 2025 envelope with a 1.4 MB attachment; funded by securitisation (not in debt); FY2024 revenue 118.1m in its own report, 78.8m as restated in FY2025's | parsed; the FY2024 report's own figures are kept for FY2024 |
+| Vehis Finanse | KRS XML in thousands under `JednostkaInnaWTys`, FY2025 in the 2025 envelope with a 1.4 MB attachment; funded by securitisation (2,395m PLN in FY2025, now in debt as line item `debtSecuritisation`, noted on the card); FY2024 revenue 118.1m in its own report, 78.8m as restated in FY2025's | parsed; the FY2024 report's own figures are kept for FY2024 |
 | Indos | the KRS list holds only a signed Symfonia settings file (`.xml.cfg.xades`) for FY2025, not the statement; the annual report is on indos.pl, but under `/api/`, which its robots.txt disallows. The FY2025 report restates 2024: net profit −19k PLN instead of the 3.93m first reported (a 3.95m charge, receivables lower by the same) | FY2025 PDF downloaded by the owner, read by hand; FY2024 keeps the figures of its own (original) report |
 | Vindexus FY2024 | the KRS entry for the group report holds the untagged single-company statement (pdf2htmlEX); the group ESEF package is in `Raport_roczny_2024.zip` on gpm-vindexus.pl (investor relations → reports), which tags the bonds as bonds (debt 114.6m PLN; the FY2025 report's tagging gives 2.4m for the same year) | imported from the company's site |
 | P4, Cognor FY2024 | IFRS statements as PDFs in the KRS | read by hand (FY2023 column of P4 is restated) |
@@ -754,10 +784,15 @@ Lessons from imports so far. Check here before treating a strange result as the 
 | Pepco FY2024 | the original FY2024 report (ESEF on filings.xbrl.org under LEI 213800OVMJPFP79OB449) includes Poundland, sold since; the FY2025 report restates FY2024 without it (revenue 4,160 vs 6,167m EUR, EBIT 323 vs −445). That package also leaves right-of-use depreciation (365m EUR) untagged for the parser | not imported, by the owner's choice (2026-11-05): keep the most recent, comparable figures; Pepco stays on two years until its FY2026 report |
 | Allegro.eu, Żabka FY2024 | ESEF packages inside the companies' reporting packages (`Q4-2024-Reporting-package-…zip` on about.allegro.eu, `Annual-Reporting-Package-2024-Zabka-Group.zip` on zabkagroup.com) | imported |
 | BBI Development | a developer working through joint ventures: 174m PLN of equity-accounted investments, 3.4m of inventory, so net debt / stock reads 21× | the developer rule doesn't fit; needs a holding-company view (section 15) |
-| Vindexus | debt collector whose bonds sit in "other financial liabilities" (72.4m + 28.2m PLN) next to separate loan lines, so they're left out of debt (2.2m) | fix with the finance rules |
-| Grupa Corpus Iuris, Internetowy Fundusz Leasingowy | debt collector (net profit above revenue: portfolio gains aren't revenue), leasing (single company, no group) | stored for the finance rules |
+| Vindexus | debt collector whose FY2025 bonds sit in "other financial liabilities" (72.4m + 28.2m PLN) next to separate loan lines, so the figure leaves them out (2.2m) | line item `otherFinancialLiabilities`; for a lender with listed bonds and no bonds or mixed debt line, counted as bonds (debt 102.8m), noted. Only lenders: Atal's "other financial liabilities" are something else |
+| Grupa Corpus Iuris, Internetowy Fundusz Leasingowy | debt collector (net profit above revenue: portfolio gains aren't revenue), leasing (single company, no group) | collector and leasing rules; Corpus Iuris's profitability carries the note |
 | Kruk KRU0228, Resi Capital RES0228 | instalment redemptions: nominal 1,000 → 550 and → 709.27 | amount owed from the current nominal; the remainder counted at maturity |
 | IZ0831, IZ0836 (State Treasury) | inflation-indexed nominal | current nominal from the Catalyst file; formula in step 1 |
+
+Finance rules (5 November): 12 lenders scored from their reports (Best FIZ has none yet). Signals in the
+order Debt Burden, Debt Service, Liquidity, Profitability, Asset Coverage, Trend, Refinancing: Kruk GG.GGRR,
+Best and Kredyt Inkaso Gy.yGRR, Vindexus GGGyGRR, Corpus Iuris GGGGGRG, Indos GyGyyRy, IFL GGGGGGG,
+PragmaGO GyRyG.R, AOW GyRRGRR, Vehis RRyRRyR, MCI G.R.GyG.
 
 Results on 2026-11-04, prod: 34 issuers scored from reports (added that day: art.Locum and Ronson from the
 KRS, Develia, Archicom, BBI, Cavatina and Lokum from Bankier's ESEF packages), 11 from AI-collected figures,
@@ -774,13 +809,12 @@ operating cash flow −657m) and yellow for Echo.
 
 In the order the roadmap would take them:
 
-1. **Finance rules** for non-bank lenders:
-   - Subcategories first.
-   - Then equity / assets, debt / equity, interest cover, return on equity, and bonds as a share of
-     debt.
-   - For debt collectors: cash collections, cash EBITDA, net debt / cash EBITDA, and portfolio
-     purchases vs collections.
-   - Needs their reports imported (only Kruk so far).
+1. **Finance rules, next steps** (the rules are built):
+   - for debt collectors: cash collections, cash EBITDA, net debt / cash EBITDA, ERC, and portfolio
+     purchases vs collections (notes and management reports);
+   - for leasing and factoring: cost of risk and non-performing share (notes);
+   - thresholds from each issuer's bond covenants;
+   - Best FIZ's reports.
 2. **More reports:**
    PragmaGO's FY2025 PDF (collected, not imported); the 29
    in-scope issuers with no scorecard yet; FY2025 reports for the 11 scored from AI-collected figures.
@@ -818,11 +852,11 @@ In the order the roadmap would take them:
 | What | Where |
 |---|---|
 | Scorecard rules, rule sets, overrides | `packages/core/src/bonds/fundamentals/scorecard.ts` |
-| Scope (Finance, Municipal out) | `packages/core/src/bonds/fundamentals/scope.ts` |
+| Scope (Finance, Municipal out; listed lenders scored) | `packages/core/src/bonds/fundamentals/scope.ts`, `FINANCE_RULE_SETS` in `scorecard.ts` |
 | Refinancing | `packages/core/src/bonds/fundamentals/maturities.ts`, NBP rates `packages/core/src/bonds/fx/nbp.ts` |
 | Data confidence | `packages/core/src/bonds/fundamentals/confidence.ts` |
 | Report parsers | `packages/core/src/bonds/fundamentals/filings/`: `FilingParser.ts` (KRS XML), `EsefParser.ts`, `IfrsTextParser.ts`, `AiPdfExtractor.ts` |
-| Statement lines, items, write-downs | `filings/statementLines.ts`; years for the scorecard `filings/filedYears.ts` |
+| Statement lines, items, write-downs, finance lines, debt due within a year | `filings/statementLines.ts`; years for the scorecard `filings/filedYears.ts` |
 | Identity | `packages/core/src/bonds/issuers/identity.ts`, `scripts/resolve-issuers/` |
 | Classification and AI analysis | `packages/core/src/ai/issuers/IssuerClassification.ts`, `IssuerAnalysis.ts` |
 | Assembling a profile (scorecard, refinancing, confidence) | `packages/functions/src/issuers/getIssuerProfiles.ts` |

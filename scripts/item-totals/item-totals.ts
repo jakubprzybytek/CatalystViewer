@@ -9,9 +9,9 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { Resource } from "sst";
 import { IssuerFinancialsTable } from "../../packages/core/src/storage/issuerFinancials";
-import { itemTotals, markWriteDowns, type LineItem } from "../../packages/core/src/bonds/fundamentals/filings/statementLines";
+import { itemTotals, markLineItems, type ItemTotals, type LineItem } from "../../packages/core/src/bonds/fundamentals/filings/statementLines";
 
-const SHOWN: LineItem[] = ["debtLeases", "contractLiabilities", "interestPaid", "investmentProperty", "impairment"];
+const SHOWN: (keyof ItemTotals)[] = ["debtLeases", "contractLiabilities", "interestPaid", "investmentProperty", "impairment", "debtSecuritisation", "otherFinancialLiabilities", "debtDueWithinYear"];
 // Figures that are one line item, to check the totals against
 const SAME: [string, LineItem][] = [["inventory", "inventory"], ["cash", "cash"], ["operatingCashFlow", "operatingCashFlow"], ["equity", "equity"], ["totalAssets", "totalAssets"]];
 
@@ -33,7 +33,7 @@ async function main() {
     const row = await table.get(summary.entityId, summary.period);
     if (!row?.lines?.length) { console.log(`- ${summary.issuerName} ${summary.period}: no lines`); continue; }
     const lines = row.lines.map(l => ({ ...l }));
-    markWriteDowns(lines);
+    markLineItems(lines);
     const items = itemTotals(lines, row.lineSigns);
     const off = SAME.flatMap(([field, item]) => {
       const figure = row.figures[field as keyof typeof row.figures]?.value;

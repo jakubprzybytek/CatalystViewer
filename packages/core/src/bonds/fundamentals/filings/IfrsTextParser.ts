@@ -6,7 +6,7 @@
 // Labels are matched loosely, because PDF conversions drop Polish letters ("krótkoterminowe" →
 // "krtkoterminowe"): diacritics are stripped and letters that have a Polish accented form are optional.
 import { UnsupportedFilingError, type FilingField, type FilingPeriod, type FilingScope, type ParsedFiling, type SourcedFigure } from './FilingParser';
-import { itemsFromFigures, type StatementLine, markWriteDowns } from './statementLines';
+import { itemsFromFigures, type StatementLine, markLineItems } from './statementLines';
 
 type Row = { label: string; joined: string; values: [number, number | undefined] };
 type SectionName = 'balance' | 'income' | 'cashFlow';
@@ -252,7 +252,7 @@ export function parseIfrsText(html: string): ParsedFiling {
         }
         if (totalRow && rowLine.has(totalRow)) rowLine.get(totalRow)!.item = 'totalEquityAndLiabilities';
         itemsFromFigures(lines, figures, source => lineOf.get(source));
-        markWriteDowns(lines);
+        markLineItems(lines);
 
         const total = totalRow?.values[columnOf(column)];
         const assets = figures.totalAssets?.value;

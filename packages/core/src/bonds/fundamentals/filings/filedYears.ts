@@ -3,7 +3,7 @@
 import type { DbIssuerFinancialsRecord } from '../../../storage/issuerFinancials';
 import type { ReportedYear } from '../scorecard';
 import type { FilingField, FilingScope, ParsedFiling } from './FilingParser';
-import type { LineItem } from './statementLines';
+import type { ItemTotals } from './statementLines';
 
 const SCORECARD_FIELDS: FilingField[] = [
     'revenue', 'ebit', 'depreciation', 'interestExpense', 'netProfit', 'totalAssets', 'intangibleAssets',
@@ -11,9 +11,10 @@ const SCORECARD_FIELDS: FilingField[] = [
 ];
 
 // Inputs of the sector rules taken from the statement lines' item totals
-const ITEM_INPUTS: [keyof ReportedYear, LineItem][] = [
+const ITEM_INPUTS: [keyof ReportedYear, keyof ItemTotals][] = [
     ['investmentProperty', 'investmentProperty'], ['contractLiabilities', 'contractLiabilities'],
     ['leases', 'debtLeases'], ['interestPaid', 'interestPaid'],
+    ['profitBeforeTax', 'profitBeforeTax'], ['bonds', 'debtBonds'], ['securitisation', 'debtSecuritisation'], ['debtDueWithinYear', 'debtDueWithinYear'],
 ];
 
 // The depreciation figure already includes write-downs when one of its sources does (a "depreciation,
@@ -45,9 +46,30 @@ export type FiledYears = {
     years: ReportedYear[];      // newest first, full fiscal years only
 };
 
+// Debt the parsers leave out of the financial debt figure, from the item totals (PLN millions):
+// - securitisation funding (a lessor's, e.g. Vehis), always;
+// - "other financial liabilities", for a lender with listed bonds whose year shows no bonds line nor a mixed
+//   debt line: the bonds are in them then (Vindexus FY2025). Operating companies use the line for other
+//   things (Atal: buyers' escrow), so only lenders.
+function extraDebt(year: ReportedYear, items: ItemTotals | undefined, hasListedBonds: boolean): void {
+    const m = (v: number) => v / 1_000_000;
+    const add = (amount: number, dueWithinYear = 0) => {
+        year.financialDebt = (year.financialDebt ?? 0) + amount;
+        if (year.debtDueWithinYear != null) year.debtDueWithinYear += dueWithinYear;
+    };
+    if (items?.debtSecuritisation) add(m(items.debtSecuritisation));
+    const other = items?.otherFinancialLiabilities;
+    if (hasListedBonds && other && other > 0 && items.debtBonds === undefined && items.debtMixed === undefined) {
+        add(m(other), m(items.otherFinancialDueWithinYear ?? 0));
+        year.bonds = m(other);
+        year.bondsInOtherFinancialLiabilities = m(other);
+    }
+}
+
 // Group accounts when there are any (they include the subsidiaries' debt), otherwise single-company
 // accounts; the two are never mixed. Only 12-month fiscal years are used. Undefined when there's none.
-export function filedYears(records: DbIssuerFinancialsRecord[]): FiledYears | undefined {
+// `bondsMayBeInOtherFinancialLiabilities`: a lender with bonds on Catalyst (see extraDebt).
+export function filedYears(records: DbIssuerFinancialsRecord[], bondsMayBeInOtherFinancialLiabilities = false): FiledYears | undefined {
     const fullYears = records.filter(r => r.months === 12);
     const scope: FilingScope = fullYears.some(r => r.scope === 'group') ? 'group' : 'single';
     const rows = fullYears
@@ -75,6 +97,7 @@ export function filedYears(records: DbIssuerFinancialsRecord[]): FiledYears | un
                 year.ebit = derivedEbit / 1_000_000;
                 year.ebitDerived = 1;
             }
+            extraDebt(year, r.items, bondsMayBeInOtherFinancialLiabilities);
             const writeDowns = writeDownsOutsideDepreciation(r);
             if (writeDowns !== undefined) year.writeDowns = writeDowns / 1_000_000;
             return year;
