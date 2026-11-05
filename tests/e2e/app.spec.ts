@@ -56,4 +56,18 @@ test('filters issuers by industry, from the filter drawer and from a card', asyn
   await page.getByRole('button', { name: 'close filters' }).click();
   await expect(cards).toHaveCount(developers);
   for (const card of await cards.all()) await expect(card.getByText('Developer', { exact: true })).toBeVisible();
+
+  // Saved with the user's profile like the other filters: still on after a reload
+  await expect(page.getByText(/Corporate bonds · Developer/)).toBeVisible();
+  await page.waitForTimeout(1_500);   // the profile is saved in the background
+  await page.reload();
+  await expect(page.getByText(/Corporate bonds · Developer/)).toBeVisible({ timeout: 20_000 });
+  await expect(cards).toHaveCount(developers);
+
+  // Leave the profile as found, for the tests after this one
+  await page.getByRole('button', { name: 'Filter bonds' }).click();
+  await page.getByRole('button', { name: /^Developer \d+$/ }).click();
+  await page.getByRole('button', { name: 'close filters' }).click();
+  await expect(cards).toHaveCount(7);
+  await page.waitForTimeout(1_500);
 });

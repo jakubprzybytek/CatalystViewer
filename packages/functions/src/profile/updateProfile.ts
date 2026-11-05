@@ -20,7 +20,8 @@ export const handler = lambdaHandler<{ message: string }>(async event => {
         ...profile
     }
 
-    profilesTable.store(dbProfile);
+    // Awaited: a Lambda frozen after the response would drop the write
+    await profilesTable.store(dbProfile);
 
     return Success({
         message: 'OK'
