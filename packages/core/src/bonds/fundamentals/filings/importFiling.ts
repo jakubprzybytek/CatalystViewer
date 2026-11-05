@@ -298,6 +298,7 @@ export async function importFiling(deps: ImportFilingDeps, data: Buffer, options
         lines: p.lines,
         review: { status: 'parsed' },
         column: p.column,
+        reportPeriodEnd: filing.periods[0].periodEnd,
         filing: { key: s3Key, sha256, format: filing.format, schema: filing.schema, preparedOn: filing.preparedOn, checks: filing.checks, notes: filing.notes, extraction: filing.extraction },
         importedAt,
     }));

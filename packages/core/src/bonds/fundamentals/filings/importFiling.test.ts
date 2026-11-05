@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'fs';
 import path from 'path';
 import type { S3Client } from '@aws-sdk/client-s3';
-import type { DbIssuerFinancialsRecord, IssuerFinancialsTable } from '../../../storage/issuerFinancials';
+import { reportsNewerOrSame, type DbIssuerFinancialsRecord, type IssuerFinancialsTable } from '../../../storage/issuerFinancials';
 import { importFiling, ImportFilingError, normalizeCompanyName, readFiling, type ImportFilingDeps, type LeiRecord } from './importFiling';
 import { esefPackage } from './fixtures/esefPackage';
 import { makePdf } from './fixtures/makePdf';
@@ -21,7 +21,7 @@ function fakes(existing: DbIssuerFinancialsRecord[] = [], registered: string | u
             getAll: async () => [...rows.values()],
             store: async (record: DbIssuerFinancialsRecord) => {
                 const key = `${record.entityId}|${record.period}`;
-                if (record.column === 'previous' && rows.get(key)?.column === 'current') return false;
+                if (!reportsNewerOrSame(record, rows.get(key))) return false;
                 rows.set(key, record);
                 return true;
             },
@@ -96,15 +96,23 @@ describe('importFiling', () => {
         });
     });
 
-    it("doesn't let a comparative column replace a year's own filing", async () => {
-        const own = { entityId: '0000123456', period: '2024-12-31#single', column: 'current', issuerName: 'Testowa Deweloper S.A.' } as DbIssuerFinancialsRecord;
+    it("replaces a year's older own filing with the newer report's comparative column (the restated year)", async () => {
+        const own = { entityId: '0000123456', period: '2024-12-31#single', periodEnd: '2024-12-31', column: 'current', issuerName: 'Testowa Deweloper S.A.' } as DbIssuerFinancialsRecord;
         const { deps, rows } = fakes([own]);
         const result = await importFiling(deps, xml);
         expect(result.stored).toEqual([
             { periodEnd: '2025-12-31', column: 'current', written: true },
-            { periodEnd: '2024-12-31', column: 'previous', written: false },
+            { periodEnd: '2024-12-31', column: 'previous', written: true },
         ]);
-        expect(rows.get('0000123456|2024-12-31#single')).toBe(own);
+        expect(rows.get('0000123456|2024-12-31#single')).toMatchObject({ column: 'previous', reportPeriodEnd: '2025-12-31' });
+    });
+
+    it("doesn't let an older report replace a year from a newer one", async () => {
+        const fromNewer = { entityId: '0000123456', period: '2024-12-31#single', periodEnd: '2024-12-31', column: 'previous', reportPeriodEnd: '2026-12-31', issuerName: 'Testowa Deweloper S.A.' } as DbIssuerFinancialsRecord;
+        const { deps, rows } = fakes([fromNewer]);
+        const result = await importFiling(deps, xml);
+        expect(result.stored.find(s => s.periodEnd === '2024-12-31')).toEqual({ periodEnd: '2024-12-31', column: 'previous', written: false });
+        expect(rows.get('0000123456|2024-12-31#single')).toBe(fromNewer);
     });
 
     it('writes nothing on a dry run', async () => {

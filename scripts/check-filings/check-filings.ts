@@ -19,7 +19,7 @@ import { BedrockRuntimeClient } from "@aws-sdk/client-bedrock-runtime";
 import { Resource } from "sst";
 import { DEFAULT_MODEL_ALIAS, resolveModelId } from "../../packages/core/src/ai/models";
 import { bedrockTranscriber } from "../../packages/core/src/bonds/fundamentals/filings/AiPdfExtractor";
-import { IssuerFinancialsTable } from "../../packages/core/src/storage/issuerFinancials";
+import { IssuerFinancialsTable, reportPeriodEndOf } from "../../packages/core/src/storage/issuerFinancials";
 import type { FilingField, SourcedFigure } from "../../packages/core/src/bonds/fundamentals/filings/FilingParser";
 import type { StatementLine } from "../../packages/core/src/bonds/fundamentals/filings/statementLines";
 import { readAnyFiling } from "../../packages/core/src/bonds/fundamentals/filings/importFiling";
@@ -88,7 +88,11 @@ async function main() {
     const problems: string[] = [];
 
     const row = await financials.get(report.entityId, report.period);
+    // The year's row may now come from a more recent report (its comparative column, restated): the hand-read
+    // figures are this report's own, so only the re-read is compared then.
+    const replaced = row && row.filing.key !== report.file && reportPeriodEndOf(row) > report.period.split("#")[0];
     if (!row) problems.push("stored: no row");
+    else if (replaced) { /* compared on the re-read below */ }
     else {
       problems.push(...differences(report.thousands, row.figures).map((d) => `stored: ${d}`));
       problems.push(...lineProblems(row.lines, row.figures).map((d) => `stored: ${d}`));
@@ -115,8 +119,9 @@ async function main() {
       console.log(`✗ ${name}`);
       for (const p of problems) console.log(`    ${p}`);
     } else {
-      console.log(`✓ ${name}: stored${reparsed === "re-read" ? " and re-read" : `, ${reparsed}`}`);
-      if (mark && row && row.review?.status !== "hand-checked") {
+      const stored = replaced ? "stored row from a more recent report (not compared)" : "stored";
+      console.log(`✓ ${name}: ${stored}${reparsed === "re-read" ? " and re-read" : `, ${reparsed}`}`);
+      if (mark && row && !replaced && row.review?.status !== "hand-checked") {
         await financials.setReview(report.entityId, report.period, { status: "hand-checked", note: "scripts/check-filings/expected.json", at: new Date().toISOString() });
         console.log("    marked hand-checked");
       }

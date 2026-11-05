@@ -161,7 +161,7 @@ async function main() {
       console.log(`  Issuer: ${result.issuerName} (stored under ${result.entityId})`);
       for (const warning of result.warnings) console.log(`  ⚠ ${warning}`);
       for (const s of result.stored) {
-        const what = dryRun ? "would store" : s.written ? "stored" : "kept the existing row (from that year's own filing)";
+        const what = dryRun ? "would store" : s.written ? "stored" : "kept the existing row (from a more recent report)";
         console.log(`  ${s.periodEnd} (${s.column === "current" ? "this filing's year" : "comparative year"}): ${what}`);
       }
       if (!dryRun) console.log(`  File: s3://${resources.filings}/${result.s3Key}`);

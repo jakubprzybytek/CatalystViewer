@@ -275,6 +275,11 @@ A new override needs a stated reason (`RULE_SET_OVERRIDES` in `scorecard.ts`).
 - **12-month years only.** A quarter or half-year summed into a "year" breaks every ratio (Dadelo's
   "2026" was Q1 only).
 - **Fiscal year ends vary:** Pepco and AB end on 30 September.
+- **The most recent report wins (built 2026-11-05):** when a year appears in two reports, the newer report's
+  figures are kept, its comparative column included: companies restate earlier years (Indos's 2024 profit became
+  a loss; Unibep, PGE, Orlen, Allegro.eu, Vehis restated too). The older report still gives the year before.
+  Exceptions are recorded per issuer: Vindexus FY2024 keeps its own report (the newer one hides the bonds), and
+  Pepco FY2024's original report isn't imported (different perimeter).
 - **Three years at least** for the trend. Each report carries its previous year as a comparative
   column, so two reports give three years. 23 of the 27 imported issuers have only 2 years today.
 - **When the report is due:** annual reports are approved within 6 months of the year end, then filed.

@@ -8,7 +8,8 @@ export type ReviewStatus = 'parsed' | 'hand-checked' | 'flagged';
 
 // One fiscal year of an issuer's financials, read from a filed statement.
 // Key: entityId (PK), period = "<periodEnd>#<scope>" (SK). Each filing gives two years: its own (column
-// "current") and the comparative previous year ("previous"), which fills a year until its own filing comes.
+// "current") and the comparative previous year ("previous"). A year's row comes from the most recent report
+// that shows it, whichever column: a later report restates the earlier year (reportsNewerOrSame).
 export type DbIssuerFinancialsRecord = {
     entityId: string;             // PK: the KRS number (Polish companies), else "LEI:<lei>"
     krs?: string;
@@ -31,6 +32,7 @@ export type DbIssuerFinancialsRecord = {
     review?: { status: ReviewStatus; note?: string; at?: string };
     linesExtraction?: FilingExtraction;  // PDF lines added later (reparse-filings): the model read they came from
     column: 'current' | 'previous';
+    reportPeriodEnd?: string;     // the fiscal year end of the report the row came from (its own column's year)
     filing: {
         key: string;              // S3 key of the original file in the Filings bucket
         sha256: string;
@@ -43,3 +45,17 @@ export type DbIssuerFinancialsRecord = {
     };
     importedAt: string;           // ISO 8601
 };
+
+// The year of the report a row came from. Rows stored before reportPeriodEnd existed: a "current" row is its own
+// year; a "previous" row's report year is in its file's name ("filings/<entity>/<YYYY-MM-DD>-<scope>-<hash>.<ext>").
+export function reportPeriodEndOf(row: Pick<DbIssuerFinancialsRecord, 'reportPeriodEnd' | 'column' | 'periodEnd' | 'filing'>): string {
+    if (row.reportPeriodEnd) return row.reportPeriodEnd;
+    if (row.column === 'current') return row.periodEnd;
+    return row.filing?.key?.match(/\/(\d{4}-\d{2}-\d{2})-(?:single|group)-/)?.[1] ?? row.periodEnd;
+}
+
+// Whether `incoming` may replace `existing`: it comes from the same report or a more recent one. The most recent
+// report's figures are kept, restated years included (Indos and Pepco restated FY2024 in their FY2025 reports).
+export function reportsNewerOrSame(incoming: DbIssuerFinancialsRecord, existing: DbIssuerFinancialsRecord | undefined): boolean {
+    return !existing || reportPeriodEndOf(incoming) >= reportPeriodEndOf(existing);
+}

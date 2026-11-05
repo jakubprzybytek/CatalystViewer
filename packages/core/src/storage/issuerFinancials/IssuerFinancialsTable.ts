@@ -1,6 +1,6 @@
 import { DynamoDBClient, ConditionalCheckFailedException } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, GetCommand, PutCommand, QueryCommand, ScanCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
-import type { DbIssuerFinancialsRecord } from '.';
+import { reportPeriodEndOf, type DbIssuerFinancialsRecord } from '.';
 import { itemTotals } from '../../bonds/fundamentals/filings/statementLines';
 import { queryAll, scanAll } from '../utils';
 import type { DbIssuerIdentityRecord } from '../issuerProfiles';
@@ -95,6 +95,17 @@ export class IssuerFinancialsTable {
     }
 
     // Marks a year as checked by hand (or flagged).
+    async setReportPeriodEnd(entityId: string, period: string, reportPeriodEnd: string): Promise<void> {
+        await this.documentClient.send(new UpdateCommand({
+            TableName: this.tableName,
+            Key: { entityId, period },
+            UpdateExpression: 'SET #rpe = :rpe',
+            ConditionExpression: 'attribute_exists(#entityId)',
+            ExpressionAttributeNames: { '#rpe': 'reportPeriodEnd', '#entityId': 'entityId' },
+            ExpressionAttributeValues: { ':rpe': reportPeriodEnd },
+        }));
+    }
+
     async setReview(entityId: string, period: string, review: NonNullable<DbIssuerFinancialsRecord['review']>): Promise<void> {
         await this.documentClient.send(new UpdateCommand({
             TableName: this.tableName,
@@ -106,18 +117,18 @@ export class IssuerFinancialsTable {
         }));
     }
 
-    // A year from a filing's own column always wins. A comparative column only fills a year that has
-    // no row yet, or one that also came from a comparative column. Returns false when it was skipped.
+    // The most recent report wins (reportsNewerOrSame): a row is written unless the stored one came from a newer
+    // report, whichever column. Rows without reportPeriodEnd predate the rule (setReportPeriodEnd fills them).
+    // Returns false when it was skipped.
     async store(record: DbIssuerFinancialsRecord): Promise<boolean> {
+        const item = { ...record, reportPeriodEnd: reportPeriodEndOf(record) };
         try {
             await this.documentClient.send(new PutCommand({
                 TableName: this.tableName,
-                Item: record.lines ? { ...record, items: itemTotals(record.lines, record.lineSigns) } : record,
-                ...(record.column === 'previous' ? {
-                    ConditionExpression: 'attribute_not_exists(entityId) OR #column = :previous',
-                    ExpressionAttributeNames: { '#column': 'column' },
-                    ExpressionAttributeValues: { ':previous': 'previous' },
-                } : {}),
+                Item: item.lines ? { ...item, items: itemTotals(item.lines, item.lineSigns) } : item,
+                ConditionExpression: 'attribute_not_exists(entityId) OR attribute_not_exists(#rpe) OR #rpe <= :rpe',
+                ExpressionAttributeNames: { '#rpe': 'reportPeriodEnd' },
+                ExpressionAttributeValues: { ':rpe': item.reportPeriodEnd },
             }));
             return true;
         } catch (error) {
