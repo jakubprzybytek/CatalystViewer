@@ -746,6 +746,7 @@ Lessons from imports so far. Check here before treating a strange result as the 
 | Vindexus FY2024 | the KRS entry for the group report holds the untagged single-company statement (pdf2htmlEX); the group ESEF package is in `Raport_roczny_2024.zip` on gpm-vindexus.pl (investor relations → reports), which tags the bonds as bonds (debt 114.6m PLN; the FY2025 report's tagging gives 2.4m for the same year) | imported from the company's site |
 | P4, Cognor FY2024 | IFRS statements as PDFs in the KRS | read by hand (FY2023 column of P4 is restated) |
 | MOL FY2024 | `ifrs-consolidated-fs-eng-esef.pdf` on molgroup.info is the auditor's report only; the ESEF zip isn't linked at a fixed address. The statements are in the integrated annual report (pages 51–55, HUF million, costs printed as positive amounts) | read by hand from the integrated report |
+| Pepco FY2024 | the original FY2024 report (ESEF on filings.xbrl.org under LEI 213800OVMJPFP79OB449) includes Poundland, sold since; the FY2025 report restates FY2024 without it (revenue 4,160 vs 6,167m EUR, EBIT 323 vs −445). That package also leaves right-of-use depreciation (365m EUR) untagged for the parser | not imported, by the owner's choice (2026-11-05): keep the most recent, comparable figures; Pepco stays on two years until its FY2026 report |
 | Allegro.eu, Żabka FY2024 | ESEF packages inside the companies' reporting packages (`Q4-2024-Reporting-package-…zip` on about.allegro.eu, `Annual-Reporting-Package-2024-Zabka-Group.zip` on zabkagroup.com) | imported |
 | BBI Development | a developer working through joint ventures: 174m PLN of equity-accounted investments, 3.4m of inventory, so net debt / stock reads 21× | the developer rule doesn't fit; needs a holding-company view (section 15) |
 | Vindexus | debt collector whose bonds sit in "other financial liabilities" (72.4m + 28.2m PLN) next to separate loan lines, so they're left out of debt (2.2m) | fix with the finance rules |
@@ -758,7 +759,7 @@ KRS, Develia, Archicom, BBI, Cavatina and Lokum from Bankier's ESEF packages), 1
 29 in scope with no scorecard yet; Finance issuers with reports stored for the coming finance rules: Kruk,
 Best, Vindexus, Corpus Iuris, Vehis, IFL, Indos, MCI Management, AOW Faktoring. After the KRS FY2024 reports
 (4–5 November), 30 of the 34 have 3 or more years, so their trend is computed; by 5 November all but Pepco
-(Allegro.eu, Żabka and MOL FY2024 fetched from their own sites). Trend red: Atal, Archicom, Benefit Systems, Cavatina, Cognor,
+(Allegro.eu, Żabka and MOL FY2024 fetched from their own sites; Pepco's FY2024 left out, see the table above). Trend red: Atal, Archicom, Benefit Systems, Cavatina, Cognor,
 Echo, Lokum, Marvipol, PCC Exol, PCC Rokita, Polenergia. Refinancing is red for Atal (130m PLN due in 12 months, 146m cash,
 operating cash flow −657m) and yellow for Echo.
 
@@ -775,7 +776,7 @@ In the order the roadmap would take them:
    - For debt collectors: cash collections, cash EBITDA, net debt / cash EBITDA, and portfolio
      purchases vs collections.
    - Needs their reports imported (only Kruk so far).
-2. **More reports:** Pepco's FY2024 annual report (its site now lists only FY2025), for its trend;
+2. **More reports:**
    PragmaGO's FY2025 PDF (collected, not imported); the 29
    in-scope issuers with no scorecard yet; FY2025 reports for the 11 scored from AI-collected figures.
 3. **From the notes, by a model with quotes checked in code:**
