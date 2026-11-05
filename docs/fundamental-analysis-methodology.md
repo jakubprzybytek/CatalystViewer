@@ -113,6 +113,7 @@ bond name (e.g. "ATA0128") or ISIN
   6. no report?  → AI-collected figures as a fallback, marked as such (never for lenders)
   7. scorecard   → 6 dimensions with the rule set's metrics and thresholds
   8. refinancing → listed bonds due in 12 / 24 months vs cash and operating cash flow
+                   + repayment track record: how past bonds ended (planned)
   9. confidence  → high / medium / low with facts
  10. judgement   → verdict, red flags, what to watch
 ```
@@ -375,7 +376,7 @@ elsewhere, Python run with `-I`).
 |---|---|---|
 | **Catalyst daily statistics file** (XLS) | every listed bond: ISIN, market, type, **current nominal**, maturity, coupon, accrued interest | what CatalystViewer reads; the reliable current nominal, IZ included |
 | **gpwcatalyst.pl** quote, instrument and interest-table pages | ~280 corporate bonds: reference, last, bid/ask, turnover; nominal and accrued interest | latest session only; cells misaligned with headers (read by position); unreachable from PortfolioTracker's environment since 2026-10-12 |
-| **BiznesRadar** `biznesradar.pl/notowania-historyczne/<CODE>[,<page>]`, `/notowania/<CODE>` | daily OHLC (clean, % of nominal) and volume since listing, 50 sessions a page; latest quote, 15 min delayed | the only free corporate bond **price history**; lags a day; 404 for a redeemed bond; one page every 2 s |
+| **BiznesRadar** `biznesradar.pl/notowania-historyczne/<CODE>`, `/notowania/<CODE>` | daily OHLC (clean, % of nominal) and volume, the latest 50 sessions on the first page; latest quote, 15 min delayed | the only free corporate bond **price history**; lags a day; 404 for a redeemed bond. **Its robots.txt (checked 2026-11-05) disallows the paged history** (`/notowania-historyczne/*,*`) and the transaction pages: only the first page, one request every 2 s |
 | **gpw.pl archive** `gpw.pl/archiwum-notowan?fetch=1&type=13&instrument=<CODE>` | treasury and state-guaranteed bonds only, daily history; `date=dd-mm-yyyy` for a day; indices with `type=1` | no corporate bonds; IZ nominal unreliable; resets after a few dozen requests |
 | **Ministry of Finance calculator** `kalkulatorodsetek.xlsm` (gov.pl/web/finanse/kalkulatory2) | CPI reference index `W(n)` since 2003-07; every IZ series; fixed-rate treasury series | read as data; VBA macros never run |
 | **Ministry of Finance index ratios** gov.pl/web/finanse/wspolczynniki-indeksacji2 | daily IZ ratio and accrued interest | cross-check |
@@ -687,6 +688,96 @@ its business makes, or does it depend on refinancing? **Built** for every issuer
 Not included yet: bank loans due, undrawn credit lines, developers' escrow accounts, the dates of later
 instalments, taps and buy-backs after the bond was first seen (section 18).
 
+### Repayment track record (planned)
+
+How an issuer handled its past bonds is direct evidence for the question this analysis asks. An issuer
+that has repaid twenty series on time, several of them early, is a different risk from one that extended
+maturities, paid late or restructured. Catalyst issuers often repay old bonds with new ones, so the record
+also shows whether they could still raise money when it mattered. It complements the scorecard; it is not
+a seventh colour.
+
+**What to show, per company** (all its names and financing vehicles, as in Refinancing):
+
+- counts: bonds repaid at maturity, redeemed early (call, buy-back, mandatory redemption), restructured
+  or extended, not paid (default), unknown;
+- a "Past bonds" table: bond, ISIN, amount, maturity, when trading ended, how it ended, the last price
+  before the end, and the source of each fact;
+- the period covered ("since 2023-03", "since 2018"), so a short record isn't read as a clean one;
+- red flags: any missed payment, a suspension because of a payment, a GPW marking (below), a maturity
+  extended by a bondholders' meeting, a bond bought back well below par.
+
+**Signals and their meaning:**
+
+| Signal | Reads as |
+|---|---|
+| left trading within ~2 weeks of maturity (the redemption record date), last price near par | repaid at maturity (inferred; confirmed by a GPW notice or the issuer's report) |
+| left 30+ days before maturity, last price near par | early redemption: an issuer call (bank MREL bonds leave a year before maturity), a buy-back, a refinancing; or a merger (Kredyt Inkaso → Best) |
+| still listed or suspended after maturity | not paid, or paid late |
+| last price well below par before the end, or a buy-back below par | distress, or a restructuring at a loss for bondholders |
+| GPW marking `/1`–`/23` on the issuer's instruments | bankruptcy petition or ruling, liquidation, arrangement or sanation proceedings, information breaches |
+| suspension "na wniosek emitenta" before a redemption | routine (trading stops for the redemption) |
+| issuer report "niezrealizowanie świadczenia", "niedokonanie wykupu", "nieterminowa wypłata" | payment missed |
+
+**What the app's own data shows already** (prod, 2026-11-05). The daily update keeps a bond after it leaves
+the Catalyst file, as `inactive`, since 2023-03-10:
+- 314 corporate bonds ended; 151 left at maturity;
+- 163 left more than 30 days before it, all last trading at ≥ 90% of nominal (161 at ≥ 98%): calls,
+  buy-backs and mergers rather than distress;
+- no listed corporate bond is past its maturity.
+
+This matches the market reports (analizy.pl: 2024 had no corporate credit incident apart from the Getin
+Noble Bank restructuring). A bond on two markets (GPW and BondSpot) is stored twice and must be counted
+once.
+
+**Possible approaches**, cheapest first (they combine):
+
+1. **From the app's own records (no new source).** Classify each inactive bond by when it left against
+   its maturity and by its last price, per company. Labelled "inferred from trading", it can say "repaid"
+   only as "left at maturity, trading near par". Covers 2023-03 onwards only; can't tell a call from a
+   buy-back, nor see unlisted bonds.
+2. **Record the reason going forward (Bonds Updater).** On each run, also read:
+   - GPW's [suspensions and exclusions](https://www.gpw.pl/zawieszenia-i-wykluczenia): ISIN, issuer LEI,
+     action, reason, dates, since 2018;
+   - the Catalyst notices ("zakończenie obrotu … w związku z przedterminowym wykupem / z wykupem");
+   - the [special markings](https://gpwcatalyst.pl/szczegolne-oznaczenia-instrumentow-finansowych) of
+     instruments.
+
+   Store the reason with the bond when it leaves. GPW's robots.txt allows this. It adds an external
+   source to the schedule, so it needs the owner's approval.
+3. **Backfill the past from GPW.** The same pages for 2018 onwards, and the board resolutions
+   ([gpwcatalyst.pl/uchwaly-zarzadu](https://gpwcatalyst.pl/uchwaly-zarzadu), older items behind "show
+   earlier") for exclusions and suspensions before that. That gives every bond that ever left Catalyst with
+   a reason, also bonds the app never saw. One request every 2 s.
+4. **Confirm payment from the issuer.** Its EBI/ESPI current reports: "terminowy wykup" (paid on time),
+   "przedterminowy wykup" (early), "niezrealizowanie świadczenia" (not paid), a bondholders' meeting
+   changing the terms. Mirrors:
+   - Bankier: listed companies; the report text stays, attachments go after about a year;
+   - PAP Biznes article pages: its robots.txt disallows `/api`, `/search/`, `/wyszukiwarka`;
+   - GPW's issuer reports page;
+   - not Parkiet: it's behind a Cloudflare challenge, so not automatically.
+
+   A model can read the report text, with the quote checked in code (as for the notes, section 18).
+5. **From the annual reports already imported.** The debt note lists the series issued and repaid in the
+   year; the cash flow has `borrowingsRepaid`. Confirms repayment for the years with reports, also of
+   bonds outside Catalyst; it needs the notes read (section 18, item 2).
+6. **Named defaults from market statistics.** The monthly default-rate articles based on Obligacje.pl's
+   index (republished by analizy.pl, bank.pl, Parkiet) name the defaulted series and issuers: a
+   cross-check, and the calibration set (GetBack 2018, PBG, Braster, Europejskie Centrum Odszkodowań, …).
+7. **Legal status.** The KRS register API (open) shows liquidation, bankruptcy and restructuring entries
+   in the company's current record. The court register of insolvent companies (KRZ) refuses automated
+   access (its robots.txt answers 401), so it's by hand only.
+
+**Not available, or not for an agent:**
+- obligacje.pl's archive of past bonds and defaults: it blocks AI assistants (a person may browse it);
+- a per-bond list of missed payments from KDPW: it notifies (e.g. PTI's unpaid interest), but no list
+  was found;
+- price history of bonds that are gone: BiznesRadar answers 404, and its paged history is disallowed;
+- unlisted private placements.
+
+**Reliability:** a GPW notice says *that* and usually *why* trading ended; the issuer's report or a
+default list says *whether it was paid*. Well-known defaults are covered by several sources. Small issuers
+years back will have gaps, shown as "unknown", never as "repaid".
+
 ## 12. Step 9: data confidence
 
 How much the colours rest on. **Built** (`confidence.ts`, design `2026-11-03-data-confidence-design.md`).
@@ -753,8 +844,11 @@ ratios.
 - **Defaults and restructurings:** missed coupons, extended maturities, buy-backs below par,
   restructuring proceedings, Catalyst suspensions (ESPI/EBI current reports).
 - **Market signals:** a price well below par, a widening spread, collapsing liquidity: not proof, but a
-  reason to look. BiznesRadar's history shows when the market started to doubt the issuer; a bond that
-  stops trading before maturity (404) needs an explanation.
+  reason to look. The app's own quote history (since 2023) shows when the market started to doubt the
+  issuer; a bond that stops trading before maturity needs an explanation (step 8, "Repayment track
+  record").
+- **The repayment track record:** missed or late payments, extended maturities, buy-backs below par (step
+  8, "Repayment track record").
 
 ### Benchmarks to compare with (planned)
 
@@ -950,7 +1044,9 @@ In the order the roadmap would take them:
    - thresholds from each issuer's bond covenants (net debt / equity caps).
 4. **Developers:** escrow accounts and pre-sales from the notes, the land bank. **Contractors:** the
    order backlog.
-5. **Undrawn credit lines** and bank loans due, in Refinancing.
+5. **Undrawn credit lines** and bank loans due, in Refinancing. **Repayment track record** (step 8,
+   "Repayment track record"): from the app's records first, then GPW's exit reasons going forward and
+   back to 2018 or earlier, confirmed by the issuers' reports.
 6. **Instalments and amounts in circulation:** the dates of later instalments (from the terms of issue);
    re-reading the amount in circulation for taps and buy-backs.
 7. **Trailing 12 months** from half-year and quarterly reports.
