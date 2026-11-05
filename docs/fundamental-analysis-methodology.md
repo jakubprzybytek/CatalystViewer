@@ -459,7 +459,7 @@ amounts are copied, never computed.
 
 ### Quality control (built)
 
-A known-answers set (`scripts/check-filings/expected.json`) covers 36 reports. Its figures were read
+A known-answers set (`scripts/check-filings/expected.json`) covers 38 reports. Its figures were read
 by hand from the printed statements and are compared with the stored rows and with a fresh parse. Run
 it after any parser or prompt change. Each new report gets its hand-read figures added.
 
@@ -743,6 +743,8 @@ Lessons from imports so far. Check here before treating a strange result as the 
 | art.Locum S.A. | IFRS group statements as signed PDFs in the KRS, in złoty | read by hand |
 | Vehis Finanse | KRS XML in thousands under `JednostkaInnaWTys`, FY2025 in the 2025 envelope with a 1.4 MB attachment; funded by securitisation (not in debt); FY2024 revenue 118.1m in its own report, 78.8m as restated in FY2025's | parsed; the FY2024 report's own figures are kept for FY2024 |
 | Indos | the KRS list holds a signed Symfonia settings file (`.xml.cfg.xades`) for FY2025, not the statement | FY2025 still to download |
+| Vindexus FY2024 | the KRS file saved as "Skonsolidowane…xml" was an untagged pdf2htmlEX statement (single company) | skipped; the group ESEF package is needed |
+| P4, Cognor FY2024 | IFRS statements as PDFs in the KRS | read by hand (FY2023 column of P4 is restated) |
 | BBI Development | a developer working through joint ventures: 174m PLN of equity-accounted investments, 3.4m of inventory, so net debt / stock reads 21× | the developer rule doesn't fit; needs a holding-company view (section 15) |
 | Vindexus | debt collector whose bonds sit in "other financial liabilities" (72.4m + 28.2m PLN) next to separate loan lines, so they're left out of debt (2.2m) | fix with the finance rules |
 | Grupa Corpus Iuris, Internetowy Fundusz Leasingowy | debt collector (net profit above revenue: portfolio gains aren't revenue), leasing (single company, no group) | stored for the finance rules |
@@ -753,8 +755,9 @@ Results on 2026-11-04, prod: 34 issuers scored from reports (added that day: art
 KRS, Develia, Archicom, BBI, Cavatina and Lokum from Bankier's ESEF packages), 11 from AI-collected figures,
 29 in scope with no scorecard yet; Finance issuers with reports stored for the coming finance rules: Kruk,
 Best, Vindexus, Corpus Iuris, Vehis, IFL, Indos, MCI Management, AOW Faktoring. After the KRS FY2024 reports
-(same day), 20 issuers have 3 or more years, so their trend is computed (Atal, Archicom, Cavatina, Echo, Lokum
-and Marvipol trend red). Refinancing is red for Atal (130m PLN due in 12 months, 146m cash,
+(4–5 November), 30 of the 34 have 3 or more years, so their trend is computed; only the four foreign issuers
+(Pepco, Żabka, MOL, Allegro.eu) still have two. Trend red: Atal, Archicom, Benefit Systems, Cavatina, Cognor,
+Echo, Lokum, Marvipol, PCC Exol, PCC Rokita, Polenergia. Refinancing is red for Atal (130m PLN due in 12 months, 146m cash,
 operating cash flow −657m) and yellow for Echo.
 
 ---
@@ -770,9 +773,9 @@ In the order the roadmap would take them:
    - For debt collectors: cash collections, cash EBITDA, net debt / cash EBITDA, and portfolio
      purchases vs collections.
    - Needs their reports imported (only Kruk so far).
-2. **More reports:** the FY2024 report of Murapol, P4, Benefit Systems, Enea, PGE, Polenergia, KGHM,
-   Cognor, PCC Rokita and PCC Exol, from the KRS (the checklist page), so their trend fills in; PragmaGO's
-   FY2025 PDF (collected, not imported); Indos FY2025.
+2. **More reports:** the FY2024 report of the four foreign issuers (their own sites), for their trend;
+   PragmaGO's FY2025 PDF (collected, not imported); Indos FY2025 and Vindexus FY2024 (group); the 29
+   in-scope issuers with no scorecard yet; FY2025 reports for the 11 scored from AI-collected figures.
 3. **From the notes, by a model with quotes checked in code:**
    - the debt maturity schedule, including loans;
    - covenants, collateral, guarantees and ranking;

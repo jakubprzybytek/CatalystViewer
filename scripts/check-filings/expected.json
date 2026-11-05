@@ -547,6 +547,36 @@
         "equity": 553824,
         "cash": 289178
       }
+    },
+    {
+      "issuer": "P4 Sp. z o.o.",
+      "entityId": "0000217207",
+      "period": "2024-12-31#group",
+      "file": "filings/0000217207/2024-12-31-group-3fc1875792e4.pdf",
+      "format": "ai-pdf",
+      "currency": "PLN",
+      "thousands": {
+        "revenue": 10186521,
+        "netProfit": 1415941,
+        "totalAssets": 20274654,
+        "equity": 940222,
+        "cash": 141650
+      }
+    },
+    {
+      "issuer": "Cognor S.A.",
+      "entityId": "0000211496",
+      "period": "2024-12-31#single",
+      "file": "filings/0000211496/2024-12-31-single-6609d8d7a5d3.pdf",
+      "format": "ai-pdf",
+      "currency": "PLN",
+      "thousands": {
+        "revenue": 2193973,
+        "netProfit": -54637,
+        "totalAssets": 2667591,
+        "equity": 1238129,
+        "cash": 80744
+      }
     }
   ]
 }

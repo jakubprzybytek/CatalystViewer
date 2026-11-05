@@ -6,82 +6,8 @@
     "scope": "any"
   },
   {
-    "company": "Murapol S.A.",
-    "krs": "0000275523",
-    "year": 2024,
-    "scope": "group"
-  },
-  {
-    "company": "P4 Sp. z o.o.",
-    "krs": "0000217207",
-    "year": 2024,
-    "scope": "group"
-  },
-  {
-    "company": "Benefit Systems S.A.",
-    "krs": "0000370919",
-    "year": 2024,
-    "scope": "group"
-  },
-  {
-    "company": "Enea S.A.",
-    "krs": "0000012483",
-    "year": 2024,
-    "scope": "group"
-  },
-  {
-    "company": "PGE S.A.",
-    "krs": "0000059307",
-    "year": 2024,
-    "scope": "group"
-  },
-  {
-    "company": "Polenergia S.A.",
-    "krs": "0000026545",
-    "year": 2024,
-    "scope": "group"
-  },
-  {
-    "company": "KGHM Polska Miedź S.A.",
-    "krs": "0000023302",
-    "year": 2024,
-    "scope": "group"
-  },
-  {
-    "company": "Cognor Holding S.A.",
-    "krs": "0000211496",
-    "year": 2024,
-    "scope": "single"
-  },
-  {
-    "company": "PCC Rokita S.A.",
-    "krs": "0000105885",
-    "year": 2024,
-    "scope": "group"
-  },
-  {
-    "company": "PCC Exol S.A.",
-    "krs": "0000306150",
-    "year": 2024,
-    "scope": "group"
-  },
-  {
-    "company": "Best S.A.",
-    "krs": "0000017158",
-    "year": 2024,
-    "scope": "group",
-    "optional": true
-  },
-  {
     "company": "Vindexus S.A.",
     "krs": "0000057576",
-    "year": 2024,
-    "scope": "group",
-    "optional": true
-  },
-  {
-    "company": "PragmaGO S.A.",
-    "krs": "0000267847",
     "year": 2024,
     "scope": "group",
     "optional": true
