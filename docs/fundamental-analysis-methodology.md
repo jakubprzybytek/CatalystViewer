@@ -743,7 +743,7 @@ Lessons from imports so far. Check here before treating a strange result as the 
 | art.Locum S.A. | IFRS group statements as signed PDFs in the KRS, in złoty | read by hand |
 | Vehis Finanse | KRS XML in thousands under `JednostkaInnaWTys`, FY2025 in the 2025 envelope with a 1.4 MB attachment; funded by securitisation (not in debt); FY2024 revenue 118.1m in its own report, 78.8m as restated in FY2025's | parsed; the FY2024 report's own figures are kept for FY2024 |
 | Indos | the KRS list holds only a signed Symfonia settings file (`.xml.cfg.xades`) for FY2025, not the statement; the annual report is on indos.pl, but under `/api/`, which its robots.txt disallows. The FY2025 report restates 2024: net profit −19k PLN instead of the 3.93m first reported (a 3.95m charge, receivables lower by the same) | FY2025 PDF downloaded by the owner, read by hand; FY2024 keeps the figures of its own (original) report |
-| Vindexus FY2024 | the KRS file saved as "Skonsolidowane…xml" was an untagged pdf2htmlEX statement (single company) | skipped; the group ESEF package is needed |
+| Vindexus FY2024 | the KRS entry for the group report holds the untagged single-company statement (pdf2htmlEX); the group ESEF package is in `Raport_roczny_2024.zip` on gpm-vindexus.pl (investor relations → reports), which tags the bonds as bonds (debt 114.6m PLN; the FY2025 report's tagging gives 2.4m for the same year) | imported from the company's site |
 | P4, Cognor FY2024 | IFRS statements as PDFs in the KRS | read by hand (FY2023 column of P4 is restated) |
 | BBI Development | a developer working through joint ventures: 174m PLN of equity-accounted investments, 3.4m of inventory, so net debt / stock reads 21× | the developer rule doesn't fit; needs a holding-company view (section 15) |
 | Vindexus | debt collector whose bonds sit in "other financial liabilities" (72.4m + 28.2m PLN) next to separate loan lines, so they're left out of debt (2.2m) | fix with the finance rules |
@@ -774,7 +774,7 @@ In the order the roadmap would take them:
      purchases vs collections.
    - Needs their reports imported (only Kruk so far).
 2. **More reports:** the FY2024 report of the four foreign issuers (their own sites), for their trend;
-   PragmaGO's FY2025 PDF (collected, not imported); Vindexus FY2024 (group); the 29
+   PragmaGO's FY2025 PDF (collected, not imported); the 29
    in-scope issuers with no scorecard yet; FY2025 reports for the 11 scored from AI-collected figures.
 3. **From the notes, by a model with quotes checked in code:**
    - the debt maturity schedule, including loans;
