@@ -24,7 +24,7 @@ test('menu shows the deployed version', async ({ page }) => {
 
 test('bonds view lists the updated and the new bonds, not the deactivated one', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: 'Bonds' }).click();
+  await page.getByRole('button', { name: 'Bonds', exact: true }).click();
 
   const cards = page.locator('.bond-card');
   await expect(cards).toHaveCount(8, { timeout: 20_000 });
