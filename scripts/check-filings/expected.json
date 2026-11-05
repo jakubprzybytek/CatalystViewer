@@ -577,6 +577,21 @@
         "equity": 1238129,
         "cash": 80744
       }
+    },
+    {
+      "issuer": "Indos S.A.",
+      "entityId": "0000343763",
+      "period": "2025-12-31#single",
+      "file": "filings/0000343763/2025-12-31-single-23b74a331deb.pdf",
+      "format": "ai-pdf",
+      "currency": "PLN",
+      "thousands": {
+        "revenue": 22034,
+        "netProfit": 4373,
+        "totalAssets": 108081,
+        "equity": 37484,
+        "cash": 11913
+      }
     }
   ]
 }
