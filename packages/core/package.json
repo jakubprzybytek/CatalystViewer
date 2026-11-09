@@ -7,15 +7,15 @@
     "typecheck": "tsc -noEmit"
   },
   "dependencies": {
-    "@aws-sdk/client-bedrock-runtime": "3.1156.0",
-    "@aws-sdk/client-dynamodb": "3.1156.0",
-    "@aws-sdk/client-s3": "3.1156.0",
-    "@aws-sdk/lib-dynamodb": "3.1156.0",
+    "@aws-sdk/client-bedrock-runtime": "3.1161.0",
+    "@aws-sdk/client-dynamodb": "3.1161.0",
+    "@aws-sdk/client-s3": "3.1161.0",
+    "@aws-sdk/lib-dynamodb": "3.1161.0",
     "axios": "^1.8.4",
     "date-fns": "^2.30.0",
     "fast-xml-parser": "5.11.2",
     "pdfjs-dist": "4.10.38",
-    "read-excel-file": "9.3.12",
+    "read-excel-file": "9.3.14",
     "simple-statistics": "^7.12.1"
   }
 }
