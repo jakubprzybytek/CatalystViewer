@@ -1,10 +1,14 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 
 // Against a test stage seeded from tests/fixtures (docs/testing.md), signed in as the test user (global-setup.ts).
 // The default filters show corporate WIBOR bonds: 8 of the fixture bonds, from 7 issuers.
+// The Issuers/Bonds view is saved with the user's profile, so each test picks the view it needs.
+
+const showIssuers = (page: Page) => page.getByRole('button', { name: 'Issuers', exact: true }).click();
 
 test('issuers view lists the issuers of the fixture bonds', async ({ page }) => {
   await page.goto('/');
+  await showIssuers(page);
 
   const cards = page.locator('.issuer-card');
   await expect(cards).toHaveCount(7, { timeout: 20_000 });
@@ -32,10 +36,16 @@ test('bonds view lists the updated and the new bonds, not the deactivated one', 
     await expect(cards.filter({ hasText: name }), name).toHaveCount(1);
   }
   await expect(cards.filter({ hasText: 'ARH0329' })).toHaveCount(0);
+
+  // Leave the profile as found, for the tests after this one
+  await showIssuers(page);
+  await expect(page.locator('.issuer-card')).toHaveCount(7);
+  await page.waitForTimeout(1_500);   // the profile is saved in the background
 });
 
 test('filters issuers by industry, from the filter drawer and from a card', async ({ page }) => {
   await page.goto('/');
+  await showIssuers(page);
   const cards = page.locator('.issuer-card');
   await expect(cards).toHaveCount(7, { timeout: 20_000 });
 
