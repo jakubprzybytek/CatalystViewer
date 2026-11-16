@@ -1,5 +1,5 @@
 import { api, userPoolId, userPoolClientId } from "./api";
-import { isProd, referenceDate, siteDomain } from "./stage";
+import { isProd, referenceDate, siteConcurrency, siteDomain } from "./stage";
 
 const openNextVersion = "3.10.2";
 
@@ -24,6 +24,14 @@ const site = new sst.aws.Nextjs("Site", {
     NEXT_PUBLIC_APP_VERSION: process.env.APP_VERSION || "local",
     // int: yields and interest progress at the fixtures' reference date (packages/web/src/common/Clock.ts)
     ...(referenceDate ? { NEXT_PUBLIC_REFERENCE_DATE: referenceDate } : {}),
+  },
+  transform: {
+    server: (args) => {
+      args.concurrency = { reserved: siteConcurrency.server };
+    },
+    imageOptimizer: (args) => {
+      args.concurrency = { reserved: siteConcurrency.imageOptimizer };
+    },
   },
 });
 

@@ -29,3 +29,9 @@ export const functionEnvironment: Record<string, string> = {
 
 // prod lives at the bare domain, other stages under a prefix.
 export const siteDomain = isProd ? "catalyst.albedoonline.com" : `${stage}.catalyst.albedoonline.com`;
+
+// The most copies of each public function that may run at once (reserved concurrency), per agent-playbook
+// aws-app-guidelines: bounds what a flood of requests can cost and keeps a scan of one stage from taking the
+// account's shared Lambda capacity. prod's server normally runs 1-2 copies, about 16 under a crawler; scans of
+// 200-700 requests in a few seconds reached 50. E2E tests run with one worker.
+export const siteConcurrency = isProd ? { server: 20, imageOptimizer: 5 } : { server: 5, imageOptimizer: 2 };
