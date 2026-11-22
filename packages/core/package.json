@@ -14,7 +14,7 @@
     "axios": "^1.8.4",
     "date-fns": "^2.30.0",
     "fast-xml-parser": "5.11.2",
-    "pdfjs-dist": "4.10.38",
+    "pdfjs-dist": "6.4.299",
     "read-excel-file": "9.3.12",
     "simple-statistics": "^7.12.1"
   }
