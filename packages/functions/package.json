@@ -19,7 +19,7 @@
     "@aws-sdk/client-sfn": "^3.1156.0",
     "@aws-sdk/client-ssm": "3.1156.0",
     "@aws-sdk/s3-request-presigner": "3.1156.0",
-    "date-fns": "^2.30.0",
+    "date-fns": "^4.4.0",
     "pug": "^3.0.4",
     "sst": "4.17.2"
   }
