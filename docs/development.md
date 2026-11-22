@@ -1,5 +1,7 @@
 # Development
 
+> **Maintenance mode (since 2026-11-22).** CatalystViewer is no longer actively developed: it will be decommissioned once its features have moved to [PortfolioTracker](https://github.com/jakubprzybytek/PortfolioTracker). Until then only high-priority work is done here: outages, critical or high security alerts, data at risk. Other bugs, medium and low alerts and routine dependency updates are left alone unless they block such work. Before decommissioning, turn off deletion protection on the prod tables (`infra/storage.ts`).
+
 This app is developed and delivered per the [continuous-delivery standard](https://github.com/jakubprzybytek/agent-playbook/blob/main/skills/continuous-delivery/STANDARD.md): develop on `dev`, every push to `main` goes through `int` to `prod`. The standard has the general rules (stages, tests, the CD pipeline, versions, when a push needs a yes first, test users); this file holds what is specific to CatalystViewer and where it still deviates. Testing details (fixtures, reference date) are in [testing.md](testing.md); deploying from GitHub (OIDC role, policy) in [infra/github/README.md](../infra/github/README.md).
 
 ## Stages
